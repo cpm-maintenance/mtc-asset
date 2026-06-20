@@ -1,0 +1,70 @@
+{
+  "_metadata": {
+    "exportedAt": "2026-06-20T08:35:22Z",
+    "project": "mtc-asset",
+    "trigger": "workflow_dispatch",
+    "workflow": "27865785944"
+  },
+  "Equipment": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "SpareParts": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "HistoryLog": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "Performance": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "Users": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "Stats": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "Settings": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "AI_Settings": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+,
+
+  "ImageUploads": 
+[33m[1m⚠ [22m[39m Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started
+
+[1m[31mError:[39m[22m Failed to get details for project: mtc-asset.
+{}
+
+}
