@@ -34,8 +34,9 @@ const DB_NODES = [
   'Users',
   'Stats',
   'Settings',
-  'AI_Settings',
   'ImageUploads',
+  // NOTE: AI_Settings dikecualikan karena berisi API keys
+  // Data AI settings di-backup via _full database saja (setelah disanitasi)
 ];
 
 // ========================================
@@ -147,7 +148,28 @@ function backup() {
     }
   }
 
-  // 3. Simpan file
+  // 3. Sanitasi — hapus API keys dari backup (jangan sampai ter-commit ke public repo)
+  for (const node of Object.keys(backupData)) {
+    if (node === 'AI_Settings' && backupData[node]) {
+      for (const key of Object.keys(backupData[node])) {
+        if (backupData[node][key] && typeof backupData[node][key] === 'object') {
+          delete backupData[node][key].apiKey;
+          delete backupData[node][key].apiKeys;
+        }
+      }
+    }
+    // Juga hapus dari _full jika ada
+    if (node === '_full' && backupData._full?.AI_Settings) {
+      for (const key of Object.keys(backupData._full.AI_Settings)) {
+        if (backupData._full.AI_Settings[key] && typeof backupData._full.AI_Settings[key] === 'object') {
+          delete backupData._full.AI_Settings[key].apiKey;
+          delete backupData._full.AI_Settings[key].apiKeys;
+        }
+      }
+    }
+  }
+
+  // 4. Simpan file
   const filename = `backup-${timestamp}.json`;
   const filePath = join(BACKUP_DIR, filename);
   const jsonStr = JSON.stringify(backupData, null, 2);
