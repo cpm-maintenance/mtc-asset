@@ -1,0 +1,116 @@
+<!-- 📈 PAGE: PERFORMANCE TRACKER -->
+<div x-cloak class="space-y-4">
+  <!-- Header with Title and Actions -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <h3 class="font-black text-xl lg:text-2xl text-nexus-text nexus-glow-text uppercase tracking-tight">KPI Availability Matrix</h3>
+    <div class="flex flex-wrap gap-2.5 items-center">
+      <button @click="downloadTemplate('perf')" class="btn-nexus-small"><i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span></button>
+      <button @click="exportData('perf', 'csv')" class="btn-nexus-small"><i class="fas fa-download"></i><span class="hidden lg:inline ml-1">CSV</span></button>
+      <label class="btn-nexus-small cursor-pointer">
+        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+        <input type="file" @change="importCSV($event, 'perf')" class="hidden" accept=".csv, .xlsx">
+      </label>
+      <button @click="exportKPIToPDF()" class="btn-nexus-small"><i class="fas fa-file-pdf"></i><span class="hidden lg:inline ml-1">PDF</span></button>
+      <button @click="openPerformanceModal(false)" class="btn-nexus-gold"><i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Log</span></button>
+    </div>
+  </div>
+
+  <!-- DIAGNOSTIK PANEL -->
+  <div class="bg-slate-900/90 border-2 border-amber-500/50 rounded-xl p-4 mb-4 backdrop-blur-sm">
+    <p class="text-amber-400 font-bold text-sm mb-3">🔧 DIAGNOSTIK Performance</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Data:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="performanceData ? performanceData.length : '0'"></span>
+      </div>
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Filtered:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="filteredPerformanceData ? filteredPerformanceData.length : '0'"></span>
+      </div>
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Filter:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="kpiFilter + ' | ' + kpiFilterDate"></span>
+      </div>
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Online:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="isOnline"></span>
+      </div>
+    </div>
+    <div x-show="performanceData && performanceData.length > 0" class="mt-2 text-xs text-slate-400">
+      Contoh: <span class="text-green-400" x-text="performanceData[0]?.date + ' - ' + performanceData[0]?.equipmentId"></span>
+    </div>
+    <div x-show="!performanceData || performanceData.length === 0" class="mt-2 text-xs text-yellow-400">
+      ⚠️ Data Performance kosong - Pastikan Firebase path "Performance" ada data-nya
+    </div>
+  </div>
+
+  <!-- Performance Table -->
+  <div class="card-modern overflow-hidden border-nexus-accent/10">
+    <div class="overflow-x-auto">
+      <table id="perfTable" class="w-full text-left">
+        <thead class="glass text-[10px] uppercase font-black tracking-widest text-nexus-accent/60">
+          <tr>
+            <th class="p-5">Timeline</th>
+            <th class="p-5">Asset Node</th>
+            <th class="p-5">Category</th>
+            <th class="p-5">Area</th>
+            <th class="p-5 text-center">WH</th>
+            <th class="p-5 text-center">BD</th>
+            <th class="p-5 text-center">Freq</th>
+            <th class="p-5 text-center">MA %</th>
+            <th class="p-5 text-center">PA %</th>
+            <th class="p-5 text-center">Gap %</th>
+            <th class="p-5 text-right">Protocol</th>
+          </tr>
+        </thead>
+        <tbody class="text-xs">
+          <template x-for="p in filteredPerformanceData" :key="p.id">
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+              <td class="p-5 font-bold text-nexus-text" x-text="p.date"></td>
+              <td class="p-5 text-nexus-accent font-black" x-text="getEquipName(p.equipmentId)"></td>
+              <td class="p-5"><span class="tag-nexus" x-text="p.category || 'Mechanical'"></span></td>
+              <td class="p-5 text-slate-400" x-text="p.area"></td>
+              <td class="p-5 text-center font-bold" x-text="p.wh"></td>
+              <td class="p-5 text-center text-rose-400 font-bold" x-text="p.bd"></td>
+              <td class="p-5 text-center font-bold text-white"><span class="px-2 py-0.5 glass rounded-md border border-white/10" x-text="(p.events && p.events.length > 0) ? p.events.length : (p.freq || 0)"></span></td>
+              <td class="p-5 text-center font-black text-white"><div class="flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_#3b82f6]"></div><span x-text="calculateKPI(p).ma + '%'"></span></div></td>
+              <td class="p-5 text-center font-black text-white"><div class="flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]"></div><span x-text="calculateKPI(p).pa + '%'"></span></div></td>
+              <td class="p-5 text-center font-black">
+                <div class="flex items-center justify-center gap-2">
+                  <div class="w-2 h-2 rounded-full" :class="Number(calculateKPI(p).gap) < 0 ? 'bg-rose-500 shadow-[0_0_5px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_5px_#10b981]'"></div>
+                  <span :class="Number(calculateKPI(p).gap) < 0 ? 'text-rose-500' : 'text-emerald-500'" x-text="calculateKPI(p).gap + '%'"></span>
+                </div>
+              </td>
+              <td class="p-5 text-right">
+                <div x-show="isAdmin" class="flex justify-end gap-2">
+                  <button @click="openPerformanceModal(true, p)" class="w-8 h-8 glass rounded-lg text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/20"><i class="fas fa-edit text-[10px]"></i></button>
+                  <button @click="deleteItem('Performance', p.id)" class="w-8 h-8 glass rounded-lg text-rose-400 flex items-center justify-center hover:bg-rose-500/20"><i class="fas fa-trash text-[10px]"></i></button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div x-show="filteredPerformanceData.length === 0" class="text-center py-16">
+    <div class="inline-flex flex-col items-center gap-4">
+      <i class="fas fa-chart-line text-6xl text-slate-600"></i>
+      <div>
+        <p class="text-slate-400 text-lg font-bold">Belum ada Data Performance</p>
+        <p class="text-slate-500 text-sm mt-2">
+          <span x-show="performanceData.length === 0">Klik tombol di bawah untuk memuat ulang data</span>
+          <span x-show="performanceData.length > 0">Coba ubah filter tanggal</span>
+        </p>
+      </div>
+      <button x-show="performanceData.length === 0" @click="refreshData()" class="btn-nexus-gold">
+        <i class="fas fa-sync-alt mr-2"></i> Muat Ulang Data
+      </button>
+      <button x-show="isAdmin && performanceData.length === 0" @click="openPerformanceModal(false)" class="btn-nexus-small">
+        <i class="fas fa-plus mr-1"></i> Tambah Data Pertama
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>GoldEquip Track - Firebase Edition</title>
+  
+  <!-- CSS & UI Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <style>
+    :root { --gold: #D4AF37; --dark: #121212; }
+    body { background-color: var(--dark); color: #E5E7EB; font-family: 'Inter', sans-serif; }
+    .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%); }
+    .gold-text { color: var(--gold); }
+    .glass { background: rgba(30, 30, 30, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.2); }
+    .nav-active { color: var(--gold); background: rgba(212, 175, 55, 0.1); border-left: 4px solid var(--gold); }
+    [x-cloak] { display: none !important; }
+  </style>
+
+  <!-- FIREBASE MODULAR SDK INIT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set, update, remove, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    // 🔴🔴🔴 GANTI DENGAN CONFIG DARI FIREBASE CONSOLE ANDA 🔴🔴🔴
+    const firebaseConfig = {
+      apiKey: "AIzaSyBCESkIsQCyaiNVGUKdZDA2jg-qr5-qRTo",
+      authDomain: "mtc-asset.firebaseapp.com",
+      databaseURL: "https://mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "mtc-asset",
+      storageBucket: "mtc-asset.firebasestorage.app",
+      messagingSenderId: "400206066339",
+      appId: "1:400206066339:web:dd230c768d370dd74a4516",
+      measurementId: "G-XN3JFFEBZE"
+    };
+
+
+    const appFirebase = initializeApp(firebaseConfig);
+    const db = getDatabase(appFirebase);
+
+    // Expose Firebase functions to global window for Alpine.js
+    window.db = db;
+    window.ref = ref;
+    window.onValue = onValue;
+    window.set = set;
+    window.update = update;
+    window.remove = remove;
+    window.get = get;
+  </script>
+  
+  <!-- Alpine.js (Harus dimuat setelah module) -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="app()">
+
+  <!-- Toast Notification -->
+  <div class="fixed bottom-20 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+    <template x-for="note in notifications" :key="note.id">
+      <div x-transition class="px-6 py-3 rounded-xl text-white shadow-2xl flex items-center gap-3 min-w-[250px] pointer-events-auto" :class="note.type === 'success' ? 'bg-green-600' : 'bg-red-600'">
+        <i :class="note.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <span x-text="note.message" class="text-sm font-medium"></span>
+      </div>
+    </template>
+  </div>
+
+  <!-- Sidebar (Desktop) -->
+  <nav class="fixed left-0 top-0 h-full w-64 glass hidden lg:flex flex-col p-4 z-50">
+    <div class="flex items-center gap-3 mb-10 px-2">
+      <div class="w-10 h-10 gold-gradient rounded-lg flex items-center justify-center text-black font-bold text-xl">GT</div>
+      <h1 class="text-xl font-bold text-white">Gold<span class="gold-text">Track</span></h1>
+    </div>
+    <div class="space-y-2 flex-1">
+      <template x-for="item in menuItems">
+        <div @click="currentPage = item.id" :class="currentPage === item.id ? 'nav-active' : 'text-gray-400 hover:text-white'" class="flex items-center gap-4 p-3 cursor-pointer rounded-lg transition-all">
+          <i :class="item.icon" class="w-5 text-center"></i>
+          <span x-text="item.name" class="font-medium"></span>
+        </div>
+      </template>
+    </div>
+  </nav>
+
+  <main class="lg:ml-64 pb-24 lg:pb-0">
+    <!-- Header -->
+    <header class="p-4 glass sticky top-0 z-40 flex justify-between items-center">
+      <h2 class="text-lg font-semibold" x-text="menuItems.find(i => i.id === currentPage)?.name"></h2>
+      <div class="flex items-center gap-3">
+        <button @click="openQR()" class="p-2 rounded-full bg-gray-800 text-white hover:text-gold transition"><i class="fas fa-qrcode"></i></button>
+        <div class="w-8 h-8 rounded-full gold-gradient shadow-[0_0_10px_rgba(212,175,55,0.5)]"></div>
+      </div>
+    </header>
+
+    <div class="p-4 max-w-6xl mx-auto">
+      
+      <!-- Loading Overlay -->
+      <div x-show="isLoading" class="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="text-center">
+          <i class="fas fa-circle-notch fa-spin text-gold text-4xl mb-3 shadow-gold"></i>
+          <p class="text-white font-bold tracking-widest text-sm">SYNCING FIREBASE...</p>
+        </div>
+      </div>
+
+      <!-- PAGE: DASHBOARD -->
+      <div x-show="currentPage === 'dash'" x-cloak class="space-y-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <template x-for="stat in Object.values(calculatedStats)">
+            <div class="glass p-4 rounded-2xl border-l-4" :class="stat.color">
+              <p class="text-gray-400 text-xs uppercase" x-text="stat.label"></p>
+              <p class="text-2xl font-bold text-white" x-text="stat.value"></p>
+            </div>
+          </template>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 glass p-6 rounded-2xl">
+            <h3 class="font-bold mb-6 gold-text">Equipment Status</h3>
+            <div class="h-[300px] flex justify-center"><canvas id="statusChart"></canvas></div>
+          </div>
+          <div class="glass p-6 rounded-2xl overflow-y-auto max-h-[400px]">
+            <h3 class="font-bold mb-4 text-red-500 sticky top-0 bg-[#1e1e1e] pb-2">Critical / High Assets</h3>
+            <div class="space-y-3">
+              <template x-for="e in equipment.filter(x => x.Criticality === 'High')">
+                <div class="p-3 bg-red-500/10 border-l-4 border-red-500 rounded-lg flex justify-between items-center hover:bg-red-500/20 transition cursor-pointer" @click="goToDetail(e.EquipmentID)">
+                  <div>
+                    <p class="text-sm font-bold text-white" x-text="e.Nama"></p>
+                    <p class="text-[10px] text-gray-400" x-text="'Next PM: ' + (e.NextPMDate || 'Not Set')"></p>
+                  </div>
+                  <i class="fas fa-chevron-right text-red-500 text-xs"></i>
+                </div>
+              </template>
+              <div x-show="equipment.filter(x => x.Criticality === 'High').length === 0" class="text-xs text-gray-500 italic text-center py-4">No critical assets.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: EQUIPMENT LIST -->
+      <div x-show="currentPage === 'equip'" x-cloak class="space-y-4">
+        <div class="flex gap-3 mb-6">
+          <input type="text" x-model="search" placeholder="Search Assets ID or Name..." class="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          <button @click="openEquipModal(false)" class="gold-gradient text-black px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition"><i class="fas fa-plus mr-2"></i>New</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <template x-for="e in filteredEquip" :key="e.EquipmentID">
+            <div @click="goToDetail(e.EquipmentID)" class="glass p-4 rounded-2xl cursor-pointer hover:scale-105 hover:border-gold transition-all relative">
+              <div class="flex justify-between mb-2">
+                <span :class="statusColor(e.Status)" class="text-[10px] px-2 py-1 rounded-full font-bold shadow" x-text="e.Status"></span>
+                <span class="text-xs text-gray-500 font-mono bg-black/40 px-2 py-1 rounded" x-text="e.EquipmentID"></span>
+              </div>
+              <h4 class="font-bold text-lg mt-2 text-white" x-text="e.Nama"></h4>
+              <p class="text-sm text-gold mb-4" x-text="e.Tipe"></p>
+              <div class="text-xs border-t border-gray-700 pt-2 text-gray-500 flex justify-between">
+                <span>Next PM: <span class="text-white" x-text="e.NextPMDate || '-'"></span></span>
+                <span>Loc: <span class="text-white" x-text="e.Lokasi || '-'"></span></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- PAGE: DETAIL EQUIPMENT -->
+      <div x-show="currentPage === 'detail'" x-cloak class="space-y-6">
+        <div class="flex justify-between items-center bg-black/30 p-3 rounded-xl">
+          <button @click="currentPage = 'equip'" class="text-gray-400 hover:text-gold text-sm font-medium transition"><i class="fas fa-arrow-left mr-2"></i> Back to Assets</button>
+          <div class="space-x-2">
+            <button @click="openEquipModal(true, selectedEquip)" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/50 px-4 py-2 text-xs font-bold rounded-lg transition"><i class="fas fa-edit mr-1"></i> Edit</button>
+            <button @click="deleteItem('Equipment', selectedEquip.EquipmentID)" class="bg-red-600/20 hover:bg-red-600/40 text-red-500 border border-red-500/50 px-4 py-2 text-xs font-bold rounded-lg transition"><i class="fas fa-trash mr-1"></i> Delete</button>
+          </div>
+        </div>
+        
+        <div class="glass p-6 rounded-3xl flex flex-col md:flex-row gap-6 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-gold opacity-5 rounded-full blur-3xl"></div>
+          <div class="w-32 h-32 bg-gray-800 rounded-2xl overflow-hidden border-2 border-gold shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+            <img :src="selectedEquip?.FotoURL || 'https://via.placeholder.com/150?text=No+Image'" class="w-full h-full object-cover">
+          </div>
+          <div class="flex-1 z-10">
+            <div class="flex items-center gap-3 mb-1">
+              <h2 class="text-3xl font-black text-white tracking-wide" x-text="selectedEquip?.Nama"></h2>
+              <span class="text-[10px] px-2 py-1 rounded bg-black/50 text-gray-400 border border-gray-700" x-text="selectedEquip?.EquipmentID"></span>
+            </div>
+            <p class="gold-text font-bold mb-4 uppercase text-sm tracking-widest" x-text="selectedEquip?.Tipe"></p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-black/40 p-4 rounded-xl border border-gray-800">
+              <div><p class="text-gray-500 text-[10px] uppercase font-bold mb-1">Location</p><p class="text-white" x-text="selectedEquip?.Lokasi || '-'"></p></div>
+              <div><p class="text-gray-500 text-[10px] uppercase font-bold mb-1">Criticality</p><p :class="critColor(selectedEquip?.Criticality)" x-text="selectedEquip?.Criticality || '-'"></p></div>
+              <div><p class="text-gray-500 text-[10px] uppercase font-bold mb-1">Serial Number</p><p class="text-white font-mono text-xs" x-text="selectedEquip?.SerialNumber || '-'"></p></div>
+              <div><p class="text-gray-500 text-[10px] uppercase font-bold mb-1">Vendor</p><p class="text-white" x-text="selectedEquip?.Vendor || '-'"></p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs Detail -->
+        <div class="flex gap-4 border-b border-gray-800">
+          <button @click="activeTab = 'hist'" :class="activeTab === 'hist' ? 'border-b-2 border-gold gold-text' : 'text-gray-500 hover:text-white'" class="px-4 py-3 font-bold transition">History Logs</button>
+          <button @click="activeTab = 'parts'" :class="activeTab === 'parts' ? 'border-b-2 border-gold gold-text' : 'text-gray-500 hover:text-white'" class="px-4 py-3 font-bold transition">Linked Parts</button>
+        </div>
+        
+        <div x-show="activeTab === 'hist'" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="font-bold text-gray-300">Service Timeline</h3>
+            <button @click="openLogModal(false, null, true)" class="gold-gradient text-black px-4 py-2 rounded-lg text-xs font-bold shadow hover:scale-105 transition"><i class="fas fa-plus mr-1"></i> Add Log</button>
+          </div>
+          
+          <template x-for="log in filteredLogs" :key="log.LogID">
+            <div class="glass p-4 rounded-xl border-l-4 relative group hover:bg-gray-800/50 transition" :class="logColor(log.Jenis)">
+              <div class="absolute top-2 right-2 hidden group-hover:flex space-x-2 bg-black/80 px-2 py-1 rounded backdrop-blur border border-gray-700">
+                <button @click="openLogModal(true, log, true)" class="text-blue-400 hover:text-blue-300 p-1"><i class="fas fa-edit"></i></button>
+                <button @click="deleteItem('HistoryLog', log.LogID)" class="text-red-500 hover:text-red-400 p-1"><i class="fas fa-trash"></i></button>
+              </div>
+              <div class="flex justify-between text-xs mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="font-black uppercase tracking-wider" x-text="log.Jenis"></span>
+                  <span class="px-2 py-0.5 rounded text-[9px] font-bold shadow" :class="logStatusColor(log.Status)" x-text="log.Status || 'Completed'"></span>
+                </div>
+                <span class="text-gray-400 pr-10 font-mono" x-text="log.Tanggal"></span>
+              </div>
+              <p class="text-sm mb-2 w-11/12 text-white font-medium leading-relaxed" x-text="log.Deskripsi"></p>
+              <div x-show="log.Catatan" class="mb-3 bg-black/30 p-2 rounded border-l-2 border-gray-600 text-xs text-gray-400 italic">
+                <i class="fas fa-info-circle mr-1"></i> <span x-text="log.Catatan"></span>
+              </div>
+              
+              <div class="text-[10px] text-gray-400 border-t border-gray-800 pt-2 flex justify-between items-center bg-black/20 -mx-4 -mb-4 px-4 pb-3 rounded-b-xl mt-2">
+                <span x-text="'Tech: ' + (log.Technician || '-')"></span>
+                <span class="gold-text font-bold bg-gold/10 px-2 py-1 rounded border border-gold/20" x-show="log.HM" x-text="'HM: ' + log.HM"></span>
+                <span x-text="'Downtime: ' + (log.Downtime || '0') + ' hrs'"></span>
+              </div>
+            </div>
+          </template>
+          <div x-show="filteredLogs.length === 0" class="glass p-8 text-center text-gray-500 rounded-xl border-dashed">
+            No history logs found for this equipment.
+          </div>
+        </div>
+        
+        <div x-show="activeTab === 'parts'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <template x-for="p in filteredParts" :key="p.PartID">
+            <div class="glass p-4 rounded-xl flex justify-between items-center relative group border hover:border-gold transition">
+              <div class="absolute top-2 right-2 hidden group-hover:flex space-x-2 bg-black/80 px-2 py-1 rounded">
+                <button @click="openPartModal(true, p)" class="text-blue-400 text-xs p-1"><i class="fas fa-edit"></i></button>
+                <button @click="deleteItem('SpareParts', p.PartID)" class="text-red-500 text-xs p-1"><i class="fas fa-trash"></i></button>
+              </div>
+              <div>
+                <p class="font-bold text-white text-sm" x-text="p.NamaPart"></p>
+                <p class="text-[10px] text-gray-500 font-mono mt-1" x-text="p.PartID"></p>
+              </div>
+              <div class="text-center">
+                <p class="text-[9px] text-gray-500 uppercase">Stock</p>
+                <p class="font-black text-xl" :class="Number(p.Stok) <= Number(p.MinStock) ? 'text-red-500' : 'text-green-500'" x-text="p.Stok"></p>
+              </div>
+            </div>
+          </template>
+          <div x-show="filteredParts.length === 0" class="md:col-span-2 glass p-8 text-center text-gray-500 rounded-xl border-dashed">
+            No dedicated spare parts linked to this equipment.
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: ALL LOGS -->
+      <div x-show="currentPage === 'hist'" x-cloak class="space-y-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-bold text-xl text-white">Global History Logs</h3>
+          <button @click="openLogModal(false)" class="gold-gradient text-black px-5 py-2.5 rounded-xl font-bold shadow-lg hover:scale-105 transition"><i class="fas fa-plus mr-2"></i>New Log</button>
+        </div>
+        <div class="space-y-3">
+          <template x-for="log in logs" :key="log.LogID">
+            <div class="glass p-4 rounded-xl border-l-4 relative group hover:bg-gray-800/60 transition" :class="logColor(log.Jenis)">
+              <div class="absolute top-2 right-2 hidden group-hover:flex space-x-3 bg-black/80 px-2 py-1 rounded backdrop-blur border border-gray-700">
+                <button @click="openLogModal(true, log)" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
+                <button @click="deleteItem('HistoryLog', log.LogID)" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+              </div>
+              <div class="flex justify-between text-xs mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-black uppercase tracking-wider" x-text="log.Jenis"></span>
+                  <span class="px-2 py-0.5 rounded text-[9px] font-bold shadow" :class="logStatusColor(log.Status)" x-text="log.Status || 'Completed'"></span>
+                </div>
+                <span class="text-gray-400 pr-12 font-mono" x-text="log.Tanggal"></span>
+              </div>
+              <div class="flex flex-col gap-1 mb-3">
+                 <p class="text-sm text-white font-medium w-10/12 leading-relaxed" x-text="log.Deskripsi"></p>
+                 <div x-show="log.Catatan" class="mt-1 bg-black/30 p-2 rounded border-l-2 border-gray-600 w-10/12">
+                   <p class="text-xs text-gray-400 italic"><i class="fas fa-info-circle mr-1"></i> <span x-text="log.Catatan"></span></p>
+                 </div>
+              </div>
+              <div class="flex justify-between items-center border-t border-gray-800/50 bg-black/20 -mx-4 -mb-4 px-4 py-2 rounded-b-xl mt-2">
+                 <span class="text-[10px] text-gold font-bold bg-gold/10 px-2 py-1 rounded border border-gold/20" x-show="log.HM" x-text="'HM: ' + log.HM"></span>
+                 <span class="text-[10px] bg-gray-800 px-2 py-1 rounded text-gray-300 font-mono shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition" @click="goToDetail(log.EquipmentID)" title="Click to view equipment" x-text="log.EquipmentID"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- PAGE: SPARE PARTS -->
+      <div x-show="currentPage === 'parts'" x-cloak class="space-y-4">
+        <div class="flex gap-3 mb-6">
+          <input type="text" x-model="searchPart" placeholder="Search Part ID or Name..." class="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          <button @click="openPartModal(false)" class="gold-gradient text-black px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition"><i class="fas fa-plus mr-2"></i>Add Part</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <template x-for="p in filteredAllParts" :key="p.PartID">
+            <div class="glass p-5 rounded-2xl relative group hover:border-gold transition-colors">
+              <div class="absolute top-2 right-2 hidden group-hover:flex space-x-2 bg-black/80 px-2 py-1 rounded z-10 border border-gray-700">
+                <button @click="openPartModal(true, p)" class="text-blue-400 hover:text-blue-300 text-sm"><i class="fas fa-edit"></i></button>
+                <button @click="deleteItem('SpareParts', p.PartID)" class="text-red-500 hover:text-red-400 text-sm"><i class="fas fa-trash"></i></button>
+              </div>
+              
+              <div x-show="Number(p.Stok) <= Number(p.MinStock)" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl shadow-lg flex items-center gap-1 animate-pulse">
+                <i class="fas fa-exclamation-triangle"></i> LOW
+              </div>
+              
+              <h4 class="font-bold mb-1 mt-2 text-white truncate" x-text="p.NamaPart" :title="p.NamaPart"></h4>
+              <p class="text-xs text-gold mb-4 font-mono" x-text="p.PartID"></p>
+              
+              <div class="flex justify-between items-end border-t border-gray-700 pt-3">
+                <div>
+                  <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Loc</p>
+                  <p class="text-xs text-gray-300 truncate w-20" x-text="p.Lokasi || '-'" :title="p.Lokasi"></p>
+                </div>
+                <div class="text-right">
+                  <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Stock</p>
+                  <p class="text-2xl font-black leading-none" :class="Number(p.Stok) <= Number(p.MinStock) ? 'text-red-500' : 'text-green-500'" x-text="p.Stok"></p>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="fixed bottom-0 left-0 w-full glass border-t border-gray-800 lg:hidden flex justify-around p-3 z-50">
+    <template x-for="item in menuItems.filter(i => i.mobile)">
+      <div @click="currentPage = item.id" :class="currentPage === item.id ? 'text-gold transform -translate-y-1' : 'text-gray-500'" class="flex flex-col items-center gap-1 cursor-pointer transition-all">
+        <i :class="item.icon" class="text-xl"></i>
+        <span class="text-[10px] font-medium" x-text="item.name"></span>
+      </div>
+    </template>
+  </nav>
+
+  <!-- MODAL: EQUIPMENT FORM -->
+  <div x-show="showEquipModal" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+    <div class="glass w-full max-w-2xl p-6 rounded-3xl max-h-[90vh] overflow-y-auto border border-gold/30 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+        <h3 class="text-xl font-bold text-white"><i class="fas fa-tools mr-2 text-gold"></i> <span x-text="isEditingEquip ? 'Edit Asset' : 'New Asset'"></span></h3>
+        <button @click="showEquipModal = false" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-red-500 w-8 h-8 rounded-full transition"><i class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitEquipment()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Equipment ID <span class="text-red-500">*</span></label>
+          <input type="text" x-model="equipForm.id" required placeholder="e.g., CR-001" :readonly="isEditingEquip" :class="{'opacity-50 cursor-not-allowed bg-gray-900': isEditingEquip}" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none transition">
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Asset Name <span class="text-red-500">*</span></label>
+          <input type="text" x-model="equipForm.nama" required placeholder="e.g., Primary Crusher" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none transition">
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Type</label>
+          <select x-model="equipForm.tipe" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+            <option>Crusher</option><option>Ball Mill</option><option>Thickener</option><option>Furnace</option><option>Pump</option><option>Conveyor</option><option>Generator</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Location</label>
+          <input type="text" x-model="equipForm.lokasi" placeholder="Area / Zone" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Current Status</label>
+          <select x-model="equipForm.status" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+            <option value="Active">Active</option><option value="In Maintenance">In Maintenance</option><option value="Idle">Idle</option><option value="Decommissioned">Decommissioned</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Criticality Level</label>
+          <select x-model="equipForm.criticality" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+            <option value="High">High (Critical)</option><option value="Medium">Medium</option><option value="Low">Low</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Serial Number</label>
+          <input type="text" x-model="equipForm.sn" placeholder="S/N from Manufacturer" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Next PM Date</label>
+          <input type="date" x-model="equipForm.nextPM" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Vendor / Manufacturer</label>
+          <input type="text" x-model="equipForm.vendor" placeholder="Company Name" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+        </div>
+        <button type="submit" class="md:col-span-2 gold-gradient text-black font-black tracking-widest p-4 rounded-xl shadow-lg mt-2 hover:scale-[1.02] transition" x-text="isEditingEquip ? 'UPDATE ASSET' : 'SAVE ASSET'"></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SPARE PART FORM -->
+  <div x-show="showPartModal" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+    <div class="glass w-full max-w-lg p-6 rounded-3xl border border-gold/30 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+        <h3 class="text-xl font-bold text-white"><i class="fas fa-box-open mr-2 text-gold"></i> <span x-text="isEditingPart ? 'Edit Spare Part' : 'New Spare Part'"></span></h3>
+        <button @click="showPartModal = false" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-red-500 w-8 h-8 rounded-full transition"><i class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitSparePart()" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Part ID <span class="text-red-500">*</span></label>
+            <input type="text" x-model="partForm.id" required placeholder="SKU/ID" :readonly="isEditingPart" :class="{'opacity-50 cursor-not-allowed bg-gray-900': isEditingPart}" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Part Name <span class="text-red-500">*</span></label>
+            <input type="text" x-model="partForm.nama" required placeholder="Name" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Link to Equipment (Optional)</label>
+          <select x-model="partForm.equipId" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+            <option value="">Generic / All Assets</option>
+            <template x-for="e in equipment"><option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option></template>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Current Stock</label>
+            <input type="number" x-model="partForm.stok" placeholder="0" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] text-red-400 uppercase font-bold ml-1 mb-1 block">Minimum Stock (Alert)</label>
+            <input type="number" x-model="partForm.minStock" placeholder="0" class="w-full p-3 border-red-500/50 focus:border-red-500 rounded-xl bg-gray-800 border text-white outline-none">
+          </div>
+        </div>
+        <div>
+           <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Storage Location</label>
+           <input type="text" x-model="partForm.lokasi" placeholder="e.g., Rack A12" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+        </div>
+        <button type="submit" class="w-full gold-gradient text-black font-black tracking-widest p-4 rounded-xl shadow-lg mt-2 hover:scale-[1.02] transition" x-text="isEditingPart ? 'UPDATE PART' : 'SAVE PART'"></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LOG FORM -->
+  <div x-show="showLogModal" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+    <div class="glass w-full max-w-lg p-6 rounded-3xl max-h-[95vh] overflow-y-auto border border-gold/30 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+        <h3 class="text-xl font-bold text-white"><i class="fas fa-clipboard-list mr-2 text-gold"></i> <span x-text="isEditingLog ? 'Edit Log Entry' : 'New Service Log'"></span></h3>
+        <button @click="showLogModal = false" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-red-500 w-8 h-8 rounded-full transition"><i class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitLog()" class="space-y-4">
+        
+        <div x-show="!isLogDetailView || isEditingLog">
+          <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Select Asset <span class="text-red-500">*</span></label>
+          <select x-model="logForm.equipmentId" required class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+            <option value="">-- Choose Asset --</option>
+            <template x-for="e in equipment"><option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option></template>
+          </select>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Service Type</label>
+            <select x-model="logForm.type" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+              <option value="PM">Prev. Maintenance (PM)</option><option value="Repair">Repair</option><option value="Inspection">Inspection</option><option value="Breakdown">Breakdown</option>
+            </select>
+          </div>
+          <div>
+             <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Date <span class="text-red-500">*</span></label>
+             <input type="date" x-model="logForm.date" required class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] text-gold uppercase font-bold ml-1 mb-1 block">Hour Meter (HM)</label>
+            <input type="number" x-model="logForm.hm" placeholder="e.g., 12500" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Job Status</label>
+            <select x-model="logForm.status" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+              <option value="Completed">Completed</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Pending">Pending</option>
+              <option value="Waiting Parts">Waiting Parts</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+           <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Description / Problem Found <span class="text-red-500">*</span></label>
+           <textarea x-model="logForm.desc" required placeholder="Describe the issue or work done..." class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none h-20"></textarea>
+        </div>
+        
+        <div>
+           <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Remarks / Notes</label>
+           <textarea x-model="logForm.catatan" placeholder="Any extra notes for next shift..." class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none h-12"></textarea>
+        </div>
+        
+        <div class="bg-gray-900/50 p-4 rounded-2xl border border-gray-700 shadow-inner">
+          <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
+            <span class="text-xs font-bold text-blue-400 uppercase"><i class="fas fa-boxes mr-1"></i> Parts Used</span>
+            <button type="button" @click="addPartToLog()" class="text-[10px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded border border-blue-500 hover:bg-blue-600/40 transition">+ ADD PART</button>
+          </div>
+          <div x-show="logForm.parts.length === 0" class="text-xs text-gray-600 italic text-center pb-2">No parts used for this job.</div>
+          <template x-for="(part, index) in logForm.parts" :key="index">
+            <div class="flex gap-2 mb-2 items-center">
+              <select x-model="part.id" class="flex-1 p-2 text-xs rounded-lg bg-gray-800 border border-gray-700 text-white outline-none">
+                <option value="">Select Part...</option>
+                <template x-for="p in allParts"><option :value="p.PartID" x-text="p.PartID + ' - ' + p.NamaPart"></option></template>
+              </select>
+              <input type="number" x-model="part.qty" min="1" placeholder="Qty" class="w-16 p-2 text-xs rounded-lg bg-gray-800 border border-gray-700 text-white text-center outline-none">
+              <button type="button" @click="removePartFromLog(index)" class="text-red-500 bg-red-500/10 hover:bg-red-500/20 w-8 h-8 rounded-lg transition flex items-center justify-center"><i class="fas fa-trash"></i></button>
+            </div>
+          </template>
+          <div x-show="logForm.parts.length > 0 && !isEditingLog" class="mt-2 text-[9px] text-orange-400 italic"><i class="fas fa-info-circle"></i> Stock will be automatically deducted.</div>
+          <div x-show="isEditingLog" class="mt-2 text-[9px] text-red-400 italic"><i class="fas fa-exclamation-triangle"></i> Editing parts manually adjust stock later.</div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Downtime (Hours)</label>
+            <input type="number" x-model="logForm.downtime" step="0.1" placeholder="e.g., 2.5" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] text-gray-400 uppercase font-bold ml-1 mb-1 block">Estimated Cost ($)</label>
+            <input type="number" x-model="logForm.cost" placeholder="0" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-gold outline-none">
+          </div>
+        </div>
+        <button type="submit" class="w-full gold-gradient text-black font-black tracking-widest p-4 rounded-xl shadow-lg mt-4 hover:scale-[1.02] transition" x-text="isEditingLog ? 'UPDATE LOG ENTRY' : 'SAVE LOG ENTRY'"></button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let myChartInstance = null;
+
+    function app() {
+      return {
+        // App State
+        currentPage: 'dash', activeTab: 'hist', search: '', searchPart: '',
+        showEquipModal: false, showPartModal: false, showLogModal: false, 
+        isLogDetailView: false, isEditingEquip: false, isEditingPart: false, isEditingLog: false,
+        selectedEquip: null, notifications:[], isLoading: true,
+        
+        // Data State
+        equipment: [], allParts:[], logs:[],
+        
+        // Forms
+        equipForm: { id: '', nama: '', tipe: 'Crusher', lokasi: '', status: 'Active', sn: '', tglInstalasi: '', vendor: '', foto: '', nextPM: '', criticality: 'Medium' },
+        partForm: { id: '', nama: '', equipId: '', stok: 0, minStock: 0, lokasi: '', vendor: '', harga: 0, foto: '' },
+        logForm: { logId: '', type: 'PM', desc: '', downtime: 0, cost: 0, equipmentId: '', date: '', tech: 'Maintenance Team', parts:[], status: 'Completed', hm: '', catatan: '' },
+        
+        // Temp storage for edit rollback
+        oldLogParts:[],
+
+        menuItems:[
+          { id: 'dash', name: 'Dashboard', icon: 'fas fa-chart-pie', mobile: true },
+          { id: 'equip', name: 'Equipment', icon: 'fas fa-tools', mobile: true },
+          { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true },
+          { id: 'hist', name: 'All Logs', icon: 'fas fa-history', mobile: true },
+        ],
+
+        // --- INIT & LISTENERS ---
+        init() {
+          this.setupFirebaseListeners();
+          
+          // Watchers for Chart
+          this.$watch('equipment', () => { if(this.currentPage === 'dash' && !this.isLoading) this.renderChart(); });
+          this.$watch('currentPage', (val) => { if(val === 'dash') setTimeout(() => this.renderChart(), 100); });
+        },
+
+        setupFirebaseListeners() {
+          this.isLoading = true;
+
+          // Listen to Equipment
+          window.onValue(window.ref(window.db, 'Equipment'), (snapshot) => {
+            const data = snapshot.val();
+            this.equipment = data ? Object.values(data) :[];
+            // Update selectedEquip if in detail view
+            if(this.selectedEquip) {
+              const updated = this.equipment.find(e => e.EquipmentID === this.selectedEquip.EquipmentID);
+              if(updated) this.selectedEquip = updated;
+            }
+          });
+
+          // Listen to Spare Parts
+          window.onValue(window.ref(window.db, 'SpareParts'), (snapshot) => {
+            const data = snapshot.val();
+            this.allParts = data ? Object.values(data) :[];
+          });
+
+          // Listen to History Logs
+          window.onValue(window.ref(window.db, 'HistoryLog'), (snapshot) => {
+            const data = snapshot.val();
+            // Sort by LogID descending (newest first)
+            this.logs = data ? Object.values(data).sort((a, b) => String(b.LogID).localeCompare(String(a.LogID))) :[];
+            this.isLoading = false;
+          });
+        },
+
+        // --- HELPER FUNCTIONS ---
+        formatDateForInput(dateStr) {
+          if (!dateStr) return '';
+          try {
+            if (dateStr.includes('/')) {
+              const parts = dateStr.split('/');
+              if(parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+            }
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+          } catch(e){}
+          return '';
+        },
+
+        showNotification(message, type = 'success') {
+          const id = Date.now();
+          this.notifications.push({ id, message, type });
+          setTimeout(() => { this.notifications = this.notifications.filter(n => n.id !== id); }, 4000);
+        },
+
+        // --- GETTERS (COMPUTED PROPS) ---
+        get calculatedStats() {
+          let overdueCount = 0;
+          const today = new Date(); today.setHours(0,0,0,0);
+          this.equipment.forEach(e => {
+            if (e.NextPMDate) {
+              let pmDate = new Date(e.NextPMDate);
+              if (isNaN(pmDate.getTime()) && e.NextPMDate.includes('/')) {
+                const parts = e.NextPMDate.split('/');
+                if(parts.length === 3) pmDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+              }
+              if (pmDate < today) overdueCount++;
+            }
+          });
+          const lowStockCount = this.allParts.filter(p => Number(p.Stok) <= Number(p.MinStock)).length;
+          const totalDown = this.logs.reduce((acc, curr) => acc + Number(curr.Downtime || 0), 0);
+          return {
+            totalEquip: { label: 'Total Assets', value: this.equipment.length, color: 'border-blue-500' },
+            overduePM: { label: 'Overdue PM', value: overdueCount, color: 'border-red-500' },
+            lowStock: { label: 'Low Stock Parts', value: lowStockCount, color: 'border-yellow-500' },
+            totalDowntime: { label: 'Total Down Hrs', value: parseFloat(totalDown).toFixed(1), color: 'border-green-500' }
+          };
+        },
+
+        get filteredEquip() { 
+          return (this.equipment ||[]).filter(e => 
+            (e.Nama || '').toLowerCase().includes(this.search.toLowerCase()) || 
+            (e.EquipmentID || '').toLowerCase().includes(this.search.toLowerCase())
+          ); 
+        },
+        get filteredAllParts() { 
+          return (this.allParts ||[]).filter(p => 
+            (p.NamaPart || '').toLowerCase().includes(this.searchPart.toLowerCase()) || 
+            (p.PartID || '').toLowerCase().includes(this.searchPart.toLowerCase())
+          ); 
+        },
+        get filteredLogs() { 
+          return (this.logs ||[]).filter(l => l.EquipmentID === this.selectedEquip?.EquipmentID); 
+        },
+        get filteredParts() { 
+          return (this.allParts ||[]).filter(p => p.EquipmentID === this.selectedEquip?.EquipmentID); 
+        },
+
+        // --- NAVIGATION & UI STATES ---
+        goToDetail(id) {
+          this.selectedEquip = this.equipment.find(e => e.EquipmentID === id);
+          if (this.selectedEquip) { 
+            this.currentPage = 'detail'; 
+            this.activeTab = 'hist'; 
+            window.scrollTo(0,0);
+          } else {
+            this.showNotification("Asset not found in database", "error");
+          }
+        },
+
+        statusColor(s) { return s === 'Active' ? 'bg-green-500/20 text-green-500 border border-green-500/30' : s === 'In Maintenance' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : s === 'Decommissioned' ? 'bg-gray-500/20 text-gray-400 border border-gray-500/30' : 'bg-red-500/20 text-red-500 border border-red-500/30'; },
+        critColor(c) { return c === 'High' ? 'text-red-500 font-bold' : c === 'Medium' ? 'text-yellow-500' : 'text-green-500'; },
+        logColor(t) { return t === 'PM' ? 'border-blue-500' : t === 'Breakdown' ? 'border-red-500' : t === 'Repair' ? 'border-orange-500' : 'border-gray-500'; },
+        logStatusColor(st) { 
+          return st === 'Completed' ? 'bg-green-600/20 text-green-500 border border-green-500/30' : 
+                 st === 'Pending' ? 'bg-red-600/20 text-red-500 border border-red-500/30' : 
+                 st === 'Waiting Parts' ? 'bg-orange-500/20 text-orange-500 border border-orange-500/30' : 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30'; 
+        },
+
+        openQR() {
+          const id = prompt("Enter Equipment ID (e.g. CR-001):");
+          if(id) {
+            const cleanId = id.trim().toUpperCase();
+            const e = this.equipment.find(x => String(x.EquipmentID).toUpperCase() === cleanId);
+            if(e) this.goToDetail(e.EquipmentID); 
+            else this.showNotification("Asset ID not found!", "error");
+          }
+        },
+
+        // --- MODAL CONTROLLERS ---
+        openEquipModal(isEdit = false, data = null) {
+          this.isEditingEquip = isEdit;
+          if (isEdit && data) {
+            this.equipForm = { 
+              id: data.EquipmentID || '', nama: data.Nama || '', tipe: data.Tipe || 'Crusher', 
+              lokasi: data.Lokasi || '', status: data.Status || 'Active', sn: data.SerialNumber || '', 
+              tglInstalasi: data.TglInstalasi || '', vendor: data.Vendor || '', foto: data.FotoURL || '', 
+              nextPM: this.formatDateForInput(data.NextPMDate), criticality: data.Criticality || 'Medium' 
+            };
+          } else {
+            this.equipForm = { id: '', nama: '', tipe: 'Crusher', lokasi: '', status: 'Active', sn: '', tglInstalasi: '', vendor: '', foto: '', nextPM: '', criticality: 'Medium' };
+          }
+          this.showEquipModal = true;
+        },
+
+        openPartModal(isEdit = false, data = null) {
+          this.isEditingPart = isEdit;
+          if (isEdit && data) {
+            this.partForm = { 
+              id: data.PartID || '', nama: data.NamaPart || '', equipId: data.EquipmentID || '', 
+              stok: data.Stok || 0, minStock: data.MinStock || 0, lokasi: data.Lokasi || '', 
+              vendor: data.Vendor || '', harga: data.Harga || 0, foto: data.FotoURL || '' 
+            };
+          } else {
+            this.partForm = { id: '', nama: '', equipId: '', stok: 0, minStock: 0, lokasi: '', vendor: '', harga: 0, foto: '' };
+          }
+          this.showPartModal = true;
+        },
+
+        openLogModal(isEdit = false, data = null, fromDetail = false) {
+          this.isEditingLog = isEdit;
+          this.isLogDetailView = fromDetail && !isEdit;
+          this.oldLogParts = []; // reset
+          
+          if (isEdit && data) {
+            let parsedParts =[];
+            try { 
+              parsedParts = typeof data.PartsUsed === 'string' ? JSON.parse(data.PartsUsed) : (data.PartsUsed ||[]); 
+            } catch(e){}
+            
+            // Backup old parts for rollback calculation on submit
+            this.oldLogParts = JSON.parse(JSON.stringify(parsedParts)); 
+
+            this.logForm = { 
+              logId: data.LogID, type: data.Jenis || 'PM', desc: data.Deskripsi || '', 
+              downtime: data.Downtime || 0, cost: data.Cost || 0, equipmentId: data.EquipmentID || '', 
+              date: this.formatDateForInput(data.Tanggal), tech: data.Technician || '', 
+              parts: parsedParts, status: data.Status || 'Completed', 
+              hm: data.HM || '', catatan: data.Catatan || '' 
+            };
+          } else {
+            this.logForm = { 
+              logId: '', type: 'PM', desc: '', downtime: 0, cost: 0, 
+              equipmentId: fromDetail ? this.selectedEquip.EquipmentID : '', 
+              date: new Date().toISOString().split('T')[0], tech: 'Maintenance Team', 
+              parts:[], status: 'Completed', hm: '', catatan: '' 
+            };
+          }
+          this.showLogModal = true;
+        },
+
+        addPartToLog() { this.logForm.parts.push({ id: '', qty: 1 }); },
+        removePartFromLog(index) { this.logForm.parts.splice(index, 1); },
+
+        // --- FIREBASE CRUD IMPLEMENTATIONS ---
+        async submitEquipment() {
+          this.isLoading = true;
+          try {
+            const dataToSave = {
+              EquipmentID: this.equipForm.id, Nama: this.equipForm.nama, Tipe: this.equipForm.tipe,
+              Lokasi: this.equipForm.lokasi, Status: this.equipForm.status, SerialNumber: this.equipForm.sn, 
+              Criticality: this.equipForm.criticality, NextPMDate: this.equipForm.nextPM, 
+              TglInstalasi: this.equipForm.tglInstalasi, Vendor: this.equipForm.vendor, FotoURL: this.equipForm.foto
+            };
+            
+            await window.set(window.ref(window.db, 'Equipment/' + this.equipForm.id), dataToSave);
+            this.showNotification("Asset saved successfully!");
+            this.showEquipModal = false;
+          } catch(e) { 
+            this.showNotification("Error: " + e.message, "error"); 
+          } finally { this.isLoading = false; }
+        },
+
+        async submitSparePart() {
+          this.isLoading = true;
+          try {
+            const dataToSave = {
+              PartID: this.partForm.id, NamaPart: this.partForm.nama, EquipmentID: this.partForm.equipId, 
+              Stok: Number(this.partForm.stok), MinStock: Number(this.partForm.minStock), 
+              Lokasi: this.partForm.lokasi, Vendor: this.partForm.vendor, 
+              Harga: Number(this.partForm.harga), FotoURL: this.partForm.foto
+            };
+            
+            await window.set(window.ref(window.db, 'SpareParts/' + this.partForm.id), dataToSave);
+            this.showNotification("Part saved successfully!");
+            this.showPartModal = false;
+          } catch(e) { 
+            this.showNotification("Error: " + e.message, "error"); 
+          } finally { this.isLoading = false; }
+        },
+
+        async submitLog() {
+          this.isLoading = true;
+          try {
+            const logId = this.isEditingLog ? this.logForm.logId : "LOG-" + new Date().getTime();
+            
+            const logDataToSave = {
+              LogID: logId, EquipmentID: this.logForm.equipmentId, Tanggal: this.logForm.date, 
+              Jenis: this.logForm.type, Deskripsi: this.logForm.desc, Technician: this.logForm.tech,
+              PartsUsed: JSON.stringify(this.logForm.parts), Downtime: Number(this.logForm.downtime),
+              Cost: Number(this.logForm.cost), Status: this.logForm.status, HM: this.logForm.hm, Catatan: this.logForm.catatan
+            };
+
+            const updates = {};
+            updates['/HistoryLog/' + logId] = logDataToSave;
+
+            // --- STOCK ADJUSTMENT LOGIC (ATOMIC) ---
+            if (!this.isEditingLog && this.logForm.parts.length > 0) {
+              // DEDUCT NEW
+              this.logForm.parts.forEach(p => {
+                if(!p.id) return;
+                const currentPart = this.allParts.find(x => x.PartID === p.id);
+                if (currentPart) {
+                  let currentStok = updates['/SpareParts/' + p.id + '/Stok'] !== undefined ? updates['/SpareParts/' + p.id + '/Stok'] : Number(currentPart.Stok);
+                  updates['/SpareParts/' + p.id + '/Stok'] = currentStok - Number(p.qty);
+                }
+              });
+            } else if (this.isEditingLog) {
+              // ROLLBACK OLD + DEDUCT NEW
+              // 1. Add back old parts
+              this.oldLogParts.forEach(p => {
+                if(!p.id) return;
+                const currentPart = this.allParts.find(x => x.PartID === p.id);
+                if (currentPart) {
+                   let currentStok = updates['/SpareParts/' + p.id + '/Stok'] !== undefined ? updates['/SpareParts/' + p.id + '/Stok'] : Number(currentPart.Stok);
+                   updates['/SpareParts/' + p.id + '/Stok'] = currentStok + Number(p.qty);
+                }
+              });
+              // 2. Deduct new parts
+              this.logForm.parts.forEach(p => {
+                if(!p.id) return;
+                const currentPart = this.allParts.find(x => x.PartID === p.id);
+                if (currentPart) {
+                  let currentStok = updates['/SpareParts/' + p.id + '/Stok'] !== undefined ? updates['/SpareParts/' + p.id + '/Stok'] : Number(currentPart.Stok);
+                  updates['/SpareParts/' + p.id + '/Stok'] = currentStok - Number(p.qty);
+                }
+              });
+            }
+
+            // Execute atomic update
+            await window.update(window.ref(window.db), updates);
+            
+            this.showNotification("Log saved successfully!");
+            this.showLogModal = false;
+          } catch(e) { 
+            this.showNotification("Error: " + e.message, "error"); 
+          } finally { this.isLoading = false; }
+        },
+
+        async deleteItem(nodeName, id) {
+          if (!confirm(`Are you sure you want to delete this from ${nodeName}? This action cannot be undone.`)) return;
+          this.isLoading = true;
+          try {
+            
+            // If deleting a HistoryLog, rollback the stock first!
+            if (nodeName === 'HistoryLog') {
+               const logToDelete = this.logs.find(l => l.LogID === id);
+               if (logToDelete && logToDelete.PartsUsed) {
+                  let parts =[];
+                  try { parts = typeof logToDelete.PartsUsed === 'string' ? JSON.parse(logToDelete.PartsUsed) : logToDelete.PartsUsed; } catch(e){}
+                  
+                  if (parts.length > 0) {
+                     const updates = {};
+                     updates[`/${nodeName}/${id}`] = null; // Mark log for deletion
+                     
+                     // Add back stock
+                     parts.forEach(p => {
+                        if(!p.id) return;
+                        const currentPart = this.allParts.find(x => x.PartID === p.id);
+                        if (currentPart) {
+                           let currentStok = updates['/SpareParts/' + p.id + '/Stok'] !== undefined ? updates['/SpareParts/' + p.id + '/Stok'] : Number(currentPart.Stok);
+                           updates['/SpareParts/' + p.id + '/Stok'] = currentStok + Number(p.qty);
+                        }
+                     });
+                     
+                     await window.update(window.ref(window.db), updates);
+                     this.showNotification("Log deleted & stock returned!");
+                     this.isLoading = false;
+                     return;
+                  }
+               }
+            }
+
+            // Normal Delete
+            await window.remove(window.ref(window.db, `${nodeName}/${id}`));
+            this.showNotification("Item deleted successfully!");
+            if (nodeName === 'Equipment' && this.currentPage === 'detail') this.currentPage = 'equip';
+            
+          } catch(e) { 
+            this.showNotification("Delete Error: " + e.message, "error"); 
+          } finally { this.isLoading = false; }
+        },
+
+        // --- CHART JS RENDERER ---
+        renderChart() {
+          const ctx = document.getElementById('statusChart');
+          if(!ctx) return;
+          
+          const counts = { 'Active': 0, 'In Maintenance': 0, 'Idle': 0, 'Decommissioned': 0 };
+          this.equipment.forEach(e => { 
+            const st = e.Status ? e.Status.trim() : 'Idle'; 
+            if(counts[st] !== undefined) counts[st]++; 
+            else counts['Idle']++; // fallback
+          });
+          
+          if (myChartInstance) myChartInstance.destroy();
+          
+          // Only render non-zero datasets for cleaner look
+          const labels = [];
+          const data =[];
+          const bgColors = [];
+          
+          if(counts['Active'] > 0) { labels.push('Active'); data.push(counts['Active']); bgColors.push('#10B981'); }
+          if(counts['In Maintenance'] > 0) { labels.push('In Maint.'); data.push(counts['In Maintenance']); bgColors.push('#F59E0B'); }
+          if(counts['Idle'] > 0) { labels.push('Idle'); data.push(counts['Idle']); bgColors.push('#6B7280'); }
+          if(counts['Decommissioned'] > 0) { labels.push('Decomm.'); data.push(counts['Decommissioned']); bgColors.push('#EF4444'); }
+
+          if(data.length === 0) {
+             labels.push('No Data'); data.push(1); bgColors.push('#374151');
+          }
+
+          myChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: { 
+              labels: labels, 
+              datasets:[{ 
+                data: data, 
+                backgroundColor: bgColors, 
+                borderColor: '#1e1e1e', 
+                borderWidth: 4,
+                hoverOffset: 10
+              }] 
+            },
+            options: { 
+              responsive: true, 
+              maintainAspectRatio: false, 
+              cutout: '75%',
+              plugins: { 
+                legend: { position: 'bottom', labels: { color: 'white', padding: 20, font: {family: 'Inter'} } } 
+              } 
+            }
+          });
+        }
+      } // End of return
+    } // End of app()
+  </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!-- 📜 PAGE: ALL LOGS / ACTIVITY STREAM -->
+<div x-cloak class="space-y-4">
+  <!-- Header with Title and Actions -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <h3 class="font-black text-xl lg:text-2xl text-nexus-text nexus-glow-text uppercase tracking-tight">Activity Stream</h3>
+    <div class="flex flex-wrap gap-2.5 items-center">
+      <button @click="downloadTemplate('logs')" class="btn-nexus-small">
+        <i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span>
+      </button>
+      <button @click="exportData('logs', 'csv')" class="btn-nexus-small">
+        <i class="fas fa-download"></i><span class="hidden lg:inline ml-1">Export</span>
+      </button>
+      <label class="btn-nexus-small cursor-pointer">
+        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+        <input type="file" @change="importCSV($event, 'logs')" class="hidden" accept=".csv, .xlsx">
+      </label>
+      <button x-show="isAdmin" @click="openLogModal(false)" class="btn-nexus-gold">
+        <i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Input</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Logs List -->
+  <div class="space-y-3 md:space-y-4">
+    <template x-for="log in filteredAllLogs" :key="log.LogID">
+      <div @click="goToDetail(log.EquipmentID)"
+        class="card-modern p-3 md:p-5 border-l-4 relative group hover:scale-[1.01] cursor-pointer transition-all mb-2 md:mb-4 overflow-visible"
+        :style="'border-left-color: ' + getStatColor(logColor(log.Jenis))">
+        
+        <div class="flex gap-3 md:gap-6">
+          <!-- Compact Thumbnail -->
+          <div x-show="log.PhotoURLs && log.PhotoURLs.length > 0" class="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden glass border-nexus-accent/10 flex-shrink-0 self-start p-0.5 md:p-1">
+            <img :src="cleanUrl(log.PhotoURLs?.[0])" class="w-full h-full object-cover rounded-lg md:rounded-xl" loading="lazy"
+              @error="console.log('Image error - URL:', $el.src)"
+              onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex')">
+            <div class="w-full h-full items-center justify-center text-xs text-slate-500" style="display:none">
+              <i class="fas fa-image"></i>
+            </div>
+          </div>
+          <div x-show="!(log.PhotoURLs && log.PhotoURLs.length > 0)" class="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl glass border-nexus-accent/10 flex items-center justify-center flex-shrink-0">
+            <span class="text-[8px] text-slate-600" x-text="log.PhotoURL ? 'URL' : (log.PhotoURLs?.length || '0')"></span>
+          </div>
+          
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-start mb-1 md:mb-2">
+              <div class="truncate">
+                <span class="text-[8px] md:text-[9px] font-black text-nexus-accent/40 uppercase tracking-[0.2em] block mb-0.5 md:mb-1" x-text="log.Jenis"></span>
+                <h4 class="font-black text-sm md:text-base text-nexus-text truncate pr-2 md:pr-10 nexus-glow-text" x-text="log.Deskripsi"></h4>
+              </div>
+              
+              <!-- Action Buttons (Edit/Delete/PDF) -->
+              <div class="flex gap-1 md:gap-2 flex-shrink-0 ml-2">
+                <button x-show="isAdmin && (log.Status === 'Pending' || log.Status === 'In Progress')" @click.stop="openLogModal(true, log)"
+                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
+                  <i class="fas fa-edit text-[9px] md:text-[10px]"></i>
+                </button>
+                <button x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" title="Delete Log"
+                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
+                  <i class="fas fa-trash text-[9px] md:text-[10px]"></i>
+                </button>
+                <button @click.stop="exportWOToPDF(log.LogID)" title="Export Work Order PDF"
+                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-nexus-accent/20 text-nexus-accent hover:bg-nexus-accent hover:text-nexus-black flex items-center justify-center transition-all">
+                  <i class="fas fa-file-pdf text-[9px] md:text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Status Badge -->
+            <div class="flex items-center gap-2">
+              <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
+            </div>
+
+            <!-- WO Priority & WO Number -->
+            <div x-show="log.woPriority || log.woNumber" class="flex flex-wrap items-center gap-2 mb-2 text-[7px] md:text-[8px]">
+              <span x-show="log.woNumber" class="px-2 py-0.5 rounded glass text-nexus-accent font-mono" x-text="'#'+log.woNumber"></span>
+              <span x-show="log.woPriority" class="px-2 py-0.5 rounded font-bold uppercase tracking-wider" :class="woPriorityColor(log.woPriority)" x-text="log.woPriority"></span>
+              <span x-show="log.assignedTo" class="text-slate-400"><i class="fas fa-user mr-1"></i><span x-text="log.assignedTo"></span></span>
+              <span x-show="log.requestSource" class="text-purple-400 ml-2"><i class="fas fa-building mr-1"></i><span x-text="log.requestSource"></span></span>
+              <span x-show="log.requestedBy" class="text-purple-400"><i class="fas fa-user-tag mr-1"></i><span x-text="log.requestedBy"></span></span>
+            </div>
+
+            <!-- Inline Meta Info -->
+            <div class="flex flex-wrap items-center gap-2 md:gap-6 mb-2 md:mb-4 text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-widest">
+              <div class="flex items-center gap-1 md:gap-2">
+                <i class="far fa-calendar-alt text-nexus-accent"></i> <span x-text="log.Tanggal"></span>
+              </div>
+              <div class="flex items-center gap-1 md:gap-2">
+                <i class="far fa-user-astronaut text-nexus-accent"></i> <span x-text="log.Technician"></span>
+              </div>
+              <div class="flex items-center gap-1 md:gap-2 text-nexus-purple">
+                <i class="fas fa-atom"></i> <span x-text="'NODE: ' + log.EquipmentID"></span>
+              </div>
+            </div>
+
+            <!-- Parts used / Notes -->
+            <p x-show="log.Catatan" class="text-[10px] text-slate-500 italic line-clamp-1 border-l-2 border-nexus-accent/20 pl-4" x-text="log.Catatan"></p>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>

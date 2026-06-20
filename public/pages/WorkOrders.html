@@ -1,0 +1,144 @@
+<!-- 📋 PAGE: WORK ORDERS -->
+<div x-cloak class="space-y-4">
+  <!-- Header with Title and Actions -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <h3 class="font-black text-xl lg:text-2xl text-purple-400 nexus-glow-text uppercase tracking-tight">Work Orders</h3>
+    <div class="flex flex-wrap gap-2 items-center">
+      <button @click="exportData('logs', 'csv')" class="btn-nexus-small"><i class="fas fa-download"></i> CSV</button>
+      <button x-show="isAdmin" @click="openLogModal(false)" class="btn-nexus-gold"><i class="fas fa-plus"></i> Input</button>
+    </div>
+  </div>
+
+  <!-- Search and Filter Controls -->
+  <div class="flex flex-wrap gap-3 items-center">
+    <input type="text" x-model="searchWO" placeholder="Search WO..." class="w-full md:w-64 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40 text-xs font-bold">
+    <select x-model="filterWOStatus" class="p-3 glass border-nexus-accent/10 text-xs font-bold">
+      <option value="">All Status</option>
+      <option value="Pending">Pending</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Completed">Completed</option>
+    </select>
+    <select x-model="filterWOPriority" class="p-3 glass border-nexus-accent/10 text-xs font-bold">
+      <option value="">All Priority</option>
+      <option value="Emergency">Emergency</option>
+      <option value="Urgent">Urgent</option>
+      <option value="Normal">Normal</option>
+      <option value="Planned">Planned</option>
+    </select>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-orange-500">
+      <div class="text-xl md:text-2xl font-black text-orange-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && (l.Status === 'Pending' || l.Status === 'Draft')).length || '0'"></div>
+      <div class="text-[8px] text-slate-500 uppercase tracking-widest">Open</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-blue-500">
+      <div class="text-xl md:text-2xl font-black text-blue-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'In Progress').length || '0'"></div>
+      <div class="text-[8px] text-slate-500 uppercase tracking-widest">In Progress</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-green-500">
+      <div class="text-xl md:text-2xl font-black text-green-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'Completed').length || '0'"></div>
+      <div class="text-[8px] text-slate-500 uppercase tracking-widest">Completed</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-rose-500">
+      <div class="text-xl md:text-2xl font-black text-rose-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'Cancelled').length || '0'"></div>
+      <div class="text-[8px] text-slate-500 uppercase tracking-widest">Cancelled</div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div x-show="isLoading" class="text-center py-16">
+    <div class="inline-flex flex-col items-center gap-4">
+      <i class="fas fa-spinner fa-spin text-4xl text-nexus-accent"></i>
+      <p class="text-slate-400">Loading Work Orders...</p>
+    </div>
+  </div>
+  
+  <!-- Empty State (loaded but no results) -->
+  <div x-show="!isLoading && filteredWorkOrders.length === 0" class="text-center py-16">
+    <div class="inline-flex flex-col items-center gap-4">
+      <i class="fas fa-clipboard-list text-6xl text-slate-600"></i>
+      <div>
+        <p class="text-slate-400 text-lg font-bold">No Work Orders Found</p>
+        <p class="text-slate-500 text-sm mt-2">Work Orders will appear here when created</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Work Orders List -->
+  <div x-show="!isLoading && filteredWorkOrders.length > 0" class="flex flex-col gap-4">
+    <template x-for="log in filteredWorkOrders" :key="log.LogID">
+      <div class="glass border-nexus-accent/10 rounded-xl border-l-4 overflow-hidden" :style="'border-left-color:' + (log.EquipmentID === 'EXTERNAL' ? 'orange' : getStatColor(logColor(log.Jenis)))">
+        <!-- Header - Click to expand -->
+        <div @click="selectedWODetail = selectedWODetail === log.LogID ? null : log.LogID" class="p-4 cursor-pointer hover:bg-white/5 transition-all">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2">
+              <span x-show="log.woNumber" class="px-3 py-1 rounded-lg glass text-purple-400 font-bold font-mono" x-text="'#'+log.woNumber"></span>
+              <span x-show="!log.woNumber && log.Jenis" class="px-3 py-1 rounded-lg glass text-blue-400 font-bold font-mono text-xs" x-text="log.Jenis"></span>
+              <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[7px]" :class="woPriorityColor(log.woPriority || 'Normal')" x-text="log.woPriority || 'Normal'"></span>
+              <span x-show="log.EquipmentID === 'EXTERNAL'" class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 font-bold uppercase text-[7px]">EXT</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 rounded-lg text-[7px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
+              <i :class="selectedWODetail === log.LogID ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-slate-500"></i>
+            </div>
+          </div>
+          <h4 class="font-black text-sm text-nexus-text nexus-glow-text truncate mt-2" x-text="log.Deskripsi"></h4>
+          <div class="flex flex-wrap items-center gap-4 mt-2 text-[8px] text-slate-500 font-bold uppercase tracking-widest">
+            <div class="flex items-center gap-1"><i class="far fa-calendar-alt text-purple-400"></i> <span x-text="log.Tanggal"></span></div>
+            <div class="flex items-center gap-1"><i class="far fa-user-astronaut text-purple-400"></i> <span x-text="log.assignedTo || '-'"></span></div>
+            <div x-show="log.dueDate" class="flex items-center gap-1 text-orange-400"><i class="far fa-clock"></i> <span x-text="'Due: ' + log.dueDate"></span></div>
+          </div>
+        </div>
+
+        <!-- Detail View (Expandable) -->
+        <div x-show="selectedWODetail === log.LogID" class="border-t border-white/10">
+          <div class="p-4 space-y-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+              <div class="bg-slate-800/50 p-2 rounded">
+                <span class="text-slate-500 uppercase text-[8px]">Asset</span>
+                <p class="text-white font-bold" x-text="log.EquipmentID === 'EXTERNAL' ? (log.externalEquipName || 'External') : getEquipName(log.EquipmentID)"></p>
+              </div>
+              <div class="bg-slate-800/50 p-2 rounded">
+                <span class="text-slate-500 uppercase text-[8px]">Requester</span>
+                <p class="text-white font-bold" x-text="log.requestedBy || '-'"></p>
+              </div>
+              <div class="bg-slate-800/50 p-2 rounded">
+                <span class="text-slate-500 uppercase text-[8px]">Department</span>
+                <p class="text-white font-bold" x-text="log.requestSource || '-'"></p>
+              </div>
+              <div class="bg-slate-800/50 p-2 rounded">
+                <span class="text-slate-500 uppercase text-[8px]">Type</span>
+                <p class="text-white font-bold" x-text="log.Jenis || '-'"></p>
+              </div>
+              <div class="bg-slate-800/50 p-2 rounded">
+                <span class="text-slate-500 uppercase text-[8px]">Est. Hours</span>
+                <p class="text-white font-bold" x-text="log.estimatedHours || 0"></p>
+              </div>
+              <div class="bg-slate-800/50 p-2 rounded">
+                <span class="text-slate-500 uppercase text-[8px]">Downtime</span>
+                <p class="text-white font-bold" x-text="log.Downtime + ' hrs'"></p>
+              </div>
+            </div>
+            <div x-show="log.Catatan" class="bg-slate-800/50 p-3 rounded">
+              <span class="text-slate-500 uppercase text-[8px]">Notes</span>
+              <p class="text-white text-sm" x-text="log.Catatan"></p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-2 pt-3 border-t border-white/10">
+              <button x-show="isAdmin && log.Status === 'Pending'" @click.stop="approveWO(log.LogID)" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-check"></i> Approve</button>
+              <button x-show="isAdmin && log.Status === 'Pending'" @click.stop="rejectReason = ''; activeRejectId = log.LogID; showRejectModal = true" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-times"></i> Reject</button>
+              <button x-show="isAdmin && log.Status === 'Approved'" @click.stop="startWO(log.LogID)" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-play"></i> Start</button>
+              <button x-show="isAdmin && (log.Status === 'Approved' || log.Status === 'In Progress')" @click.stop="completeWO(log.LogID)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-check-double"></i> Complete</button>
+              <button x-show="isAdmin" @click.stop="exportWOToPDF(log.LogID)" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-file-pdf"></i> PDF</button>
+              <button x-show="isAdmin" @click.stop="openLogModal(true, log)" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-edit"></i> Edit</button>
+              <button x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>

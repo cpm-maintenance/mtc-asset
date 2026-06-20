@@ -1,0 +1,81 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "Users": {
+      ".read": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth !== null && auth.uid === $uid",
+        ".write": "auth !== null && auth.uid === $uid"
+      }
+    },
+
+    "Stats": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')"
+    },
+
+    "Equipment": {
+      ".read": "auth !== null",
+      "$equipmentId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null"
+      }
+    },
+
+    "SpareParts": {
+      ".read": "auth !== null",
+      "$partId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null"
+      }
+    },
+
+    "HistoryLog": {
+      ".read": "auth !== null",
+      "$logId": {
+        ".write": "auth !== null && ((!data.exists() && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')) || (data.exists() && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor' || root.child('Users').child(auth.uid).child('role').val() === 'technician')))",
+        ".read": "auth !== null"
+      }
+    },
+
+    "Performance": {
+      ".read": "auth !== null",
+      "$perfId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null"
+      }
+    },
+
+    "WorkOrders": {
+      ".read": "auth !== null",
+      "$woId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null"
+      }
+    },
+
+    "Settings": {
+      ".read": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'",
+      "$settingId": {
+        ".write": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+
+    "ImageUploads": {
+      ".read": "auth !== null",
+      "$imageId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor' || root.child('Users').child(auth.uid).child('role').val() === 'technician')",
+        ".read": "auth !== null"
+      }
+    },
+
+    "AI_Settings": {
+      ".read": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'",
+      "$settingId": {
+        ".write": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    }
+  }
+}

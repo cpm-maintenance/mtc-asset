@@ -1,0 +1,101 @@
+<!-- 🔧 PAGE: EQUIPMENT -->
+<div x-cloak class="space-y-4">
+  <!-- Header with Search and Actions -->
+  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-2">
+    <!-- Search Bar -->
+    <div class="relative flex-1 min-w-[200px]">
+      <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-nexus-accent/40"></i>
+      <input type="text" x-model="search" placeholder="Search..."
+        class="w-full pl-12 p-3 glass">
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap gap-2.5 items-center">
+      <button @click="downloadTemplate('equip')" class="btn-nexus-small">
+        <i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span>
+      </button>
+      <button @click="exportData('equip', 'csv')" class="btn-nexus-small">
+        <i class="fas fa-download"></i><span class="hidden lg:inline ml-1">Export</span>
+      </button>
+      <label class="btn-nexus-small cursor-pointer">
+        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+        <input type="file" @change="importCSV($event, 'equip')" class="hidden" accept=".csv, .xlsx">
+      </label>
+      <button x-show="isAdmin" @click="openEquipModal(false)" class="btn-nexus-gold">
+        <i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">New Asset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Equipment Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+    <template x-for="e in filteredEquip" :key="e.EquipmentID">
+      <div @click="goToDetail(e.EquipmentID)" class="card-modern p-4 md:p-6 cursor-pointer relative group overflow-hidden">
+        <!-- Decorative Background -->
+        <div class="absolute top-0 right-0 w-20 md:w-32 h-20 md:h-32 bg-nexus-accent/5 rounded-full -mr-10 md:-mr-16 -mt-10 md:-mt-16 blur-2xl"></div>
+        
+        <!-- Card Header -->
+        <div class="flex justify-between items-start mb-3 md:mb-6">
+          <!-- Equipment Photo -->
+          <template x-if="e.FotoURL && e.FotoURL.length > 0">
+            <div class="w-10 h-10 rounded-lg overflow-hidden mr-2 shrink-0 border border-nexus-accent/20">
+              <img :src="cleanUrl(e.FotoURL)" class="w-full h-full object-cover" onerror="this.style.display='none'">
+            </div>
+          </template>
+          
+          <!-- Status Badge -->
+          <span :class="statusColor(e.Status)"
+            class="text-[8px] md:text-[9px] px-2 md:px-3 py-1 md:py-1.5 rounded-full font-black uppercase tracking-[0.1em] border border-current bg-transparent"
+            x-text="e.Status"></span>
+          
+          <!-- Equipment ID -->
+          <span class="text-[9px] md:text-[10px] text-nexus-accent/40 font-mono font-bold" x-text="'ID: ' + e.EquipmentID"></span>
+        </div>
+        
+        <!-- Equipment Name -->
+        <h4 class="font-black text-base md:text-xl text-nexus-text group-hover:text-nexus-accent transition-colors mb-1 md:mb-2 nexus-glow-text" x-text="e.Nama"></h4>
+        
+        <!-- Equipment Type -->
+        <p class="text-[9px] md:text-[10px] font-black text-nexus-purple uppercase tracking-[0.2em] mb-3 md:mb-6" x-text="e.Tipe"></p>
+        
+        <!-- Metadata Row -->
+        <div class="text-[9px] md:text-[10px] border-t border-nexus-accent/10 pt-3 md:pt-5 text-slate-400 flex justify-between font-bold uppercase tracking-widest mb-2 md:mb-4">
+          <span class="flex items-center gap-1 md:gap-2">
+            <i class="fas fa-calendar-check text-nexus-accent"></i> 
+            <span x-text="e.NextPMDate || '-'"></span>
+          </span>
+          <span class="flex items-center gap-1 md:gap-2">
+            <i class="fas fa-map-marker-alt text-nexus-accent"></i> 
+            <span x-text="e.Lokasi || '-'"></span>
+          </span>
+        </div>
+        
+        <!-- Health Score Badge -->
+        <div class="flex items-center justify-between glass p-2 md:p-3 rounded-xl border-nexus-accent/10">
+          <div class="flex flex-col">
+            <span class="text-[7px] md:text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 md:mb-1">Health Score</span>
+            <span :class="calculateHealthScore(e.EquipmentID).color" class="text-[10px] md:text-xs font-black" x-text="calculateHealthScore(e.EquipmentID).score + '%'"></span>
+          </div>
+          <div class="w-16 md:w-24 h-1 bg-white/5 rounded-full overflow-hidden">
+            <div class="h-full transition-all duration-1000" :style="'width: ' + calculateHealthScore(e.EquipmentID).score + '%'" :class="calculateHealthScore(e.EquipmentID).color.replace('text-', 'bg-')"></div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Load More Equipment Button -->
+  <div x-show="canLoadMoreEquip" class="text-center pt-4">
+    <button @click="loadMoreEquipment()" :disabled="isLoading"
+      class="btn-nexus-small">
+      <i class="fas fa-sync-alt" :class="isLoading ? 'animate-spin' : ''"></i>
+      Load More <span x-text="'(' + (equipment.length - filteredEquip.length) + ' remaining)'"></span>
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div x-show="filteredEquip.length === 0" class="text-center py-12">
+    <i class="fas fa-tools text-6xl text-slate-600 mb-4"></i>
+    <p class="text-slate-500 font-bold">No assets found</p>
+  </div>
+</div>
