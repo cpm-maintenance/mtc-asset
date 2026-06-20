@@ -1,0 +1,94 @@
+<!-- 🤖 PAGE: AI ANALYSIS -->
+<div class="space-y-6" style="background: linear-gradient(135deg, #1a2e1a 0%, #0d1f0d 100%);">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <h3 class="font-black text-xl lg:text-2xl text-white nexus-glow-text uppercase tracking-tight flex items-center gap-3">
+      <i class="fas fa-robot text-green-400"></i>
+      AI Analysis
+    </h3>
+    <button @click="showAPISettings = true" class="btn-nexus-small">
+      <i class="fas fa-cog mr-1"></i> Settings
+    </button>
+  </div>
+
+  <!-- AI Action Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <button @click="analyzeKPI()" :disabled="isAnalyzing" class="card-modern p-6 border-green-500/30 hover:border-green-400 transition-all">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+          <i class="fas fa-brain text-white text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-black text-white">Analyze KPI</h4>
+          <p class="text-[10px] text-slate-500">AI-powered insights</p>
+        </div>
+      </div>
+    </button>
+
+    <button @click="getAIRecommendations()" :disabled="isAnalyzing" class="card-modern p-6 border-green-500/30 hover:border-green-400 transition-all">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+          <i class="fas fa-lightbulb text-white text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-black text-white">Rekomendasi</h4>
+          <p class="text-[10px] text-slate-500">AI WO suggestions</p>
+        </div>
+      </div>
+    </button>
+
+    <button @click="generatePPT()" :disabled="!analysisResult || isGenerating" class="card-modern p-6 border-green-500/30 hover:border-green-400 transition-all disabled:opacity-50">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-cyan-500 flex items-center justify-center">
+          <i class="fas fa-file-powerpoint text-white text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-black text-white">Generate PPT</h4>
+          <p class="text-[10px] text-slate-500">Export report</p>
+        </div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Analysis Result -->
+  <div x-show="analysisResult" class="card-modern p-6 border-green-500/30">
+    <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+      <i class="fas fa-lightbulb text-yellow-400"></i>
+      AI Analysis Result
+    </h4>
+    <div class="bg-green-900/30 p-4 rounded-xl text-white whitespace-pre-wrap" x-text="analysisResult"></div>
+  </div>
+
+  <!-- AI Chat -->
+  <div class="card-modern p-6 border-green-500/30">
+    <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+      <i class="fas fa-comments text-cyan-400"></i>
+      Tanya AI
+      <button x-show="aiChatHistory.length > 0" @click="clearAIChat()" class="ml-auto text-xs text-slate-500 hover:text-white">
+        <i class="fas fa-trash mr-1"></i>Clear
+      </button>
+    </h4>
+    <div class="space-y-3">
+      <div class="flex gap-2">
+        <input type="text" x-model="aiChatInput" @keyup.enter="sendAIChat()" placeholder="Tulis pertanyaan..." class="flex-1 p-3 glass rounded-lg text-white">
+        <button @click="sendAIChat()" :disabled="aiIsAnalyzing || !aiChatInput" class="btn-nexus">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+      <div x-show="aiIsAnalyzing" class="text-center text-slate-500 p-2">
+        <i class="fas fa-spinner fa-spin mr-2"></i>Thinking...
+      </div>
+      <div x-show="aiChatHistory.length > 0" class="space-y-2 max-h-64 overflow-y-auto">
+        <template x-for="(msg, idx) in aiChatHistory" :key="idx">
+          <div :class="msg.role === 'user' ? 'ml-8 bg-green-800/50' : 'mr-8 bg-green-700/30'" class="p-3 rounded-xl">
+            <div class="text-[10px] text-slate-500 mb-1">
+              <i :class="msg.role === 'user' ? 'fa-user' : 'fa-robot'" class="fas mr-1"></i>
+              <span x-text="msg.role === 'user' ? 'Anda' : 'AI'"></span>
+            </div>
+            <div class="text-white text-sm whitespace-pre-wrap" x-text="msg.text"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>

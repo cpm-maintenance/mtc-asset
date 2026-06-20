@@ -1,0 +1,17 @@
+{
+  "name": "MTC-ASSET Management",
+  "short_name": "MTC-ASSET",
+  "description": "Maintenance & Asset Tracking System",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0B0F1A",
+  "theme_color": "#D4AF37",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

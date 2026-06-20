@@ -1,0 +1,129 @@
+<!-- 🔧 PAGE: SPARE PARTS INVENTORY -->
+<div x-cloak class="space-y-4 p-4 lg:p-0">
+  <!-- 🔍 DIAGNOSTIC PANEL - ALWAYS VISIBLE -->
+  <div class="bg-slate-900/90 border-2 border-rose-500/50 rounded-xl p-4 mb-4 backdrop-blur-sm">
+    <p class="text-rose-400 font-bold text-sm mb-3">🔧 DIAGNOSTIK Spare Parts</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Data:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="allParts ? allParts.length : '0'"></span>
+      </div>
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Filtered:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="filteredAllParts ? filteredAllParts.length : '0'"></span>
+      </div>
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Page:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="currentPage"></span>
+      </div>
+      <div class="bg-slate-800/80 rounded-lg p-2">
+        <span class="text-slate-400">Admin:</span>
+        <span class="text-cyan-400 font-bold ml-1" x-text="isAdmin"></span>
+      </div>
+    </div>
+    <div x-show="allParts && allParts.length > 0" class="mt-2 text-xs text-slate-400">
+      Contoh: <span class="text-green-400" x-text="allParts[0]?.PartID + ' - ' + allParts[0]?.NamaPart"></span>
+    </div>
+    <div x-show="!allParts || allParts.length === 0" class="mt-2 text-xs text-yellow-400">
+      ⚠️ Data Spare Parts kosong - Pastikan Firebase path "SpareParts" ada data-nya
+    </div>
+  </div>
+
+  <!-- Search and Actions -->
+  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-2">
+    <div class="flex flex-col md:flex-row gap-3 flex-1">
+      <div class="relative flex-1">
+        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-nexus-accent/40"></i>
+        <input type="text" x-model="searchPart" placeholder="Search by name or ID..."
+          class="w-full pl-12 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40">
+      </div>
+      <div class="relative w-full md:w-64">
+        <i class="fas fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-nexus-accent/40"></i>
+        <select x-model="partFilterEquip" class="w-full pl-12 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40 text-xs font-bold uppercase tracking-widest appearance-none cursor-pointer">
+          <option value="">All Asset Nodes</option>
+          <template x-for="e in equipment" :key="e.EquipmentID">
+            <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+          </template>
+        </select>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2.5 items-center">
+      <button @click="downloadTemplate('parts')" class="btn-nexus-small"><i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span></button>
+      <button @click="exportData('parts', 'csv')" class="btn-nexus-small"><i class="fas fa-download"></i><span class="hidden lg:inline ml-1">Export</span></button>
+      <label class="btn-nexus-small cursor-pointer">
+        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+        <input type="file" @change="importCSV($event, 'parts')" class="hidden" accept=".csv, .xlsx">
+      </label>
+      <button x-show="isAdmin" @click="openPartModal(false)" class="btn-nexus-gold"><i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Register</span></button>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div x-show="filteredAllParts.length === 0" class="text-center py-16">
+    <div class="inline-flex flex-col items-center gap-4">
+      <i class="fas fa-box-open text-6xl text-slate-600"></i>
+      <div>
+        <p class="text-slate-400 text-lg font-bold" x-text="(!searchPart &amp;&amp; !partFilterEquip &amp;&amp; allParts.length > 20) ? 'Silakan cari atau filter terlebih dahulu' : 'Belum ada Spare Parts'"></p>
+        <p class="text-slate-500 text-sm mt-2">
+          <span x-show="allParts.length === 0">Klik tombol di bawah untuk memuat ulang data</span>
+          <span x-show="allParts.length > 0 &amp;&amp; searchPart">Kata kunci tidak ditemukan</span>
+          <span x-show="allParts.length > 0 &amp;&amp; !searchPart &amp;&amp; !partFilterEquip &amp;&amp; allParts.length > 20">Gunakan kotak pencarian atau filter equipment</span>
+          <span x-show="allParts.length > 0 &amp;&amp; allParts.length <= 20">Klik tombol di bawah untuk menambah data</span>
+        </p>
+      </div>
+      <button x-show="allParts.length === 0" @click="refreshData()" class="btn-nexus-gold">
+        <i class="fas fa-sync-alt mr-2"></i> Muat Ulang Data
+      </button>
+      <button x-show="isAdmin &amp;&amp; allParts.length === 0" @click="openPartModal(false)" class="btn-nexus-small">
+        <i class="fas fa-plus mr-1"></i> Tambah Spare Part Pertama
+      </button>
+    </div>
+  </div>
+
+  <!-- Parts Grid -->
+  <div x-show="filteredAllParts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 xl:gap-8">
+    <template x-for="p in filteredAllParts" :key="p.PartID">
+      <div class="card-modern p-3 md:p-6 relative group overflow-hidden">
+        <!-- Admin Actions (Hover) -->
+        <div x-show="isAdmin" class="absolute top-2 md:top-4 right-2 md:right-4 hidden group-hover:flex space-x-1 md:space-x-2 z-20">
+          <button @click="openPartModal(true, p)"
+            class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
+            <i class="fas fa-edit text-[8px] md:text-[10px]"></i>
+          </button>
+          <button @click="deleteItem('SpareParts', p.PartID)"
+            class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
+            <i class="fas fa-trash text-[8px] md:text-[10px]"></i>
+          </button>
+        </div>
+        
+        <!-- Low Stock Badge -->
+        <div x-show="Number(p.Stok) <= Number(p.MinStock)"
+          class="absolute -top-0.5 md:-top-1 -right-0.5 md:-right-1 bg-rose-600 text-white text-[6px] md:text-[8px] font-black px-2 md:px-3 py-1 md:py-1.5 rounded-bl-lg md:rounded-bl-2xl shadow-lg flex items-center gap-1 md:gap-2 animate-pulse uppercase tracking-widest z-10">
+          <i class="fas fa-exclamation-triangle"></i> Low
+        </div>
+        
+        <!-- Part Info -->
+        <h4 class="font-black text-sm md:text-lg mb-1 text-nexus-text truncate nexus-glow-text" x-text="p.NamaPart" :title="p.NamaPart"></h4>
+        <div class="flex flex-wrap items-center gap-1.5 md:gap-3 mb-3 md:mb-6">
+          <span class="text-[7px] md:text-[9px] px-1.5 md:px-2 py-0.5 rounded-lg glass text-nexus-accent font-black uppercase tracking-widest" x-show="p.NamaSingkat" x-text="p.NamaSingkat"></span>
+          <span class="text-[7px] md:text-[9px] px-1.5 md:px-2 py-0.5 rounded-lg glass text-nexus-purple font-black uppercase tracking-widest" x-show="p.PartNumber" x-text="p.PartNumber"></span>
+          <p class="text-[8px] md:text-[10px] text-nexus-purple font-mono font-bold" x-text="p.PartID"></p>
+        </div>
+        
+        <!-- Location and Stock -->
+        <div class="flex justify-between items-end border-t border-white/5 pt-2 md:pt-5">
+          <div>
+            <p class="text-[7px] md:text-[10px] text-slate-500 uppercase font-black mb-0.5 md:mb-1.5 tracking-widest">Zone</p>
+            <p class="text-xs md:text-sm text-white font-bold" x-text="p.Lokasi || '-'" :title="p.Lokasi"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-[7px] md:text-[10px] text-slate-500 uppercase font-black mb-0.5 md:mb-1.5 tracking-widest">Stock</p>
+            <p class="text-2xl md:text-4xl font-black nexus-glow-text"
+              :class="Number(p.Stok) <= Number(p.MinStock) ? 'text-rose-500' : 'text-nexus-accent'" x-text="p.Stok">
+            </p>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>

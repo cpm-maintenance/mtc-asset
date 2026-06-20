@@ -1,0 +1,784 @@
+/**
+ * Export & Import module
+ */
+import { generateProfessionalWOPDF } from './wo-pdf-template.js';
+
+function tryParseJSON(str, fallback = []) {
+    if (!str || typeof str !== 'string') return fallback;
+    try {
+        const parsed = JSON.parse(str);
+        return Array.isArray(parsed) ? parsed : fallback;
+    } catch (e) {
+        console.warn('JSON parse failed:', e);
+        return fallback;
+    }
+}
+
+async function loadXLSX() {
+    return await import('xlsx');
+}
+
+let jsPDFInstance = null;
+
+async function loadJsPDF() {
+    if (jsPDFInstance) return jsPDFInstance;
+    const { jsPDF } = await import('jspdf');
+    jsPDFInstance = jsPDF;
+    return jsPDF;
+}
+
+async function exportTableToPDF(elementId, title) {
+    try {
+        const { jsPDF } = await import('jspdf');
+        const element = document.getElementById(elementId);
+        if (!element) throw new Error('Table element not found');
+
+        // Get table data manually
+        const rows = [];
+        const headers = [];
+        const thead = element.querySelector('thead');
+        if (thead) {
+            thead.querySelectorAll('th').forEach(th => headers.push(th.textContent.trim()));
+        }
+        const tbody = element.querySelector('tbody');
+        if (tbody) {
+            tbody.querySelectorAll('tr').forEach(tr => {
+                const row = [];
+                tr.querySelectorAll('td').forEach(td => row.push(td.textContent.trim()));
+                if (row.length > 0) rows.push(row);
+            });
+        }
+
+        // Create simple PDF without autoTable
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        pdf.setFontSize(16);
+        pdf.text(title, 14, 20);
+        pdf.setFontSize(10);
+        pdf.text('Generated: ' + new Date().toLocaleString(), 14, 28);
+
+        let yPos = 40;
+        const cellWidth = 25;
+        const cellHeight = 8;
+
+        // Draw headers
+        pdf.setFontSize(9);
+        pdf.setFillColor(5, 11, 24);
+        pdf.rect(14, yPos, 270, cellHeight, 'F');
+        pdf.setTextColor(255, 255, 255);
+        headers.forEach((h, i) => pdf.text(h.substring(0, 12), 15 + i * cellWidth, yPos + 6));
+
+        // Draw rows
+        yPos += cellHeight;
+        pdf.setTextColor(0, 0, 0);
+        rows.slice(0, 15).forEach((row, rowIndex) => {
+            if (rowIndex % 2 === 0) {
+                pdf.setFillColor(240, 240, 240);
+                pdf.rect(14, yPos, 270, cellHeight, 'F');
+            }
+            row.forEach((cell, i) => {
+                pdf.text(cell.substring(0, 15), 15 + i * cellWidth, yPos + 6);
+            });
+            yPos += cellHeight;
+            if (yPos > 180) return;
+        });
+
+        pdf.save(`${title.replace(/\s+/g, '_')}_${Date.now()}.pdf`);
+        return true;
+    } catch (e) {
+        console.error('PDF export error:', e);
+        throw e;
+    }
+}
+
+async function loadJsPDFAutotable() {
+    // Now handled in loadJsPDF() - just return true for compatibility
+    return true;
+}
+
+// ========================================
+// WORK ORDER PDF EXPORT
+// ========================================
+
+async function generateWOPDF(log, equipment, parts) {
+    const jsPDF = await loadJsPDF();
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    const primaryColor = [15, 23, 42];
+    const secondaryColor = [71, 85, 105];
+    const accentColor = [234, 88, 12];
+    const darkColor = [15, 23, 42];
+    const grayColor = [100, 116, 139];
+    const lightGray = [241, 245, 249];
+    const white = [255, 255, 255];
+    const greenColor = [22, 163, 74];
+    const redColor = [220, 38, 38];
+    const blueColor = [37, 99, 235];
+    
+    const priorityColors = {
+        'Emergency': [220, 38, 38],
+        'Urgent': [234, 88, 12],
+        'Normal': [202, 138, 4],
+        'Planned': [22, 163, 74]
+    };
+    const priority = log.woPriority || 'Normal';
+    const priorityColor = priorityColors[priority] || [202, 138, 4];
+    const isExternal = log.equipmentId === 'EXTERNAL';
+    
+    let yPos = 20;
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+    
+    // Header Background
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    
+    // Logo/Brand
+    doc.setTextColor(...white);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('WORK ORDER', margin, yPos + 5);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('MTC Maintenance Technical Center', margin, yPos + 12);
+    
+    // WO Number - Right side
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.woNumber || '-', pageWidth - margin, yPos + 5, { align: 'right' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Nomor WO', pageWidth - margin, yPos + 11, { align: 'right' });
+    
+    // Company info
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('PT. Citra Palu Minerals', pageWidth - margin, yPos + 17, { align: 'right' });
+    
+    yPos = 52;
+    
+    // Priority & Status badges - lebih lebar spacing
+    doc.setFillColor(...priorityColor);
+    doc.roundedRect(margin, yPos, 30, 10, 1.5, 1.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(priority.toUpperCase(), margin + 15, yPos + 6.5, { align: 'center' });
+    
+    const statusColors = {
+        'Pending': [234, 179, 8],
+        'In Progress': [37, 99, 235],
+        'Completed': [22, 163, 74],
+        'Cancelled': [107, 114, 128],
+        'Approved': [6, 182, 212],
+        'Draft': [126, 34, 196]
+    };
+    const status = log.Status || 'Pending';
+    const statusColor = statusColors[status] || [107, 114, 128];
+    doc.setFillColor(...statusColor);
+    doc.roundedRect(margin + 35, yPos, 35, 10, 1.5, 1.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.text(status.toUpperCase(), margin + 52.5, yPos + 6.5, { align: 'center' });
+    
+    if (isExternal) {
+        doc.setFillColor(...accentColor);
+        doc.roundedRect(margin + 75, yPos, 32, 10, 1.5, 1.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.text('EXTERNAL', margin + 91, yPos + 6.5, { align: 'center' });
+    }
+    
+    yPos = 70;
+    
+    // Section 1: Asset Information
+    doc.setFillColor(...primaryColor);
+    doc.rect(margin, yPos, contentWidth, 10, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ASSET INFORMATION', margin + 3, yPos + 7);
+    
+    yPos += 15;
+    doc.setTextColor(...grayColor);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    if (isExternal) {
+        doc.text('Asset Name', margin, yPos);
+        doc.setTextColor(...darkColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text(log.externalEquipName || 'External Asset', margin + 35, yPos);
+        
+        doc.setTextColor(...grayColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Request Source', margin + 100, yPos);
+        doc.setTextColor(...accentColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text('EXTERNAL', pageWidth - margin, yPos, { align: 'right' });
+    } else {
+        doc.text('Equipment', margin, yPos);
+        doc.setTextColor(...darkColor);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text((equipment?.Nama || '-') + ' (' + (equipment?.EquipmentID || '-') + ')', margin + 35, yPos);
+        doc.setFontSize(9);
+        
+        yPos += 8;
+        doc.setTextColor(...grayColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Location', margin, yPos);
+        doc.setTextColor(...darkColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text(equipment?.Lokasi || '-', margin + 35, yPos);
+        
+        doc.setTextColor(...grayColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Status', margin + 100, yPos);
+        doc.setTextColor(...greenColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text(equipment?.Status || '-', pageWidth - margin, yPos, { align: 'right' });
+    }
+    
+    yPos += 15;
+    
+    // Section 2: Work Details
+    doc.setFillColor(...primaryColor);
+    doc.rect(margin, yPos, contentWidth, 10, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('WORK DETAILS', margin + 3, yPos + 7);
+    
+    yPos += 15;
+    doc.setTextColor(...grayColor);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.text('Work Type', margin, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.Jenis || 'PM', margin + 35, yPos);
+    
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Date', margin + 100, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.Tanggal || '-', pageWidth - margin, yPos, { align: 'right' });
+    
+    yPos += 8;
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Technician', margin, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.Technician || '-', margin + 35, yPos);
+    
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Assigned To', margin + 100, yPos);
+    doc.setTextColor(...blueColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.assignedTo || '-', pageWidth - margin, yPos, { align: 'right' });
+    
+    yPos += 8;
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Category', margin, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.rca || 'PM', margin + 35, yPos);
+    
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('HM', margin + 100, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.HM || '-', pageWidth - margin, yPos, { align: 'right' });
+    
+    yPos += 8;
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Est. Hours', margin, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(log.estimatedHours || 0), margin + 35, yPos);
+    
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Actual Hours', margin + 100, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(log.actualHours || 0), pageWidth - margin, yPos, { align: 'right' });
+    
+    if (log.dueDate) {
+        yPos += 8;
+        doc.setTextColor(...grayColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Due Date', margin, yPos);
+        doc.setTextColor(...accentColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text(log.dueDate, margin + 35, yPos);
+    }
+    
+    yPos += 15;
+    
+    // Section 3: Request Information
+    doc.setFillColor(...primaryColor);
+    doc.rect(margin, yPos, contentWidth, 10, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REQUEST INFORMATION', margin + 3, yPos + 7);
+    
+    yPos += 15;
+    doc.setTextColor(...grayColor);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.text('Department', margin, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.requestSource || '-', margin + 35, yPos);
+    
+    yPos += 8;
+    doc.setTextColor(...grayColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Requested By', margin, yPos);
+    doc.setTextColor(...darkColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(log.requestedBy || '-', margin + 35, yPos);
+    
+    if (log.requestDate) {
+        doc.setTextColor(...grayColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Request Date', margin + 100, yPos);
+        doc.setTextColor(...darkColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text(log.requestDate, pageWidth - margin, yPos, { align: 'right' });
+    }
+    
+    if (log.approvedBy) {
+        yPos += 8;
+        doc.setTextColor(...grayColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Approved By', margin, yPos);
+        doc.setTextColor(...greenColor);
+        doc.setFont('helvetica', 'bold');
+        doc.text(log.approvedBy, margin + 35, yPos);
+        
+        if (log.approvalDate) {
+            doc.setTextColor(...grayColor);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Approval Date', margin + 100, yPos);
+            doc.setTextColor(...darkColor);
+            doc.setFont('helvetica', 'bold');
+            doc.text(log.approvalDate, pageWidth - margin, yPos, { align: 'right' });
+        }
+    }
+    
+    yPos += 15;
+    
+    // Section 4: Work Description
+    doc.setFillColor(...primaryColor);
+    doc.rect(margin, yPos, contentWidth, 10, 'F');
+    doc.setTextColor(...white);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('WORK DESCRIPTION', margin + 3, yPos + 7);
+    
+    yPos += 15;
+    doc.setTextColor(...darkColor);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const descLines = doc.splitTextToSize(log.Deskripsi || '-', contentWidth);
+    doc.text(descLines, margin, yPos);
+    yPos += descLines.length * 6 + 5;
+    
+    if (log.Catatan) {
+        doc.setFillColor(...lightGray);
+        doc.rect(margin, yPos, contentWidth, 10, 'F');
+        doc.setTextColor(...darkColor);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('NOTES', margin + 3, yPos + 7);
+        
+        yPos += 15;
+        doc.setTextColor(...grayColor);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        const notesLines = doc.splitTextToSize(log.Catatan, contentWidth);
+        doc.text(notesLines, margin, yPos);
+        yPos += notesLines.length * 6 + 5;
+    }
+    
+    const partsList = tryParseJSON(log.PartsUsed, []);
+    if (partsList && partsList.length > 0) {
+        if (yPos > pageHeight - 80) {
+            doc.addPage();
+            yPos = 20;
+        }
+        
+        doc.setFillColor(...primaryColor);
+        doc.rect(margin, yPos, contentWidth, 10, 'F');
+        doc.setTextColor(...white);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('MATERIALS / PARTS USED', margin + 3, yPos + 7);
+        
+        yPos += 15;
+        
+        const tableData = partsList.map((p, i) => {
+            const part = parts?.find(x => x.PartID === p.id);
+            return [
+                i + 1,
+                part?.PartID || p.id || '-',
+                part?.NamaPart || part?.NamaSingkat || '-',
+                p.qty || 0,
+                'Rp ' + String((part?.Harga || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+                'Rp ' + String((p.qty || 0) * (part?.Harga || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            ];
+        });
+        
+        doc.autoTable({
+            startY: yPos,
+            head: [['No', 'Part Number', 'Description', 'Qty', 'Unit Price', 'Total']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+            styles: { fontSize: 8, cellPadding: 3 },
+            columnStyles: {
+                0: { cellWidth: 12, halign: 'center' },
+                3: { cellWidth: 15, halign: 'center' },
+                4: { cellWidth: 30, halign: 'right' },
+                5: { cellWidth: 35, halign: 'right' }
+            },
+            margin: { left: margin, right: margin }
+        });
+        
+        yPos = doc.lastAutoTable.finalY + 10;
+    }
+    
+    if (log.Downtime || log.Cost) {
+        if (yPos > pageHeight - 60) {
+            doc.addPage();
+            yPos = 20;
+        }
+        
+        doc.setFillColor(...lightGray);
+        doc.rect(margin, yPos, contentWidth, 10, 'F');
+        doc.setTextColor(...darkColor);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('COST SUMMARY', margin + 3, yPos + 7);
+        
+        yPos += 15;
+        doc.setTextColor(...grayColor);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        
+        if (log.Downtime) {
+            doc.text('Downtime (Hours)', margin, yPos);
+            doc.setTextColor(...redColor);
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(log.Downtime), margin + 35, yPos);
+        }
+        
+        if (log.Cost) {
+            doc.setTextColor(...grayColor);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Total Cost', margin + 100, yPos);
+            doc.setTextColor(...darkColor);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Rp ' + String(log.Cost).replace(/\B(?=(\d{3})+(?!\d))/g, ','), pageWidth - margin, yPos, { align: 'right' });
+        }
+    }
+    
+    // Footer
+    yPos = pageHeight - 20;
+    
+    doc.setDrawColor(...lightGray);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    
+    yPos += 8;
+    doc.setTextColor(...grayColor);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Generated: ' + new Date().toLocaleDateString('id-ID', { 
+        year: 'numeric', month: 'long', day: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+    }), margin, yPos);
+    
+    doc.text('MTC Maintenance System', pageWidth - margin, yPos, { align: 'right' });
+    
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+}
+
+export const exportModule = {
+    async downloadTemplate(type) {
+        const XLSX = await loadXLSX();
+        let data = [], file = "";
+        if (type === 'equip') { 
+            data = [{ 
+                EquipmentID: "EQ-001", Nama: "Crusher 01", Tipe: "Crusher", Status: "Active", 
+                Lokasi: "Zone A", SerialNumber: "SN123", Criticality: "High", 
+                NextPMDate: "2024-12-01", TglInstalasi: "2023-01-01", Vendor: "Metso", FotoURL: "" 
+            }]; 
+            file = "Template_Equipment"; 
+        } else if (type === 'parts') {
+            data = [{ 
+                PartID: "P-001", NamaPart: "Bearing 22222", NamaSingkat: "BRG-22", 
+                PartNumber: "SKF-22222", EquipmentIDs: "EQ-001, EQ-002", EquipmentID: "EQ-001", 
+                Stok: 10, MinStock: 2, Lokasi: "Warehouse 1", Vendor: "SKF", Harga: 500000, FotoURL: "" 
+            }];
+            file = "Template_SpareParts";
+        } else if (type === 'logs') {
+            data = [{ 
+                LogID: "LOG-001", EquipmentID: "EQ-001", Tanggal: "2024-01-01", Jenis: "PM", 
+                Deskripsi: "Monthly Maintenance", Technician: "John Doe", Downtime: 2, 
+                Cost: 0, Status: "Completed", HM: "12500", Catatan: "All clear", rca: "PM",
+                PartsUsed: "[]", PhotoURLs: "[]"
+            }];
+            file = "Template_HistoryLogs";
+        } else if (type === 'perf') {
+            data = [{ 
+                id: "PERF-001", date: "2024-01-01", equipmentId: "EQ-001", area: "Zone A", 
+                wh: 20, bd: 2, stb: 2, freq: 1, type: "Unscheduled", 
+                paPlan: 90, category: "Mechanical", rca: "None", remarks: "", events: "[]" 
+            }];
+            file = "Template_Performance";
+        }
+        const ws = XLSX.utils.json_to_sheet(data);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${file}.csv`; a.click();
+    },
+
+    async exportData(type, format) {
+        const XLSX = await loadXLSX();
+        let data = [], file = "";
+        
+        // Deep clone to avoid Alpine proxy issues with XLSX
+        const logsRaw = window.Alpine?.raw ? window.Alpine.raw(this.logs || []) : this.logs || [];
+        const equipRaw = window.Alpine?.raw ? window.Alpine.raw(this.equipment || []) : this.equipment || [];
+        const partsRaw = window.Alpine?.raw ? window.Alpine.raw(this.allParts || []) : this.allParts || [];
+        const perfRaw = window.Alpine?.raw ? window.Alpine.raw(this.performanceData || []) : this.performanceData || [];
+        
+        if (type === 'perf') {
+            data = perfRaw.map(p => ({
+                ...p,
+                events: typeof p.events === 'string' ? p.events : JSON.stringify(p.events || [])
+            }));
+            file = "Performance_Export";
+        } else if (type === 'equip') {
+            data = equipRaw;
+            file = "Equipment_Export";
+        } else if (type === 'parts') {
+            data = partsRaw.map(p => ({
+                ...p,
+                EquipmentIDs: Array.isArray(p.EquipmentIDs) ? p.EquipmentIDs.join(', ') : p.EquipmentIDs
+            }));
+            file = "SpareParts_Export";
+        } else if (type === 'logs') {
+            data = logsRaw.map(l => ({
+                ...l,
+                PartsUsed: typeof l.PartsUsed === 'string' ? l.PartsUsed : JSON.stringify(l.PartsUsed || []),
+                PhotoURLs: typeof l.PhotoURLs === 'string' ? l.PhotoURLs : JSON.stringify(l.PhotoURLs || [])
+            }));
+            file = "HistoryLogs_Export";
+        }
+        const ws = XLSX.utils.json_to_sheet(data);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${file}_${Date.now()}.csv`; a.click();
+    },
+
+    async exportKPIToPDF() {
+        if (!this.performanceData || this.performanceData.length === 0) {
+            this.showNotification("No performance data to export", "error");
+            return;
+        }
+
+        try {
+            this.showNotification("Generating PDF... Please wait.", "info");
+            await exportTableToPDF('perfTable', 'Performance KPI Report');
+            this.showNotification('PDF exported successfully');
+        } catch (e) {
+            console.error('PDF Export Error:', e);
+            this.showNotification("Failed to export PDF: " + (e.message || 'Unknown error'), "error");
+        }
+    },
+
+    async exportWOToPDF(logId) {
+        if (!logId) {
+            this.showNotification("No work order selected", "error");
+            return;
+        }
+
+        try {
+            // Deep clone data to avoid Alpine proxy issues with jsPDF
+            const logsRaw = window.Alpine?.raw ? window.Alpine.raw(this.logs || []) : this.logs || [];
+            const equipRaw = window.Alpine?.raw ? window.Alpine.raw(this.equipment || []) : this.equipment || [];
+            const partsRaw = window.Alpine?.raw ? window.Alpine.raw(this.allParts || []) : this.allParts || [];
+            
+            const log = logsRaw?.find(l => l.LogID === logId);
+            if (!log) {
+                this.showNotification("Work order not found", "error");
+                return;
+            }
+
+            const equipment = equipRaw?.find(e => e.EquipmentID === log.EquipmentID);
+            const parts = partsRaw;
+
+            await generateProfessionalWOPDF(log, equipment, parts);
+            this.showNotification('Work Order PDF exported');
+        } catch (e) {
+            console.error('WO PDF Export Error:', e);
+            this.showNotification("Failed to export WO PDF: " + (e.message || 'Unknown error'), "error");
+        }
+    },
+
+    async exportToPDF(equip) {
+        if (!equip || !equip.EquipmentID) {
+            this.showNotification("No equipment selected", "error");
+            return;
+        }
+        this.isLoading = true;
+        try {
+            const jsPDF = await loadJsPDF();
+            
+            // Deep clone to avoid Alpine proxy issues
+            const equipData = JSON.parse(JSON.stringify(equip));
+            const logsData = JSON.parse(JSON.stringify(this.logs || []));
+            
+            const doc = new jsPDF();
+            if (!doc) {
+                throw new Error('jsPDF instance null');
+            }
+            doc.setFontSize(20); 
+            doc.text(`ASSET REPORT: ${equipData.Nama}`, 20, 20);
+            doc.setFontSize(10); 
+            doc.text(`ID: ${equipData.EquipmentID} | Status: ${equipData.Status}`, 20, 30);
+            
+            const equipLogs = logsData.filter(l => l.EquipmentID === equipData.EquipmentID);
+            const tableData = equipLogs.map(l => [l.Tanggal, l.Jenis, l.Deskripsi, l.HM || '-']);
+            
+            doc.autoTable({ 
+                startY: 40, 
+                head: [['Date', 'Type', 'Desc', 'HM']], 
+                body: tableData 
+            });
+            doc.save(`Report_${equipData.EquipmentID}.pdf`);
+            this.showNotification('PDF exported successfully');
+        } catch (e) { 
+            console.error('Asset PDF Export Error:', e);
+            this.showNotification("Failed to export PDF: " + (e.message || 'Unknown error'), "error");
+        } finally { 
+            this.isLoading = false; 
+        }
+    },
+
+    async importCSV(event, type) {
+        const XLSX = await loadXLSX();
+        const file = event.target.files[0];
+        if (!file) return;
+        this.isLoading = true;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const bstr = e.target.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const data = XLSX.utils.sheet_to_json(ws);
+
+                this.importProgress = 0;
+                let count = 0;
+                const total = data.length;
+
+                for (let i = 0; i < total; i++) {
+                    const row = data[i];
+                    const id = row.EquipmentID || row.PartID || row.LogID || row.id || row.ID || (type.toUpperCase() + "-" + Date.now());
+                    
+                    let dataToSave = {};
+                    if (type === 'perf') {
+                        dataToSave = {
+                            id: String(id),
+                            date: row.date || row.Date || new Date().toISOString().split('T')[0],
+                            equipmentId: row.equipmentId || row.AssetID || '',
+                            area: row.area || row.Area || '',
+                            wh: parseFloat(row.wh || 0),
+                            bd: parseFloat(row.bd || 0),
+                            stb: parseFloat(row.stb || 0),
+                            paPlan: parseFloat(row.paPlan || 90),
+                            rca: row.rca || 'None',
+                            type: row.type || 'Unscheduled',
+                            category: row.category || 'Mechanical',
+                            freq: row.freq !== undefined ? parseInt(row.freq) : (parseFloat(row.bd) > 0 ? 1 : 0),
+                            remarks: row.remarks || '',
+                            events: row.events ? (typeof row.events === 'string' ? (tryParseJSON(row.events) || []) : row.events) : []
+                        };
+                    } else if (type === 'equip') {
+                        dataToSave = {
+                            EquipmentID: String(id), Nama: row.Nama || '', Tipe: row.Tipe || 'Other',
+                            Lokasi: row.Lokasi || '', Status: row.Status || 'Active', SerialNumber: row.SerialNumber || '',
+                            Criticality: row.Criticality || 'Medium', NextPMDate: row.NextPMDate || '',
+                            TglInstalasi: row.TglInstalasi || '', Vendor: row.Vendor || '', FotoURL: row.FotoURL || ''
+                        };
+                    } else if (type === 'parts') {
+                        // Multi-link support in CSV: EquipmentIDs can be comma separated string
+                        let equipIds = [];
+                        if (row.EquipmentIDs) {
+                            equipIds = typeof row.EquipmentIDs === 'string' ? row.EquipmentIDs.split(',').map(s => s.trim()) : [row.EquipmentIDs];
+                        } else if (row.EquipmentID) {
+                            equipIds = [row.EquipmentID];
+                        }
+
+                        dataToSave = {
+                            PartID: String(id), NamaPart: row.NamaPart || '', NamaSingkat: row.NamaSingkat || '',
+                            PartNumber: row.PartNumber || '', EquipmentIDs: equipIds,
+                            EquipmentID: equipIds.length > 0 ? equipIds[0] : (row.EquipmentID || ''), 
+                            Stok: parseFloat(row.Stok || 0), MinStock: parseFloat(row.MinStock || 0),
+                            Lokasi: row.Lokasi || '', Vendor: row.Vendor || '', Harga: parseFloat(row.Harga || 0), FotoURL: row.FotoURL || ''
+                        };
+                    } else if (type === 'logs') {
+                        dataToSave = {
+                            LogID: String(id), EquipmentID: row.EquipmentID || '', Tanggal: row.Tanggal || '',
+                            Jenis: row.Jenis || 'PM', Deskripsi: row.Deskripsi || '', Technician: row.Technician || '',
+                            PartsUsed: row.PartsUsed ? (typeof row.PartsUsed === 'string' ? tryParseJSON(row.PartsUsed, []) : row.PartsUsed) : [],
+                            Downtime: parseFloat(row.Downtime || 0), Cost: parseFloat(row.Cost || 0),
+                            Status: row.Status || 'Completed', HM: row.HM || '', Catatan: row.Catatan || '',
+                            PhotoURLs: row.PhotoURLs ? (typeof row.PhotoURLs === 'string' ? tryParseJSON(row.PhotoURLs, []) : row.PhotoURLs) : [],
+                            rca: row.rca || 'PM'
+                        };
+                    }
+                    
+                    const node = type === 'perf' ? 'Performance' : type === 'equip' ? 'Equipment' : type === 'parts' ? 'SpareParts' : 'HistoryLog';
+                    await window.set(window.ref(window.db, `${node}/${id}`), dataToSave);
+                    count++;
+                    this.importProgress = Math.round(((i + 1) / total) * 100);
+                }
+                this.showNotification(`Successfully processed ${count} records`);
+                setTimeout(() => { this.importProgress = 0; }, 2000);
+            } catch (err) {
+                console.error('Import Error:', err);
+                this.showNotification("Import failed: " + err.message, "error");
+            } finally {
+                this.isLoading = false;
+                event.target.value = "";
+                // Reset progress after a short delay if it's stuck
+                if (this.importProgress >= 100) {
+                    setTimeout(() => { this.importProgress = 0; }, 2000);
+                } else {
+                    this.importProgress = 0;
+                }
+            }
+        };
+        reader.readAsBinaryString(file);
+    }
+};

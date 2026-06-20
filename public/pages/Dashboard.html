@@ -1,0 +1,51 @@
+<!-- 🏠 PAGE: DASHBOARD -->
+<div x-cloak class="space-y-4 md:space-y-6">
+  <!-- Stats Cards Grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+    <template x-for="stat in Object.values(calculatedStats)">
+      <div class="card-modern p-4 md:p-5 border-t-2 overflow-hidden relative" :style="'border-top-color: ' + getStatColor(stat.color)">
+        <div class="absolute -right-2 md:-right-4 -top-2 md:-top-4 w-10 md:w-16 h-10 md:h-16 opacity-5 rotate-12">
+          <i class="fas fa-microchip text-3xl md:text-6xl"></i>
+        </div>
+        <p class="text-nexus-accent/60 text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] mb-1 md:mb-2" x-text="stat.label"></p>
+        <p class="text-xl md:text-3xl font-black text-white nexus-glow-text" x-text="stat.value"></p>
+        <div class="mt-2 md:mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full bg-nexus-accent shadow-[0_0_10px_rgba(0,242,255,0.5)]" style="width: 70%"></div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- 📊 DASHBOARD CHARTS -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+    <!-- Asset Distribution Chart -->
+    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col">
+      <h3 class="font-bold mb-3 md:mb-4 text-white flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest">
+        <i class="fas fa-atom text-nexus-accent"></i> Asset Distribution
+      </h3>
+      <div class="flex-1 relative min-h-[150px] md:min-h-[200px]">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+
+    <!-- OpEx Tracker Chart -->
+    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col">
+      <h3 class="font-bold mb-3 md:mb-4 text-white flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest">
+        <i class="fas fa-credit-card text-nexus-purple"></i> OpEx Tracker
+      </h3>
+      <div class="flex-1 relative min-h-[150px] md:min-h-[200px]">
+        <canvas id="costChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Reliability Trend Chart -->
+    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col xl:col-span-2">
+      <h3 class="font-bold mb-3 md:mb-4 text-white flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest">
+        <i class="fas fa-chart-line text-nexus-accent"></i> Reliability Trend (PA Avg)
+      </h3>
+      <div class="flex-1 relative min-h-[150px] md:min-h-[200px]">
+        <canvas id="reliabilityChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>

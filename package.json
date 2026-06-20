@@ -1,0 +1,36 @@
+{
+  "name": "mtc-asset",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "backup": "node scripts/backup.js",
+    "backup:firebase": "node scripts/backup-firebase.js",
+    "backup:quick": "scripts/backup.bat",
+    "deploy": "firebase deploy --only hosting",
+    "deploy:all": "firebase deploy"
+  },
+  "devDependencies": {
+    "vite": "^8.0.8",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.5"
+  },
+  "dependencies": {
+    "alpinejs": "^3.15.11",
+    "autoprefixer": "^10.5.0",
+    "chart.js": "^4.5.1",
+    "firebase": "^12.12.0",
+    "html5-qrcode": "^2.3.8",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "postcss": "^8.5.10",
+    "qrcode": "^1.5.4",
+    "tailwindcss": "^3.4.19",
+    "xlsx": "^0.18.5"
+  }
+}

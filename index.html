@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>MTC-ASSET | Industrial Maintenance Management</title>
+  <meta name="description"
+    content="Professional maintenance tracking and asset management for industrial equipment. Integrated with Firebase and PWA support.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/src/css/style.css">
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="theme-color" content="#05070a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/logo.png">
+
+  <!-- Main Application Entry -->
+  <script type="module" src="/src/main.js"></script>
+
+  <!-- Emergency Global Fallbacks (Prevents ReferenceErrors) -->
+  <script>
+    window.isLoggedIn = false;
+    window.isLoading = false;
+    window.loginForm = { email: '', password: '' };
+    window.loginform = { email: '', password: '' };
+    window.login = function() {
+      if (window.appData && window.appData.login) {
+        window.appData.login();
+      } else {
+        alert("System still initializing... please wait 2 seconds and try again.");
+        location.reload();
+      }
+    };
+  </script>
+
+  <!-- Emergency Theme Script (Prevents flash & caching issues) -->
+  <script>
+      (function () {
+        const isDark = localStorage.getItem('darkMode') === 'true'; // Default to light (soft clean)
+        if (isDark) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+  </script>
+
+
+</head>
+
+<body x-data="app()" class="selection:bg-nexus-accent/30">
+
+  <!-- 🛡️ LOGIN SCREEN OVERLAY -->
+  <div x-show="!isLoggedIn" class="fixed inset-0 z-[200] bg-nexus-black flex items-center justify-center p-4">
+    <div class="w-full max-w-md space-y-8 p-10 card-modern border-nexus-accent/20">
+      <div class="text-center">
+        <div class="w-20 h-20 gold-gradient rounded-2xl flex items-center justify-center text-nexus-black text-4xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(0,242,255,0.3)] animate-pulse-nexus overflow-hidden">
+          <img src="/logo.png" alt="MTC" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerText='MTC'">
+        </div>
+        <h2 class="text-3xl font-black text-nexus-text tracking-tight nexus-glow-text">System Access</h2>
+        <p class="text-nexus-accent/60 mt-2 font-medium uppercase tracking-[0.2em] text-xs">MTC ASSET | INTERFACE</p>
+      </div>
+      <form @submit.prevent="login()" class="space-y-6">
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Authentication ID</label>
+          <input type="email" x-model="loginForm.email" required placeholder="name@planner.com" class="w-full p-4 glass">
+        </div>
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Secure Key</label>
+          <input type="password" x-model="loginForm.password" required placeholder="••••••••" class="w-full p-4 glass">
+        </div>
+        <button type="submit" :disabled="isLoading"
+          class="w-full gold-gradient font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black disabled:opacity-50 disabled:cursor-not-allowed"
+          x-html="isLoading ? '<span class=\'flex items-center justify-center gap-3\'><svg class=\'animate-spin w-5 h-5\' viewBox=\'0 0 24 24\' fill=\'none\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>INITIALIZING...</span>' : 'Initialize Dashboard'">
+        </button>
+      </form>
+      <div class="text-center pt-4">
+        <p class="text-[10px] text-slate-600 uppercase tracking-widest">Quantum Encryption Active</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="fixed top-6 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+    <template x-for="note in notifications" :key="note.id">
+      <div x-show="!note.exiting"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-[50px] scale-90"
+        x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+        x-transition:leave="transition ease-in duration-200" 
+        x-transition:leave-start="opacity-100 scale-100 translate-x-0"
+        x-transition:leave-end="opacity-0 scale-90 translate-x-[50px]"
+        :class="note.color"
+        class="px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[320px] max-w-[400px] pointer-events-auto border backdrop-blur-xl">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0" :class="note.color.replace('bg-', 'bg-').replace('text-', 'text-') + '/30'">
+          <i :class="'fas ' + note.icon"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-[9px] uppercase font-black opacity-70 tracking-widest mb-1" x-text="note.type"></p>
+          <p x-text="note.message" class="text-sm font-bold leading-tight"></p>
+        </div>
+        <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 300)" class="w-6 h-6 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity">
+          <i class="fas fa-times text-xs"></i>
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <!-- Notification Panel -->
+  <div x-show="showNotifications" x-cloak class="fixed inset-0 z-[250] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showNotifications = false">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+      class="w-full max-w-md card-modern p-6 border-nexus-accent/30 max-h-[80vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-black text-white nexus-glow-text">Notifications</h3>
+        <button @click="showNotifications = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div x-show="notifications.length === 0" class="text-center py-8 text-slate-500">
+        <i class="fas fa-bell-slash text-4xl mb-4 opacity-30"></i>
+        <p>No notifications</p>
+      </div>
+      <div class="space-y-3">
+        <template x-for="note in notifications" :key="note.id">
+          <div :class="note.color" class="p-4 rounded-xl border flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0">
+              <i :class="'fas ' + note.icon"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[8px] uppercase font-black opacity-70 tracking-widest" x-text="note.type"></p>
+              <p x-text="note.message" class="text-sm font-bold truncate"></p>
+            </div>
+            <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 300)" class="w-6 h-6 flex items-center justify-center opacity-50 hover:opacity-100">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Work Order Modal -->
+  <div x-show="showRejectModal" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+      class="w-full max-w-md card-modern p-6 border-rose-500/30">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <i class="fas fa-times-circle text-rose-500 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-black text-white nexus-glow-text">Reject Work Order</h3>
+        <p class="text-slate-400 text-sm mt-2">Please provide a reason for rejecting this Work Order.</p>
+      </div>
+      <div class="mb-4">
+        <textarea x-model="rejectReason" placeholder="Rejection reason..." class="w-full p-4 glass text-white text-sm placeholder-slate-500" rows="4"></textarea>
+      </div>
+      <div class="flex gap-3">
+        <button @click="showRejectModal = false; rejectReason = ''; activeRejectId = null" class="flex-1 px-4 py-3 rounded-xl glass border-slate-500/20 text-slate-400 font-bold uppercase text-xs tracking-widest hover:bg-slate-500/20 transition-all">
+          Cancel
+        </button>
+        <button @click="rejectWO(activeRejectId, rejectReason); showRejectModal = false" :disabled="!rejectReason.trim()" class="flex-1 px-4 py-3 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold uppercase text-xs tracking-widest hover:bg-rose-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          Reject WO
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create User Modal (Admin Only) -->
+  <div x-show="showCreateUserModal" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+      class="w-full max-w-md card-modern p-6 border-nexus-accent/30">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-nexus-accent/20 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-user-plus text-nexus-accent text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-black text-white nexus-glow-text">Create New User</h3>
+        <p class="text-slate-400 text-sm mt-2">Add a new user to the system</p>
+      </div>
+      <form @submit.prevent="submitCreateUser()" class="space-y-4">
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Email</label>
+          <input type="email" x-model="newUserForm.email" required placeholder="user@company.com" class="w-full p-4 glass">
+        </div>
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Password</label>
+          <input type="password" x-model="newUserForm.password" required placeholder="Min 6 characters" minlength="6" class="w-full p-4 glass">
+        </div>
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Role</label>
+          <select x-model="newUserForm.role" class="w-full p-4 glass">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            <option value="supervisor">Supervisor</option>
+          </select>
+        </div>
+        <div class="flex gap-3">
+          <button type="button" @click="closeCreateUserModal()" class="flex-1 px-4 py-3 rounded-xl glass border-slate-500/20 text-slate-400 font-bold uppercase text-xs tracking-widest hover:bg-slate-500/20 transition-all">
+            Cancel
+          </button>
+          <button type="submit" :disabled="isLoading" class="flex-1 px-4 py-3 rounded-xl bg-nexus-accent/20 border border-nexus-accent/30 text-nexus-accent font-bold uppercase text-xs tracking-widest hover:bg-nexus-accent/30 transition-all disabled:opacity-50">
+            Create User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Management Modal (Admin Only) -->
+  <div x-show="showUserManagement" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+      class="w-full max-w-2xl card-modern p-6 border-nexus-accent/30 max-h-[80vh] overflow-hidden flex flex-col">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-nexus-accent/20 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-users text-nexus-accent text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-black text-white nexus-glow-text">User Management</h3>
+        <p class="text-slate-400 text-sm mt-2">View and manage all users</p>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto space-y-2 mb-4 pr-2">
+        <template x-for="user in allUsers" :key="user.uid">
+          <div class="flex items-center justify-between p-4 glass rounded-xl">
+            <div>
+              <p class="text-white font-bold text-sm" x-text="user.email"></p>
+              <p class="text-slate-500 text-xs">
+                <span class="capitalize" x-text="user.role"></span> | 
+                Created: <span x-text="user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'"></span>
+              </p>
+            </div>
+            <button @click="deleteUser(user.uid)" x-show="user.uid !== this.user?.uid"
+              class="px-3 py-2 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 rounded-lg text-xs transition-all">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </template>
+        <div x-show="allUsers.length === 0" class="text-center text-slate-500 py-8">
+          No users found
+        </div>
+      </div>
+      
+      <button @click="showUserManagement = false" class="w-full px-4 py-3 rounded-xl glass border-slate-500/20 text-slate-400 font-bold uppercase text-xs tracking-widest hover:bg-slate-500/20 transition-all">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div x-show="showDeleteConfirm" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+      class="w-full max-w-md card-modern p-6 border-rose-500/30">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <i class="fas fa-trash-alt text-rose-500 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-black text-white nexus-glow-text">Confirm Delete</h3>
+        <p class="text-slate-400 text-sm mt-2">Are you sure you want to delete this item? This action cannot be undone.</p>
+      </div>
+      <div class="flex gap-3">
+        <button @click="showDeleteConfirm = false; deleteConfirmCallback?.cancel?.()" class="flex-1 px-4 py-3 rounded-xl glass border-slate-500/20 text-slate-400 font-bold uppercase text-xs tracking-widest hover:bg-slate-500/20 transition-all">
+          Cancel
+        </button>
+        <button @click="showDeleteConfirm = false; deleteConfirmCallback?.confirm?.()" class="flex-1 px-4 py-3 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold uppercase text-xs tracking-widest hover:bg-rose-500/30 transition-all">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Boundary Modal -->
+  <div x-show="hasError" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 flex items-center justify-center p-4">
+    <div class="w-full max-w-md card-modern p-8 border-rose-500/30">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-exclamation-triangle text-rose-500 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-black text-white nexus-glow-text">Error Occurred</h3>
+        <p class="text-rose-400 text-sm mt-2" x-text="errorMessage"></p>
+      </div>
+      <div x-show="errorDetails" class="mb-6 p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
+        <p class="text-[10px] text-rose-400/60 font-mono" x-text="errorDetails"></p>
+      </div>
+      <div class="flex gap-3">
+        <button @click="clearError()" class="flex-1 btn-nexus-small">
+          <i class="fas fa-times"></i> Dismiss
+        </button>
+        <button @click="systemReset()" class="flex-1 btn-nexus-small bg-rose-500/20 border-rose-500/30 text-rose-400">
+          <i class="fas fa-sync"></i> Reload
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar (Desktop) -->
+  <nav x-show="isLoggedIn" x-cloak 
+    :class="sidebarCollapsed ? 'w-24' : 'w-72'"
+    class="fixed left-0 top-0 h-full bg-nexus-black/40 backdrop-blur-2xl hidden lg:flex flex-col p-6 z-50 border-r border-white/5 shadow-2xl transition-all duration-300">
+    
+    <!-- Sidebar Toggle (Floating) -->
+    <button @click="sidebarCollapsed = !sidebarCollapsed" 
+      class="absolute -right-3 top-20 w-6 h-6 bg-nexus-accent rounded-full flex items-center justify-center text-nexus-black shadow-lg border border-white/10 hover:scale-110 transition-all z-[60]">
+      <i class="fas" :class="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'" style="font-size: 10px"></i>
+    </button>
+
+    <div class="flex items-center gap-4 mb-8 group cursor-pointer overflow-hidden">
+      <div
+        class="w-12 h-12 gold-gradient rounded-2xl flex items-center justify-center text-nexus-black font-bold text-xl shadow-[0_0_20px_rgba(0,242,255,0.3)] overflow-hidden transition-transform group-hover:rotate-6 shrink-0">
+        <img src="/logo.png" alt="MTC" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerText='MTC'">
+      </div>
+      <div x-show="!sidebarCollapsed" x-transition>
+        <h1 class="text-xl font-black text-white tracking-tighter leading-none">MTC<span class="gold-text"> ASSET</span></h1>
+        <p class="text-[8px] text-nexus-accent/40 font-black uppercase tracking-[0.3em] mt-1">Page: <span x-text="currentPage"></span></p>
+      </div>
+    </div>
+
+    <!-- Notification Bell -->
+    <button @click="showNotifications = !showNotifications" class="relative p-3 rounded-xl text-slate-400 hover:text-nexus-accent hover:bg-white/5 transition-all mb-4">
+      <i class="fas fa-bell text-lg"></i>
+      <span x-show="notifications.length > 0" x-text="notifications.length" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"></span>
+    </button>
+
+    <div class="space-y-2 flex-1">
+      <template x-for="item in menuItems.filter(m => isAdmin || (m.id !== 'perf' && m.id !== 'kpi' && m.id !== 'ai'))">
+        <div @click="currentPage = item.id"
+          :class="currentPage === item.id ? 'bg-nexus-accent/10 text-nexus-accent border-r-2 border-nexus-accent' : 'text-slate-500 hover:bg-white/5 hover:text-nexus-accent'"
+          class="flex items-center gap-3 md:gap-4 p-3 md:p-4 cursor-pointer rounded-2xl transition-all duration-300 group relative overflow-hidden">
+          <i :class="item.icon" class="w-5 md:w-6 text-center text-base md:text-lg group-hover:scale-110 transition-transform"></i>
+          <span x-show="!sidebarCollapsed" x-transition x-text="item.name" class="font-black text-[9px] md:text-[11px] uppercase tracking-widest whitespace-nowrap"></span>
+          <div x-show="currentPage === item.id" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 md:h-6 bg-nexus-accent rounded-r-full shadow-[0_0_10px_#00f2ff]"></div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Sidebar Footer / Logout -->
+    <div class="mt-auto pt-4 md:pt-6 border-t border-white/5 space-y-1 md:space-y-2 overflow-hidden">
+      <!-- Create User Button (Admin Only) -->
+      <button x-show="isAdmin" @click="loadAllUsers(); openCreateUserModal()"
+        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-nexus-accent hover:bg-nexus-accent/10 rounded-xl transition-all group">
+        <i class="fas fa-user-plus w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[9px] md:text-[11px] uppercase tracking-widest">Add User</span>
+      </button>
+      <!-- Manage Users Button (Admin Only) -->
+      <button x-show="isAdmin" @click="loadAllUsers(); showUserManagement = true"
+        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-nexus-accent hover:bg-nexus-accent/10 rounded-xl transition-all group">
+        <i class="fas fa-users w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[9px] md:text-[11px] uppercase tracking-widest">Manage Users</span>
+      </button>
+      <button @click="logout()" 
+        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group">
+        <i class="fas fa-sign-out-alt w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[9px] md:text-[11px] uppercase tracking-widest">Logout</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 📱 MAIN INTERFACE -->
+  <main x-show="isLoggedIn" x-cloak 
+    :class="sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-72'"
+    class="pb-16 lg:pb-0 transition-all duration-500">
+    <!-- ⚡ HEADER / STATUS BAR -->
+    <header class="p-4 md:p-6 lg:p-8 glass sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 lg:px-12 border-b border-white/5 backdrop-blur-3xl shadow-xl">
+<div class="flex items-center gap-3 md:gap-6">
+          <div class="lg:hidden w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl gold-gradient flex items-center justify-center text-nexus-black shadow-lg">
+             <i class="fas fa-atom text-base md:text-lg"></i>
+          </div>
+          <h2 class="text-lg md:text-2xl lg:text-3xl font-black text-white nexus-glow-text tracking-tighter uppercase" x-text="menuItems.find(i => i.id === currentPage)?.name"></h2>
+          <!-- DEBUG: Show currentPage value -->
+          <span x-show="isLoggedIn" class="text-xs text-yellow-400 ml-2">[debug: <span x-text="currentPage"></span>]</span>
+        </div>
+
+      <div class="flex items-center gap-2 md:gap-3">
+        <!-- Offline Banner (Mobile) -->
+        <div x-show="!isOnline" x-cloak class="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-[10px] font-black py-2 px-4 flex items-center justify-center gap-2 lg:hidden">
+          <i class="fas fa-wifi-slash"></i> OFFLINE - Changes will sync when online
+        </div>
+        <!-- Connection Status - Modern Design (All Screens) -->
+        <div class="flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider"
+          :class="isOnline ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+          :title="isOnline ? 'Online - Data synced' : 'Offline - Changes queued'">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse"
+            :class="isOnline ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-rose-400 shadow-[0_0_6px_#fb7185]'">
+          </span>
+          <span class="hidden sm:inline" x-text="isOnline ? 'LIVE' : 'OFF'"></span>
+        </div>
+        <button @click="toggleDarkMode()" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/10 transition-colors">
+          <i :class="darkMode ? 'fas fa-sun text-sm' : 'fas fa-moon text-sm'"></i>
+        </button>
+        <button @click="refreshData()" title="Refresh Data" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:text-nexus-accent transition-colors">
+          <i class="fas fa-sync-alt text-sm"></i>
+        </button>
+        <button @click="systemReset()" title="Reset System" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent/40 flex items-center justify-center hover:text-nexus-accent transition-colors">
+          <i class="fas fa-broom text-sm"></i>
+        </button>
+        <button @click="openQR()"
+          class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent hover:bg-nexus-accent hover:text-nexus-black transition-all flex items-center justify-center">
+          <i class="fas fa-qrcode text-sm"></i>
+        </button>
+        <button @click="logout()"
+          class="lg:hidden w-9 md:w-10 h-9 md:h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center hover:bg-rose-500/20 transition-all">
+          <i class="fas fa-sign-out-alt text-xs md:text-sm"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="p-4 md:p-6 lg:p-8 w-full max-w-[1920px] mx-auto"
+      :class="!isOnline ? 'mt-8' : 'mt-0'">
+
+      <!-- Loading Overlay -->
+      <div x-show="isLoading"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-[100] bg-nexus-black/90 flex items-center justify-center backdrop-blur-md">
+        <div class="text-center">
+          <div class="relative w-20 h-20 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-nexus-accent/20 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-transparent border-t-nexus-accent rounded-full animate-spin"></div>
+            <div class="absolute inset-2 border-4 border-transparent border-b-nexus-purple rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 0.8s"></div>
+          </div>
+          <p class="text-white font-black tracking-[0.3em] text-[10px] uppercase nexus-glow-text mb-2">Syncing with Nexus</p>
+          <div class="flex justify-center gap-1">
+            <div class="w-2 h-2 bg-nexus-accent rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+            <div class="w-2 h-2 bg-nexus-accent rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+            <div class="w-2 h-2 bg-nexus-accent rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🏠 PAGE: DASHBOARD (Dynamic Component) -->
+      <template x-if="currentPage === 'dash'">
+        <div x-page="'Dashboard'"></div>
+      </template>
+
+      <!-- PAGE: EQUIPMENT (Already updated) -->
+      
+      <!-- 🔍 PAGE: DETAIL EQUIPMENT (Dynamic Component) -->
+      <div x-show="currentPage === 'detail'" x-page="'EquipmentDetail'"></div>
+
+
+    <!-- 🔧 PAGE: EQUIPMENT (Dynamic Component) -->
+    <div x-show="currentPage === 'equip'" x-page="'Equipment'"></div>
+
+
+    <!-- 📜 PAGE: ALL LOGS / ACTIVITY STREAM (Dynamic Component) -->
+    <div x-show="currentPage === 'hist'" x-page="'AllLogs'"></div>
+
+
+    <!-- 📋 PAGE: WORK ORDERS (Dynamic Component) -->
+    <div x-show="currentPage === 'wo'" x-page="'WorkOrders'"></div>
+
+
+
+    <!-- 🔧 PAGE: SPARE PARTS (Dynamic Component) -->
+    <div x-show="currentPage === 'parts'" x-page="'SpareParts'"></div>
+
+
+    <!-- 📈 PAGE: PERFORMANCE TRACKER (Dynamic Component) -->
+    <div x-show="currentPage === 'perf'" x-page="'Performance'"></div>
+
+
+    <!-- 📊 PAGE: KPI ANALYTICS (Dynamic Component) -->
+    <template x-if="currentPage === 'kpi'">
+      <div x-page="'KPI'"></div>
+    </template>
+
+
+    <!-- 🤖 PAGE: AI ANALYSIS (Dynamic Component) -->
+    <template x-if="currentPage === 'ai'">
+      <div x-page="'AI'"></div>
+    </template>
+
+
+      <!-- API Settings Modal -->
+      <div x-show="showAPISettings" x-cloak class="fixed inset-0 z-[250] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showAPISettings = false">
+        <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+          x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+          class="w-full max-w-md card-modern p-6 border-green-500/30 max-h-[80vh] overflow-y-auto" style="background: linear-gradient(135deg, #1a2e1a 0%, #0d1f0d 100%);">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-black text-white nexus-glow-text">Ajeng Settings</h3>
+            <button @click="showAPISettings = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Provider</label>
+              <select x-model="aiProvider" @change="updateModelOptions()" class="w-full p-3 glass rounded-lg">
+                <option value="openai">OpenAI</option>
+                <option value="claude">Claude</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Model</label>
+              <select x-model="aiModel" class="w-full p-3 glass rounded-lg">
+                <template x-for="opt in aiModelOptions" :key="opt.value">
+                  <option :value="opt.value" x-text="opt.label"></option>
+                </template>
+              </select>
+              <input x-show="aiModel === '__custom__'" type="text" x-model="customModelInput" placeholder="model-id (contoh: openai/gpt-4o)" class="w-full p-3 glass rounded-lg mt-2">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">API Keys (Max 5 - Auto Rotate)</label>
+              <div class="space-y-2">
+                <input type="password" x-model="aiApiKeyInput1" placeholder="API Key 1 (utama)" class="w-full p-3 glass rounded-lg text-sm"></input>
+                <input type="password" x-model="aiApiKeyInput2" placeholder="API Key 2 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
+                <input type="password" x-model="aiApiKeyInput3" placeholder="API Key 3 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
+                <input type="password" x-model="aiApiKeyInput4" placeholder="API Key 4 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
+                <input type="password" x-model="aiApiKeyInput5" placeholder="API Key 5 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
+              </div>
+              <p class="text-[9px] text-slate-500 mt-2">Isi beberapa API key untuk failover otomatis jika limit tercapai</p>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button @click="saveAIWithCustomModel()" class="btn-nexus flex-1">
+              <i class="fas fa-check mr-2"></i> Save
+            </button>
+            <button @click="showAPISettings = false" class="btn-nexus-small">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav x-show="isLoggedIn" x-cloak
+    class="fixed bottom-0 left-0 w-full glass border-t border-nexus-accent/20 lg:hidden flex justify-around py-1 px-1 z-50 bg-nexus-black/95 backdrop-blur-lg h-12">
+    <template x-for="item in menuItems.filter(i => i.mobile && (isAdmin || (i.id !== 'perf' && i.id !== 'kpi' && i.id !== 'ai')))">
+      <div @click="currentPage = item.id" :class="currentPage === item.id ? 'text-nexus-accent' : 'text-slate-500'"
+        class="flex flex-col items-center justify-center cursor-pointer transition-all p-1 h-full aspect-square">
+        <i :class="item.icon" class="text-base"></i>
+      </div>
+    </template>
+  </nav>
+
+
+  <!-- 📦 MODAL: ASSET CONFIGURATION -->
+  <template x-if="showEquipModal">
+    <div x-cloak
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-all"
+      x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+    <div class="card-modern w-full max-w-2xl p-10 rounded-[2.5rem] max-h-[90vh] overflow-y-auto border-nexus-accent/20">
+      <div class="flex justify-between items-center mb-10">
+        <h3 class="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tighter">
+          <i class="fas fa-microchip text-nexus-accent"></i>
+          <span x-text="isEditingEquip ? 'Reconfigure Asset' : 'Initialize Asset'"></span>
+        </h3>
+        <button @click="showEquipModal = false" class="btn-nexus-close"><i class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitEquipment()" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Asset Identifier</label>
+          <input type="text" x-model="equipForm.id" required placeholder="NEXUS-XXX" :readonly="isEditingEquip"
+            class="w-full p-4 glass">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Designation Name</label>
+          <input type="text" x-model="equipForm.nama" required placeholder="System Node Name"
+            class="w-full p-4 glass">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Classification</label>
+          <select x-model="equipForm.tipe"
+            class="w-full p-4 glass">
+            <option>Crusher</option>
+            <option>Ball Mill</option>
+            <option>Thickener</option>
+            <option>Furnace</option>
+            <option>Pump</option>
+            <option>Conveyor</option>
+            <option>Generator</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operation Sector</label>
+          <input type="text" x-model="equipForm.lokasi" placeholder="Area Coordinate"
+            class="w-full p-4 glass">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operational Status</label>
+          <select x-model="equipForm.status"
+            class="w-full p-4 glass">
+            <option value="Active">Operational</option>
+            <option value="In Maintenance">Under Repair</option>
+            <option value="Idle">Standby</option>
+            <option value="Decommissioned">Offline</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Criticality Level</label>
+          <select x-model="equipForm.criticality"
+            class="w-full p-4 glass">
+            <option value="High">Priority Alpha</option>
+            <option value="Medium">Priority Beta</option>
+            <option value="Low">Priority Gamma</option>
+          </select>
+        </div>
+        
+        <!-- Asset Photo Upload -->
+        <div class="md:col-span-2">
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Visual Signature</label>
+          <div class="flex items-center gap-6 glass p-6 rounded-3xl border-nexus-accent/10">
+            <div class="w-28 h-28 rounded-2xl bg-white/5 overflow-hidden border-2 border-dashed border-nexus-accent/20 flex items-center justify-center relative group">
+              <template x-if="equipForm.foto">
+                <img :src="equipForm.foto" class="w-full h-full object-cover">
+              </template>
+              <template x-if="!equipForm.foto">
+                <i class="fas fa-camera text-nexus-accent/20 text-3xl"></i>
+              </template>
+              <label class="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 bg-nexus-accent/20 flex items-center justify-center transition-opacity">
+                <i class="fas fa-upload text-white"></i>
+                <input type="file" @change="handleEquipPhoto($event)" class="hidden" accept="image/*">
+              </label>
+            </div>
+            <div class="flex-1">
+              <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Capture Optical Data</p>
+              <p class="text-[9px] text-slate-600 mt-1">JPEG/PNG high-resolution formats supported.</p>
+              <button type="button" x-show="equipForm.foto" @click="equipForm.foto = ''" class="text-rose-400 text-[9px] font-black uppercase mt-3 tracking-widest flex items-center gap-2"><i class="fas fa-trash-alt"></i> Purge Image</button>
+            </div>
+          </div>
+        </div>
+        <button type="submit"
+          class="md:col-span-2 gold-gradient font-black tracking-[0.3em] p-6 rounded-2xl shadow-[0_0_20px_rgba(0,242,255,0.3)] mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black"
+          x-text="isEditingEquip ? 'Update Neural Configuration' : 'Authorize Deployment'"></button>
+      </form>
+    </div>
+  </div>
+  </template>
+
+
+  <template x-if="showPartModal">
+    <div x-cloak
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-opacity">
+    <div class="card-modern w-full max-w-lg p-10 rounded-[3rem] shadow-2xl border-nexus-accent/20">
+      <div class="flex justify-between items-center mb-10">
+        <h3 class="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tighter"><i
+            class="fas fa-box-open text-nexus-accent"></i> <span
+            x-text="isEditingPart ? 'Sync Component' : 'Register Component'"></span></h3>
+        <button @click="showPartModal = false"
+          class="text-slate-500 hover:text-nexus-accent w-12 h-12 rounded-2xl glass flex items-center justify-center transition-all"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitSparePart()" class="space-y-6">
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Identifier</label>
+            <input type="text" x-model="partForm.id" required placeholder="SKU-XXXX" :readonly="isEditingPart"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Component Name</label>
+            <input type="text" x-model="partForm.nama" required placeholder="Nomenclature"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Brief Designation</label>
+            <input type="text" x-model="partForm.namaSingkat" placeholder="Alias"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Number</label>
+            <input type="text" x-model="partForm.partNumber" placeholder="Mfr P/N"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Neural Links (Associated Assets)</label>
+          <div class="glass p-4 rounded-2xl max-h-48 overflow-y-auto border border-nexus-accent/10 space-y-2">
+            <template x-for="e in equipment" :key="e.EquipmentID">
+              <label class="flex items-center gap-3 p-2 hover:bg-nexus-accent/5 rounded-xl cursor-pointer transition-colors group">
+                <input type="checkbox" :value="e.EquipmentID" x-model="partForm.equipIds" 
+                  class="w-4 h-4 rounded border-nexus-accent/20 bg-nexus-black text-nexus-accent focus:ring-nexus-accent/50">
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] font-black text-nexus-text truncate" x-text="e.Nama"></p>
+                  <p class="text-[8px] text-nexus-accent/60 font-mono" x-text="e.EquipmentID"></p>
+                </div>
+              </label>
+            </template>
+            <div x-show="equipment.length === 0" class="text-center py-4 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+               No asset nodes detected
+            </div>
+          </div>
+          <p class="text-[8px] text-slate-500 mt-2 px-1 uppercase tracking-widest font-bold">Part will be visible and accessible across all selected system nodes.</p>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Current Stock</label>
+            <input type="number" x-model="partForm.stok" placeholder="0" min="0"
+              class="w-full p-3 glass text-xs font-bold text-center">
+          </div>
+          <div>
+            <label class="text-[9px] text-rose-400/60 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Safety Level</label>
+            <input type="number" x-model="partForm.minStock" placeholder="0" min="0"
+              class="w-full p-3 glass text-xs font-bold text-center text-rose-400 border border-rose-500/20 rounded-xl">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Unit Price (IDR)</label>
+            <input type="number" x-model="partForm.harga" placeholder="0" min="0"
+              class="w-full p-3 glass text-xs font-bold text-center">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Storage Sector</label>
+            <input type="text" x-model="partForm.lokasi" placeholder="Warehouse"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Vendor</label>
+            <input type="text" x-model="partForm.vendor" placeholder="Supplier"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+        </div>
+        <!-- Lifetime Tracking -->
+        <div class="mt-4 pt-4 border-t border-nexus-accent/10">
+          <h4 class="text-[10px] text-nexus-accent font-black uppercase tracking-widest mb-3">⚡ Lifetime Settings</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Last Replaced</label>
+              <input type="date" x-model="partForm.lastReplaceDate"
+                class="w-full p-3 glass text-xs font-bold">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Avg Lifetime (Days)</label>
+              <input type="number" x-model="partForm.avgLifetimeDays" placeholder="365" min="1"
+                class="w-full p-3 glass text-xs font-bold text-center">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Usage Hours</label>
+              <input type="number" x-model="partForm.usageHours" placeholder="0" min="0"
+                class="w-full p-3 glass text-xs font-bold text-center">
+            </div>
+          </div>
+        </div>
+        <button type="submit"
+          class="w-full gold-gradient font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl mt-4 hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black text-xs"
+          x-text="isEditingPart ? 'Update Inventory Matrix' : 'Commit to Database'"></button>
+      </form>
+    </div>
+  </div>
+  </template>
+
+
+  <!-- MODAL: PERFORMANCE LOG -->
+  <template x-if="showPerformanceModal">
+  <div x-cloak
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-opacity">
+    <div class="card-modern w-full max-w-4xl p-8 lg:p-10 rounded-[3rem] shadow-2xl border-nexus-accent/20 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl gold-gradient flex items-center justify-center shadow-lg">
+             <i class="fas fa-chart-line text-nexus-black text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-white uppercase tracking-tighter" x-text="isEditingPerformance ? 'Adjust Metrics' : 'Initialize Performance' "></h3>
+            <p class="text-[9px] text-nexus-accent/40 font-black uppercase tracking-widest">Neural Performance Protocol</p>
+          </div>
+        </div>
+        <button @click="showPerformanceModal = false"
+          class="text-slate-500 hover:text-nexus-accent w-10 h-10 rounded-xl glass flex items-center justify-center transition-all"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitPerformance()" class="space-y-6">
+        <!-- Section: Basic Info -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-1">
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
+            <input type="date" x-model="performanceForm.date" required id="perf-date" name="perf-date"
+              class="w-full p-3 glass text-xs font-bold text-white">
+          </div>
+          <div class="md:col-span-1">
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Asset Index</label>
+            <select x-model="performanceForm.equipmentId" required id="perf-equip" name="perf-equip"
+              class="w-full p-3 glass text-xs font-bold text-white">
+              <option value="" disabled>-- Select Asset Node --</option>
+              <template x-for="e in equipment">
+                <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+              </template>
+            </select>
+          </div>
+          <div class="md:col-span-1">
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Ops Area</label>
+            <input type="text" x-model="performanceForm.area" placeholder="Zone/Pit"
+              class="w-full p-3 glass text-xs font-bold">
+          </div>
+        </div>
+        
+        <!-- Section: Operational Metrics -->
+        <div class="p-6 glass rounded-3xl border border-white/5">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div>
+              <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">Work (WH)</label>
+              <input type="number" x-model="performanceForm.wh" step="0.01" @input="updatePerfHours('wh')"
+                class="w-full p-3 glass font-black text-white text-center text-sm">
+            </div>
+            <div>
+              <label class="text-[8px] text-rose-400/60 uppercase font-black mb-2 block text-center">Total Down</label>
+              <input type="number" x-model="performanceForm.bd" step="0.01" readonly
+                class="w-full p-3 glass font-black text-rose-400 text-center text-sm opacity-60">
+            </div>
+            <div>
+              <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">Standby</label>
+              <input type="number" x-model="performanceForm.stb" step="0.01" @input="updatePerfHours('stb')"
+                class="w-full p-3 glass font-black text-white text-center text-sm">
+            </div>
+            <div>
+              <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">BD Freq</label>
+              <input type="number" x-model="performanceForm.freq" readonly
+                class="w-full p-3 glass font-black text-white text-center text-sm opacity-60">
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="text-[8px] text-nexus-accent/60 uppercase font-black mb-2 block text-center">Target PA%</label>
+              <input type="number" x-model="performanceForm.paPlan"
+                class="w-full p-3 glass font-black text-nexus-accent text-center text-sm">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Breakdown Events -->
+        <div class="glass p-6 rounded-[2rem] border border-rose-500/10 space-y-4">
+          <div class="flex justify-between items-center">
+            <h4 class="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] flex items-center gap-2">
+              <i class="fas fa-exclamation-triangle"></i> Breakdown Details
+            </h4>
+            <button type="button" @click="addBDEvent()"
+              class="text-[9px] glass text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-black hover:bg-rose-500/10 transition-all uppercase tracking-widest">+ Add Event</button>
+          </div>
+          
+          <div x-show="performanceForm.events.length === 0" class="text-[9px] text-slate-600 italic text-center py-4 border-2 border-dashed border-white/5 rounded-2xl">
+             NO BREAKDOWNS RECORDED FOR THIS TIMELINE
+          </div>
+          
+          <div class="grid grid-cols-1 gap-4">
+            <template x-for="(event, idx) in performanceForm.events" :key="idx">
+              <div class="p-6 glass border-white/5 rounded-2xl relative group bg-white/[0.02]">
+                <button type="button" @click="removeBDEvent(idx)" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all z-10"><i class="fas fa-times"></i></button>
+                
+                <div class="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4 border-b border-white/5 pb-4">
+                   <select x-model="event.category" class="bg-white/5 p-3 rounded-xl text-xs font-black text-nexus-accent uppercase tracking-widest outline-none w-full md:w-auto">
+                      <option value="Mechanical">Mechanical</option>
+                      <option value="Electrical">Electrical</option>
+                      <option value="Operational">Operational</option>
+                   </select>
+                   <input type="text" x-model="event.component" placeholder="Component (e.g., Valve)..." class="flex-1 w-full bg-white/5 p-3 rounded-xl text-xs font-bold text-white border-none outline-none focus:ring-1 focus:ring-nexus-accent placeholder:text-slate-500">
+                   <div class="md:ml-auto flex items-center gap-2 bg-white/5 p-2 rounded-xl w-full md:w-auto">
+                      <input type="number" x-model="event.duration" step="0.01" @input="updatePerfHours('bd')" class="w-20 bg-transparent text-center text-sm font-bold p-1 outline-none">
+                      <span class="text-xs text-slate-500 uppercase font-black pr-2">Hrs</span>
+                   </div>
+                </div>
+                
+                <input type="text" x-model="event.problem" placeholder="Failure Description..." class="w-full bg-white/5 rounded-xl text-sm border-none p-4 mb-4 placeholder:text-slate-600 focus:ring-1 focus:ring-nexus-accent">
+                
+                <select x-model="event.rca" class="w-full bg-white/5 rounded-xl p-4 text-xs font-bold text-slate-400 border-none outline-none focus:ring-1 focus:ring-nexus-accent">
+                  <option value="Fatigue/Wear">Root Cause: Fatigue / Wear</option>
+                  <option value="Human Error">Root Cause: Human Error</option>
+                  <option value="Design/Quality">Root Cause: Design / Quality</option>
+                  <option value="External Factor">Root Cause: External Factor</option>
+                  <option value="Lack of PM">Root Cause: Lack of PM</option>
+                </select>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block ml-1">Operational Type</label>
+            <select x-model="performanceForm.type" class="w-full p-3 glass text-xs font-bold">
+              <option value="Unscheduled">Emergency (Unsch)</option>
+              <option value="Scheduled">Planned (Sch)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block ml-1">Neural Root Cause (Primary)</label>
+            <select x-model="performanceForm.rca" class="w-full p-3 glass text-xs font-bold">
+              <option value="None">No Anomaly</option>
+              <option value="Human Error">Human Error</option>
+              <option value="Fatigue/Wear">Natural Wear</option>
+              <option value="External Factor">External factor</option>
+              <option value="Design/Quality">Design/Part Quality</option>
+              <option value="Operational Misuse">Operational Misuse</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full gold-gradient font-black tracking-[0.3em] p-6 rounded-2xl shadow-xl mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black"
+          x-text="isEditingPerformance ? 'Apply Corrections' : 'Commit to Neural Base'"></button>
+      </form>
+    </div>
+  </div>
+  </template>
+
+
+  <template x-if="showLogModal">
+  <div x-cloak
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-opacity">
+    <div class="card-modern w-full max-w-4xl p-8 lg:p-10 rounded-[3rem] max-h-[90vh] overflow-y-auto border-nexus-accent/20 shadow-2xl">
+      <div class="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl gold-gradient flex items-center justify-center shadow-lg">
+             <i class="fas fa-clipboard-check text-nexus-black text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-white uppercase tracking-tighter" x-text="isEditingLog ? 'Reconstruct Log' : 'New System Entry'"></h3>
+            <p class="text-[9px] text-nexus-accent/40 font-black uppercase tracking-widest">Maintenance Activity Protocol</p>
+          </div>
+        </div>
+        <button @click="showLogModal = false"
+          class="text-slate-500 hover:text-nexus-accent w-10 h-10 rounded-xl glass flex items-center justify-center transition-all"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <form @submit.prevent="submitLog()" class="space-y-6">
+
+        <div x-show="!isLogDetailView || isEditingLog" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Neural Target (Asset)</label>
+            <select x-model="logForm.equipmentId" required
+              class="w-full p-3 glass text-xs font-bold">
+              <option value="">-- Choose Asset Index --</option>
+              <template x-for="e in equipment">
+                <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+              </template>
+              <option value="EXTERNAL">EXTERNAL - Other / External Request</option>
+            </select>
+            <input x-show="logForm.equipmentId === 'EXTERNAL'" type="text" x-model="logForm.externalEquipName" placeholder="Enter external equipment/asset name..." x-bind:style="logForm.equipmentId === 'EXTERNAL' ? 'display:block' : 'display:none'"
+              class="w-full p-3 glass text-xs font-bold mt-2">
+          </div>
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
+            <input type="date" x-model="logForm.date" required
+              class="w-full p-3 glass text-xs font-bold text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Activity Type</label>
+            <select x-model="logForm.type"
+              class="w-full p-4 glass text-xs font-bold">
+              <option value="PM">Prev. Maintenance (PM)</option>
+              <option value="Repair">Repair</option>
+              <option value="Inspection">Inspection</option>
+              <option value="Breakdown">Breakdown</option>
+              <option value="Calibration">Calibration</option>
+              <option value="Installation">Installation</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Mission Status</label>
+            <select x-model="logForm.status"
+              class="w-full p-4 glass text-xs font-bold">
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Work Order Section -->
+        <div class="mt-6 pt-6 border-t border-nexus-accent/20">
+          <h4 class="text-[10px] text-nexus-accent font-black uppercase tracking-widest mb-4">⚡ Work Order Settings</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Priority Level</label>
+              <select x-model="logForm.woPriority"
+                class="w-full p-4 glass text-xs font-bold">
+                <option value="Planned">Planned - Schedule normally</option>
+                <option value="Normal">Normal - Can wait</option>
+                <option value="Urgent">Urgent - Fix today</option>
+                <option value="Emergency">Emergency - Production stopped</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Assigned Technician</label>
+              <input type="text" x-model="logForm.assignedTo" placeholder="Technician name"
+                class="w-full p-4 glass text-xs font-bold">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Due Date</label>
+              <input type="date" x-model="logForm.dueDate"
+                class="w-full p-4 glass text-xs font-bold">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Est. Hours</label>
+              <input type="number" x-model="logForm.estimatedHours" placeholder="0" min="0"
+                class="w-full p-4 glass text-xs font-bold">
+            </div>
+          </div>
+        </div>
+
+        <!-- Department Request Section -->
+        <div class="mt-6 pt-6 border-t border-nexus-accent/20">
+          <h4 class="text-[10px] text-purple-400 font-black uppercase tracking-widest mb-4">🏢 Department Request</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Request Source</label>
+              <select x-model="logForm.requestSource"
+                class="w-full p-4 glass text-xs font-bold">
+                <option value="Production">Production</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Safety">Safety</option>
+                <option value="Quality">Quality</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Operations">Operations</option>
+                <option value="External">External</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Requested By</label>
+              <input type="text" x-model="logForm.requestedBy" placeholder="Name of requester"
+                class="w-full p-4 glass text-xs font-bold">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Request Date</label>
+              <input type="date" x-model="logForm.requestDate"
+                class="w-full p-4 glass text-xs font-bold">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Approved By</label>
+              <input type="text" x-model="logForm.approvedBy" placeholder="Supervisor/Manager name"
+                class="w-full p-4 glass text-xs font-bold">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operational Down (Hrs)</label>
+            <input type="number" x-model="logForm.downtime" step="0.1" placeholder="0.0"
+              class="w-full p-4 glass font-black text-white">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Cost ($)</label>
+            <input type="number" x-model="logForm.cost" placeholder="0"
+              class="w-full p-4 glass font-black text-white">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Root Cause (RCA)</label>
+            <select x-model="logForm.rca" class="w-full p-4 glass text-[10px] font-bold">
+              <option value="PM">Normal PM</option>
+              <option value="Human Error">Human Error</option>
+              <option value="Fatigue/Wear">Fatigue/Wear</option>
+              <option value="External Factor">External Factor</option>
+              <option value="Design/Quality">Design/Quality</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Technical Briefing</label>
+          <textarea x-model="logForm.desc" required placeholder="Input technical findings..."
+            class="w-full p-4 glass h-32"></textarea>
+        </div>
+
+        <!-- Documentation Photo (Multiple) -->
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 block">Visual Documentation (Limit 4)</label>
+            <span class="text-[10px] font-black text-nexus-accent" x-text="logForm.photos.length + ' / 4'"></span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-4">
+            <template x-for="(p, idx) in logForm.photos">
+              <div
+                class="relative group aspect-square rounded-2xl overflow-hidden glass border-nexus-accent/20 shadow-xl">
+                <img :src="p.preview" class="w-full h-full object-cover">
+                <button type="button" @click="removeLogPhoto(idx)"
+                  class="absolute top-2 right-2 w-7 h-7 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"><i
+                    class="fas fa-times text-[10px]"></i></button>
+              </div>
+            </template>
+
+            <!-- Add Button (shows only if < 4) -->
+            <label x-show="logForm.photos.length < 4"
+              class="cursor-pointer glass hover:border-nexus-accent text-nexus-accent/20 aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all">
+              <i class="fas fa-plus text-xl"></i>
+              <span class="text-[8px] font-black uppercase tracking-widest">Add Photo</span>
+              <input type="file" @change="handleLogPhoto($event)" class="hidden" accept="image/*" multiple>
+            </label>
+          </div>
+        </div>
+
+        <div class="glass p-8 rounded-[3rem] border border-white/5">
+          <div class="flex justify-between items-center mb-6">
+            <span class="text-[9px] font-black text-nexus-accent/40 uppercase tracking-[0.2em]"><i class="fas fa-microchip mr-2"></i>
+              Components Linked</span>
+            <button type="button" @click="addPartToLog()"
+              class="text-[9px] glass text-nexus-accent px-5 py-2.5 rounded-xl border border-nexus-accent/20 font-black hover:bg-nexus-accent/10 transition-all shadow-xl uppercase tracking-widest">+
+              Link Part</button>
+          </div>
+          <div x-show="logForm.parts.length === 0" class="text-[10px] text-slate-600 italic text-center py-4 uppercase tracking-widest">No components registered to this log.</div>
+          <template x-for="(part, index) in logForm.parts" :key="index">
+            <div class="flex gap-3 mb-4 items-center">
+              <select x-model="part.id"
+                class="flex-1 p-4 glass text-[10px] font-bold">
+                <option value="">Select Component...</option>
+                <template x-for="p in filteredPartsForLog">
+                  <option :value="p.PartID" x-text="(p.NamaSingkat || p.NamaPart) + (p.PartNumber ? ' (' + p.PartNumber + ')' : '')"></option>
+                </template>
+              </select>
+              <input type="number" x-model="part.qty" min="1" placeholder="Qty"
+                class="w-20 p-4 glass text-center font-black text-white">
+              <button type="button" @click="removePartFromLog(index)"
+                class="text-rose-400 glass hover:bg-rose-500/20 w-12 h-12 rounded-xl border border-rose-500/20 transition-all flex items-center justify-center shadow-xl"><i
+                  class="fas fa-trash-alt"></i></button>
+            </div>
+          </template>
+        </div>
+
+        <button type="submit"
+          class="w-full gold-gradient font-black tracking-[0.3em] p-6 rounded-2xl shadow-xl mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black"
+          x-text="isEditingLog ? 'Execute Update' : 'Initialize Protocol'"></button>
+      </form>
+    </div>
+  </div>
+  </template>
+
+
+  <!-- QR SCANNER MODAL -->
+  <template x-if="showScanner">
+  <div x-cloak
+    class="fixed inset-0 z-[100] bg-nexus-black flex flex-col items-center justify-center p-6 backdrop-blur-2xl">
+    <div class="w-full max-w-sm space-y-10 text-center relative">
+      <div class="absolute -top-16 right-0">
+        <button @click="stopScanner()" class="text-white/30 hover:text-nexus-accent transition-colors">
+          <i class="fas fa-times text-3xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 mb-10">
+        <h3 class="text-3xl font-black text-white nexus-glow-text uppercase tracking-tighter">Optical Scanner</h3>
+        <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Aligning with System Node QR</p>
+      </div>
+
+      <div
+        class="relative mx-auto w-full aspect-square max-w-[320px] overflow-hidden rounded-[3rem] border-4 border-nexus-accent/20 shadow-[0_0_50px_rgba(0,242,255,0.15)] bg-black">
+        <div id="reader" class="w-full h-full"></div>
+
+        <!-- Professional Scanner Overlay -->
+        <div class="absolute inset-0 pointer-events-none border-[50px] border-black/60"></div>
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 border border-nexus-accent/30 rounded-[2rem] animate-pulse-nexus">
+          <div class="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-nexus-accent rounded-tl-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
+          <div class="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-nexus-accent rounded-tr-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
+          <div class="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-nexus-accent rounded-bl-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
+          <div class="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-nexus-accent rounded-br-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
+        </div>
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[2px] bg-nexus-accent/40 shadow-[0_0_20px_rgba(0,242,255,0.8)] animate-[scan_2s_infinite]">
+        </div>
+      </div>
+
+      <button @click="stopScanner()"
+        class="glass border-rose-500/30 text-rose-400 px-12 py-5 rounded-2xl font-black tracking-[0.4em] text-[10px] transition-all uppercase hover:bg-rose-500 hover:text-white">Abort Operation</button>
+    </div>
+  </div>
+  </template>
+
+
+  <!-- MODAL: QR PREVIEW -->
+  <template x-if="showQRPreviewModal">
+  <div x-cloak
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md transition-all">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
+      x-transition:enter-end="opacity-100 scale-100"
+      class="card-modern w-full max-w-sm rounded-[3rem] p-10 border-nexus-accent/20 text-center">
+      <div class="flex justify-between items-center mb-8">
+        <h3 class="text-xl font-black text-white uppercase tracking-tighter">Asset Signature</h3>
+        <button @click="showQRPreviewModal = false" class="text-slate-500 hover:text-nexus-accent transition-colors">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-8 mx-auto w-fit border-8 border-nexus-accent/5">
+        <img :src="qrCodeDataUrl" class="w-48 h-48 mx-auto" alt="Asset QR Code">
+      </div>
+      
+      <div class="space-y-3 mb-10">
+        <p class="text-white font-black text-xl nexus-glow-text" x-text="selectedEquip?.Nama"></p>
+        <p class="text-nexus-accent font-mono font-bold tracking-[0.2em] text-xs" x-text="selectedEquip?.EquipmentID"></p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <button @click="downloadQR()"
+          class="gold-gradient text-nexus-black font-black py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]">
+          <i class="fas fa-download"></i> Save Data
+        </button>
+        <button @click="window.print()"
+          class="glass border-nexus-accent/20 text-nexus-accent font-black py-5 rounded-2xl hover:border-nexus-accent transition-all uppercase tracking-widest text-[10px]">
+          <i class="fas fa-print mr-2"></i> Print Node
+        </button>
+      </div>
+    </div>
+  </div>
+  </template>
+
+  <!-- 🔄 PROCESSING / IMPORT OVERLAY -->
+  <div x-show="importProgress > 0" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" x-cloak class="fixed inset-0 z-[250] bg-nexus-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-10">
+    <div class="w-full max-w-md text-center space-y-12">
+      <div class="relative w-48 h-48 mx-auto">
+        <svg class="w-full h-full transform -rotate-90 drop-shadow-[0_0_15px_rgba(0,242,255,0.2)]">
+          <circle cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8" fill="transparent" class="text-white/5" />
+          <circle cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8" fill="transparent" 
+            class="text-nexus-accent transition-all duration-300"
+            :stroke-dasharray="2 * Math.PI * 88"
+            :stroke-dashoffset="2 * Math.PI * 88 * (1 - importProgress / 100)"
+            stroke-linecap="round" />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-5xl font-black text-white nexus-glow-text" x-text="importProgress + '%'"></span>
+        </div>
+      </div>
+      
+      <div class="space-y-4">
+        <h3 class="text-3xl font-black text-white uppercase tracking-tighter nexus-glow-text">Neural Sync Active</h3>
+        <div class="flex items-center justify-center gap-3">
+          <div class="w-2 h-2 bg-nexus-accent rounded-full animate-pulse"></div>
+          <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em]" x-text="importProgress < 100 ? 'Importing Sector Data...' : 'Sync Complete'"></p>
+        </div>
+      </div>
+      
+      <div class="w-full h-1 bg-white/5 rounded-xl overflow-hidden border border-white/5">
+        <div class="h-full bg-gradient-to-r from-nexus-accent via-nexus-purple to-nexus-accent bg-[length:200%_100%] animate-[shimmer_2s_linear_infinite] transition-all duration-300" :style="'width: ' + importProgress + '%'"></div>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
