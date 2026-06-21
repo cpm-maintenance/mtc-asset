@@ -40,7 +40,14 @@
   <!-- Emergency Theme Script (Prevents flash & caching issues) -->
   <script>
       (function () {
-        const isDark = localStorage.getItem('darkMode') === 'true'; // Default to light (soft clean)
+        // ONE-TIME MIGRATION: reset old light preference to dark
+        if (localStorage.getItem('darkMode') === 'false' && !localStorage.getItem('_theme_migrated')) {
+          localStorage.removeItem('darkMode');
+          localStorage.setItem('_theme_migrated', '1');
+        }
+        // Default to DARK (industrial look)
+        const stored = localStorage.getItem('darkMode');
+        const isDark = stored === null ? true : stored === 'true';
         if (isDark) {
           document.documentElement.setAttribute('data-theme', 'dark');
           document.documentElement.classList.add('dark');
@@ -373,8 +380,6 @@
              <i class="fas fa-atom text-base md:text-lg"></i>
           </div>
           <h2 class="text-lg md:text-2xl lg:text-3xl font-black text-white nexus-glow-text tracking-tighter uppercase" x-text="menuItems.find(i => i.id === currentPage)?.name"></h2>
-          <!-- DEBUG: Show currentPage value -->
-          <span x-show="isLoggedIn" class="text-xs text-yellow-400 ml-2">[debug: <span x-text="currentPage"></span>]</span>
         </div>
 
       <div class="flex items-center gap-2 md:gap-3">
