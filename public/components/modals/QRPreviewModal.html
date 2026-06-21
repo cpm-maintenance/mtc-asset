@@ -1,0 +1,34 @@
+<!-- 🖼️ MODAL: QR PREVIEW -->
+<div x-cloak
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md transition-all">
+  <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
+       x-transition:enter-end="opacity-100 scale-100"
+       class="card-modern w-full max-w-sm rounded-[3rem] p-10 border-nexus-accent/20 text-center">
+    <div class="flex justify-between items-center mb-8">
+      <h3 class="text-xl font-black text-white uppercase tracking-tighter">Asset Signature</h3>
+      <button @click="showQRPreviewModal = false" class="text-slate-500 hover:text-nexus-accent transition-colors">
+        <i class="fas fa-times text-2xl"></i>
+      </button>
+    </div>
+
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-8 mx-auto w-fit border-8 border-nexus-accent/5">
+      <img :src="qrCodeDataUrl" class="w-48 h-48 mx-auto" alt="Asset QR Code">
+    </div>
+
+    <div class="space-y-3 mb-10">
+      <p class="text-white font-black text-xl nexus-glow-text" x-text="selectedEquip?.Nama"></p>
+      <p class="text-nexus-accent font-mono font-bold tracking-[0.2em] text-xs" x-text="selectedEquip?.EquipmentID"></p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <button @click="downloadQR()"
+              class="gold-gradient text-nexus-black font-black py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]">
+        <i class="fas fa-download"></i> Save Data
+      </button>
+      <button @click="window.print()"
+              class="glass border-nexus-accent/20 text-nexus-accent font-black py-5 rounded-2xl hover:border-nexus-accent transition-all uppercase tracking-widest text-[10px]">
+        <i class="fas fa-print mr-2"></i> Print Node
+      </button>
+    </div>
+  </div>
+</div>

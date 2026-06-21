@@ -1,0 +1,115 @@
+<!-- 🔧 MODAL: SPARE PARTS CONFIGURATION -->
+<div x-cloak
+     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-opacity">
+  <div class="card-modern w-full max-w-lg p-10 rounded-[3rem] shadow-2xl border-nexus-accent/20">
+    <div class="flex justify-between items-center mb-10">
+      <h3 class="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tighter">
+        <i class="fas fa-box-open text-nexus-accent"></i>
+        <span x-text="isEditingPart ? 'Sync Component' : 'Register Component'"></span>
+      </h3>
+      <button @click="showPartModal = false"
+              class="text-slate-500 hover:text-nexus-accent w-12 h-12 rounded-2xl glass flex items-center justify-center transition-all">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form @submit.prevent="submitSparePart()" class="space-y-6">
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Identifier</label>
+          <input type="text" x-model="partForm.id" required placeholder="SKU-XXXX" :readonly="isEditingPart"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Component Name</label>
+          <input type="text" x-model="partForm.nama" required placeholder="Nomenclature"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Brief Designation</label>
+          <input type="text" x-model="partForm.namaSingkat" placeholder="Alias"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Number</label>
+          <input type="text" x-model="partForm.partNumber" placeholder="Mfr P/N"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+      </div>
+      <div>
+        <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Neural Links (Associated Assets)</label>
+        <div class="glass p-4 rounded-2xl max-h-48 overflow-y-auto border border-nexus-accent/10 space-y-2">
+          <template x-for="e in equipment" :key="e.EquipmentID">
+            <label class="flex items-center gap-3 p-2 hover:bg-nexus-accent/5 rounded-xl cursor-pointer transition-colors group">
+              <input type="checkbox" :value="e.EquipmentID" x-model="partForm.equipIds"
+                     class="w-4 h-4 rounded border-nexus-accent/20 bg-nexus-black text-nexus-accent focus:ring-nexus-accent/50">
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] font-black text-nexus-text truncate" x-text="e.Nama"></p>
+                <p class="text-[8px] text-nexus-accent/60 font-mono" x-text="e.EquipmentID"></p>
+              </div>
+            </label>
+          </template>
+          <div x-show="equipment.length === 0" class="text-center py-4 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+            No asset nodes detected
+          </div>
+        </div>
+        <p class="text-[8px] text-slate-500 mt-2 px-1 uppercase tracking-widest font-bold">Part will be visible and accessible across all selected system nodes.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Current Stock</label>
+          <input type="number" x-model="partForm.stok" placeholder="0" min="0"
+                 class="w-full p-3 glass text-xs font-bold text-center">
+        </div>
+        <div>
+          <label class="text-[9px] text-rose-400/60 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Safety Level</label>
+          <input type="number" x-model="partForm.minStock" placeholder="0" min="0"
+                 class="w-full p-3 glass text-xs font-bold text-center text-rose-400 border border-rose-500/20 rounded-xl">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Unit Price (IDR)</label>
+          <input type="number" x-model="partForm.harga" placeholder="0" min="0"
+                 class="w-full p-3 glass text-xs font-bold text-center">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Storage Sector</label>
+          <input type="text" x-model="partForm.lokasi" placeholder="Warehouse"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Vendor</label>
+          <input type="text" x-model="partForm.vendor" placeholder="Supplier"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+      </div>
+      <!-- Lifetime Tracking -->
+      <div class="mt-4 pt-4 border-t border-nexus-accent/10">
+        <h4 class="text-[10px] text-nexus-accent font-black uppercase tracking-widest mb-3">⚡ Lifetime Settings</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Last Replaced</label>
+            <input type="date" x-model="partForm.lastReplaceDate"
+                   class="w-full p-3 glass text-xs font-bold">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Avg Lifetime (Days)</label>
+            <input type="number" x-model="partForm.avgLifetimeDays" placeholder="365" min="1"
+                   class="w-full p-3 glass text-xs font-bold text-center">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Usage Hours</label>
+            <input type="number" x-model="partForm.usageHours" placeholder="0" min="0"
+                   class="w-full p-3 glass text-xs font-bold text-center">
+          </div>
+        </div>
+      </div>
+      <button type="submit"
+              class="w-full gold-gradient font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl mt-4 hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black text-xs"
+              x-text="isEditingPart ? 'Update Inventory Matrix' : 'Commit to Database'">
+      </button>
+    </form>
+  </div>
+</div>

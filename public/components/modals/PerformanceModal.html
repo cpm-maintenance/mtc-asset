@@ -1,0 +1,153 @@
+<!-- 🔧 MODAL: PERFORMANCE LOG -->
+<div x-cloak
+  class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-opacity">
+  <div class="card-modern w-full max-w-4xl p-8 lg:p-10 rounded-[3rem] shadow-2xl border-nexus-accent/20 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl gold-gradient flex items-center justify-center shadow-lg">
+          <i class="fas fa-chart-line text-nexus-black text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-black text-white uppercase tracking-tighter" x-text="isEditingPerformance ? 'Adjust Metrics' : 'Initialize Performance'"></h3>
+          <p class="text-[9px] text-nexus-accent/40 font-black uppercase tracking-widest">Neural Performance Protocol</p>
+        </div>
+      </div>
+      <button @click="showPerformanceModal = false"
+        class="text-slate-500 hover:text-nexus-accent w-10 h-10 rounded-xl glass flex items-center justify-center transition-all">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form @submit.prevent="submitPerformance()" class="space-y-6">
+      <!-- Section: Basic Info -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-1">
+          <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
+          <input type="date" x-model="performanceForm.date" required id="perf-date" name="perf-date"
+                 class="w-full p-3 glass text-xs font-bold text-white">
+        </div>
+        <div class="md:col-span-1">
+          <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Asset Index</label>
+          <select x-model="performanceForm.equipmentId" required id="perf-equip" name="perf-equip"
+                  class="w-full p-3 glass text-xs font-bold text-white">
+            <option value="" disabled>-- Select Asset Node --</option>
+            <template x-for="e in equipment">
+              <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+            </template>
+          </select>
+        </div>
+        <div class="md:col-span-1">
+          <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Ops Area</label>
+          <input type="text" x-model="performanceForm.area" placeholder="Zone/Pit"
+                 class="w-full p-3 glass text-xs font-bold">
+        </div>
+      </div>
+
+      <!-- Section: Operational Metrics -->
+      <div class="p-6 glass rounded-3xl border border-white/5">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">Work (WH)</label>
+            <input type="number" x-model="performanceForm.wh" step="0.01" @input="updatePerfHours('wh')"
+                   class="w-full p-3 glass font-black text-white text-center text-sm">
+          </div>
+          <div>
+            <label class="text-[8px] text-rose-400/60 uppercase font-black mb-2 block text-center">Total Down</label>
+            <input type="number" x-model="performanceForm.bd" step="0.01" readonly
+                   class="w-full p-3 glass font-black text-rose-400 text-center text-sm opacity-60">
+          </div>
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">Standby</label>
+            <input type="number" x-model="performanceForm.stb" step="0.01" @input="updatePerfHours('stb')"
+                   class="w-full p-3 glass font-black text-white text-center text-sm">
+          </div>
+          <div>
+            <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">BD Freq</label>
+            <input type="number" x-model="performanceForm.freq" readonly
+                   class="w-full p-3 glass font-black text-white text-center text-sm opacity-60">
+          </div>
+          <div class="col-span-2 md:col-span-1">
+            <label class="text-[8px] text-nexus-accent/60 uppercase font-black mb-2 block text-center">Target PA%</label>
+            <input type="number" x-model="performanceForm.paPlan"
+                   class="w-full p-3 glass font-black text-nexus-accent text-center text-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Breakdown Events -->
+      <div class="glass p-6 rounded-[2rem] border border-rose-500/10 space-y-4">
+        <div class="flex justify-between items-center">
+          <h4 class="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i> Breakdown Details
+          </h4>
+          <button type="button" @click="addBDEvent()"
+                  class="text-[9px] glass text-rose-400 px-4 py-2 rounded-xl border border-rose-500/20 font-black hover:bg-rose-500/10 transition-all uppercase tracking-widest">
+            + Add Event
+          </button>
+        </div>
+
+        <div x-show="performanceForm.events.length === 0" class="text-[9px] text-slate-600 italic text-center py-4 border-2 border-dashed border-white/5 rounded-2xl">
+          NO BREAKDOWNS RECORDED FOR THIS TIMELINE
+        </div>
+
+        <div class="grid grid-cols-1 gap-4">
+          <template x-for="(event, idx) in performanceForm.events" :key="idx">
+            <div class="p-6 glass border-white/5 rounded-2xl relative group bg-white/[0.02]">
+              <button type="button" @click="removeBDEvent(idx)" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all z-10">
+                <i class="fas fa-times"></i>
+              </button>
+
+              <div class="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4 border-b border-white/5 pb-4">
+                <select x-model="event.category" class="bg-white/5 p-3 rounded-xl text-xs font-black text-nexus-accent uppercase tracking-widest outline-none w-full md:w-auto">
+                  <option value="Mechanical">Mechanical</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Operational">Operational</option>
+                </select>
+                <input type="text" x-model="event.component" placeholder="Component (e.g., Valve)..." class="flex-1 w-full bg-white/5 p-3 rounded-xl text-xs font-bold text-white border-none outline-none focus:ring-1 focus:ring-nexus-accent placeholder:text-slate-500">
+                <div class="md:ml-auto flex items-center gap-2 bg-white/5 p-2 rounded-xl w-full md:w-auto">
+                  <input type="number" x-model="event.duration" step="0.01" @input="updatePerfHours('bd')" class="w-20 bg-transparent text-center text-sm font-bold p-1 outline-none">
+                  <span class="text-xs text-slate-500 uppercase font-black pr-2">Hrs</span>
+                </div>
+              </div>
+
+              <input type="text" x-model="event.problem" placeholder="Failure Description..." class="w-full bg-white/5 rounded-xl text-sm border-none p-4 mb-4 placeholder:text-slate-600 focus:ring-1 focus:ring-nexus-accent">
+
+              <select x-model="event.rca" class="w-full bg-white/5 rounded-xl p-4 text-xs font-bold text-slate-400 border-none outline-none focus:ring-1 focus:ring-nexus-accent">
+                <option value="Fatigue/Wear">Root Cause: Fatigue / Wear</option>
+                <option value="Human Error">Root Cause: Human Error</option>
+                <option value="Design/Quality">Root Cause: Design / Quality</option>
+                <option value="External Factor">Root Cause: External Factor</option>
+                <option value="Lack of PM">Root Cause: Lack of PM</option>
+              </select>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block ml-1">Operational Type</label>
+          <select x-model="performanceForm.type" class="w-full p-3 glass text-xs font-bold">
+            <option value="Unscheduled">Emergency (Unsch)</option>
+            <option value="Scheduled">Planned (Sch)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block ml-1">Neural Root Cause (Primary)</label>
+          <select x-model="performanceForm.rca" class="w-full p-3 glass text-xs font-bold">
+            <option value="None">No Anomaly</option>
+            <option value="Human Error">Human Error</option>
+            <option value="Fatigue/Wear">Natural Wear</option>
+            <option value="External Factor">External factor</option>
+            <option value="Design/Quality">Design/Part Quality</option>
+            <option value="Operational Misuse">Operational Misuse</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit"
+              class="w-full gold-gradient font-black tracking-[0.3em] p-6 rounded-2xl shadow-xl mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black"
+              x-text="isEditingPerformance ? 'Apply Corrections' : 'Commit to Neural Base'">
+      </button>
+    </form>
+  </div>
+</div>
