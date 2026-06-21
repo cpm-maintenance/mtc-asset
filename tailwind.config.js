@@ -4,6 +4,8 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx,vue}",
     "./src/**/*.html",
+    "./public/pages/**/*.html",
+    "./public/components/**/*.html",
   ],
   darkMode: 'selector',
   theme: {

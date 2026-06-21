@@ -123,15 +123,15 @@ export const uiModule = {
     // Helpers
     statusColor(s) {
         const colors = {
-            'Active': 'bg-emerald-50 text-emerald-600 border border-emerald-100',
-            'In Maintenance': 'bg-amber-50 text-amber-600 border border-amber-100',
-            'Decommissioned': 'bg-slate-100 text-slate-500 border border-slate-200'
+            'Active': 'text-emerald-400 border border-emerald-500/30 bg-emerald-500/10',
+            'In Maintenance': 'text-amber-400 border border-amber-500/30 bg-amber-500/10',
+            'Decommissioned': 'text-slate-400 border border-slate-500/30 bg-slate-500/10'
         };
-        return colors[s] || 'bg-rose-50 text-rose-600 border border-rose-100';
+        return colors[s] || 'text-rose-400 border border-rose-500/30 bg-rose-500/10';
     },
 
     critColor(c) {
-        return c === 'High' ? 'text-rose-600 font-bold' : c === 'Medium' ? 'text-amber-600' : 'text-emerald-600';
+        return c === 'High' ? 'text-rose-400 font-bold' : c === 'Medium' ? 'text-amber-400' : 'text-emerald-400';
     },
 
     logColor(type) {

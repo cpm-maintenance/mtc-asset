@@ -1,34 +1,5 @@
 <!-- 🔧 PAGE: SPARE PARTS INVENTORY -->
 <div x-cloak class="space-y-4 p-4 lg:p-0">
-  <!-- 🔍 DIAGNOSTIC PANEL - ALWAYS VISIBLE -->
-  <div class="bg-slate-900/90 border-2 border-rose-500/50 rounded-xl p-4 mb-4 backdrop-blur-sm">
-    <p class="text-rose-400 font-bold text-sm mb-3">🔧 DIAGNOSTIK Spare Parts</p>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-      <div class="bg-slate-800/80 rounded-lg p-2">
-        <span class="text-slate-400">Data:</span>
-        <span class="text-cyan-400 font-bold ml-1" x-text="allParts ? allParts.length : '0'"></span>
-      </div>
-      <div class="bg-slate-800/80 rounded-lg p-2">
-        <span class="text-slate-400">Filtered:</span>
-        <span class="text-cyan-400 font-bold ml-1" x-text="filteredAllParts ? filteredAllParts.length : '0'"></span>
-      </div>
-      <div class="bg-slate-800/80 rounded-lg p-2">
-        <span class="text-slate-400">Page:</span>
-        <span class="text-cyan-400 font-bold ml-1" x-text="currentPage"></span>
-      </div>
-      <div class="bg-slate-800/80 rounded-lg p-2">
-        <span class="text-slate-400">Admin:</span>
-        <span class="text-cyan-400 font-bold ml-1" x-text="isAdmin"></span>
-      </div>
-    </div>
-    <div x-show="allParts && allParts.length > 0" class="mt-2 text-xs text-slate-400">
-      Contoh: <span class="text-green-400" x-text="allParts[0]?.PartID + ' - ' + allParts[0]?.NamaPart"></span>
-    </div>
-    <div x-show="!allParts || allParts.length === 0" class="mt-2 text-xs text-yellow-400">
-      ⚠️ Data Spare Parts kosong - Pastikan Firebase path "SpareParts" ada data-nya
-    </div>
-  </div>
-
   <!-- Search and Actions -->
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-2">
     <div class="flex flex-col md:flex-row gap-3 flex-1">

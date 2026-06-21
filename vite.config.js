@@ -52,6 +52,6 @@ export default defineConfig({
     open: true,
   },
   optimizeDeps: {
-    exclude: ['chart.js', 'jspdf', 'jspdf-autotable']
+    exclude: ['jspdf', 'jspdf-autotable']
   }
 });

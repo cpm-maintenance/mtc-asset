@@ -56,13 +56,14 @@
   background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
-[data-theme='light'] .glass {
+/* Force semi-transparent backgrounds even in light mode to maintain design */
+[data-theme='light'] .card-modern {
   background: rgba(255, 255, 255, 0.8) !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-[data-theme='light'] .card-modern {
-  background: #ffffff !important;
+[data-theme='light'] .glass {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 [data-theme='light'] input,

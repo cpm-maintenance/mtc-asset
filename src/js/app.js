@@ -10,6 +10,8 @@ import { kpiEngineModule } from './modules/kpi-engine.js';
 import { aiModule } from './modules/ai.js';
 import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM } from './constants.js';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 export function app() {
     return {
@@ -332,7 +334,7 @@ aiIsAnalyzing: false,
         isLogDetailView: false, isEditingEquip: false, isEditingPart: false, isEditingLog: false,
         selectedEquip: null, notifications: [], isLoading: true, html5QrCode: null, qrCodeDataUrl: '',
         isOnline: navigator.onLine,
-        darkMode: (() => { try { return localStorage.getItem('darkMode') === 'true'; } catch(e) { return false; } })(),
+        darkMode: (() => { try { const v = localStorage.getItem('darkMode'); return v === null ? true : v === 'true'; } catch(e) { return true; } })(),
         isLoggedIn: false, user: null,
         userRole: 'user', // 'admin' or 'user'
         loginForm: { email: '', password: '' },
@@ -912,17 +914,12 @@ if (confirm('Are you sure you want to logout?')) {
             }
         },
 
-        // Lazy load Chart.js - only load when needed
+        // Lazy load Chart.js - already statically imported
         async loadChartJS() {
-            if (window._chartJS) return window._chartJS;
-            try {
-                const { Chart } = await import('chart.js/auto');
+            if (!window._chartJS) {
                 window._chartJS = Chart;
-                return Chart;
-            } catch (e) {
-                console.error('Failed to load Chart.js:', e);
-                return null;
             }
+            return window._chartJS;
         },
 
         // Safe Chart creation with error boundary
