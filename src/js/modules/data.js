@@ -155,6 +155,16 @@ export const dataModule = {
         // Load from IndexedDB first for instant UI
         this.loadFromIndexedDB();
 
+        // Safety timeout: if Firebase never responds (permission error, etc), 
+        // force isLoading=false after 10s so the UI is not stuck forever
+        if (this._loadingTimeout) clearTimeout(this._loadingTimeout);
+        this._loadingTimeout = setTimeout(() => {
+            if (this.isLoading) {
+                console.warn('[Data] Firebase loading timeout - forcing isLoading=false');
+                this.isLoading = false;
+            }
+        }, 10000);
+
         const saveCache = async (key, data) => {
             try {
                 const plainData = JSON.parse(JSON.stringify(data));
@@ -248,6 +258,7 @@ export const dataModule = {
 
         // Load ALL HistoryLog with real-time listener (replaces paginated load)
         const histRef = window.ref(window.db, 'HistoryLog');
+        let _firebaseLogsLoaded = false;
         window.onValue(histRef, (snapshot) => {
             try {
                 const data = snapshot.val();
@@ -263,7 +274,12 @@ export const dataModule = {
                 this.activeWorkOrders = allLogs.filter(l => l.woNumber);
                 
                 saveCache('logs', allLogs);
-                this.isLoading = false;
+                
+                // Only set isLoading=false when Firebase data has been received
+                if (!_firebaseLogsLoaded) {
+                    _firebaseLogsLoaded = true;
+                    this.isLoading = false;
+                }
             } catch (e) {
                 console.error('HistoryLog Listener Error:', e);
                 this.logs = [];
@@ -468,7 +484,6 @@ export const dataModule = {
             if (perf.length > 0) this.performanceData = perf.sort((a, b) => b.date.localeCompare(a.date));
 
             if (equip.length > 0 || parts.length > 0) {
-                this.isLoading = false;
                 // Charts disabled - Alpine Proxy causes errors
             }
 

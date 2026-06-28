@@ -484,6 +484,10 @@ if (confirm('Are you sure you want to logout?')) {
                     } else {
                         this.isLoggedIn = true;
                         this.user = user;
+                        // Set Sentry user context
+                        if (window.Sentry) {
+                            window.Sentry.setUser({ id: user.uid, email: user.email });
+                        }
                         // Check if user is admin
                         this.checkUserRole(user.uid);
                         this.setupFirebaseListeners();
@@ -580,13 +584,24 @@ if (confirm('Are you sure you want to logout?')) {
             console.log('Modals ready');
         },
 
-        // Error Handling
         handleError(error, context = '') {
             console.error(`Error in ${context}:`, error);
             this.hasError = true;
             this.errorMessage = this.getUserFriendlyError(error);
             this.errorDetails = error?.message || String(error);
             this.showNotification(this.errorMessage, 'error');
+            
+            // Send to Sentry
+            try {
+                if (window.Sentry) {
+                    window.Sentry.captureException(error, {
+                        tags: { context: context || 'unknown' },
+                        extra: { userRole: this.userRole, page: this.currentPage }
+                    });
+                }
+            } catch (sentryError) {
+                console.warn('[Sentry] Failed to capture error:', sentryError);
+            }
         },
 
         getUserFriendlyError(error) {
