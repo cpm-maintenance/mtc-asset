@@ -471,11 +471,13 @@
     <div x-show="currentPage === 'parts'" x-page="'SpareParts'"></div>
 
 
-    <!-- 📈 PAGE: PERFORMANCE TRACKER (Dynamic Component) -->
+    <!-- 🗓️ PAGE: PERFORMANCE TRACKER (Dynamic Component) -->
     <div x-show="currentPage === 'perf'" x-page="'Performance'"></div>
 
+    <!-- 📅 PAGE: PM SCHEDULE (Dynamic Component) -->
+    <div x-show="currentPage === 'pms'" x-page="'PMSchedule'"></div>
 
-    <!-- 📊 PAGE: KPI ANALYTICS (Dynamic Component) -->
+    <!-- 🧠 PAGE: KPI ANALYTICS (Dynamic Component) -->
     <template x-if="currentPage === 'kpi'">
       <div x-page="'KPI'"></div>
     </template>

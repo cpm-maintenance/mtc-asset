@@ -72,3 +72,17 @@ export const DEFAULT_PERF_FORM = () => ({
   wh: "24.00", bd: "0.00", stb: "0.00", freq: 0, type: 'Unscheduled',
   area: '', paPlan: 90, remarks: '', rca: 'None', category: 'Mechanical', events: []
 });
+
+export const DEFAULT_PM_FORM = () => ({
+  pmId: '',
+  taskName: '',
+  equipmentId: '',
+  description: '',
+  date: new Date().toISOString().split('T')[0],
+  frequency: 'none',
+  assignedTo: 'Maintenance Team',
+  status: 'pending',
+  priority: 'Medium',
+  completionDate: '',
+  completionNote: '',
+});

@@ -8,7 +8,8 @@ import { performanceModule } from './modules/performance.js';
 import { exportModule } from './modules/export.js';
 import { kpiEngineModule } from './modules/kpi-engine.js';
 import { aiModule } from './modules/ai.js';
-import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM } from './constants.js';
+import { pmScheduleModule } from './modules/pm-schedule.js';
+import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants.js';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -357,6 +358,16 @@ aiIsAnalyzing: false,
         equipPage: 1,
         equipLimit: 30,
 
+        // --- PM SCHEDULE STATE ---
+        pmView: 'calendar',
+        pmMonthOffset: 0,
+        pmFilterEquip: '',
+        pmShowDetail: false,
+        selectedPM: null,
+        pmGanttScroll: 0,
+        selectedPMDate: '',
+        showPMModal: false,
+
         // --- AUTH METHODS (Moved from module for stability) ---
         async login() {
             const form = this.loginform.email ? this.loginform : this.loginForm;
@@ -438,6 +449,7 @@ if (confirm('Are you sure you want to logout?')) {
             { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true },
             { id: 'hist', name: 'All Logs', icon: 'fas fa-history', mobile: true },
             { id: 'wo', name: 'Work Orders', icon: 'fas fa-clipboard-list', mobile: true },
+            { id: 'pms', name: 'PM Schedule', icon: 'fas fa-calendar-alt', mobile: true },
             { id: 'perf', name: 'Performance', icon: 'fas fa-chart-line', mobile: true },
             { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true },
             { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false },
@@ -454,6 +466,7 @@ if (confirm('Are you sure you want to logout?')) {
         ...exportModule,
         ...kpiEngineModule,
         ...aiModule,
+        ...pmScheduleModule,
 
         // --- CORE METHODS ---
         init() {
@@ -492,6 +505,17 @@ if (confirm('Are you sure you want to logout?')) {
                         this.checkUserRole(user.uid);
                         this.setupFirebaseListeners();
                         this.loadAISettings();
+                        this.loadPMSchedule();
+
+                        // Request notification permission after login
+                        setTimeout(() => {
+                            if (window.notificationAPI?.requestNotificationPermission) {
+                                window.notificationAPI.requestNotificationPermission();
+                                window.notificationAPI.registerFCMToken();
+                                // Run initial notification check after data loads
+                                setTimeout(() => window.notificationAPI?.checkAllNotifications?.(), 6000);
+                            }
+                        }, 3000);
                     }
                 });
 
@@ -823,6 +847,249 @@ if (confirm('Are you sure you want to logout?')) {
         get filteredLogs() {
             if (!this.logs || !Array.isArray(this.logs)) return [];
             return this.logs.filter(l => l.EquipmentID === this.selectedEquip?.EquipmentID);
+        },
+
+        // --- PM SCHEDULE COMPUTED GETTERS ---
+
+        /** Month label for calendar navigation */
+        get pmMonthLabel() {
+            const d = new Date();
+            d.setMonth(d.getMonth() + (this.pmMonthOffset || 0));
+            return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        },
+
+        /** Build calendar grid days */
+        get pmCalendarDays() {
+            const today = new Date();
+            const offset = this.pmMonthOffset || 0;
+            const year = today.getFullYear();
+            const month = today.getMonth() + offset;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startPad = firstDay.getDay(); // 0=Sun
+
+            // Build events lookup: dateStr -> events[]
+            const eventsByDate = {};
+            const equipList = this.pmFilterEquip
+                ? this.equipment.filter(e => e.EquipmentID === this.pmFilterEquip)
+                : this.equipment || [];
+
+            const logs = this.logs || [];
+            const todayStr = today.toISOString().split('T')[0];
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+            const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+            equipList.forEach(eq => {
+                if (!eq.NextPMDate) return;
+
+                const pmDate = eq.NextPMDate;
+                const isOverdue = pmDate < todayStr;
+                const isDueSoon = !isOverdue && pmDate <= nextWeekStr;
+                const isCompleted = logs.some(l =>
+                    l.EquipmentID === eq.EquipmentID &&
+                    l.Jenis === 'PM' &&
+                    l.Tanggal === pmDate &&
+                    l.Status === 'Completed'
+                );
+
+                const evt = {
+                    id: `pm_${eq.EquipmentID}_${pmDate}`,
+                    name: eq.Nama || eq.EquipmentID,
+                    equipId: eq.EquipmentID,
+                    date: pmDate,
+                    dateISO: pmDate,
+                    isOverdue,
+                    isDueSoon,
+                    isCompleted,
+                    criticality: eq.Criticality || 'Medium',
+                    location: eq.Lokasi || '',
+                };
+
+                if (!eventsByDate[pmDate]) eventsByDate[pmDate] = [];
+                eventsByDate[pmDate].push(evt);
+            });
+
+            // Build days array
+            const days = [];
+            const totalDays = startPad + lastDay.getDate();
+            const rows = Math.ceil(totalDays / 7);
+
+            for (let i = 0; i < rows * 7; i++) {
+                const dayNum = i - startPad + 1;
+                const date = new Date(year, month, dayNum);
+                const dateStr = date.toISOString().split('T')[0];
+                const isOtherMonth = date.getMonth() !== month;
+                const isToday = dateStr === todayStr;
+
+                days.push({
+                    date,
+                    dateStr,
+                    isToday,
+                    isOtherMonth,
+                    isWeekend: date.getDay() === 0 || date.getDay() === 6,
+                    events: eventsByDate[dateStr] || [],
+                });
+            }
+
+            return days;
+        },
+
+        /** PM Statistics */
+        get pmStats() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            const endMonthStr = endMonth.toISOString().split('T')[0];
+            const end30 = new Date(today);
+            end30.setDate(today.getDate() + 30);
+            const end30Str = end30.toISOString().split('T')[0];
+
+            const logs = this.logs || [];
+            const equipList = this.equipment || [];
+
+            let overdue = 0, dueThisMonth = 0, upcoming = 0, completed = 0;
+
+            equipList.forEach(eq => {
+                if (!eq.NextPMDate) return;
+                const pmDate = eq.NextPMDate;
+
+                if (pmDate < todayStr) overdue++;
+                else if (pmDate <= endMonthStr) dueThisMonth++;
+                if (pmDate > todayStr && pmDate <= end30Str) upcoming++;
+
+                const hasCompletion = logs.some(l =>
+                    l.EquipmentID === eq.EquipmentID &&
+                    l.Jenis === 'PM' &&
+                    l.Status === 'Completed' &&
+                    l.Tanggal >= todayStr
+                );
+                if (hasCompletion) completed++;
+            });
+
+            return { overdue, dueThisMonth, upcoming, completed };
+        },
+
+        // --- GANTT CHART GETTERS ---
+
+        /** Months for Gantt scroll */
+        get pmGanttMonths() {
+            const months = [];
+            for (let i = -2; i <= 4; i++) {
+                const d = new Date();
+                d.setMonth(d.getMonth() + i);
+                months.push({
+                    label: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                    offset: i,
+                });
+            }
+            return months;
+        },
+
+        /** Day columns for Gantt (6 months worth) */
+        get pmGanttDays() {
+            const days = [];
+            const scrollOffset = this.pmGanttScroll || 0;
+            const startDate = new Date();
+            startDate.setMonth(startDate.getMonth() - 2 + scrollOffset);
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 4);
+            endDate.setDate(0); // last day of previous month = end of range
+
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                days.push({
+                    date: d.getDate(),
+                    dateStr,
+                    dayName: d.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 2),
+                    isToday: dateStr === todayStr,
+                    isWeekend: d.getDay() === 0 || d.getDay() === 6,
+                    label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                });
+            }
+
+            return days;
+        },
+
+        /** Equipment rows for Gantt with event bars */
+        get pmGanttRows() {
+            const days = this.pmGanttDays;
+            if (days.length === 0) return [];
+
+            const dayWidth = 20; // px
+            const daysTotal = days.length;
+            const firstDateStr = days[0]?.dateStr || '';
+            const lastDateStr = days[days.length - 1]?.dateStr || '';
+            const logs = this.logs || [];
+            const todayStr = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+            const daysSinceEpoch = (dateStr) => {
+                return Math.floor(new Date(dateStr).getTime() / 86400000);
+            };
+
+            const day0 = daysSinceEpoch(firstDateStr);
+
+            const equipList = this.pmFilterEquip
+                ? this.equipment.filter(e => e.EquipmentID === this.pmFilterEquip)
+                : this.equipment || [];
+
+            const rows = [];
+
+            equipList.forEach(eq => {
+                if (!eq.NextPMDate) return;
+
+                const pmDate = eq.NextPMDate;
+                if (pmDate < firstDateStr || pmDate > lastDateStr) return;
+
+                const isOverdue = pmDate < todayStr;
+                const isDueSoon = !isOverdue && pmDate <= nextWeekStr;
+                const isCompleted = logs.some(l =>
+                    l.EquipmentID === eq.EquipmentID &&
+                    l.Jenis === 'PM' &&
+                    l.Tanggal === pmDate &&
+                    l.Status === 'Completed'
+                );
+
+                const evtDay = daysSinceEpoch(pmDate) - day0;
+                const left = evtDay * dayWidth;
+                const width = dayWidth * 2 - 2; // 2-day span
+
+                const events = [{
+                    id: `pm_${eq.EquipmentID}_${pmDate}`,
+                    name: 'PM',
+                    equipId: eq.EquipmentID,
+                    date: pmDate,
+                    isOverdue,
+                    isDueSoon,
+                    isCompleted,
+                    left,
+                    width,
+                    tooltip: `${eq.Nama || eq.EquipmentID} - PM: ${pmDate}`,
+                    criticality: eq.Criticality || 'Medium',
+                    location: eq.Lokasi || '',
+                }];
+
+                let status = 'Scheduled';
+                if (isOverdue) status = 'Overdue';
+                else if (isDueSoon) status = 'Due Soon';
+                else if (isCompleted) status = 'Completed';
+
+                rows.push({
+                    equipId: eq.EquipmentID,
+                    name: eq.Nama || eq.EquipmentID,
+                    status,
+                    events,
+                });
+            });
+
+            return rows;
         },
 
         get filteredWorkOrders() {
