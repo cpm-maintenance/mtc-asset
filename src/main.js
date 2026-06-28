@@ -4,6 +4,29 @@ import './css/style.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
 
+// Sentry Error Tracking (Production only)
+import * as Sentry from '@sentry/browser';
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE, // 'development' vs 'production'
+    tracesSampleRate: import.meta.env.PROD ? 0.5 : 0.0,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    ],
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
+  console.log('[Sentry] Initialized, env:', import.meta.env.MODE);
+} else {
+  console.log('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
+}
+
 window.Alpine = Alpine;
 
 // Create single instance
@@ -70,3 +93,6 @@ console.log('Component Loader Ready');
 // Start Alpine immediately (AFTER registering everything)
 Alpine.start();
 console.log('Alpine Started');
+
+// Expose Sentry for manual error capture from Alpine modules
+window.Sentry = Sentry;
