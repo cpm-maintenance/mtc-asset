@@ -76,6 +76,30 @@
       "$settingId": {
         ".write": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'"
       }
+    },
+
+    "PM_Schedule": {
+      ".read": "auth !== null",
+      "$pmId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null"
+      }
+    },
+
+    "_fcmTokens": {
+      ".read": "auth !== null",
+      "$uid": {
+        ".write": "auth !== null && auth.uid === $uid",
+        ".read": "auth !== null && auth.uid === $uid"
+      }
+    },
+
+    "_notifications": {
+      ".read": "auth !== null",
+      "$uid": {
+        ".write": "auth !== null && auth.uid === $uid",
+        ".read": "auth !== null && auth.uid === $uid"
+      }
     }
   }
 }
