@@ -1,4 +1,4 @@
-<!-- 📅 PAGE: PM SCHEDULE — Calendar & Gantt View (Standalone Data) -->
+<!-- 📅 PAGE: PM SCHEDULE — Task List, Calendar & Gantt -->
 <div x-cloak class="space-y-4">
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -7,17 +7,22 @@
       <p class="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Preventive Maintenance Task Planner</p>
     </div>
     <div class="flex flex-wrap gap-2 items-center">
-      <!-- View Toggle -->
+      <!-- 3-Way View Toggle -->
       <div class="flex glass rounded-xl p-1 border-nexus-accent/10">
+        <button @click="pmView = 'list'" 
+          :class="pmView === 'list' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'text-slate-500 hover:text-slate-300'"
+          class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-transparent flex items-center gap-2">
+          <i class="fas fa-list"></i> <span class="hidden sm:inline">Tasks</span>
+        </button>
         <button @click="pmView = 'calendar'" 
           :class="pmView === 'calendar' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'text-slate-500 hover:text-slate-300'"
           class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-transparent flex items-center gap-2">
-          <i class="fas fa-calendar-alt"></i> Calendar
+          <i class="fas fa-calendar-alt"></i> <span class="hidden sm:inline">Calendar</span>
         </button>
         <button @click="pmView = 'gantt'" 
           :class="pmView === 'gantt' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'text-slate-500 hover:text-slate-300'"
           class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-transparent flex items-center gap-2">
-          <i class="fas fa-chart-bar"></i> Gantt
+          <i class="fas fa-chart-bar"></i> <span class="hidden sm:inline">Gantt</span>
         </button>
       </div>
       <button @click="openPMModal(false)" x-show="isAdmin"
@@ -33,39 +38,25 @@
   <!-- Statistics Cards -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-red-500">
-      <div class="text-xl md:text-2xl font-black text-red-500" x-text="pmStats.overdue"></div>
+      <div class="text-xl md:text-2xl font-black text-red-500" x-text="pmGetStats().overdue"></div>
       <div class="text-[8px] text-slate-500 uppercase tracking-widest">Overdue</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-orange-500">
-      <div class="text-xl md:text-2xl font-black text-orange-500" x-text="pmStats.dueThisMonth"></div>
+      <div class="text-xl md:text-2xl font-black text-orange-500" x-text="pmGetStats().dueThisMonth"></div>
       <div class="text-[8px] text-slate-500 uppercase tracking-widest">Due This Month</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-cyan-500">
-      <div class="text-xl md:text-2xl font-black text-cyan-500" x-text="pmStats.upcoming"></div>
+      <div class="text-xl md:text-2xl font-black text-cyan-500" x-text="pmGetStats().upcoming"></div>
       <div class="text-[8px] text-slate-500 uppercase tracking-widest">Upcoming (30d)</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-emerald-500">
-      <div class="text-xl md:text-2xl font-black text-emerald-500" x-text="pmStats.completed"></div>
+      <div class="text-xl md:text-2xl font-black text-emerald-500" x-text="pmGetStats().completed"></div>
       <div class="text-[8px] text-slate-500 uppercase tracking-widest">Completed</div>
     </div>
   </div>
 
-  <!-- Filters -->
+  <!-- Shared Filters -->
   <div class="flex flex-wrap items-center gap-3">
-    <!-- Month Navigation -->
-    <div class="flex items-center gap-3">
-      <button @click="pmMonthOffset--" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all">
-        <i class="fas fa-chevron-left text-xs"></i>
-      </button>
-      <h4 class="text-lg font-black text-white min-w-[200px] text-center" x-text="pmMonthLabel"></h4>
-      <button @click="pmMonthOffset++" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all">
-        <i class="fas fa-chevron-right text-xs"></i>
-      </button>
-      <button @click="pmMonthOffset = 0" class="px-3 py-2 rounded-xl glass text-xs font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all">
-        Today
-      </button>
-    </div>
-    <!-- Filters -->
     <select x-model="pmFilterEquip" class="p-3 glass border-nexus-accent/10 text-xs font-bold max-w-[200px]">
       <option value="">All Equipment</option>
       <template x-for="e in equipment" :key="e.EquipmentID">
@@ -89,9 +80,127 @@
   </div>
 
   <!-- ════════════════════════════════════════════ -->
-  <!-- CALENDAR VIEW -->
+  <!-- TAB 1: TASK LIST (Full Table) -->
+  <!-- ════════════════════════════════════════════ -->
+  <div x-show="!pmLoading && pmView === 'list'">
+    <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden">
+      <!-- Sort by header row -->
+      <div class="hidden md:grid md:grid-cols-[auto_1fr_1fr_auto_auto_auto_auto_auto] gap-3 p-3 border-b border-white/5 text-[8px] font-black uppercase tracking-widest text-slate-500">
+        <div class="w-6"></div>
+        <div>Task Name</div>
+        <div>Equipment</div>
+        <div>Date</div>
+        <div>Status</div>
+        <div>Priority</div>
+        <div>Repeat</div>
+        <div class="text-right">Action</div>
+      </div>
+      <!-- Rows -->
+      <div class="divide-y divide-white/5">
+        <template x-for="pm in pmGetFilteredList()" :key="pm.pmId">
+          <div @click="selectedPM = pm; pmShowDetail = true"
+            class="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_1fr_auto_auto_auto_auto_auto] gap-3 p-3 items-center hover:bg-white/[0.02] cursor-pointer transition-all">
+            <!-- Status dot -->
+            <div class="w-6 h-6 rounded-lg flex items-center justify-center" :class="{
+              'bg-red-500/20': pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0],
+              'bg-cyan-500/20': pm.status === 'pending',
+              'bg-emerald-500/20': pm.status === 'completed',
+              'bg-slate-500/20': pm.status === 'cancelled',
+            }">
+              <i class="fas text-[9px]" :class="{
+                'fa-exclamation-triangle text-red-400': pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0],
+                'fa-clock text-cyan-400': pm.status === 'pending',
+                'fa-check text-emerald-400': pm.status === 'completed',
+                'fa-ban text-slate-400': pm.status === 'cancelled',
+              }"></i>
+            </div>
+            <!-- Task Name -->
+            <div class="min-w-0">
+              <span class="text-xs font-bold text-white truncate block" x-text="pm.taskName"></span>
+              <span x-show="pm.description" class="text-[8px] text-slate-600 truncate block" x-text="pm.description"></span>
+            </div>
+            <!-- Equipment -->
+            <div class="min-w-0">
+              <span class="text-xs font-bold text-cyan-300 truncate block" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
+              <span class="text-[8px] text-slate-600 font-mono block" x-text="pm.equipmentId"></span>
+            </div>
+            <!-- Date -->
+            <div class="text-center">
+              <span class="text-xs font-bold" :class="{
+                'text-red-400': pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0],
+                'text-white': pm.status === 'pending',
+                'text-emerald-400': pm.status === 'completed',
+              }" x-text="pm.date"></span>
+            </div>
+            <!-- Status badge -->
+            <div>
+              <span class="text-[8px] px-2 py-0.5 rounded-full font-bold" :class="{
+                'bg-red-500/20 text-red-400': pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0],
+                'bg-cyan-500/20 text-cyan-400': pm.status === 'pending',
+                'bg-emerald-500/20 text-emerald-400': pm.status === 'completed',
+                'bg-slate-500/20 text-slate-400': pm.status === 'cancelled',
+              }" x-text="pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0] ? 'Overdue' : pm.status"></span>
+            </div>
+            <!-- Priority badge -->
+            <div>
+              <span class="text-[8px] px-2 py-0.5 rounded-full font-bold" :class="{
+                'bg-red-500/20 text-red-400': pm.priority === 'High',
+                'bg-yellow-500/20 text-yellow-400': pm.priority === 'Medium',
+                'bg-slate-500/20 text-slate-400': pm.priority === 'Low',
+              }" x-text="pm.priority || 'Medium'"></span>
+            </div>
+            <!-- Frequency -->
+            <div class="text-center">
+              <span class="text-[8px] text-slate-500 font-bold uppercase" x-text="pm.frequency === 'none' ? '—' : pm.frequency"></span>
+            </div>
+            <!-- Action buttons -->
+            <div class="flex gap-1 justify-end" @click.stop>
+              <button x-show="pm.status === 'pending'"
+                @click="completePM(pm.pmId)"
+                class="w-7 h-7 rounded-lg bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/30 transition-all" title="Mark Complete">
+                <i class="fas fa-check text-[9px]"></i>
+              </button>
+              <button x-show="isAdmin"
+                @click="openPMModal(true, pm); $event.stopPropagation()"
+                class="w-7 h-7 rounded-lg bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 hover:bg-cyan-500/30 transition-all" title="Edit">
+                <i class="fas fa-pen text-[9px]"></i>
+              </button>
+              <button x-show="isAdmin"
+                @click="deletePM(pm.pmId)"
+                class="w-7 h-7 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500/30 transition-all" title="Delete">
+                <i class="fas fa-trash text-[9px]"></i>
+              </button>
+            </div>
+          </div>
+        </template>
+        <!-- Empty state -->
+        <div x-show="pmGetFilteredList().length === 0" class="text-center py-16 text-slate-500">
+          <i class="fas fa-clipboard-list text-5xl text-slate-700 mb-4 block"></i>
+          <p class="font-bold text-base">No PM Tasks Found</p>
+          <p class="text-sm mt-1">Click <span class="text-cyan-400 font-bold">+ New PM Task</span> to create one</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 2: CALENDAR VIEW -->
   <!-- ════════════════════════════════════════════ -->
   <div x-show="!pmLoading && pmView === 'calendar'">
+    <!-- Month Navigation -->
+    <div class="flex items-center gap-3 mb-4">
+      <button @click="pmMonthOffset--" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all">
+        <i class="fas fa-chevron-left text-xs"></i>
+      </button>
+      <h4 class="text-lg font-black text-white min-w-[200px] text-center" x-text="pmGetMonthLabel()"></h4>
+      <button @click="pmMonthOffset++" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-all">
+        <i class="fas fa-chevron-right text-xs"></i>
+      </button>
+      <button @click="pmMonthOffset = 0" class="px-3 py-2 rounded-xl glass text-xs font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all">
+        Today
+      </button>
+    </div>
+
     <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden">
       <!-- Day Headers -->
       <div class="grid grid-cols-7 border-b border-white/5">
@@ -104,7 +213,7 @@
       </div>
       <!-- Days -->
       <div class="grid grid-cols-7">
-        <template x-for="(day, idx) in pmCalendarDays" :key="idx">
+        <template x-for="(day, idx) in pmGetCalendarDays()" :key="idx">
           <div 
             :class="{
               'bg-cyan-500/5': day.isToday && !day.isOtherMonth,
@@ -167,11 +276,11 @@
   </div>
 
   <!-- ════════════════════════════════════════════ -->
-  <!-- GANTT CHART VIEW -->
+  <!-- TAB 3: GANTT CHART -->
   <!-- ════════════════════════════════════════════ -->
   <div x-show="!pmLoading && pmView === 'gantt'" class="space-y-4">
     <div class="flex items-center gap-2 overflow-x-auto pb-2">
-      <template x-for="(m, idx) in pmGanttMonths" :key="idx">
+      <template x-for="(m, idx) in pmGetGanttMonths()" :key="idx">
         <button @click="pmGanttScroll = idx"
           :class="pmGanttScroll === idx ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'text-slate-500 border-transparent hover:text-slate-300'"
           class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border glass whitespace-nowrap transition-all">
@@ -189,7 +298,7 @@
               <span class="text-[8px] font-black uppercase tracking-widest text-slate-500">Equipment / Task</span>
             </div>
             <div class="flex flex-1">
-              <template x-for="day in pmGanttDays" :key="day.dateStr">
+              <template x-for="day in pmGetGanttDays()" :key="day.dateStr">
                 <div 
                   :class="{'bg-cyan-500/5': day.isToday, 'bg-slate-800/30': day.isWeekend && !day.isToday, 'border-white/5': true}"
                   class="w-[20px] shrink-0 border-r text-center py-2" :title="day.label">
@@ -199,9 +308,8 @@
               </template>
             </div>
           </div>
-
           <!-- Rows -->
-          <template x-for="(row, rIdx) in pmGanttRows" :key="row.equipId">
+          <template x-for="(row, rIdx) in pmGetGanttRows()" :key="row.equipId">
             <div class="flex border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
               <div class="w-[200px] shrink-0 p-3 border-r border-white/5 flex flex-col justify-center">
                 <div class="flex items-center gap-2">
@@ -216,7 +324,7 @@
                 <span class="text-[8px] text-slate-500 mt-0.5 font-mono" x-text="row.equipId"></span>
               </div>
               <div class="flex flex-1 relative">
-                <template x-for="day in pmGanttDays" :key="day.dateStr">
+                <template x-for="day in pmGetGanttDays()" :key="day.dateStr">
                   <div class="w-[20px] shrink-0 border-r border-white/5 relative"
                     :class="{'bg-cyan-500/[0.03]': day.isToday, 'bg-slate-800/20': day.isWeekend}"></div>
                 </template>
@@ -237,64 +345,12 @@
               </div>
             </div>
           </template>
-
-          <div x-show="pmGanttRows.length === 0" class="text-center py-16">
-            <div class="inline-flex flex-col items-center gap-4">
-              <i class="fas fa-calendar-times text-5xl text-slate-600"></i>
-              <p class="text-slate-400 font-bold">No PM Tasks</p>
-              <p class="text-slate-500 text-sm">Click <span class="text-cyan-400">+ New PM Task</span> to create one</p>
-            </div>
+          <!-- Empty -->
+          <div x-show="pmGetGanttRows().length === 0" class="text-center py-16 text-slate-500">
+            <i class="fas fa-chart-bar text-5xl text-slate-700 mb-4 block"></i>
+            <p class="font-bold">No PM Tasks in this Range</p>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════ -->
-  <!-- LIST VIEW (filteredPMList) -->
-  <!-- ════════════════════════════════════════════ -->
-  <div x-show="!pmLoading && pmView === 'calendar'" class="mt-6">
-    <h4 class="text-sm font-black text-white mb-3 uppercase tracking-widest">Upcoming Tasks</h4>
-    <div class="space-y-2">
-      <template x-for="pm in filteredPMList.slice(0, 20)" :key="pm.pmId">
-        <div @click="selectedPM = pm; pmShowDetail = true"
-          class="flex items-center gap-3 p-3 glass border-nexus-accent/10 rounded-xl cursor-pointer hover:brightness-110 transition-all">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="{
-            'bg-red-500/20': pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0],
-            'bg-cyan-500/20': pm.status === 'pending',
-            'bg-emerald-500/20': pm.status === 'completed',
-          }">
-            <i class="fas" :class="{
-              'fa-exclamation-triangle text-red-400': pm.status === 'pending' && pm.date < new Date().toISOString().split('T')[0],
-              'fa-clock text-cyan-400': pm.status === 'pending',
-              'fa-check text-emerald-400': pm.status === 'completed',
-            }"></i>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-white truncate" x-text="pm.taskName"></span>
-              <span class="text-[8px] px-2 py-0.5 rounded-full font-bold" :class="{
-                'bg-red-500/20 text-red-400': pm.priority === 'High',
-                'bg-yellow-500/20 text-yellow-400': pm.priority === 'Medium',
-                'bg-slate-500/20 text-slate-400': pm.priority === 'Low',
-              }" x-text="pm.priority"></span>
-            </div>
-            <div class="flex gap-3 mt-1">
-              <span class="text-[9px] text-slate-400"><i class="fas fa-calendar mr-1 text-slate-600"></i><span x-text="pm.date"></span></span>
-              <span x-show="pm.equipmentId" class="text-[9px] text-slate-400"><i class="fas fa-tools mr-1 text-slate-600"></i><span x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span></span>
-              <span x-show="pm.frequency !== 'none'" class="text-[9px] text-slate-400"><i class="fas fa-repeat mr-1 text-slate-600"></i><span x-text="pm.frequency"></span></span>
-            </div>
-          </div>
-          <div x-show="pm.status === 'pending'" class="flex gap-1">
-            <button @click.stop="completePM(pm.pmId); $event.stopPropagation()" class="w-7 h-7 rounded-lg bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/30 transition-all">
-              <i class="fas fa-check text-[9px]"></i>
-            </button>
-          </div>
-        </div>
-      </template>
-      <div x-show="filteredPMList.length === 0" class="text-center py-8 text-slate-500">
-        <i class="fas fa-check-circle text-3xl text-emerald-500/50 mb-2 block"></i>
-        <p class="font-bold">No PM tasks found</p>
       </div>
     </div>
   </div>
@@ -316,16 +372,12 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-
       <form @submit.prevent="submitPM()" class="space-y-4">
-        <!-- Task Name -->
         <div>
           <label class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Task Name *</label>
           <input type="text" x-model="pmForm.taskName" placeholder="e.g. Ganti Oli, Greasing, Inspect Belt..."
             class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold text-white placeholder-slate-600 rounded-xl focus:border-cyan-500/50 outline-none transition-all">
         </div>
-
-        <!-- Equipment -->
         <div>
           <label class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Equipment *</label>
           <select x-model="pmForm.equipmentId" class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold rounded-xl">
@@ -335,16 +387,12 @@
             </template>
           </select>
         </div>
-
-        <!-- Description -->
         <div>
           <label class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Description</label>
           <textarea x-model="pmForm.description" rows="2"
             class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold text-white placeholder-slate-600 rounded-xl focus:border-cyan-500/50 outline-none transition-all resize-none"
             placeholder="Optional notes..."></textarea>
         </div>
-
-        <!-- Date + Frequency row -->
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">PM Date *</label>
@@ -361,8 +409,6 @@
             </select>
           </div>
         </div>
-
-        <!-- Priority + Assigned To row -->
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Priority</label>
@@ -377,12 +423,8 @@
             <input type="text" x-model="pmForm.assignedTo" class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold rounded-xl">
           </div>
         </div>
-
-        <!-- Submit -->
         <div class="flex gap-2 pt-2">
-          <button type="button" @click="showPMModal = false" class="flex-1 px-4 py-3 glass text-slate-400 rounded-xl text-xs font-bold hover:text-white transition-all">
-            Cancel
-          </button>
+          <button type="button" @click="showPMModal = false" class="flex-1 px-4 py-3 glass text-slate-400 rounded-xl text-xs font-bold hover:text-white transition-all">Cancel</button>
           <button type="submit" class="flex-1 px-4 py-3 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded-xl text-xs font-bold hover:bg-cyan-500/30 transition-all">
             <i class="fas fa-save mr-2"></i> Save PM Task
           </button>
@@ -427,7 +469,6 @@
               <p class="text-slate-400 text-sm" x-text="selectedPM.equipmentId"></p>
             </div>
           </div>
-
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-slate-800/50 p-3 rounded-xl">
               <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Date</p>
@@ -440,10 +481,7 @@
                 'text-cyan-400': selectedPM.status === 'pending',
                 'text-emerald-400': selectedPM.status === 'completed',
                 'text-slate-400': selectedPM.status === 'cancelled',
-              }" x-text="selectedPM.status === 'pending' && selectedPM.date < new Date().toISOString().split('T')[0] ? 'Overdue'
-                : selectedPM.status === 'pending' ? 'Pending'
-                : selectedPM.status === 'completed' ? 'Completed'
-                : 'Cancelled'"></p>
+              }" x-text="selectedPM.status === 'pending' && selectedPM.date < new Date().toISOString().split('T')[0] ? 'Overdue' : selectedPM.status"></p>
             </div>
             <div class="bg-slate-800/50 p-3 rounded-xl">
               <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Priority</p>
@@ -462,12 +500,10 @@
               <p class="text-emerald-400 font-bold text-sm" x-text="selectedPM.completionDate"></p>
             </div>
           </div>
-
           <div x-show="selectedPM.description" class="bg-slate-800/50 p-3 rounded-xl">
             <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1">Description</p>
             <p class="text-white text-sm" x-text="selectedPM.description"></p>
           </div>
-
           <div class="flex gap-2 pt-2">
             <button @click="openPMModal(true, selectedPM); pmShowDetail = false" x-show="isAdmin"
               class="flex-1 px-4 py-3 bg-slate-600/20 border border-slate-500/30 text-slate-400 rounded-xl text-xs font-bold hover:bg-slate-500/30 transition-all">

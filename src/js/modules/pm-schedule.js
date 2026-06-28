@@ -32,7 +32,7 @@ export const pmScheduleModule = {
   pmView: 'calendar',
   pmMonthOffset: 0,
   pmGanttScroll: 0,
-  pmLoading: false,
+  pmLoading: true,
 
   // --- INIT ---
   /** Load PM_Schedule from Firebase */
@@ -243,7 +243,7 @@ export const pmScheduleModule = {
   },
 
   // --- FILTERS ---
-  get filteredPMList() {
+  pmGetFilteredList() {
     let list = this.pmList || [];
 
     if (this.pmFilterEquip) {
@@ -263,15 +263,15 @@ export const pmScheduleModule = {
     });
   },
 
-  // --- COMPUTED GETTERS (for calendar & gantt) ---
-  get pmMonthLabel() {
+  // --- COMPUTED HELPERS (regular methods, not getters - keeps Alpine reactivity) ---
+  pmGetMonthLabel() {
     const d = new Date();
     d.setMonth(d.getMonth() + (this.pmMonthOffset || 0));
     return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   },
 
   /** Build calendar events from pmList */
-  get pmCalendarEvents() {
+  pmGetCalendarEvents() {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const nextWeek = new Date();
@@ -311,7 +311,7 @@ export const pmScheduleModule = {
   },
 
   /** Build calendar grid days */
-  get pmCalendarDays() {
+  pmGetCalendarDays() {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const offset = this.pmMonthOffset || 0;
@@ -322,7 +322,7 @@ export const pmScheduleModule = {
     const lastDay = new Date(year, month + 1, 0);
     const startPad = firstDay.getDay();
 
-    const eventsByDate = this.pmCalendarEvents;
+    const eventsByDate = this.pmGetCalendarEvents();
 
     const days = [];
     const totalDays = startPad + lastDay.getDate();
@@ -348,7 +348,7 @@ export const pmScheduleModule = {
   },
 
   /** PM Statistics */
-  get pmStats() {
+  pmGetStats() {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -375,7 +375,7 @@ export const pmScheduleModule = {
   },
 
   // Gantt chart
-  get pmGanttMonths() {
+  pmGetGanttMonths() {
     const months = [];
     for (let i = -2; i <= 4; i++) {
       const d = new Date();
@@ -388,7 +388,7 @@ export const pmScheduleModule = {
     return months;
   },
 
-  get pmGanttDays() {
+  pmGetGanttDays() {
     const days = [];
     const scrollOffset = this.pmGanttScroll || 0;
     const startDate = new Date();
@@ -414,8 +414,8 @@ export const pmScheduleModule = {
     return days;
   },
 
-  get pmGanttRows() {
-    const days = this.pmGanttDays;
+  pmGetGanttRows() {
+    const days = this.pmGetGanttDays();
     if (days.length === 0) return [];
 
     const dayWidth = 20;
