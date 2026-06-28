@@ -3,6 +3,7 @@ import { app } from './js/app.js';
 import './css/style.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
+import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification } from './js/modules/notification.js';
 
 // Sentry Error Tracking (Production only)
 import * as Sentry from '@sentry/browser';
@@ -94,5 +95,55 @@ console.log('Component Loader Ready');
 Alpine.start();
 console.log('Alpine Started');
 
+// ============================================================
+// Initialize FCM Push Notifications
+// ============================================================
+// Use a small delay to ensure Firebase listeners are ready
+setTimeout(() => {
+  // Get FCM token and start listening
+  getFCMToken().then(token => {
+    if (token) {
+      console.log('[FCM] Registered, token:', token.substring(0, 20) + '...');
+      setupForegroundListener();
+
+      // Run initial check after data loads
+      setTimeout(checkAllNotifications, 5000);
+
+      // Periodic checks every 5 minutes
+      setInterval(checkAllNotifications, 5 * 60 * 1000);
+    } else {
+      console.log('[FCM] Notification permission not granted or error');
+    }
+  });
+}, 2000);
+
 // Expose Sentry for manual error capture from Alpine modules
 window.Sentry = Sentry;
+
+// Expose notification functions
+window.notificationAPI = {
+  requestNotificationPermission,
+  registerFCMToken,
+  checkAllNotifications,
+  removeFCMToken,
+  sendBrowserNotification,
+};
+
+// ============================================================
+// Initialize Notifications
+// ============================================================
+setTimeout(() => {
+  if (Notification.permission === 'granted') {
+    registerFCMToken().then(token => {
+      if (token) setupForegroundListener();
+    });
+
+    setTimeout(checkAllNotifications, 5000);
+    setInterval(checkAllNotifications, 5 * 60 * 1000);
+    console.log('[Notif] Notification system initialized');
+  } else if (Notification.permission === 'default') {
+    console.log('[Notif] Permission not yet requested');
+  } else {
+    console.log('[Notif] Permission denied');
+  }
+}, 4000);

@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore } from "firebase/database";
 import { getStorage, ref as refStorage, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth, signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword } from "firebase/auth";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,10 +20,13 @@ const db = getDatabase(appFirebase);
 const storage = getStorage(appFirebase);
 const auth = getAuth(appFirebase);
 
+const messaging = getMessaging(appFirebase);
+
 // Expose Firebase functions to global window for Alpine.js
 window.db = db;
 window.storage = storage;
 window.auth = auth;
+window.messaging = messaging;
 window.ref = ref;
 window.refStorage = refStorage;
 window.uploadBytes = uploadBytes;

@@ -23,7 +23,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.png'],
+      includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js'],
       manifest: {
         name: 'MTC.NEXUS',
         short_name: 'NEXUS',
@@ -31,6 +31,8 @@ export default defineConfig({
         theme_color: '#0B0F1A',
         background_color: '#05070a',
         display: 'standalone',
+        // Enable push notifications in PWA manifest
+        gcm_sender_id: '400206066339',
         icons: [
           {
             src: 'logo.png',
