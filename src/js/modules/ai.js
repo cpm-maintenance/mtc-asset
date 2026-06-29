@@ -3,6 +3,7 @@
  */
 
 export const aiModule = {
+    // Single key (legacy)
     apiKey: '',
     apiProvider: 'openai',
     apiModel: '',
@@ -10,6 +11,22 @@ export const aiModule = {
     isAnalyzing: false,
     isGenerating: false,
     analysisResult: null,
+
+    // Multi-key (from app.js merge)
+    aiApiKeys: [],
+    aiApiKeyInput1: '', aiApiKeyInput2: '', aiApiKeyInput3: '', aiApiKeyInput4: '', aiApiKeyInput5: '',
+    activeKeyIndex: 0,
+    aiProvider: 'openrouter',
+    aiModel: '',
+    customModelInput: '',
+    aiModelOptions: [],
+    showAPISettings: false,
+    showCustomPrompt: false,
+    aiChatInput: '',
+    aiChatHistory: [],
+    aiIsAnalyzing: false,
+    aiIsGenerating: false,
+    aiAnalysisResult: null,
 
     async init() {
         // Load saved API key
@@ -618,5 +635,200 @@ Please provide:
         };
         
         this.showNotification("Report generated! Press Ctrl+P to save as PDF", "success");
-    }
+    },
+
+    // --- MERGED FROM app.js ---
+
+    clearAIChat() {
+        this.aiChatHistory = [];
+    },
+
+    rotateApiKey() {
+        if (this.aiApiKeys.length <= 1) {
+            const count = parseInt(localStorage.getItem('ai_api_keys_count') || '0');
+            for (let i = 0; i < count; i++) {
+                const key = localStorage.getItem('ai_api_key_' + i);
+                if (key && key.trim() && !this.aiApiKeys.includes(key.trim())) {
+                    this.aiApiKeys.push(key.trim());
+                }
+            }
+            if (this.aiApiKeys.length <= 1) return null;
+        }
+        for (let i = 1; i < this.aiApiKeys.length; i++) {
+            const idx = (this.activeKeyIndex + i) % this.aiApiKeys.length;
+            if (this.aiApiKeys[idx] && this.aiApiKeys[idx].trim()) {
+                this.activeKeyIndex = idx;
+                localStorage.setItem('ai_active_key_index', String(idx));
+                return this.aiApiKeys[idx];
+            }
+        }
+        return null;
+    },
+
+    async sendAIChat() {
+        if (!this.aiChatInput?.trim()) return;
+        const apiKey = this.activeApiKey;
+        if (!apiKey) { this.showNotification("Silakan setting API key dulu", "error"); return; }
+        if (this.aiIsAnalyzing) return;
+        this.aiIsAnalyzing = true;
+        const question = this.aiChatInput;
+        this.aiChatInput = '';
+        this.aiChatHistory.push({ role: 'user', text: question });
+        try {
+            const result = await this.callAI(`Anda adalah asisten maintenance yang helpful. Jawab singkat dalam bahasa Indonesia.\n\nPertanyaan: ${question}`, apiKey);
+            this.aiChatHistory.push({ role: 'ai', text: result || 'Tidak ada response dari AI' });
+        } catch (e) {
+            this.showNotification("Error: " + e.message, "error");
+            this.aiChatHistory.push({ role: 'ai', text: 'Error: ' + e.message });
+        } finally {
+            this.aiIsAnalyzing = false;
+        }
+    },
+
+    updateModelOptions() {
+        const provider = this.aiProvider;
+        if (provider === 'openai') {
+            this.aiModelOptions = [
+                { value: 'gpt-4o', label: 'GPT-4o' },
+                { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+                { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
+            ];
+        } else if (provider === 'claude') {
+            this.aiModelOptions = [
+                { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
+                { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
+                { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' }
+            ];
+        } else {
+            this.aiModelOptions = [
+                { value: 'google/gemma-4-26b-a4b-it:free', label: 'Gemma 4 (Free)' },
+                { value: 'minimax/minimax-m2.5:free', label: 'MiniMax M2.5 (Free)' },
+                { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (Paid)' },
+                { value: 'openai/gpt-4o', label: 'GPT-4o (Paid)' },
+                { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 (Paid)' },
+                { value: 'z-ai/glm-4.5-air:free', label: 'GLM-4.5 Air (Free)' },
+                { value: '__custom__', label: 'Custom Model...' }
+            ];
+        }
+        this.aiModel = this.aiModelOptions[0]?.value || '';
+    },
+
+    loadAISettings() {
+        this.loadAIFromFirebase().then(firebaseLoaded => {
+            if (firebaseLoaded) return;
+            const storedCount = parseInt(localStorage.getItem('ai_api_keys_count') || '0');
+            if (storedCount > 0) {
+                this.aiApiKeys = [];
+                for (let i = 0; i < storedCount; i++) {
+                    const key = localStorage.getItem('ai_api_key_' + i) || '';
+                    if (key.trim()) this.aiApiKeys.push(key);
+                }
+            }
+            this.aiApiKeyInput1 = localStorage.getItem('ai_api_key_0') || '';
+            this.aiApiKeyInput2 = localStorage.getItem('ai_api_key_1') || '';
+            this.aiApiKeyInput3 = localStorage.getItem('ai_api_key_2') || '';
+            this.aiApiKeyInput4 = localStorage.getItem('ai_api_key_3') || '';
+            this.aiApiKeyInput5 = localStorage.getItem('ai_api_key_4') || '';
+            this.aiProvider = localStorage.getItem('ai_provider') || 'openrouter';
+            this.aiModel = localStorage.getItem('ai_model') || '';
+            this.customPrompt = localStorage.getItem('ai_custom_prompt') || '';
+            this.activeKeyIndex = parseInt(localStorage.getItem('ai_active_key_index') || '0');
+            this.updateModelOptions();
+            if (this.aiModel && !this.aiModelOptions.find(o => o.value === this.aiModel)) {
+                this.aiModelOptions.push({ value: this.aiModel, label: 'Custom: ' + this.aiModel });
+            }
+        });
+    },
+
+    async loadAIFromFirebase() {
+        if (!window.db || !this.user || !this.isAdmin) return false;
+        try {
+            const snapshot = await window.get(window.ref(window.db, 'AI_Settings/admin'));
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                if (data.apiKey) {
+                    if (data.apiKeys && Array.isArray(data.apiKeys)) this.aiApiKeys = data.apiKeys;
+                    else this.aiApiKeys = [data.apiKey];
+                    this.aiApiKeyInput1 = data.apiKey;
+                    if (data.apiKeys?.length > 1) {
+                        this.aiApiKeyInput2 = data.apiKeys[1] || '';
+                        this.aiApiKeyInput3 = data.apiKeys[2] || '';
+                        this.aiApiKeyInput4 = data.apiKeys[3] || '';
+                        this.aiApiKeyInput5 = data.apiKeys[4] || '';
+                    }
+                    this.aiProvider = data.provider || 'openrouter';
+                    this.aiModel = data.model || '';
+                    this.customPrompt = data.customPrompt || '';
+                    return true;
+                }
+            }
+        } catch(e) { console.log('[AI] Firebase load error:', e.message); }
+        return false;
+    },
+
+    saveAIWithCustomModel() {
+        const keys = [];
+        const keyInputs = [this.aiApiKeyInput1, this.aiApiKeyInput2, this.aiApiKeyInput3, this.aiApiKeyInput4, this.aiApiKeyInput5];
+        for (let i = 0; i < keyInputs.length; i++) {
+            if (keyInputs[i]?.trim()) keys.push(keyInputs[i].trim());
+        }
+        this.aiApiKeys = keys;
+        this.activeKeyIndex = 0;
+        localStorage.setItem('ai_active_key_index', '0');
+        localStorage.setItem('ai_api_keys_count', String(keys.length));
+        for (let i = 0; i < keys.length; i++) localStorage.setItem('ai_api_key_' + i, keys[i]);
+
+        let modelToSave = this.aiModel;
+        if (this.aiModel === '__custom__' && this.customModelInput?.trim()) modelToSave = this.customModelInput.trim();
+        this.aiModel = modelToSave;
+        localStorage.setItem('ai_provider', this.aiProvider);
+        localStorage.setItem('ai_model', modelToSave);
+        localStorage.setItem('ai_custom_prompt', this.customPrompt || '');
+        this.saveAIToFirebase(keys[0], modelToSave);
+        this.showAPISettings = false;
+    },
+
+    async saveAIToFirebase(apiKey, model) {
+        if (!window.db || !this.isAdmin) return;
+        try {
+            await window.set(window.ref(window.db, 'AI_Settings/admin'), {
+                apiKey, apiKeys: this.aiApiKeys, provider: this.aiProvider,
+                model: model || '', customPrompt: this.customPrompt || '',
+                updatedAt: new Date().toISOString(), updatedBy: this.user?.email || 'admin'
+            });
+        } catch(e) { console.log('[AI] Firebase save error:', e.message); }
+    },
+
+    get activeApiKey() {
+        if (this.aiApiKeys?.length > 0 && this.aiApiKeys[this.activeKeyIndex]) return this.aiApiKeys[this.activeKeyIndex];
+        for (let i = 0; i < 10; i++) { const key = localStorage.getItem('ai_api_key_' + i); if (key?.trim()) return key; }
+        return localStorage.getItem('ai_api_key') || '';
+    },
+
+    get aiApiKey() {
+        return this.aiApiKeys[0] || localStorage.getItem('ai_api_key_0') || '';
+    },
+    set aiApiKey(v) {
+        if (!this.aiApiKeys[0]) this.aiApiKeys[0] = v;
+        localStorage.setItem('ai_api_key_input_0', v);
+    },
+
+    get apiKeyAlias() { return this.activeApiKey; },
+    get isAnalyzingAlias() { return this.aiIsAnalyzing; },
+    get isGeneratingAlias() { return this.aiIsGenerating || false; },
+    get analysisResultAlias() { return this.aiAnalysisResult || null; },
+
+    async getAIRecommendations() {
+        if (!this.activeApiKey) { this.showNotification("Silakan setting API key dulu", "error"); return; }
+        if (this.aiIsAnalyzing) return;
+        this.showNotification("Menghasilkan rekomendasi...", "info");
+        try {
+            const recommendations = await this.generateRecommendations();
+            if (recommendations?.length > 0) {
+                this.showNotification("Berhasil! " + recommendations.length + " rekomendasi ditemukan", "success");
+            } else {
+                this.showNotification("Tidak ada rekomendasi", "warning");
+            }
+        } catch (e) { this.showNotification("Error: " + e.message, "error"); }
+    },
 };
