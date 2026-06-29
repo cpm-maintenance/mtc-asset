@@ -1,114 +1,109 @@
 <!-- 🏠 PAGE: DASHBOARD -->
-<div x-cloak class="space-y-4 md:space-y-6">
-  <!-- Stats Cards Grid -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+<div x-cloak class="space-y-5 md:space-y-7">
+  <!-- Row 1: Stats Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
     <template x-for="stat in Object.values(calculatedStats)">
-      <div class="card-modern p-4 md:p-5 border-t-2 overflow-hidden relative" :style="'border-top-color: ' + getStatColor(stat.color)">
-        <div class="absolute -right-2 md:-right-4 -top-2 md:-top-4 w-10 md:w-16 h-10 md:h-16 opacity-5 rotate-12">
-          <i class="fas fa-microchip text-3xl md:text-6xl"></i>
+      <div class="card-modern p-4 md:p-5 border-t-2 overflow-hidden relative group hover:border-t-[#00f2ff] transition-all duration-300" :style="'border-top-color: ' + getStatColor(stat.color)">
+        <div class="absolute -right-3 -top-3 w-16 h-16 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+          <i class="fas fa-microchip text-5xl"></i>
         </div>
-        <p class="text-nexus-accent/60 text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] mb-1 md:mb-2" x-text="stat.label"></p>
-        <p class="text-xl md:text-3xl font-black text-white nexus-glow-text" x-text="stat.value"></p>
-        <div class="mt-2 md:mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-          <div class="h-full bg-nexus-accent shadow-[0_0_10px_rgba(0,242,255,0.5)]" style="width: 70%"></div>
+        <p class="text-nexus-accent/50 text-[9px] uppercase font-black tracking-[0.2em] mb-1.5" x-text="stat.label"></p>
+        <p class="text-2xl md:text-4xl font-black text-white nexus-glow-text tracking-tight" x-text="stat.value"></p>
+        <div class="mt-3 h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-1000" style="width: 70%" :style="'background: ' + getStatColor(stat.color)"></div>
         </div>
       </div>
     </template>
   </div>
 
-  <!-- 📊 DASHBOARD CHARTS -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-    <!-- Asset Distribution Chart -->
-    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col">
-      <h3 class="font-bold mb-3 md:mb-4 text-white flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest">
+  <!-- Row 2: Charts 2-col -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
+    <!-- Asset Distribution -->
+    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col lg:col-span-2">
+      <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
         <i class="fas fa-atom text-nexus-accent"></i> Asset Distribution
       </h3>
-      <div class="flex-1 relative min-h-[150px] md:min-h-[200px]">
+      <div class="flex-1 relative min-h-[220px]">
         <canvas id="statusChart"></canvas>
       </div>
     </div>
 
-    <!-- OpEx Tracker Chart -->
-    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col">
-      <h3 class="font-bold mb-3 md:mb-4 text-white flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest">
-        <i class="fas fa-credit-card text-nexus-purple"></i> OpEx Tracker
+    <!-- PM Status (Horizontal Bar) -->
+    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col lg:col-span-3">
+      <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+        <i class="fas fa-calendar-check text-emerald-400"></i> PM Schedule Status
       </h3>
-      <div class="flex-1 relative min-h-[150px] md:min-h-[200px]">
-        <canvas id="costChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Reliability Trend Chart -->
-    <div class="card-modern p-4 md:p-5 border-nexus-accent/10 flex flex-col xl:col-span-2">
-      <h3 class="font-bold mb-3 md:mb-4 text-white flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest">
-        <i class="fas fa-chart-line text-nexus-accent"></i> Reliability Trend (PA Avg)
-      </h3>
-      <div class="flex-1 relative min-h-[150px] md:min-h-[200px]">
-        <canvas id="reliabilityChart"></canvas>
+      <div class="flex-1 relative min-h-[220px]">
+        <canvas id="pmStatusChart"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- ⏰ PM SCHEDULE WIDGET -->
+  <!-- Row 3: Reliability (full width, taller) -->
   <div class="card-modern p-4 md:p-5 border-nexus-accent/10">
+    <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+      <i class="fas fa-chart-line text-nexus-accent"></i> Reliability Trend (PA Average)
+    </h3>
+    <div class="relative min-h-[250px] md:min-h-[300px]">
+      <canvas id="reliabilityChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 4: PM Schedule Widget (full width) -->
+  <div class="card-modern p-5 md:p-6 border-nexus-accent/10">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="font-bold text-white flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest">
+      <h3 class="font-bold text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
         <i class="fas fa-calendar-check text-nexus-accent"></i>
         PM Schedule
-        <span x-show="pmUpcomingList.length > 0" class="text-[9px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full font-bold" x-text="`${pmUpcomingList.length} upcoming`"></span>
+        <span x-show="pmUpcomingList.length > 0" class="text-[9px] bg-cyan-500/15 text-cyan-400 px-2.5 py-0.5 rounded-full font-bold tracking-normal" x-text="`${pmUpcomingList.length} upcoming`"></span>
       </h3>
-      <a href="#" @click.prevent="currentPage='pms'" class="text-[8px] text-nexus-accent/60 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
-        View All →
+      <a href="#" @click.prevent="currentPage='pms'" class="text-[8px] text-slate-500 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
+        View All <i class="fas fa-arrow-right ml-1 text-[7px]"></i>
       </a>
     </div>
 
-    <!-- Loading -->
-    <div x-show="!pmList || pmList.length === 0" class="text-center py-8 text-slate-500">
-      <i class="fas fa-calendar text-3xl text-slate-700 mb-2 block"></i>
-      <p class="text-sm font-bold">No PM tasks yet</p>
+    <div x-show="!pmList || pmList.length === 0" class="text-center py-10 text-slate-600">
+      <i class="fas fa-calendar text-4xl text-slate-700 mb-3 block"></i>
+      <p class="text-sm font-bold text-slate-500">No PM tasks yet</p>
+      <p class="text-xs text-slate-600 mt-1">Create a task in PM Schedule to get started</p>
     </div>
 
-    <!-- Upcoming PM task list -->
-    <div x-show="pmList && pmList.length > 0" class="space-y-2">
+    <div x-show="pmList && pmList.length > 0" class="space-y-1.5">
       <template x-for="pm in pmUpcomingList.slice(0, 5)" :key="pm.pmId">
         <a href="#" @click.prevent="currentPage='pms'; selectedPM=pm; pmShowDetail=true"
-          class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-all group cursor-pointer">
-          <!-- Status indicator -->
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="{
-            'bg-red-500/20': isPMOverdue(pm),
-            'bg-amber-500/20': isPMDueSoon(pm),
-            'bg-cyan-500/20': !isPMOverdue(pm) && !isPMDueSoon(pm),
+          class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition-all group cursor-pointer border border-transparent hover:border-white/5">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{
+            'bg-red-500/10': isPMOverdue(pm),
+            'bg-amber-500/10': isPMDueSoon(pm),
+            'bg-cyan-500/10': !isPMOverdue(pm) && !isPMDueSoon(pm),
           }">
-            <i class="fas text-[9px]" :class="{
+            <i class="fas text-[10px]" :class="{
               'fa-exclamation-triangle text-red-400': isPMOverdue(pm),
               'fa-clock text-amber-400': isPMDueSoon(pm),
               'fa-calendar-day text-cyan-400': !isPMOverdue(pm) && !isPMDueSoon(pm),
             }"></i>
           </div>
-          <!-- Content -->
           <div class="flex-1 min-w-0">
-            <p class="text-xs font-bold text-white truncate" x-text="pm.taskName"></p>
-            <p class="text-[9px] text-slate-500 mt-0.5">
-              <span class="text-cyan-300 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
-              <span class="mx-1">·</span>
+            <p class="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors" x-text="pm.taskName"></p>
+            <p class="text-[9px] text-slate-500 mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5 items-center">
+              <span class="text-cyan-300/80 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
+              <span class="text-slate-600">·</span>
               <span :class="isPMOverdue(pm) ? 'text-red-400' : 'text-slate-400'" x-text="pm.date"></span>
-              <span x-show="pm.frequency !== 'none'" class="mx-1">·</span>
-              <span x-show="pm.frequency !== 'none'" class="text-purple-400 font-bold uppercase" x-text="pm.frequency"></span>
+              <span x-show="pm.frequency !== 'none'" class="text-slate-600">·</span>
+              <span x-show="pm.frequency !== 'none'" class="text-purple-400/80 font-bold uppercase" x-text="pm.frequency"></span>
             </p>
           </div>
-          <!-- Priority badge -->
-          <span class="text-[7px] px-1.5 py-0.5 rounded font-bold uppercase shrink-0" :class="{
-            'bg-red-500/20 text-red-400': pm.priority === 'High',
-            'bg-yellow-500/20 text-yellow-400': pm.priority === 'Medium',
-            'bg-slate-500/20 text-slate-400': pm.priority === 'Low',
+          <span class="text-[7px] px-2 py-0.5 rounded font-bold uppercase shrink-0" :class="{
+            'bg-red-500/10 text-red-400': pm.priority === 'High',
+            'bg-amber-500/10 text-amber-400': pm.priority === 'Medium',
+            'bg-slate-500/10 text-slate-400': !pm.priority || pm.priority === 'Low',
           }" x-text="pm.priority || 'Medium'"></span>
         </a>
       </template>
 
-      <!-- More link -->
-      <div x-show="pmUpcomingList.length > 5" class="text-center pt-1">
+      <div x-show="pmUpcomingList.length > 5" class="text-center pt-2">
         <a href="#" @click.prevent="currentPage='pms'" class="text-[8px] text-slate-600 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
-          +<span x-text="pmUpcomingList.length - 5"></span> more
+          +<span x-text="pmUpcomingList.length - 5"></span> more tasks
         </a>
       </div>
     </div>
