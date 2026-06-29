@@ -37,6 +37,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
           VITE_IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
       
       - name: Deploy to Firebase
         if: github.ref == 'refs/heads/main'
