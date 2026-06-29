@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce } from '../src/js/utils.js';
+import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor } from '../src/js/utils.js';
 import { kpiEngineModule } from '../src/js/modules/kpi-engine.js';
 import { performanceModule } from '../src/js/modules/performance.js';
 
@@ -502,5 +502,196 @@ describe('debounce', () => {
     await new Promise(r => setTimeout(r, 60));
     
     expect(count).toBe(1);
+  });
+});
+
+describe('sanitizeForDisplay', () => {
+  it('should escape HTML but keep slashes', () => {
+    const result = sanitizeForDisplay('<b>bold</b>');
+    expect(result).toBe('&lt;b&gt;bold&lt;/b&gt;');
+  });
+  it('should handle null', () => {
+    expect(sanitizeForDisplay(null)).toBe('');
+  });
+});
+
+describe('isValidPositiveNumber', () => {
+  it('should return true for positive numbers', () => {
+    expect(isValidPositiveNumber(5)).toBe(true);
+    expect(isValidPositiveNumber('3.5')).toBe(true);
+  });
+  it('should return false for zero when allowZero=false', () => {
+    expect(isValidPositiveNumber(0)).toBe(false);
+  });
+  it('should return true for zero when allowZero=true', () => {
+    expect(isValidPositiveNumber(0, true)).toBe(true);
+  });
+  it('should return false for negatives and NaN', () => {
+    expect(isValidPositiveNumber(-1)).toBe(false);
+    expect(isValidPositiveNumber('abc')).toBe(false);
+  });
+});
+
+describe('isValidInteger', () => {
+  it('should return true for valid integers', () => {
+    expect(isValidInteger(5)).toBe(true);
+    expect(isValidInteger('10')).toBe(true);
+  });
+  it('should enforce min/max', () => {
+    expect(isValidInteger(5, 10)).toBe(false);
+    expect(isValidInteger(15, 10, 20)).toBe(true);
+    expect(isValidInteger(25, 10, 20)).toBe(false);
+  });
+});
+
+describe('isValidDateRange', () => {
+  it('should return true for valid range', () => {
+    expect(isValidDateRange('2025-01-01', '2025-06-01')).toBe(true);
+  });
+  it('should return false for inverted range', () => {
+    expect(isValidDateRange('2025-06-01', '2025-01-01')).toBe(false);
+  });
+  it('should return false for invalid dates', () => {
+    expect(isValidDateRange(null, '2025-01-01')).toBe(false);
+  });
+});
+
+describe('isValidPhone', () => {
+  it('should return true for valid phones', () => {
+    expect(isValidPhone('+6281234567890')).toBe(true);
+    expect(isValidPhone('0812-3456-7890')).toBe(true);
+  });
+  it('should return false for invalid', () => {
+    expect(isValidPhone('')).toBe(false);
+    expect(isValidPhone('12')).toBe(false);
+  });
+});
+
+describe('isValidURL', () => {
+  it('should return true for valid URLs', () => {
+    expect(isValidURL('https://example.com/image.jpg')).toBe(true);
+  });
+  it('should return true for empty (optional)', () => {
+    expect(isValidURL('')).toBe(true);
+  });
+  it('should return false for invalid URL', () => {
+    expect(isValidURL('not-a-url')).toBe(false);
+  });
+});
+
+describe('isValidLength', () => {
+  it('should validate string length', () => {
+    expect(isValidLength('abc', 1, 5)).toBe(true);
+    expect(isValidLength('toolong', 1, 3)).toBe(false);
+  });
+  it('should return false for null', () => {
+    expect(isValidLength(null, 1, 5)).toBe(false);
+  });
+});
+
+describe('validateEmail', () => {
+  it('should return true for valid emails', () => {
+    expect(validateEmail('user@example.com')).toBe(true);
+    expect(validateEmail('admin@mtc-asset.web.app')).toBe(true);
+  });
+  it('should return false for invalid', () => {
+    expect(validateEmail('')).toBe(false);
+    expect(validateEmail('not-an-email')).toBe(false);
+  });
+});
+
+describe('validateForm', () => {
+  it('should validate required fields', () => {
+    const result = validateForm({}, { name: { required: true } });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('name is required');
+  });
+  it('should validate min/max', () => {
+    const rules = { age: { required: true, min: 18, max: 99 } };
+    expect(validateForm({ age: 15 }, rules).valid).toBe(false);
+    expect(validateForm({ age: 25 }, rules).valid).toBe(true);
+  });
+});
+
+describe('sanitizeDataForFirebase', () => {
+  it('should sanitize all strings in object', () => {
+    const data = { name: '<script>alert(1)</script>', age: 25, tags: ['<b>a</b>'] };
+    const result = sanitizeDataForFirebase(data);
+    expect(result.name).not.toContain('<script>');
+    expect(result.age).toBe(25);
+    expect(result.tags[0]).not.toContain('<b>');
+  });
+  it('should handle empty object', () => {
+    expect(sanitizeDataForFirebase({})).toEqual({});
+  });
+});
+
+describe('generateId', () => {
+  it('should generate ID with prefix', () => {
+    const id = generateId('WO');
+    expect(id).toMatch(/^WO-\d+-[a-z0-9]+$/);
+  });
+  it('should generate unique IDs', () => {
+    const id1 = generateId();
+    const id2 = generateId();
+    expect(id1).not.toBe(id2);
+  });
+});
+
+describe('isOverdue', () => {
+  it('should return true for past dates', () => {
+    expect(isOverdue('2020-01-01')).toBe(true);
+  });
+  it('should return false for null', () => {
+    expect(isOverdue(null)).toBe(false);
+  });
+});
+
+describe('calculateStats', () => {
+  it('should calculate stats from equipment/parts/logs', () => {
+    const equipment = [{ EquipmentID: 'EQ001', NextPMDate: '2020-01-01' }];
+    const parts = [{ Stok: 3, MinStock: 10 }];
+    const logs = [{ Downtime: 4 }, { Downtime: 2 }];
+    const result = calculateStats(equipment, parts, logs);
+    expect(result.overdueCount).toBe(1);
+    expect(result.lowStockCount).toBe(1);
+    expect(result.totalDown).toBe(6);
+  });
+});
+
+describe('validatePerformanceForm', () => {
+  it('should return errors for missing fields', () => {
+    const errors = validatePerformanceForm({});
+    expect(errors).toContain('Equipment selection is required');
+    expect(errors).toContain('Date is required');
+  });
+  it('should validate hour total', () => {
+    const errors = validatePerformanceForm({
+      equipmentId: 'EQ001', date: '2025-01-01', wh: '24', bd: '0', stb: '0'
+    });
+    const hasTotalError = errors.some(e => e.includes('Total hours'));
+    expect(hasTotalError).toBe(false);
+  });
+  it('should error on incorrect total hours', () => {
+    const errors = validatePerformanceForm({
+      equipmentId: 'EQ001', date: '2025-01-01', wh: '10', bd: '5', stb: '5'
+    });
+    expect(errors.some(e => e.includes('Total hours'))).toBe(true);
+  });
+});
+
+describe('getLifetimeColor', () => {
+  it('should return correct colors', () => {
+    expect(getLifetimeColor('overdue')).toBe('text-rose-500');
+    expect(getLifetimeColor('warning')).toBe('text-amber-500');
+    expect(getLifetimeColor('ok')).toBe('text-emerald-500');
+  });
+});
+
+describe('getLifetimeBgColor', () => {
+  it('should return correct bg colors', () => {
+    expect(getLifetimeBgColor('overdue')).toContain('bg-rose-500');
+    expect(getLifetimeBgColor('warning')).toContain('bg-amber-500');
+    expect(getLifetimeBgColor('ok')).toContain('bg-emerald-500');
   });
 });
