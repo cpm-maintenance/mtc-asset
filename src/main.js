@@ -3,7 +3,7 @@ import { app } from './js/app.js';
 import './css/style.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
-import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification } from './js/modules/notification.js';
+import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification, resetNotifBlocker } from './js/modules/notification.js';
 
 // Sentry Error Tracking (Production only)
 import * as Sentry from '@sentry/browser';
