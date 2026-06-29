@@ -336,8 +336,8 @@
     </button>
 
     <div class="space-y-2 flex-1">
-      <template x-for="item in menuItems.filter(m => isAdmin || (m.id !== 'perf' && m.id !== 'kpi' && m.id !== 'ai'))">
-        <div @click="currentPage = item.id"
+      <template x-for="item in menuItems.filter(m => isAdmin || (m.id !== 'pms' && m.id !== 'perf' && m.id !== 'kpi' && m.id !== 'ai'))">
+        <div @click="navigateTo(item.id)"
           :class="currentPage === item.id ? 'bg-nexus-accent/10 text-nexus-accent border-r-2 border-nexus-accent' : 'text-slate-500 hover:bg-white/5 hover:text-nexus-accent'"
           class="flex items-center gap-3 md:gap-4 p-3 md:p-4 cursor-pointer rounded-2xl transition-all duration-300 group relative overflow-hidden">
           <i :class="item.icon" class="w-5 md:w-6 text-center text-base md:text-lg group-hover:scale-110 transition-transform"></i>
@@ -548,8 +548,8 @@
   <!-- Mobile Bottom Navigation -->
   <nav x-show="isLoggedIn" x-cloak
     class="fixed bottom-0 left-0 w-full glass border-t border-nexus-accent/20 lg:hidden flex justify-around py-1 px-1 z-50 bg-nexus-black/95 backdrop-blur-lg h-12">
-    <template x-for="item in menuItems.filter(i => i.mobile && (isAdmin || (i.id !== 'perf' && i.id !== 'kpi' && i.id !== 'ai')))">
-      <div @click="currentPage = item.id" :class="currentPage === item.id ? 'text-nexus-accent' : 'text-slate-500'"
+    <template x-for="item in menuItems.filter(i => i.mobile && (isAdmin || (i.id !== 'pms' && i.id !== 'perf' && i.id !== 'kpi' && i.id !== 'ai')))">
+      <div @click="navigateTo(item.id)" :class="currentPage === item.id ? 'text-nexus-accent' : 'text-slate-500'"
         class="flex flex-col items-center justify-center cursor-pointer transition-all p-1 h-full aspect-square">
         <i :class="item.icon" class="text-base"></i>
       </div>

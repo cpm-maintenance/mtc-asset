@@ -103,6 +103,14 @@ export const bootstrapModule = {
                 if (this.currentPage === 'dash' && this.logs && this.logs.length > 0) debouncedDash(); 
             });
             this.$watch('currentPage', (val, oldVal) => {
+                // Guard: block admin-only pages for non-admin
+                const blocked = { pms: 1, perf: 1, kpi: 1, ai: 1 };
+                if (blocked[val] && !this.isAdmin) {
+                    console.warn('[Access] Blocked direct navigation to', val);
+                    this.showNotification('Access denied: admin only', 'error');
+                    this.currentPage = oldVal || 'dash';
+                    return;
+                }
                 if (oldVal === 'dash') {
                     Object.values(window._appCharts || {}).forEach(c => { 
                         if(c) { try { c.destroy(); } catch(e) { console.warn('Chart destroy error', e); } }

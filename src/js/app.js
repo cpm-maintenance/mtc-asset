@@ -146,11 +146,21 @@ if (confirm('Are you sure you want to logout?')) {
             { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true },
             { id: 'hist', name: 'All Logs', icon: 'fas fa-history', mobile: true },
             { id: 'wo', name: 'Work Orders', icon: 'fas fa-clipboard-list', mobile: true },
-            { id: 'pms', name: 'PM Schedule', icon: 'fas fa-calendar-alt', mobile: true },
-            { id: 'perf', name: 'Performance', icon: 'fas fa-chart-line', mobile: true },
-            { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true },
-            { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false },
+            { id: 'pms', name: 'PM Schedule', icon: 'fas fa-calendar-alt', mobile: true, allowedRole: 'admin' },
+            { id: 'perf', name: 'Performance', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'admin' },
+            { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin' },
+            { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin' },
         ],
+
+        // --- ROLE-BASED NAVIGATION ---
+        navigateTo(pageId) {
+            const page = this.menuItems.find(m => m.id === pageId);
+            if (page?.allowedRole && page.allowedRole === 'admin' && !this.isAdmin) {
+                this.showNotification("Access denied: admin only", "error");
+                return;
+            }
+            this.currentPage = pageId;
+        },
 
         // --- MODULE INJECTION ---
         ...authModule,
