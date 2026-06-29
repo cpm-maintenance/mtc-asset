@@ -5,20 +5,26 @@ export default defineConfig({
   root: './',
   build: {
     outDir: 'dist',
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
-      input: {
-        main: './index.html',
-      },
-      output: (chunkInfo) => {
-        if (chunkInfo.name === 'chart.js' || chunkInfo.name?.includes('chart')) {
-          return { name: 'chart' };
-        }
-        if (chunkInfo.name?.includes('firebase')) {
-          return { name: 'firebase' };
+      input: { main: './index.html' },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/xlsx')) return 'xlsx';
+          if (id.includes('node_modules/jspdf')) return 'jspdf';
+          if (id.includes('node_modules/chart.js')) return 'chart';
+          if (id.includes('node_modules/firebase')) return 'firebase';
+          if (id.includes('node_modules/html2canvas')) return 'html2canvas';
+          if (id.includes('node_modules/@sentry')) return 'sentry';
+          if (id.includes('node_modules/dompurify') || id.includes('node_modules/purify')) return 'purify';
+          if (id.includes('node_modules/alpinejs')) return 'alpine';
+          if (id.includes('node_modules/qrcode')) return 'qrcode';
+          if (id.includes('node_modules')) return 'vendor';
         }
       }
     },
-    chunkSizeWarningLimit: 800,
+    // Suppress size warning for known-large libs
+    reportCompressedSize: false,
   },
   plugins: [
     VitePWA({

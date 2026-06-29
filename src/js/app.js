@@ -1353,6 +1353,59 @@ if (confirm('Are you sure you want to logout?')) {
                         };
                         window._appCharts.reliability = await this.safeCreateChart(ctxRel, relConfig);
                     }
+
+                    const ctxPM = await waitForCanvas('pmStatusChart');
+                    if (this.currentPage !== 'dash') return;
+                    if (ctxPM) {
+                        const pmList = this.safeDeepClone(this.pmList) || [];
+                        const today = new Date().toISOString().split('T')[0];
+                        let pending = 0, overdue = 0, completed = 0, cancelled = 0;
+                        pmList.forEach(pm => {
+                            if (pm.status === 'completed') completed++;
+                            else if (pm.status === 'cancelled') cancelled++;
+                            else if (pm.status === 'pending' && pm.date < today) overdue++;
+                            else pending++;
+                        });
+                        window._appCharts = window._appCharts || {};
+                        if (window._appCharts.pmStatus) {
+                            try { window._appCharts.pmStatus.destroy(); } catch(e) { console.warn('Chart destroy failed', e); }
+                        }
+                        const pmConfig = {
+                            type: 'bar',
+                            data: {
+                                labels: ['Overdue', 'Pending', 'Completed', 'Cancelled'],
+                                datasets: [{
+                                    data: [overdue, pending, completed, cancelled],
+                                    backgroundColor: [
+                                        'rgba(239,68,68,0.7)',
+                                        'rgba(6,182,212,0.7)',
+                                        'rgba(34,197,94,0.7)',
+                                        'rgba(100,116,139,0.5)'
+                                    ],
+                                    borderColor: ['#ef4444', '#06b6d4', '#22c55e', '#64748b'],
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                animation: { duration: 800, easing: 'easeOutQuart' },
+                                maintainAspectRatio: false,
+                                responsive: true,
+                                scales: {
+                                    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true },
+                                    y: { grid: { display: false }, ticks: { color: tc, font: { size: 10, weight: 'bold' } } }
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                }
+                            }
+                        };
+                        // Only show if there are any PM tasks, else show empty message
+                        if (overdue + pending + completed + cancelled > 0) {
+                            window._appCharts.pmStatus = await this.safeCreateChart(ctxPM, pmConfig);
+                        }
+                    }
                 }
                 this.$nextTick(() => {
                     requestAnimationFrame(() => renderCharts().catch(e => console.error(e)));

@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 backup-2026-06-28_20-08-41.json
+=======
+backup-2026-06-29_10-48-58.json
+>>>>>>> 7af569c (chore: dashboard redesign + PM status bar chart + chunk splitting)
