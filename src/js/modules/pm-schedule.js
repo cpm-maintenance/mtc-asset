@@ -33,6 +33,7 @@ export const pmScheduleModule = {
   pmMonthOffset: 0,
   pmGanttScroll: 0,
   pmLoading: true,
+  pmSelectedIds: [],
 
   // --- INIT ---
   /** Load PM_Schedule from Firebase */
@@ -242,6 +243,78 @@ export const pmScheduleModule = {
     }
   },
 
+  // --- BULK ACTIONS ---
+  pmToggleSelect(pmId) {
+    const idx = this.pmSelectedIds.indexOf(pmId);
+    if (idx >= 0) this.pmSelectedIds.splice(idx, 1);
+    else this.pmSelectedIds.push(pmId);
+  },
+
+  pmToggleSelectAll() {
+    const filtered = this.pmGetFilteredList().filter(p => p.status === 'pending');
+    const allSelected = filtered.every(p => this.pmSelectedIds.includes(p.pmId));
+    if (allSelected) {
+      this.pmSelectedIds = this.pmSelectedIds.filter(id => !filtered.some(p => p.pmId === id));
+    } else {
+      filtered.forEach(p => {
+        if (!this.pmSelectedIds.includes(p.pmId)) this.pmSelectedIds.push(p.pmId);
+      });
+    }
+  },
+
+  async bulkCompletePM() {
+    const ids = this.pmSelectedIds;
+    if (!ids.length) return this.showNotification('No tasks selected', 'error');
+    if (!confirm(`Complete ${ids.length} selected PM tasks?`)) return;
+
+    this.pmLoading = true;
+    try {
+      const now = new Date().toISOString();
+      const today = now.split('T')[0];
+      const promises = ids.map(pmId => {
+        const pm = this.pmList.find(p => p.pmId === pmId);
+        if (!pm || pm.status === 'completed') return;
+
+        const updates = {
+          status: 'completed',
+          completionDate: today,
+          completionNote: 'Bulk completed',
+          updatedAt: now,
+        };
+        Object.assign(pm, updates);
+        const savePromise = window.update(window.ref(window.db, `PM_Schedule/${pmId}`), updates);
+
+        // Auto-generate next if has frequency
+        if (pm.frequency && pm.frequency !== 'none') {
+          return savePromise.then(() => this.generateNextPM(pm));
+        }
+        return savePromise;
+      });
+
+      await Promise.all(promises);
+      this.pmList = [...this.pmList];
+      this.pmSelectedIds = [];
+      this.showNotification(`✅ ${ids.length} PM tasks completed`);
+    } catch (e) {
+      console.error('[PM] Bulk complete error:', e);
+      this.showNotification('Error: ' + e.message, 'error');
+    } finally {
+      this.pmLoading = false;
+    }
+  },
+
+  /** Complete PM + open log form pre-filled from this PM task */
+  logPMFromSchedule(pm) {
+    if (!pm) return;
+    this.completePM(pm.pmId);
+    // Set logForm directly for new entry
+    this.logForm.equipmentId = pm.equipmentId;
+    this.logForm.type = 'PM';
+    this.logForm.desc = (pm.taskName || '') + (pm.description ? ' - ' + pm.description : '');
+    this.logForm.tech = pm.assignedTo || 'Maintenance Team';
+    this.showLogModal = true;
+  },
+
   // --- FILTERS ---
   pmGetFilteredList() {
     let list = this.pmList || [];
@@ -261,6 +334,30 @@ export const pmScheduleModule = {
       if (aOverdue !== bOverdue) return bOverdue - aOverdue;
       return (a.date || '').localeCompare(b.date || '');
     });
+  },
+
+  // --- DASHBOARD HELPERS ---
+  /** Pending tasks sorted: overdue first, then by date */
+  get pmUpcomingList() {
+    const today = new Date().toISOString().split('T')[0];
+    return (this.pmList || [])
+      .filter(p => p.status === 'pending')
+      .sort((a, b) => {
+        const aOverdue = a.date < today ? 1 : 0;
+        const bOverdue = b.date < today ? 1 : 0;
+        if (aOverdue !== bOverdue) return bOverdue - aOverdue;
+        return (a.date || '').localeCompare(b.date || '');
+      });
+  },
+  isPMOverdue(pm) {
+    const today = new Date().toISOString().split('T')[0];
+    return pm.status === 'pending' && pm.date < today;
+  },
+  isPMDueSoon(pm) {
+    const today = new Date().toISOString().split('T')[0];
+    const threeDays = new Date();
+    threeDays.setDate(threeDays.getDate() + 3);
+    return pm.status === 'pending' && pm.date >= today && pm.date <= threeDays.toISOString().split('T')[0];
   },
 
   // --- COMPUTED HELPERS (regular methods, not getters - keeps Alpine reactivity) ---

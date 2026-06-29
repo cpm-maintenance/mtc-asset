@@ -644,6 +644,136 @@ export const exportModule = {
         }
     },
 
+    async exportPMSchedulePDF() {
+        this.isLoading = true;
+        try {
+            const jsPDF = await loadJsPDF();
+            const list = JSON.parse(JSON.stringify(this.pmList || []));
+            if (!list.length) {
+                this.showNotification('No PM tasks to export', 'warning');
+                return;
+            }
+
+            // Sort: overdue first, then by date
+            const today = new Date().toISOString().split('T')[0];
+            list.sort((a, b) => {
+                const aO = a.status === 'pending' && a.date < today ? 1 : 0;
+                const bO = b.status === 'pending' && b.date < today ? 1 : 0;
+                if (aO !== bO) return bO - aO;
+                return (a.date || '').localeCompare(b.date || '');
+            });
+
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const pageW = doc.internal.pageSize.getWidth();
+
+            // Header
+            doc.setFillColor(6, 182, 212);
+            doc.rect(0, 0, pageW, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PM SCHEDULE REPORT', 20, 18);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 25);
+
+            // Stats summary
+            const total = list.length;
+            const pending = list.filter(p => p.status === 'pending').length;
+            const completed = list.filter(p => p.status === 'completed').length;
+            const overdue = list.filter(p => p.status === 'pending' && p.date < today).length;
+            doc.setTextColor(107, 114, 128);
+            doc.setFontSize(9);
+            doc.text(`Total: ${total}  |  Pending: ${pending}  |  Completed: ${completed}  |  Overdue: ${overdue}`, pageW - 20, 25, { align: 'right' });
+
+            // Table header
+            const col = [
+                { label: '#', x: 20, w: 12 },
+                { label: 'Task', x: 32, w: 50 },
+                { label: 'Equipment', x: 82, w: 40 },
+                { label: 'Date', x: 122, w: 28 },
+                { label: 'Status', x: 150, w: 22 },
+                { label: 'Priority', x: 172, w: 20 },
+                { label: 'Repeat', x: 192, w: 22 },
+                { label: 'Equipment ID', x: 214, w: 30 },
+            ];
+            let y = 38;
+            doc.setFillColor(55, 65, 81);
+            doc.rect(18, y - 4, pageW - 36, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            col.forEach(c => doc.text(c.label, c.x, y, { align: c.label === '#' ? 'center' : 'left' }));
+
+            // Rows
+            y += 6;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6);
+            list.forEach((pm, i) => {
+                // Page break
+                if (y > 185) {
+                    doc.addPage();
+                    y = 20;
+                    // Repeat header
+                    doc.setFillColor(55, 65, 81);
+                    doc.rect(18, y - 4, pageW - 36, 8, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'bold');
+                    col.forEach(c => doc.text(c.label, c.x, y, { align: c.label === '#' ? 'center' : 'left' }));
+                    y += 6;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6);
+                }
+
+                // Zebra
+                if (i % 2 === 0) {
+                    doc.setFillColor(249, 250, 251);
+                    doc.rect(18, y - 3, pageW - 36, 5.5, 'F');
+                }
+
+                const equipName = this.equipment?.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId || '-';
+                const status = pm.status === 'pending' && pm.date < today ? 'Overdue' : (pm.status || 'pending');
+                const statusColor = status === 'Overdue' ? [220, 38, 38] : status === 'completed' ? [22, 163, 74] : status === 'pending' ? [6, 182, 212] : [107, 114, 128];
+                doc.setTextColor(...statusColor);
+                doc.setFont('helvetica', 'bold');
+
+                doc.text((i + 1).toString(), 20, y, { align: 'center' });
+                doc.text(pm.taskName || '-', 32, y);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                doc.text(equipName, 82, y);
+                doc.setTextColor(107, 114, 128);
+                doc.text(pm.date || '-', 122, y);
+                doc.setTextColor(...statusColor);
+                doc.text(status.charAt(0).toUpperCase() + status.slice(1), 150, y);
+                doc.setTextColor(0, 0, 0);
+                doc.text(pm.priority || 'Medium', 172, y);
+                doc.setTextColor(107, 114, 128);
+                doc.text(pm.frequency === 'none' ? '—' : (pm.frequency || '—'), 192, y);
+                doc.text(pm.equipmentId || '', 214, y);
+
+                // Reset
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'normal');
+                y += 6;
+            });
+
+            // Footer
+            doc.setFontSize(7);
+            doc.setTextColor(156, 163, 175);
+            doc.text(`MTC-ASSET · PM Schedule · Page ${doc.internal.getNumberOfPages()}`, 20, y + 6);
+
+            doc.save(`PM_Schedule_${new Date().toISOString().split('T')[0]}.pdf`);
+            this.showNotification('PM Schedule PDF exported');
+        } catch (e) {
+            console.error('PM Schedule PDF Export Error:', e);
+            this.showNotification('Failed to export PDF: ' + (e.message || 'Unknown error'), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    },
+
     async exportToPDF(equip) {
         if (!equip || !equip.EquipmentID) {
             this.showNotification("No equipment selected", "error");
