@@ -41,7 +41,8 @@ export const logsModule = {
                 console.warn('Parsing PartsUsed:', e);
             }
 
-            this.oldLogParts = JSON.parse(JSON.stringify(parsedParts));
+// ponytail: structuredClone native, handles Date properly
+            this.oldLogParts = structuredClone(parsedParts);
 
             let existingPhotos = [];
             if (typeof data.PhotoURLs === 'string' && data.PhotoURLs) {

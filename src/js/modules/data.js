@@ -167,7 +167,7 @@ export const dataModule = {
 
         const saveCache = async (key, data) => {
             try {
-                const plainData = JSON.parse(JSON.stringify(data));
+                const plainData = structuredClone(data);
                 const storeName = { 'equipment': 'equipment', 'allParts': 'parts', 'logs': 'logs', 'performanceData': 'performance' }[key] || key;
                 try {
                     await idbManager.putBulk(storeName, plainData);
@@ -607,7 +607,7 @@ export const dataModule = {
                     const rawData = snapshot.val();
                     // Deep clone to get rid of any proxies
                     if (rawData) {
-                        logToDelete = JSON.parse(JSON.stringify(rawData));
+                        logToDelete = structuredClone(rawData);
                         console.log('[DeleteLog] Raw from Firebase - PartsUsed:', logToDelete.PartsUsed);
                     }
                 } catch(e) {
