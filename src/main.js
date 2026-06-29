@@ -100,21 +100,23 @@ console.log('Alpine Started');
 // ============================================================
 // Use a small delay to ensure Firebase listeners are ready
 setTimeout(() => {
-  // Get FCM token and start listening
-  getFCMToken().then(token => {
-    if (token) {
-      console.log('[FCM] Registered, token:', token.substring(0, 20) + '...');
-      setupForegroundListener();
+  // Only register FCM if permission already granted — don't auto-request (Chrome blocks from setTimeout)
+  if (Notification.permission === 'granted') {
+    registerFCMToken().then(token => {
+      if (token) {
+        console.log('[FCM] Registered, token:', token.substring(0, 20) + '...');
+        setupForegroundListener();
+      }
+    });
+  } else {
+    console.log('[FCM] Permission not granted — skipping auto-register. Will register on user click.');
+  }
 
-      // Run initial check after data loads
-      setTimeout(checkAllNotifications, 5000);
+  // Run initial check after data loads
+  setTimeout(checkAllNotifications, 5000);
 
-      // Periodic checks every 5 minutes
-      setInterval(checkAllNotifications, 5 * 60 * 1000);
-    } else {
-      console.log('[FCM] Notification permission not granted or error');
-    }
-  });
+  // Periodic checks every 5 minutes
+  setInterval(checkAllNotifications, 5 * 60 * 1000);
 }, 2000);
 
 // Expose Sentry for manual error capture from Alpine modules
@@ -127,6 +129,7 @@ window.notificationAPI = {
   checkAllNotifications,
   removeFCMToken,
   sendBrowserNotification,
+  resetNotifBlocker,
 };
 
 // ============================================================

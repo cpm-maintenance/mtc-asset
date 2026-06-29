@@ -27,6 +27,11 @@ const VAPID_KEY = 'BKEQWc2qqz_wtMqZ2tYcPmlwoW1jNPO7jKmsiCX-UD-iyqJqBRFtsDF0VywoW
 // Anti-spam: already notified this session (key = notif type)
 const _notifiedKeys = new Set();
 
+/** Reset anti-spam blocker — called on bell click so fresh checks always show */
+export function resetNotifBlocker() {
+  _notifiedKeys.clear();
+}
+
 // ============================================================
 // MODE 1: BROWSER NOTIFICATION API (Immediate, no server)
 // ============================================================
@@ -214,6 +219,26 @@ export function setupForegroundListener() {
 // ============================================================
 
 /**
+ * Push a notification into the in-app notification panel (lonceng).
+ * This makes alerts visible in the bell badge + notification modal.
+ */
+function pushInAppNotif(type, message, icon, color = 'border-cyan-500 bg-cyan-500/20 text-cyan-400') {
+  const app = window.app;
+  if (!app || !Array.isArray(app.notifications)) return;
+  const id = Date.now() + Math.random();
+  // Prevent duplicate type+message
+  if (app.notifications.some(n => n.type === type && n.message === message)) return;
+  app.notifications.push({
+    id,
+    type,
+    message,
+    icon: icon || 'fa-bell',
+    color,
+    exiting: false,
+  });
+}
+
+/**
  * Check all conditions and send browser notifications.
  * Called:
  * - 5 detik setelah login
@@ -239,11 +264,12 @@ function checkLowStockParts() {
       `${zeroStock.length} part dengan stok 0: ${names}${zeroStock.length > 3 ? ` +${zeroStock.length - 3} lainnya` : ''}`,
       { tag: 'low-stock-zero', data: { type: 'low_stock' } }
     );
+    pushInAppNotif('Low Stock', `${zeroStock.length} part stok 0: ${names}${zeroStock.length > 3 ? ` +${zeroStock.length-3}` : ''}`, 'fa-box', 'border-red-500 bg-red-500/20 text-red-400');
   }
 
   const lowStock = parts.filter(p => {
     const stok = Number(p.Stok) || 0;
-    const min = Number(p.MinStok) || 0;
+    const min = Number(p.MinStock) || 0;
     return min > 0 && stok <= min && stok > 0;
   });
 
@@ -254,6 +280,7 @@ function checkLowStockParts() {
       `${lowStock.length} part mendekati minimum: ${names}${lowStock.length > 3 ? ` +${lowStock.length - 3} lainnya` : ''}`,
       { tag: 'low-stock-warn', data: { type: 'low_stock' } }
     );
+    pushInAppNotif('Low Stock', `${lowStock.length} part di bawah minimum: ${names}${lowStock.length > 3 ? ` +${lowStock.length-3}` : ''}`, 'fa-boxes', 'border-yellow-500 bg-yellow-500/20 text-yellow-400');
   }
 }
 
@@ -276,43 +303,45 @@ function checkPendingWorkOrders() {
       `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length - 3} lainnya` : ''}`,
       { tag: 'wo-urgent', data: { type: 'pending_wo' } }
     );
+    pushInAppNotif('Work Order', `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length-3}` : ''}`, 'fa-clipboard-exclamation', 'border-orange-500 bg-orange-500/20 text-orange-400');
   }
 }
 
 function checkPMOverdue() {
-  if (!window.app?.equipment) return;
+  if (!window.app?.pmList) return;
 
-  const now = new Date();
-  const today = now.toISOString().split('T')[0];
-
-  const threeDaysLater = new Date(now);
-  threeDaysLater.setDate(now.getDate() + 3);
+  const today = new Date().toISOString().split('T')[0];
+  const threeDaysLater = new Date();
+  threeDaysLater.setDate(threeDaysLater.getDate() + 3);
   const threeDaysStr = threeDaysLater.toISOString().split('T')[0];
 
-  const overdue = window.app.equipment.filter(e =>
-    e.NextPMDate && e.NextPMDate <= today && e.Status !== 'Decommissioned'
+  // Overdue from pmList (real PM tasks)
+  const overdue = (window.app.pmList || []).filter(pm =>
+    pm.status === 'pending' && pm.date < today
   );
 
   if (overdue.length > 0 && shouldNotify('pm_overdue')) {
-    const names = overdue.slice(0, 3).map(e => e.Nama || e.EquipmentID).join(', ');
+    const names = overdue.slice(0, 3).map(pm => pm.taskName).join(', ');
     sendBrowserNotification(
       '⏰ PM Overdue!',
-      `${overdue.length} equipment lewat jadwal PM: ${names}${overdue.length > 3 ? ` +${overdue.length - 3} lainnya` : ''}`,
+      `${overdue.length} PM task overdue: ${names}${overdue.length > 3 ? ` +${overdue.length - 3} lainnya` : ''}`,
       { tag: 'pm-overdue', data: { type: 'pm_overdue' } }
     );
+    pushInAppNotif('PM Overdue', `${overdue.length} task lewat jadwal: ${names}${overdue.length > 3 ? ` +${overdue.length-3}` : ''}`, 'fa-calendar-times', 'border-red-500 bg-red-500/20 text-red-400');
   }
 
   // H-3 upcoming
-  const upcoming = window.app.equipment.filter(e =>
-    e.NextPMDate && e.NextPMDate > today && e.NextPMDate <= threeDaysStr && e.Status !== 'Decommissioned'
+  const upcoming = (window.app.pmList || []).filter(pm =>
+    pm.status === 'pending' && pm.date >= today && pm.date <= threeDaysStr
   );
 
   if (upcoming.length > 0 && shouldNotify('pm_upcoming')) {
-    const names = upcoming.slice(0, 3).map(e => e.Nama || e.EquipmentID).join(', ');
+    const names = upcoming.slice(0, 3).map(pm => pm.taskName).join(', ');
     sendBrowserNotification(
       '📅 PM Mendekati Deadline',
-      `${upcoming.length} equipment jatuh tempo H-3: ${names}${upcoming.length > 3 ? ` +${upcoming.length - 3} lainnya` : ''}`,
+      `${upcoming.length} PM task due in 3 days: ${names}${upcoming.length > 3 ? ` +${upcoming.length - 3} lainnya` : ''}`,
       { tag: 'pm-upcoming', data: { type: 'pm_overdue' } }
     );
+    pushInAppNotif('PM Due Soon', `${upcoming.length} task jatuh tempo H-3: ${names}${upcoming.length > 3 ? ` +${upcoming.length-3}` : ''}`, 'fa-calendar-day', 'border-amber-500 bg-amber-500/20 text-amber-400');
   }
 }

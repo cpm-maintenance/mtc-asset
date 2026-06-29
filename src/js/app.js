@@ -1234,15 +1234,10 @@ if (confirm('Are you sure you want to logout?')) {
                 let overduePM = 0;
                 let lowStock = 0;
                 
-                // Equipment stats
-                if (equipment && Array.isArray(equipment)) {
-                    const today = new Date().toISOString().split('T')[0];
-                    equipment.forEach(e => {
-                        // Overdue PM check
-                        if (e.NextPMDate && e.NextPMDate < today && e.NextPMDate !== '') {
-                            overduePM++;
-                        }
-                    });
+                // Overdue PM check — use pmList (real PM data)
+                if (this.pmList && Array.isArray(this.pmList)) {
+                  const today = new Date().toISOString().split('T')[0];
+                  overduePM = this.pmList.filter(p => p.status === 'pending' && p.date < today).length;
                 }
                 
                 // Calculate total downtime from Performance data

@@ -48,4 +48,69 @@
       </div>
     </div>
   </div>
+
+  <!-- ⏰ PM SCHEDULE WIDGET -->
+  <div class="card-modern p-4 md:p-5 border-nexus-accent/10">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-white flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest">
+        <i class="fas fa-calendar-check text-nexus-accent"></i>
+        PM Schedule
+        <span x-show="pmUpcomingList.length > 0" class="text-[9px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full font-bold" x-text="`${pmUpcomingList.length} upcoming`"></span>
+      </h3>
+      <a href="#" @click.prevent="currentPage='pms'" class="text-[8px] text-nexus-accent/60 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
+        View All →
+      </a>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="!pmList || pmList.length === 0" class="text-center py-8 text-slate-500">
+      <i class="fas fa-calendar text-3xl text-slate-700 mb-2 block"></i>
+      <p class="text-sm font-bold">No PM tasks yet</p>
+    </div>
+
+    <!-- Upcoming PM task list -->
+    <div x-show="pmList && pmList.length > 0" class="space-y-2">
+      <template x-for="pm in pmUpcomingList.slice(0, 5)" :key="pm.pmId">
+        <a href="#" @click.prevent="currentPage='pms'; selectedPM=pm; pmShowDetail=true"
+          class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.03] transition-all group cursor-pointer">
+          <!-- Status indicator -->
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="{
+            'bg-red-500/20': isPMOverdue(pm),
+            'bg-amber-500/20': isPMDueSoon(pm),
+            'bg-cyan-500/20': !isPMOverdue(pm) && !isPMDueSoon(pm),
+          }">
+            <i class="fas text-[9px]" :class="{
+              'fa-exclamation-triangle text-red-400': isPMOverdue(pm),
+              'fa-clock text-amber-400': isPMDueSoon(pm),
+              'fa-calendar-day text-cyan-400': !isPMOverdue(pm) && !isPMDueSoon(pm),
+            }"></i>
+          </div>
+          <!-- Content -->
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-white truncate" x-text="pm.taskName"></p>
+            <p class="text-[9px] text-slate-500 mt-0.5">
+              <span class="text-cyan-300 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
+              <span class="mx-1">·</span>
+              <span :class="isPMOverdue(pm) ? 'text-red-400' : 'text-slate-400'" x-text="pm.date"></span>
+              <span x-show="pm.frequency !== 'none'" class="mx-1">·</span>
+              <span x-show="pm.frequency !== 'none'" class="text-purple-400 font-bold uppercase" x-text="pm.frequency"></span>
+            </p>
+          </div>
+          <!-- Priority badge -->
+          <span class="text-[7px] px-1.5 py-0.5 rounded font-bold uppercase shrink-0" :class="{
+            'bg-red-500/20 text-red-400': pm.priority === 'High',
+            'bg-yellow-500/20 text-yellow-400': pm.priority === 'Medium',
+            'bg-slate-500/20 text-slate-400': pm.priority === 'Low',
+          }" x-text="pm.priority || 'Medium'"></span>
+        </a>
+      </template>
+
+      <!-- More link -->
+      <div x-show="pmUpcomingList.length > 5" class="text-center pt-1">
+        <a href="#" @click.prevent="currentPage='pms'" class="text-[8px] text-slate-600 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
+          +<span x-text="pmUpcomingList.length - 5"></span> more
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
