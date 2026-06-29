@@ -1,0 +1,171 @@
+{
+  /* =======================================================
+     Firebase Realtime Database Rules — MTC-ASSET
+     Copy-paste this entire JSON ke Firebase Console →
+     Realtime Database → Rules
+     
+     Cara apply:
+     1. Buka https://console.firebase.google.com
+     2. Pilih project MTC-ASSET
+     3. Realtime Database → Rules
+     4. Paste → Publish
+     ======================================================= */
+
+  "rules": {
+    /* ================================================================
+       USERS — Read/write terbatas
+       - User bisa read + write profile mereka sendiri
+       - Admin bisa read + write semua user
+       - Public read hanya role (untuk login check)
+    ================================================================ */
+    "Users": {
+      ".read": "auth !== null",
+      ".indexOn": ["role", "email"],
+      "$uid": {
+        ".read": "auth !== null && (auth.uid === $uid || root.child('Users/'+auth.uid+'/role').val() === 'admin')",
+        /* User sendiri bisa write profilnya, admin bisa write semua */
+        ".write": "auth !== null && (auth.uid === $uid || root.child('Users/'+auth.uid+'/role').val() === 'admin')",
+        "role": {
+          /* Hanya admin yang bisa set/ubah role */
+          ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'"
+        },
+        "fcmToken": {
+          ".write": "auth !== null && auth.uid === $uid"
+        }
+      }
+    },
+
+    /* ================================================================
+       EQUIPMENT — Semua authenticated bisa read, hanya admin write
+    ================================================================ */
+    "Equipment": {
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      ".indexOn": ["EquipmentID", "Nama", "Status", "Criticality"],
+      "$id": {
+        ".validate": "newData.hasChildren(['EquipmentID', 'Nama'])",
+        "EquipmentID": { ".validate": "newData.isString() && newData.val().length < 50" },
+        "Nama": { ".validate": "newData.isString() && newData.val().length < 200" },
+        "Tipe": { ".validate": "newData.isString()" },
+        "Lokasi": { ".validate": "newData.isString()" },
+        "Status": { ".validate": "newData.isString()" },
+        "SerialNumber": { ".validate": "newData.isString()" },
+        "Criticality": { ".validate": "newData.isString()" },
+        "NextPMDate": { ".validate": "newData.isString()" },
+        "TglInstalasi": { ".validate": "newData.isString()" },
+        "Vendor": { ".validate": "newData.isString()" },
+        "FotoURL": { ".validate": "newData.isString()" },
+        "HM": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    /* ================================================================
+       HISTORY LOG (Work Orders) — Semua authenticated read, admin write
+    ================================================================ */
+    "HistoryLog": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      ".indexOn": ["EquipmentID", "woNumber", "Status", "Tanggal"],
+      "$id": {
+        ".validate": "newData.hasChildren(['LogID', 'EquipmentID'])",
+        "LogID": { ".validate": "newData.isString()" },
+        "EquipmentID": { ".validate": "newData.isString()" },
+        "Tanggal": { ".validate": "newData.isString()" },
+        "Jenis": { ".validate": "newData.isString()" },
+        "Deskripsi": { ".validate": "newData.isString()" },
+        "Downtime": { ".validate": "newData.isNumber()" },
+        "Cost": { ".validate": "newData.isNumber()" },
+        "Status": { ".validate": "newData.isString()" },
+        "woNumber": { ".validate": "newData.isString()" },
+        "PartsUsed": { ".validate": "newData.isString()" },
+        "PhotoURLs": { ".validate": "newData.isString()" },
+        "Technician": { ".validate": "newData.isString()" },
+        "Catatan": { ".validate": "newData.isString()" },
+        "rca": { ".validate": "newData.isString()" },
+        "requestedBy": { ".validate": "newData.isString()" },
+        "woPriority": { ".validate": "newData.isString()" },
+        "externalEquipName": { ".validate": "newData.isString()" },
+        "HM": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    /* ================================================================
+       PARTS — Semua authenticated read, admin write
+    ================================================================ */
+    "Parts": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      ".indexOn": ["NamaPart", "PartID", "EquipmentIDs", "EquipmentID"],
+      "$id": {
+        "PartID": { ".validate": "newData.isString()" },
+        "NamaPart": { ".validate": "newData.isString()" },
+        "NamaSingkat": { ".validate": "newData.isString()" },
+        "PartNumber": { ".validate": "newData.isString()" },
+        "Stok": { ".validate": "newData.isNumber()" },
+        "MinStock": { ".validate": "newData.isNumber()" },
+        "Satuan": { ".validate": "newData.isString()" },
+        "Harga": { ".validate": "newData.isNumber()" },
+        "Lokasi": { ".validate": "newData.isString()" },
+        "EquipmentIDs": { ".validate": "newData.isString()" },
+        "EquipmentID": { ".validate": "newData.isString()" },
+        "lastReplaceDate": { ".validate": "newData.isString()" },
+        "avgLifetimeDays": { ".validate": "newData.isNumber()" },
+        "totalQty": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    /* ================================================================
+       PERFORMANCE — Semua authenticated read, admin write
+    ================================================================ */
+    "Performance": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      ".indexOn": ["equipmentId", "date"]
+    },
+
+    /* ================================================================
+       PM SCHEDULE — Semua authenticated read, admin write
+    ================================================================ */
+    "PM_Schedule": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      ".indexOn": ["EquipmentID", "taskDate", "Status"]
+    },
+
+    /* ================================================================
+       AI SETTINGS — Sensitif! Admin only
+    ================================================================ */
+    "AI_Settings": {
+      ".read": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'"
+    },
+
+    /* ================================================================
+       NOTIFICATIONS — User-specific
+    ================================================================ */
+    "Notifications": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'"
+    },
+
+    /* ================================================================
+       IMAGE UPLOADS — Authenticated, admin-only write
+    ================================================================ */
+    "ImageUploads": {
+      ".read": "auth !== null",
+      ".write": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'"
+    },
+
+    /* ================================================================
+       FCM TOKENS (Admin notification target) — Internal
+    ================================================================ */
+    "_fcmTokens": {
+      ".read": "auth !== null && root.child('Users/'+auth.uid+'/role').val() === 'admin'",
+      "$uid": {
+        ".write": "auth !== null && auth.uid === $uid"
+      }
+    }
+  }
+}
