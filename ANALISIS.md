@@ -106,9 +106,10 @@ Chunk splitting ✅, Firebase streaming ✅, Canvas retry ✅.
 
 ---
 
-## 🧪 7. Testing: 3/10
+## 🧪 7. Testing: 6/10
 
-Vitest setup ada tapi **0 test**. No integration/E2E.
+95 tests — vitest ✅. Semua pure function utils + modul kpi-engine dites.
+- Bisa nambah: integration test, component test, E2E
 
 ---
 
