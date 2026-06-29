@@ -11,7 +11,8 @@ export const chartModule = {
         if (!data) return [];
         try {
             const raw = window.Alpine.raw(data);
-            if (Array.isArray(raw)) return JSON.parse(JSON.stringify(raw));
+// ponytail: structuredClone native, faster than JSON.parse
+            if (Array.isArray(raw)) return structuredClone(raw);
             return [];
         } catch (e) {
             console.warn('Deep clone failed:', e);

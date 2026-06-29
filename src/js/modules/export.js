@@ -648,7 +648,7 @@ export const exportModule = {
         this.isLoading = true;
         try {
             const jsPDF = await loadJsPDF();
-            const list = JSON.parse(JSON.stringify(this.pmList || []));
+            const list = structuredClone(this.pmList || []);
             if (!list.length) {
                 this.showNotification('No PM tasks to export', 'warning');
                 return;
@@ -784,8 +784,8 @@ export const exportModule = {
             const jsPDF = await loadJsPDF();
             
             // Deep clone to avoid Alpine proxy issues
-            const equipData = JSON.parse(JSON.stringify(equip));
-            const logsData = JSON.parse(JSON.stringify(this.logs || []));
+            const equipData = structuredClone(equip);
+            const logsData = structuredClone(this.logs || []);
             
             const doc = new jsPDF();
             if (!doc) {
