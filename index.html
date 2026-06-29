@@ -445,7 +445,32 @@
 
       <!-- 🏠 PAGE: DASHBOARD (Dynamic Component) -->
       <template x-if="currentPage === 'dash'">
-        <div x-page="'Dashboard'"></div>
+        <div>
+          <!-- Skeleton Loading -->
+          <div x-show="isLoading" class="space-y-6">
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="skeleton skeleton-stat"><div class="skeleton skeleton-line skeleton-sm"></div><div class="skeleton skeleton-line skeleton-md"></div></div>
+              <div class="skeleton skeleton-stat"><div class="skeleton skeleton-line skeleton-sm"></div><div class="skeleton skeleton-line skeleton-md"></div></div>
+              <div class="skeleton skeleton-stat"><div class="skeleton skeleton-line skeleton-sm"></div><div class="skeleton skeleton-line skeleton-md"></div></div>
+              <div class="skeleton skeleton-stat"><div class="skeleton skeleton-line skeleton-sm"></div><div class="skeleton skeleton-line skeleton-md"></div></div>
+            </div>
+            <!-- Chart Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-chart"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div></div>
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-chart"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div></div>
+            </div>
+            <!-- Bottom Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-chart" style="height:180px"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div></div>
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-chart" style="height:180px"><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div><div class="skeleton skeleton-bar"></div></div></div>
+            </div>
+          </div>
+          <!-- Content -->
+          <div x-show="!isLoading">
+            <div x-page="'Dashboard'"></div>
+          </div>
+        </div>
       </template>
 
       <!-- PAGE: EQUIPMENT (Already updated) -->
@@ -455,7 +480,21 @@
 
 
     <!-- 🔧 PAGE: EQUIPMENT (Dynamic Component) -->
-    <div x-show="currentPage === 'equip'" x-page="'Equipment'"></div>
+    <div x-show="currentPage === 'equip'">
+      <div x-show="isLoading" class="space-y-4">
+        <div class="flex justify-between items-center">
+          <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+          <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div><div class="skeleton skeleton-line skeleton-lg"></div></div>
+          <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div><div class="skeleton skeleton-line skeleton-lg"></div></div>
+        </div>
+      </div>
+      <div x-show="!isLoading">
+        <div x-page="'Equipment'"></div>
+      </div>
+    </div>
 
 
     <!-- 📜 PAGE: ALL LOGS / ACTIVITY STREAM (Dynamic Component) -->
@@ -468,7 +507,22 @@
 
 
     <!-- 🔧 PAGE: SPARE PARTS (Dynamic Component) -->
-    <div x-show="currentPage === 'parts'" x-page="'SpareParts'"></div>
+    <div x-show="currentPage === 'parts'">
+      <div x-show="isLoading" class="space-y-4">
+        <div class="flex justify-between items-center">
+          <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+          <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+        </div>
+      </div>
+      <div x-show="!isLoading">
+        <div x-page="'SpareParts'"></div>
+      </div>
+    </div>
 
 
     <!-- 🗓️ PAGE: PERFORMANCE TRACKER (Dynamic Component) -->
