@@ -695,3 +695,15 @@ describe('getLifetimeBgColor', () => {
     expect(getLifetimeBgColor('ok')).toContain('bg-emerald-500');
   });
 });
+
+describe('PM ID Uniqueness', () => {
+  it('should generate unique IDs even when called in the same millisecond', () => {
+    const ids = new Set();
+    const count = 100;
+    for (let i = 0; i < count; i++) {
+      const pmId = `PM_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      ids.add(pmId);
+    }
+    expect(ids.size).toBe(count);
+  });
+});

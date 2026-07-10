@@ -42,6 +42,7 @@ export const bootstrapModule = {
                     this.setupFirebaseListeners();
                     this.loadAISettings();
                     this.loadPMSchedule();
+                    this.setupRequisitionsListener();
 
                     // Request notification permission after login
                     setTimeout(() => {

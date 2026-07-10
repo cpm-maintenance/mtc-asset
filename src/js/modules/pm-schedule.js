@@ -119,8 +119,8 @@ export const pmScheduleModule = {
         dataToSave.createdBy = this.user?.uid || 'unknown';
         dataToSave.createdAt = new Date().toISOString();
 
-        // Generate ID: PM + timestamp
-        const pmId = `PM_${Date.now()}`;
+        // Generate ID: PM + timestamp + random suffix
+        const pmId = `PM_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         dataToSave.pmId = pmId;
 
         await window.set(window.ref(window.db, `PM_Schedule/${pmId}`), dataToSave);
@@ -207,7 +207,7 @@ export const pmScheduleModule = {
     );
     if (exists) return;
 
-    const pmId = `PM_${Date.now()}`;
+    const pmId = `PM_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const now = new Date().toISOString();
     const newPM = {
       pmId,

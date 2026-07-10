@@ -7,7 +7,10 @@
       ".read": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'",
       "$uid": {
         ".read": "auth !== null && auth.uid === $uid",
-        ".write": "auth !== null && auth.uid === $uid"
+        ".write": "auth !== null && auth.uid === $uid",
+        "role": {
+          ".write": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'"
+        }
       }
     },
 
@@ -20,7 +23,8 @@
       ".read": "auth !== null",
       "$equipmentId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
-        ".read": "auth !== null"
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['EquipmentID', 'Nama', 'Lokasi'])"
       }
     },
 
@@ -28,7 +32,8 @@
       ".read": "auth !== null",
       "$partId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
-        ".read": "auth !== null"
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['NamaPart', 'Stok', 'MinStock'])"
       }
     },
 
@@ -83,6 +88,15 @@
       "$pmId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
         ".read": "auth !== null"
+      }
+    },
+
+    "Requisitions": {
+      ".read": "auth !== null",
+      "$reqId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor' || root.child('Users').child(auth.uid).child('role').val() === 'technician')",
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['itemName', 'quantity', 'status']) && newData.child('status').val().matches(/^(pending|approved|arrived|closed)$/) && (!data.exists() || data.child('status').val() === 'pending' || root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')"
       }
     },
 
