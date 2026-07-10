@@ -167,7 +167,8 @@ export const dataModule = {
 
         const saveCache = async (key, data) => {
             try {
-                const plainData = structuredClone(data);
+                const rawData = window.Alpine ? window.Alpine.raw(data) : data;
+                const plainData = structuredClone(rawData);
                 const storeName = { 'equipment': 'equipment', 'allParts': 'parts', 'logs': 'logs', 'performanceData': 'performance' }[key] || key;
                 try {
                     await idbManager.putBulk(storeName, plainData);

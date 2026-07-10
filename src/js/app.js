@@ -9,6 +9,7 @@ import { exportModule } from './modules/export.js';
 import { kpiEngineModule } from './modules/kpi-engine.js';
 import { aiModule } from './modules/ai.js';
 import { pmScheduleModule } from './modules/pm-schedule.js';
+import { requisitionModule } from './modules/requisition.js';
 import { chartModule } from './charts.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
@@ -150,6 +151,7 @@ if (confirm('Are you sure you want to logout?')) {
             { id: 'perf', name: 'Performance', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'admin' },
             { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin' },
             { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin' },
+            { id: 'request', name: 'Request Part', icon: 'fas fa-shopping-cart', mobile: true },
         ],
 
         // --- ROLE-BASED NAVIGATION ---
@@ -174,6 +176,7 @@ if (confirm('Are you sure you want to logout?')) {
         ...kpiEngineModule,
         ...aiModule,
         ...pmScheduleModule,
+        ...requisitionModule,
         ...chartModule,
         ...errorHandlerModule,
         ...bootstrapModule,

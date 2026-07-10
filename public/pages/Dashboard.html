@@ -87,6 +87,11 @@
             <p class="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors" x-text="pm.taskName"></p>
             <p class="text-[9px] text-slate-500 mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5 items-center">
               <span class="text-cyan-300/80 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
+              <span x-show="allParts.some(p => ((p.EquipmentIDs && p.EquipmentIDs.includes(pm.equipmentId)) || p.EquipmentID === pm.equipmentId) && isLowStock(p.Stok, p.MinStock))"
+                class="text-[7px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded"
+                title="Linked parts low in stock!">
+                ⚠️ LOW STOCK
+              </span>
               <span class="text-slate-600">·</span>
               <span :class="isPMOverdue(pm) ? 'text-red-400' : 'text-slate-400'" x-text="pm.date"></span>
               <span x-show="pm.frequency !== 'none'" class="text-slate-600">·</span>
