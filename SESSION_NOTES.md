@@ -31,3 +31,40 @@
    - Priority & Notes global diisi sekali untuk semua item.
    - Memperbesar ukuran form (max-w-3xl, p-8, text-sm, p-3) agar lebih nyaman.
    - Build & deploy hosting sukses.
+
+## Session: 10 Juli 2026
+
+### ✅ Completed
+1. **Edit & Delete tombol di Request Part**
+   - `RequestPart.html` — tombol Edit (cyan) dan Delete (rose) per baris, hanya muncul untuk `isAdmin` + status `pending`
+   - `requisition.js` — `openRequisitionModal(req)` untuk edit mode, guard status di `submitRequisition()` dan `deleteRequisition()`
+   - Guard `x-show="isAdmin"` di tombol New Request dan action buttons
+
+2. **Realtime Listener Requisitions**
+   - `requisition.js` — ganti `loadRequisitions()` (one-shot `get()`) ke `setupRequisitionsListener()` (`onValue()` realtime)
+   - `bootstrap.js` — panggil `setupRequisitionsListener()` ganti `loadRequisitions()`
+
+3. **Skeleton Loading RequestPart**
+   - `index.html` — shimmer skeleton cards untuk RequestPart (konsisten dengan equip/parts pages)
+
+4. **Firebase Rules Hardening**
+   - `database.rules.json` — tambah `.validate` untuk Equipment (`hasChildren`), SpareParts (`hasChildren`), Requisitions (status enum + pending-only update)
+   - Tambah `role` write guard di Users node
+
+5. **Deploy**
+   - Build & deploy hosting + database ke Firebase
+   - Live di https://mtc-asset.web.app
+
+### 📂 Files Changed
+- `public/pages/RequestPart.html` — edit/delete buttons, admin guards, modal edit mode
+- `src/js/modules/requisition.js` — realtime listener, edit CRUD, status guards
+- `src/js/bootstrap.js` — call `setupRequisitionsListener()`
+- `index.html` — skeleton loading request page
+- `database.rules.json` — hardened validation rules
+- `SESSION_NOTES.md` — catatan sesi ini (file ini)
+
+### 📌 Commit
+`cbe6146` — "feat: edit/delete request part + skeleton + realtime listener + rules hardening"
+
+### ⚠️ Noted
+- Dark Reader / similar extension cause `cssRules getter: Not allowed to access cross-origin stylesheet` — bukan error dari app, disable extension on localhost
