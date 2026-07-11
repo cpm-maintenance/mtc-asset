@@ -104,11 +104,11 @@ export const bootstrapModule = {
                 if (this.currentPage === 'dash' && this.logs && this.logs.length > 0) debouncedDash(); 
             });
             this.$watch('currentPage', (val, oldVal) => {
-                // Guard: block admin-only pages for non-admin
-                const blocked = { pms: 1, perf: 1, kpi: 1, ai: 1 };
-                if (blocked[val] && !this.isAdmin) {
+                // Guard: block restricted pages for unauthorized users
+                const page = this.menuItems.find(m => m.id === val);
+                if (page && !this.canAccess(page)) {
                     console.warn('[Access] Blocked direct navigation to', val);
-                    this.showNotification('Access denied: admin only', 'error');
+                    this.showNotification('Access denied', 'error');
                     this.currentPage = oldVal || 'dash';
                     return;
                 }
@@ -128,6 +128,17 @@ export const bootstrapModule = {
                 // Trigger KPI charts with delay to ensure DOM is ready - render regardless of data length
                 if (val === 'kpi') {
                     setTimeout(() => this.renderKPICharts(), 1000);
+                }
+                // Destroy enterprise charts when navigating away
+                if (oldVal === 'enterprise') {
+                    ['eHealth','woStatus','pmTrend','downtimeTrend','costTrend','abc'].forEach(k => {
+                        if (window._appCharts && window._appCharts[k]) { try { window._appCharts[k].destroy(); } catch(e) {} }
+                    });
+                }
+                // Trigger enterprise dashboard compute + charts
+                if (val === 'enterprise') {
+                    this.computeEnterpriseData();
+                    setTimeout(() => this.renderEnterpriseCharts(), 800);
                 }
             });
             this.$watch('kpiFilter', () => { if (this.currentPage === 'kpi') debouncedKPI(); });
@@ -154,15 +165,13 @@ export const bootstrapModule = {
     },
 
     checkUserRole(uid) {
-        if (!this.userRole || this.userRole === 'user') {
-            window.get(window.ref(window.db, `Users/${uid}/role`))
-                .then(snap => {
-                    if (snap.exists()) {
-                        this.userRole = snap.val();
-                        console.log('User role from Firebase:', this.userRole);
-                    }
-                })
-                .catch(() => {});
-        }
+        window.get(window.ref(window.db, `Users/${uid}/role`))
+            .then(snap => {
+                if (snap.exists()) {
+                    this.userRole = snap.val();
+                    console.log('User role from Firebase:', this.userRole);
+                }
+            })
+            .catch(() => {});
     },
 };

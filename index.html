@@ -8,6 +8,8 @@
   <meta name="description"
     content="Professional maintenance tracking and asset management for industrial equipment. Integrated with Firebase and PWA support.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <link rel="stylesheet" href="/src/css/style.css">
 
   <!-- PWA Meta Tags -->
@@ -16,6 +18,10 @@
   <meta name="theme-color" content="#05070a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MTC-ASSET">
+  <meta name="application-name" content="MTC-ASSET">
+  <meta name="msapplication-TileColor" content="#05070a">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="/logo.png">
 
   <!-- Main Application Entry -->
@@ -335,14 +341,19 @@
       <span x-show="notifications.length > 0" x-text="notifications.length" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"></span>
     </button>
 
-    <div class="space-y-2 flex-1">
-      <template x-for="item in menuItems.filter(m => isAdmin || (m.id !== 'pms' && m.id !== 'perf' && m.id !== 'kpi' && m.id !== 'ai'))">
-        <div @click="navigateTo(item.id)"
-          :class="currentPage === item.id ? 'bg-nexus-accent/10 text-nexus-accent border-r-2 border-nexus-accent' : 'text-slate-500 hover:bg-white/5 hover:text-nexus-accent'"
-          class="flex items-center gap-3 md:gap-4 p-3 md:p-4 cursor-pointer rounded-2xl transition-all duration-300 group relative overflow-hidden">
-          <i :class="item.icon" class="w-5 md:w-6 text-center text-base md:text-lg group-hover:scale-110 transition-transform"></i>
-          <span x-show="!sidebarCollapsed" x-transition x-text="item.name" class="font-black text-[9px] md:text-[11px] uppercase tracking-widest whitespace-nowrap"></span>
-          <div x-show="currentPage === item.id" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 md:h-6 bg-nexus-accent rounded-r-full shadow-[0_0_10px_#00f2ff]"></div>
+    <div class="space-y-0.5 flex-1 overflow-y-auto">
+      <template x-for="(group, gi) in menuGroups" :key="gi">
+        <div>
+          <div x-show="!sidebarCollapsed" class="text-[8px] text-slate-600 font-black uppercase tracking-[0.3em] px-3 pt-4 pb-1.5" x-text="group.name"></div>
+          <template x-for="item in group.items" :key="item.id">
+            <div @click="navigateTo(item.id)"
+              :class="currentPage === item.id ? 'bg-nexus-accent/10 text-nexus-accent border-r-2 border-nexus-accent' : 'text-slate-500 hover:bg-white/5 hover:text-nexus-accent'"
+              class="flex items-center gap-3 md:gap-4 p-3 md:p-4 cursor-pointer rounded-2xl transition-all duration-300 group relative overflow-hidden">
+              <i :class="item.icon" class="w-5 md:w-6 text-center text-base md:text-lg group-hover:scale-110 transition-transform"></i>
+              <span x-show="!sidebarCollapsed" x-transition x-text="item.name" class="font-black text-[10px] uppercase tracking-wider whitespace-nowrap"></span>
+              <div x-show="currentPage === item.id" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 md:h-6 bg-nexus-accent rounded-r-full shadow-[0_0_10px_#00f2ff]"></div>
+            </div>
+          </template>
         </div>
       </template>
     </div>
@@ -353,18 +364,18 @@
       <button x-show="isAdmin" @click="loadAllUsers(); openCreateUserModal()"
         class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-nexus-accent hover:bg-nexus-accent/10 rounded-xl transition-all group">
         <i class="fas fa-user-plus w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[9px] md:text-[11px] uppercase tracking-widest">Add User</span>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Add User</span>
       </button>
       <!-- Manage Users Button (Admin Only) -->
       <button x-show="isAdmin" @click="loadAllUsers(); showUserManagement = true"
         class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-nexus-accent hover:bg-nexus-accent/10 rounded-xl transition-all group">
         <i class="fas fa-users w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[9px] md:text-[11px] uppercase tracking-widest">Manage Users</span>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Manage Users</span>
       </button>
       <button @click="logout()" 
         class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group">
         <i class="fas fa-sign-out-alt w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[9px] md:text-[11px] uppercase tracking-widest">Logout</span>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Logout</span>
       </button>
     </div>
   </nav>
@@ -556,6 +567,11 @@
       <div x-page="'AI'"></div>
     </template>
 
+    <!-- 🏭 PAGE: ENTERPRISE DASHBOARD -->
+    <template x-if="currentPage === 'enterprise'">
+      <div x-page="'EnterpriseDashboard'"></div>
+    </template>
+
     <!-- 🛒 PAGE: REQUEST PART / MATERIAL GENERAL -->
     <template x-if="currentPage === 'request'">
       <div>
@@ -635,7 +651,7 @@
   <!-- Mobile Bottom Navigation -->
   <nav x-show="isLoggedIn" x-cloak
     class="fixed bottom-0 left-0 w-full glass border-t border-nexus-accent/20 lg:hidden flex justify-around py-1 px-1 z-50 bg-nexus-black/95 backdrop-blur-lg h-12">
-    <template x-for="item in menuItems.filter(i => i.mobile && (isAdmin || (i.id !== 'pms' && i.id !== 'perf' && i.id !== 'kpi' && i.id !== 'ai')))">
+    <template x-for="item in menuItems.filter(i => i.mobile && canAccess(i))">
       <div @click="navigateTo(item.id)" :class="currentPage === item.id ? 'text-nexus-accent' : 'text-slate-500'"
         class="flex flex-col items-center justify-center cursor-pointer transition-all p-1 h-full aspect-square">
         <i :class="item.icon" class="text-base"></i>
@@ -710,7 +726,10 @@
         <!-- Asset Photo Upload -->
         <div class="md:col-span-2">
           <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Visual Signature</label>
-          <div class="flex items-center gap-6 glass p-6 rounded-3xl border-nexus-accent/10">
+          <div class="flex items-center gap-6 glass p-6 rounded-3xl border-nexus-accent/10"
+            @dragover.prevent="$el.classList.add('border-amber-400')"
+            @dragleave.prevent="$el.classList.remove('border-amber-400')"
+            @drop.prevent="$el.classList.remove('border-amber-400'); const f = $event.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) { equipForm.foto = URL.createObjectURL(f); tempEquipFile = f; showCropModal(equipForm.foto, (croppedBlob) => { tempEquipFile = croppedBlob; equipForm.foto = URL.createObjectURL(croppedBlob); }); } else { showNotification('Only image files allowed','error'); }">
             <div class="w-28 h-28 rounded-2xl bg-white/5 overflow-hidden border-2 border-dashed border-nexus-accent/20 flex items-center justify-center relative group">
               <template x-if="equipForm.foto">
                 <img :src="equipForm.foto" class="w-full h-full object-cover">
@@ -725,7 +744,7 @@
             </div>
             <div class="flex-1">
               <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Capture Optical Data</p>
-              <p class="text-[9px] text-slate-600 mt-1">JPEG/PNG high-resolution formats supported.</p>
+              <p class="text-[9px] text-slate-600 mt-1">Drop image here or click to browse. Crop &amp; compress auto.</p>
               <button type="button" x-show="equipForm.foto" @click="equipForm.foto = ''" class="text-rose-400 text-[9px] font-black uppercase mt-3 tracking-widest flex items-center gap-2"><i class="fas fa-trash-alt"></i> Purge Image</button>
             </div>
           </div>
@@ -1188,9 +1207,12 @@
 
             <!-- Add Button (shows only if < 4) -->
             <label x-show="logForm.photos.length < 4"
-              class="cursor-pointer glass hover:border-nexus-accent text-nexus-accent/20 aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all">
+              class="cursor-pointer glass hover:border-nexus-accent text-nexus-accent/20 aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all"
+              @dragover.prevent="$el.classList.add('border-amber-400')"
+              @dragleave.prevent="$el.classList.remove('border-amber-400')"
+              @drop.prevent="$el.classList.remove('border-amber-400'); [...$event.dataTransfer.files].filter(f => f.type.startsWith('image/')).slice(0, 4 - logForm.photos.length).forEach(f => { handleLogPhotoDrop(f); });">
               <i class="fas fa-plus text-xl"></i>
-              <span class="text-[8px] font-black uppercase tracking-widest">Add Photo</span>
+              <span class="text-[8px] font-black uppercase tracking-widest">Drop / Add Photo</span>
               <input type="file" @change="handleLogPhoto($event)" class="hidden" accept="image/*" multiple>
             </label>
           </div>
@@ -1340,8 +1362,35 @@
       </div>
     </div>
   </div>
+  </div>
     </div>
   </div>
+
+  <!-- ✂️ CROP MODAL -->
+  <template x-if="showCropModalOpen">
+    <div x-cloak class="fixed inset-0 z-[400] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      @click.self="showCropModalOpen = false">
+      <div class="w-full max-w-3xl card-modern p-6 border-amber-500/30 max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-black text-white nexus-glow-text flex items-center gap-3">
+            <i class="fas fa-crop text-amber-400"></i> Crop Image
+          </h3>
+          <button @click="showCropModalOpen = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="bg-black/40 rounded-2xl overflow-hidden mb-4 max-h-[60vh]">
+          <img id="cropImage" :src="cropImageSrc" class="max-w-full" style="display:block;max-height:60vh;width:auto">
+        </div>
+        <div class="flex gap-3">
+          <button @click="showCropModalOpen = false" class="flex-1 px-4 py-3 glass text-slate-400 rounded-xl text-sm font-bold hover:text-white transition-all">Cancel</button>
+          <button @click="applyCrop()" class="flex-1 px-4 py-3 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-xl text-sm font-bold hover:bg-amber-500/30 transition-all">
+            <i class="fas fa-check mr-2"></i> Apply Crop
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
 
 </body>
 

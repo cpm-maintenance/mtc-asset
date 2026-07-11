@@ -4,12 +4,12 @@
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-2">
     <div class="flex flex-col md:flex-row gap-3 flex-1">
       <div class="relative flex-1">
-        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-nexus-accent/40"></i>
+        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-amber-400/40"></i>
         <input type="text" x-model="searchPart" placeholder="Search by name or ID..."
           class="w-full pl-12 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40">
       </div>
       <div class="relative w-full md:w-64">
-        <i class="fas fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-nexus-accent/40"></i>
+        <i class="fas fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-amber-400/40"></i>
         <select x-model="partFilterEquip" class="w-full pl-12 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40 text-xs font-bold uppercase tracking-widest appearance-none cursor-pointer">
           <option value="">All Asset Nodes</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
@@ -59,38 +59,38 @@
         <div x-show="isAdmin" class="absolute top-2 md:top-4 right-2 md:right-4 hidden group-hover:flex space-x-1 md:space-x-2 z-20">
           <button @click="openPartModal(true, p)"
             class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
-            <i class="fas fa-edit text-[8px] md:text-[10px]"></i>
+            <i class="fas fa-edit text-xs md:text-xs"></i>
           </button>
           <button @click="deleteItem('SpareParts', p.PartID)"
             class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
-            <i class="fas fa-trash text-[8px] md:text-[10px]"></i>
+            <i class="fas fa-trash text-xs md:text-xs"></i>
           </button>
         </div>
         
         <!-- Low Stock Badge -->
         <div x-show="Number(p.Stok) <= Number(p.MinStock)"
-          class="absolute -top-0.5 md:-top-1 -right-0.5 md:-right-1 bg-rose-600 text-white text-[6px] md:text-[8px] font-black px-2 md:px-3 py-1 md:py-1.5 rounded-bl-lg md:rounded-bl-2xl shadow-lg flex items-center gap-1 md:gap-2 animate-pulse uppercase tracking-widest z-10">
+          class="absolute -top-0.5 md:-top-1 -right-0.5 md:-right-1 bg-rose-600 text-white text-[6px] md:text-xs font-black px-2 md:px-3 py-1 md:py-1.5 rounded-bl-lg md:rounded-bl-2xl shadow-lg flex items-center gap-1 md:gap-2 animate-pulse uppercase tracking-widest z-10">
           <i class="fas fa-exclamation-triangle"></i> Low
         </div>
         
         <!-- Part Info -->
         <h4 class="font-black text-sm md:text-lg mb-1 text-nexus-text truncate nexus-glow-text" x-text="p.NamaPart" :title="p.NamaPart"></h4>
         <div class="flex flex-wrap items-center gap-1.5 md:gap-3 mb-3 md:mb-6">
-          <span class="text-[7px] md:text-[9px] px-1.5 md:px-2 py-0.5 rounded-lg glass text-nexus-accent font-black uppercase tracking-widest" x-show="p.NamaSingkat" x-text="p.NamaSingkat"></span>
-          <span class="text-[7px] md:text-[9px] px-1.5 md:px-2 py-0.5 rounded-lg glass text-nexus-purple font-black uppercase tracking-widest" x-show="p.PartNumber" x-text="p.PartNumber"></span>
-          <p class="text-[8px] md:text-[10px] text-nexus-purple font-mono font-bold" x-text="p.PartID"></p>
+          <span class="text-xs md:text-sm px-1.5 md:px-2 py-0.5 rounded-lg glass text-amber-400 font-black uppercase tracking-widest" x-show="p.NamaSingkat" x-text="p.NamaSingkat"></span>
+          <span class="text-xs md:text-sm px-1.5 md:px-2 py-0.5 rounded-lg glass text-nexus-purple font-black uppercase tracking-widest" x-show="p.PartNumber" x-text="p.PartNumber"></span>
+          <p class="text-xs md:text-xs text-nexus-purple font-mono font-bold" x-text="p.PartID"></p>
         </div>
         
         <!-- Location and Stock -->
         <div class="flex justify-between items-end border-t border-white/5 pt-2 md:pt-5">
           <div>
-            <p class="text-[7px] md:text-[10px] text-slate-500 uppercase font-black mb-0.5 md:mb-1.5 tracking-widest">Zone</p>
+            <p class="text-xs md:text-xs text-slate-500 uppercase font-black mb-0.5 md:mb-1.5 tracking-widest">Zone</p>
             <p class="text-xs md:text-sm text-white font-bold" x-text="p.Lokasi || '-'" :title="p.Lokasi"></p>
           </div>
           <div class="text-right">
-            <p class="text-[7px] md:text-[10px] text-slate-500 uppercase font-black mb-0.5 md:mb-1.5 tracking-widest">Stock</p>
+            <p class="text-xs md:text-xs text-slate-500 uppercase font-black mb-0.5 md:mb-1.5 tracking-widest">Stock</p>
             <p class="text-2xl md:text-4xl font-black nexus-glow-text"
-              :class="Number(p.Stok) <= Number(p.MinStock) ? 'text-rose-500' : 'text-nexus-accent'" x-text="p.Stok">
+              :class="Number(p.Stok) <= Number(p.MinStock) ? 'text-rose-500' : 'text-amber-400'" x-text="p.Stok">
             </p>
           </div>
         </div>

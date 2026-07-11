@@ -3,6 +3,7 @@
  */
 
 const ADMIN_EMAILS = ['admin@planner.com'];
+const SUPERVISOR_EMAILS = ['supervisor@planner.com'];
 
 export const authModule = {
     loginForm: { email: '', password: '' },
@@ -18,6 +19,9 @@ export const authModule = {
             const isAdmin = user.email && ADMIN_EMAILS.some(admin => 
                 user.email.toLowerCase() === admin.toLowerCase()
             );
+            const isSupervisor = !isAdmin && user.email && SUPERVISOR_EMAILS.some(sup => 
+                user.email.toLowerCase() === sup.toLowerCase()
+            );
             
             const existingData = snapshot.exists() ? snapshot.val() : null;
             const existingCreatedAt = existingData?.createdAt;
@@ -25,7 +29,7 @@ export const authModule = {
             const userData = {
                 uid: user.uid,
                 email: user.email,
-                role: isAdmin ? 'admin' : 'user',
+                role: isAdmin ? 'admin' : (isSupervisor ? 'supervisor' : 'user'),
                 lastLogin: new Date().toISOString(),
                 createdAt: existingCreatedAt || new Date().toISOString()
             };

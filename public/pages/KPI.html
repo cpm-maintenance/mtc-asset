@@ -9,13 +9,13 @@
         </div>
         KPI Deep Analytics
       </h2>
-      <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-bold">Intelligent breakdown & availability insights</p>
+      <p class="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">Intelligent breakdown & availability insights</p>
     </div>
     <div class="flex flex-wrap items-center gap-3">
       <div class="flex rounded-xl overflow-hidden border border-white/10">
-        <button @click="kpiFilter = 'daily'" :class="kpiFilter === 'daily' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all">Daily</button>
-        <button @click="kpiFilter = 'weekly'" :class="kpiFilter === 'weekly' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all">Weekly</button>
-        <button @click="kpiFilter = 'monthly'" :class="kpiFilter === 'monthly' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all">Monthly</button>
+        <button @click="kpiFilter = 'daily'" :class="kpiFilter === 'daily' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all">Daily</button>
+        <button @click="kpiFilter = 'weekly'" :class="kpiFilter === 'weekly' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all">Weekly</button>
+        <button @click="kpiFilter = 'monthly'" :class="kpiFilter === 'monthly' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all">Monthly</button>
       </div>
       <input type="date" x-model="kpiFilterDate" class="glass p-2 rounded-xl text-xs font-bold text-white border border-white/10 bg-transparent">
     </div>
@@ -24,19 +24,19 @@
   <!-- Summary Stats Row -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <div class="card-modern p-5 border-t-2 border-cyan-500">
-      <p class="text-[9px] text-cyan-400/60 uppercase font-black tracking-widest mb-1">Total Records</p>
+      <p class="text-[11px] text-amber-400/60 uppercase font-black tracking-widest mb-1">Total Records</p>
       <p class="text-2xl font-black text-white" x-text="getFilteredPerfData().length"></p>
     </div>
     <div class="card-modern p-5 border-t-2 border-rose-500">
-      <p class="text-[9px] text-rose-400/60 uppercase font-black tracking-widest mb-1">Total Downtime (H)</p>
+      <p class="text-[11px] text-rose-400/60 uppercase font-black tracking-widest mb-1">Total Downtime (H)</p>
       <p class="text-2xl font-black text-rose-400" x-text="getFilteredPerfData().reduce((a,p) => a + Number(p.bd || 0), 0).toFixed(2)"></p>
     </div>
     <div class="card-modern p-5 border-t-2 border-purple-500">
-      <p class="text-[9px] text-purple-400/60 uppercase font-black tracking-widest mb-1">Avg PA %</p>
+      <p class="text-[11px] text-purple-400/60 uppercase font-black tracking-widest mb-1">Avg PA %</p>
       <p class="text-2xl font-black text-purple-400" x-text="(() => { const d = getFilteredPerfData(); return d.length ? (d.reduce((a,p) => a + Number(calculateKPI(p).pa), 0) / d.length).toFixed(1) : '0.0'; })()"></p>
     </div>
     <div class="card-modern p-5 border-t-2 border-amber-500">
-      <p class="text-[9px] text-amber-400/60 uppercase font-black tracking-widest mb-1">Total Events</p>
+      <p class="text-[11px] text-amber-400/60 uppercase font-black tracking-widest mb-1">Total Events</p>
       <p class="text-2xl font-black text-amber-400" x-text="getFilteredPerfData().reduce((a,p) => a + (p.events ? p.events.length : 0), 0)"></p>
     </div>
   </div>
@@ -45,13 +45,13 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-crosshairs text-nexus-accent"></i> PA Plan vs Actual <span class="text-slate-500 ml-auto text-[9px] normal-case tracking-normal">by Equipment</span>
+        <i class="fas fa-crosshairs text-amber-400"></i> PA Plan vs Actual <span class="text-slate-500 ml-auto text-[11px] normal-case tracking-normal">by Equipment</span>
       </h3>
       <div class="flex-1 relative min-h-[260px]"><canvas id="kpiPaVsActual"></canvas></div>
     </div>
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-map-marked-alt text-amber-400"></i> PA Plan vs Actual <span class="text-slate-500 ml-auto text-[9px] normal-case tracking-normal">by Area</span>
+        <i class="fas fa-map-marked-alt text-amber-400"></i> PA Plan vs Actual <span class="text-slate-500 ml-auto text-[11px] normal-case tracking-normal">by Area</span>
       </h3>
       <div class="flex-1 relative min-h-[260px]"><canvas id="kpiAreaPa"></canvas></div>
     </div>
@@ -67,7 +67,7 @@
     </div>
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-cogs text-nexus-accent"></i> Top 5 Downtime by Component
+        <i class="fas fa-cogs text-amber-400"></i> Top 5 Downtime by Component
       </h3>
       <div class="flex-1 relative min-h-[260px]"><canvas id="kpiTop5Components"></canvas></div>
     </div>
@@ -77,7 +77,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-calendar-check text-cyan-400"></i> Scheduled vs Unscheduled
+        <i class="fas fa-calendar-check text-amber-400"></i> Scheduled vs Unscheduled
       </h3>
       <div class="flex-1 relative min-h-[260px]"><canvas id="kpiSchedVsUnsched"></canvas></div>
     </div>
@@ -93,7 +93,7 @@
   <div class="grid grid-cols-1 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-6 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-chart-bar text-nexus-accent"></i> Pareto RCA Analysis <span class="text-slate-500 ml-auto text-[9px] normal-case tracking-normal">80/20 Rule - Major Failure Causes</span>
+        <i class="fas fa-chart-bar text-amber-400"></i> Pareto RCA Analysis <span class="text-slate-500 ml-auto text-[11px] normal-case tracking-normal">80/20 Rule - Major Failure Causes</span>
       </h3>
       <div class="flex-1 relative min-h-[350px]"><canvas id="kpiParetoRCA"></canvas></div>
     </div>
