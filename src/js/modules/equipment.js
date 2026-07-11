@@ -33,6 +33,11 @@ export const equipmentModule = {
         if (!file) return;
         this.tempEquipFile = file;
         this.equipForm.foto = URL.createObjectURL(file);
+        // Open crop modal
+        this.showCropModal(this.equipForm.foto, (croppedBlob) => {
+            this.tempEquipFile = croppedBlob;
+            this.equipForm.foto = URL.createObjectURL(croppedBlob);
+        });
     },
 
     async submitEquipment() {

@@ -14,10 +14,19 @@
         <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
         <input type="file" @change="importCSV($event, 'logs')" class="hidden" accept=".csv, .xlsx">
       </label>
-      <button x-show="isAdmin" @click="openLogModal(false)" class="btn-nexus-gold">
+      <button x-show="isAdminOrSupervisor" @click="openLogModal(false)" class="btn-nexus-gold">
         <i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Input</span>
       </button>
     </div>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="flex flex-wrap gap-3 items-center">
+    <input type="date" x-model="filterDateFrom" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-36" title="From date">
+    <input type="date" x-model="filterDateTo" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-36" title="To date">
+    <button x-show="filterDateFrom || filterDateTo" @click="filterDateFrom=''; filterDateTo=''" class="text-[11px] text-slate-500 hover:text-rose-400 font-bold uppercase tracking-widest">
+      <i class="fas fa-times"></i> Clear
+    </button>
   </div>
 
   <!-- Logs List -->
@@ -38,41 +47,41 @@
             </div>
           </div>
           <div x-show="!(log.PhotoURLs && log.PhotoURLs.length > 0)" class="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl glass border-nexus-accent/10 flex items-center justify-center flex-shrink-0">
-            <span class="text-[8px] text-slate-600" x-text="log.PhotoURL ? 'URL' : (log.PhotoURLs?.length || '0')"></span>
+            <span class="text-xs text-slate-600" x-text="log.PhotoURL ? 'URL' : (log.PhotoURLs?.length || '0')"></span>
           </div>
           
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start mb-1 md:mb-2">
               <div class="truncate">
-                <span class="text-[8px] md:text-[9px] font-black text-nexus-accent/40 uppercase tracking-[0.2em] block mb-0.5 md:mb-1" x-text="log.Jenis"></span>
+                <span class="text-xs md:text-[11px] font-black text-amber-400/40 uppercase tracking-[0.2em] block mb-0.5 md:mb-1" x-text="log.Jenis"></span>
                 <h4 class="font-black text-sm md:text-base text-nexus-text truncate pr-2 md:pr-10 nexus-glow-text" x-text="log.Deskripsi"></h4>
               </div>
               
               <!-- Action Buttons (Edit/Delete/PDF) -->
               <div class="flex gap-1 md:gap-2 flex-shrink-0 ml-2">
-                <button x-show="isAdmin && (log.Status === 'Pending' || log.Status === 'In Progress')" @click.stop="openLogModal(true, log)"
+                <button x-show="isAdminOrSupervisor && (log.Status === 'Pending' || log.Status === 'In Progress')" @click.stop="openLogModal(true, log)"
                   class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
-                  <i class="fas fa-edit text-[9px] md:text-[10px]"></i>
+                  <i class="fas fa-edit text-[11px] md:text-xs"></i>
                 </button>
                 <button x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" title="Delete Log"
                   class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
-                  <i class="fas fa-trash text-[9px] md:text-[10px]"></i>
+                  <i class="fas fa-trash text-[11px] md:text-xs"></i>
                 </button>
                 <button @click.stop="exportWOToPDF(log.LogID)" title="Export Work Order PDF"
-                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-nexus-accent/20 text-nexus-accent hover:bg-nexus-accent hover:text-nexus-black flex items-center justify-center transition-all">
-                  <i class="fas fa-file-pdf text-[9px] md:text-[10px]"></i>
+                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-nexus-accent/20 text-amber-400 hover:bg-nexus-accent hover:text-nexus-black flex items-center justify-center transition-all">
+                  <i class="fas fa-file-pdf text-[11px] md:text-xs"></i>
                 </button>
               </div>
             </div>
             
             <!-- Status Badge -->
             <div class="flex items-center gap-2">
-              <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-[7px] md:text-[8px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
+              <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-xs md:text-xs font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
             </div>
 
             <!-- WO Priority & WO Number -->
-            <div x-show="log.woPriority || log.woNumber" class="flex flex-wrap items-center gap-2 mb-2 text-[7px] md:text-[8px]">
-              <span x-show="log.woNumber" class="px-2 py-0.5 rounded glass text-nexus-accent font-mono" x-text="'#'+log.woNumber"></span>
+            <div x-show="log.woPriority || log.woNumber" class="flex flex-wrap items-center gap-2 mb-2 text-xs md:text-xs">
+              <span x-show="log.woNumber" class="px-2 py-0.5 rounded glass text-amber-400 font-mono" x-text="'#'+log.woNumber"></span>
               <span x-show="log.woPriority" class="px-2 py-0.5 rounded font-bold uppercase tracking-wider" :class="woPriorityColor(log.woPriority)" x-text="log.woPriority"></span>
               <span x-show="log.assignedTo" class="text-slate-400"><i class="fas fa-user mr-1"></i><span x-text="log.assignedTo"></span></span>
               <span x-show="log.requestSource" class="text-purple-400 ml-2"><i class="fas fa-building mr-1"></i><span x-text="log.requestSource"></span></span>
@@ -80,12 +89,12 @@
             </div>
 
             <!-- Inline Meta Info -->
-            <div class="flex flex-wrap items-center gap-2 md:gap-6 mb-2 md:mb-4 text-[8px] md:text-[10px] text-slate-500 font-black uppercase tracking-widest">
+            <div class="flex flex-wrap items-center gap-2 md:gap-6 mb-2 md:mb-4 text-xs md:text-xs text-slate-500 font-black uppercase tracking-widest">
               <div class="flex items-center gap-1 md:gap-2">
-                <i class="far fa-calendar-alt text-nexus-accent"></i> <span x-text="log.Tanggal"></span>
+                <i class="far fa-calendar-alt text-amber-400"></i> <span x-text="log.Tanggal"></span>
               </div>
               <div class="flex items-center gap-1 md:gap-2">
-                <i class="far fa-user-astronaut text-nexus-accent"></i> <span x-text="log.Technician"></span>
+                <i class="far fa-user-astronaut text-amber-400"></i> <span x-text="log.Technician"></span>
               </div>
               <div class="flex items-center gap-1 md:gap-2 text-nexus-purple">
                 <i class="fas fa-atom"></i> <span x-text="'NODE: ' + log.EquipmentID"></span>
@@ -93,7 +102,7 @@
             </div>
 
             <!-- Parts used / Notes -->
-            <p x-show="log.Catatan" class="text-[10px] text-slate-500 italic line-clamp-1 border-l-2 border-nexus-accent/20 pl-4" x-text="log.Catatan"></p>
+            <p x-show="log.Catatan" class="text-xs text-slate-500 italic line-clamp-1 border-l-2 border-nexus-accent/20 pl-4" x-text="log.Catatan"></p>
           </div>
         </div>
       </div>

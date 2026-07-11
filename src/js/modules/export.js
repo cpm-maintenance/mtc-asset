@@ -782,30 +782,139 @@ export const exportModule = {
         this.isLoading = true;
         try {
             const jsPDF = await loadJsPDF();
+            await import('jspdf-autotable');
             
-            // Deep clone to avoid Alpine proxy issues
             const equipData = structuredClone(equip);
             const logsData = structuredClone(this.logs || []);
+            const pmData = structuredClone(this.pmList || []);
+            const partsData = structuredClone(this.allParts || []);
             
-            const doc = new jsPDF();
-            if (!doc) {
-                throw new Error('jsPDF instance null');
-            }
-            doc.setFontSize(20); 
-            doc.text(`ASSET REPORT: ${equipData.Nama}`, 20, 20);
-            doc.setFontSize(10); 
-            doc.text(`ID: ${equipData.EquipmentID} | Status: ${equipData.Status}`, 20, 30);
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageW = doc.internal.pageSize.getWidth();
             
-            const equipLogs = logsData.filter(l => l.EquipmentID === equipData.EquipmentID);
-            const tableData = equipLogs.map(l => [l.Tanggal, l.Jenis, l.Deskripsi, l.HM || '-']);
+            // Helper
+            const line = (y) => { doc.setDrawColor(0, 242, 255); doc.setLineWidth(0.3); doc.line(20, y, pageW - 20, y); };
+            const section = (title, y) => { doc.setFontSize(13); doc.setTextColor(0, 242, 255); doc.text(title, 20, y); return y + 7; };
             
-            doc.autoTable({ 
-                startY: 40, 
-                head: [['Date', 'Type', 'Desc', 'HM']], 
-                body: tableData 
+            // --- HEADER ---
+            doc.setFontSize(22); doc.setTextColor(255, 255, 255);
+            doc.text(`MTC-ASSET REPORT`, pageW / 2, 18, { align: 'center' });
+            doc.setFontSize(8); doc.setTextColor(140, 158, 183);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, pageW / 2, 25, { align: 'center' });
+            line(30);
+            
+            // --- EQUIPMENT INFO ---
+            let y = section('EQUIPMENT INFO', 38);
+            const fields = [
+                ['Name', equipData.Nama || '-'], ['ID', equipData.EquipmentID],
+                ['Location', equipData.Lokasi || '-'], ['Status', equipData.Status || '-'],
+                ['Type', equipData.Tipe || '-'], ['Serial', equipData.SerialNumber || '-'],
+                ['Vendor', equipData.Vendor || '-'], ['Criticality', equipData.Criticality || '-'],
+                ['Next PM', equipData.NextPMDate || '-'], ['Install Date', equipData.InstallDate || '-'],
+            ];
+            doc.setFontSize(9); doc.setTextColor(200, 210, 220);
+            let col = 0, xStart = 20;
+            fields.forEach(([k, v], i) => {
+                const x = xStart + col * 90;
+                doc.setFont('helvetica', 'bold'); doc.text(k + ':', x, y);
+                doc.setFont('helvetica', 'normal'); const w = doc.getTextWidth(k + ':  ' + v);
+                if (x + w + 10 > xStart + 90) { doc.text(v.length > 25 ? v.substring(0, 25) + '…' : v, x, y + 4); }
+                else { doc.text(v, x + doc.getTextWidth(k + ':  '), y); }
+                col++;
+                if (col > 1) { col = 0; y += 6; }
             });
-            doc.save(`Report_${equipData.EquipmentID}.pdf`);
-            this.showNotification('PDF exported successfully');
+            y += 4; line(y); y += 5;
+            
+            // --- HEALTH SCORE ---
+            const hScore = this.calculateHealthScore ? this.calculateHealthScore(equipData.EquipmentID) : null;
+            y = section('HEALTH & RELIABILITY', y);
+            doc.setFontSize(9); doc.setTextColor(200, 210, 220);
+            doc.setFont('helvetica', 'bold'); doc.text(`Health Score: `, 20, y);
+            doc.setFont('helvetica', 'normal'); doc.text(`${hScore?.score || 'N/A'}% - ${hScore?.status || '-'}`, 20 + doc.getTextWidth('Health Score: '), y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`MTBF: `, 90, y);
+            doc.setFont('helvetica', 'normal'); doc.text(`${this.calculateMTBF ? this.calculateMTBF(equipData.EquipmentID) : 'N/A'} hrs`, 90 + doc.getTextWidth('MTBF: '), y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Failure Est: `, 150, y);
+            doc.setFont('helvetica', 'normal'); doc.text(`${this.predictNextFailure ? this.predictNextFailure(equipData.EquipmentID) : 'N/A'}`, 150 + doc.getTextWidth('Failure Est: '), y);
+            y += 8; line(y); y += 5;
+            
+            // --- LOG HISTORY ---
+            const equipLogs = logsData.filter(l => l.EquipmentID === equipData.EquipmentID);
+            y = section('MAINTENANCE LOGS', y);
+            if (equipLogs.length > 0) {
+                const logRows = equipLogs.slice(0, 50).map(l => [
+                    l.Tanggal || '-', l.Jenis || '-',
+                    (l.Deskripsi || '').substring(0, 40),
+                    l.Status || '-', l.HM || '-'
+                ]);
+                doc.autoTable({
+                    startY: y, margin: { left: 20 },
+                    headStyles: { fillColor: [0, 242, 255], textColor: [0, 0, 0], fontSize: 8, fontStyle: 'bold' },
+                    bodyStyles: { fontSize: 7, textColor: [50, 50, 50] },
+                    alternateRowStyles: { fillColor: [240, 245, 250] },
+                    head: [['Date', 'Type', 'Description', 'Status', 'HM']],
+                    body: logRows,
+                });
+                y = doc.lastAutoTable.finalY + 6;
+            } else {
+                doc.setFontSize(9); doc.setTextColor(140, 158, 183);
+                doc.text('No maintenance logs recorded', 20, y); y += 7;
+            }
+            line(y); y += 5;
+            
+            // --- PM SCHEDULE ---
+            const equipPM = pmData.filter(p => p.equipmentId === equipData.EquipmentID);
+            y = section('PM SCHEDULE', y);
+            if (equipPM.length > 0) {
+                const pmRows = equipPM.map(p => [p.date || '-', (p.taskName || '').substring(0, 35), p.status || '-']);
+                doc.autoTable({
+                    startY: y, margin: { left: 20 },
+                    headStyles: { fillColor: [6, 182, 212], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+                    bodyStyles: { fontSize: 7, textColor: [50, 50, 50] },
+                    alternateRowStyles: { fillColor: [240, 245, 250] },
+                    head: [['Date', 'Task', 'Status']],
+                    body: pmRows,
+                });
+                y = doc.lastAutoTable.finalY + 6;
+            } else {
+                doc.setFontSize(9); doc.setTextColor(140, 158, 183);
+                doc.text('No PM schedule for this equipment', 20, y); y += 7;
+            }
+            line(y); y += 5;
+            
+            // --- PARTS ---
+            const equipParts = partsData.filter(p => 
+                (p.EquipmentIDs && p.EquipmentIDs.includes(equipData.EquipmentID)) || 
+                p.EquipmentID === equipData.EquipmentID
+            );
+            y = section('LINKED PARTS', y);
+            if (equipParts.length > 0) {
+                const partRows = equipParts.map(p => [
+                    p.PartID || '-', (p.NamaPart || '').substring(0, 25),
+                    String(p.Stok || 0), String(p.MinStock || 0),
+                    Number(p.Stok) <= Number(p.MinStock) ? '⚠️ LOW' : 'OK'
+                ]);
+                doc.autoTable({
+                    startY: y, margin: { left: 20 },
+                    headStyles: { fillColor: [34, 197, 94], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+                    bodyStyles: { fontSize: 7, textColor: [50, 50, 50] },
+                    alternateRowStyles: { fillColor: [240, 245, 250] },
+                    head: [['Part ID', 'Name', 'Stock', 'Min', 'Status']],
+                    body: partRows,
+                });
+                y = doc.lastAutoTable.finalY;
+            } else {
+                doc.setFontSize(9); doc.setTextColor(140, 158, 183);
+                doc.text('No parts linked to this equipment', 20, y); y += 7;
+            }
+            
+            // Footer
+            doc.setFontSize(7); doc.setTextColor(180, 190, 200);
+            doc.text(`MTC-ASSET v1.2 | Page 1`, pageW / 2, 290, { align: 'center' });
+            
+            doc.save(`Asset_${equipData.EquipmentID}.pdf`);
+            this.showNotification('✅ Asset report exported');
         } catch (e) { 
             console.error('Asset PDF Export Error:', e);
             this.showNotification("Failed to export PDF: " + (e.message || 'Unknown error'), "error");

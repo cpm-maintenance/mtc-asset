@@ -20,7 +20,7 @@
         </div>
         <div class="flex-1">
           <h4 class="font-black text-white">Analyze KPI</h4>
-          <p class="text-[10px] text-slate-500">AI-powered insights</p>
+          <p class="text-xs text-slate-500">AI-powered insights</p>
         </div>
       </div>
     </button>
@@ -32,7 +32,7 @@
         </div>
         <div class="flex-1">
           <h4 class="font-black text-white">Rekomendasi</h4>
-          <p class="text-[10px] text-slate-500">AI WO suggestions</p>
+          <p class="text-xs text-slate-500">AI WO suggestions</p>
         </div>
       </div>
     </button>
@@ -44,7 +44,7 @@
         </div>
         <div class="flex-1">
           <h4 class="font-black text-white">Generate PPT</h4>
-          <p class="text-[10px] text-slate-500">Export report</p>
+          <p class="text-xs text-slate-500">Export report</p>
         </div>
       </div>
     </button>
@@ -62,7 +62,7 @@
   <!-- AI Chat -->
   <div class="card-modern p-6 border-green-500/30">
     <h4 class="font-bold text-white mb-4 flex items-center gap-2">
-      <i class="fas fa-comments text-cyan-400"></i>
+      <i class="fas fa-comments text-amber-400"></i>
       Tanya AI
       <button x-show="aiChatHistory.length > 0" @click="clearAIChat()" class="ml-auto text-xs text-slate-500 hover:text-white">
         <i class="fas fa-trash mr-1"></i>Clear
@@ -81,7 +81,7 @@
       <div x-show="aiChatHistory.length > 0" class="space-y-2 max-h-64 overflow-y-auto">
         <template x-for="(msg, idx) in aiChatHistory" :key="idx">
           <div :class="msg.role === 'user' ? 'ml-8 bg-green-800/50' : 'mr-8 bg-green-700/30'" class="p-3 rounded-xl">
-            <div class="text-[10px] text-slate-500 mb-1">
+            <div class="text-xs text-slate-500 mb-1">
               <i :class="msg.role === 'user' ? 'fa-user' : 'fa-robot'" class="fas mr-1"></i>
               <span x-text="msg.role === 'user' ? 'Anda' : 'AI'"></span>
             </div>

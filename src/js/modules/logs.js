@@ -146,8 +146,18 @@ export const logsModule = {
             this.showNotification("Maximum 4 photos allowed.", "error");
             return;
         }
-        files.forEach(file => {
-            this.logForm.photos.push({ file: file, preview: URL.createObjectURL(file), base64: null });
+        files.forEach((file, i) => {
+            const preview = URL.createObjectURL(file);
+            // Only open crop for first new file
+            if (i === 0) {
+                this.showCropModal(preview, (croppedBlob) => {
+                    if (!this.logForm.photos) this.logForm.photos = [];
+                    if (this.logForm.photos.length >= 4) return;
+                    this.logForm.photos.push({ file: croppedBlob, preview: URL.createObjectURL(croppedBlob), base64: null });
+                });
+            } else {
+                this.logForm.photos.push({ file, preview, base64: null });
+            }
         });
     },
 
@@ -181,7 +191,7 @@ export const logsModule = {
             return;
         }
         
-        if (!this.isEditingLog && !this.isAdmin) {
+        if (!this.isEditingLog && !this.isAdminOrSupervisor) {
             this.showNotification("Admin access required to create logs", "error");
             return;
         }
@@ -382,7 +392,7 @@ async approveWO(logId) {
             return;
         }
 
-        if (!this.isAdmin) {
+        if (!this.isAdminOrSupervisor) {
             this.showNotification("Only supervisor can approve Work Order", "error");
             return;
         }
@@ -451,7 +461,7 @@ async approveWO(logId) {
             return;
         }
 
-        if (!this.isAdmin) {
+        if (!this.isAdminOrSupervisor) {
             this.showNotification("Only supervisor can reject Work Order", "error");
             return;
         }

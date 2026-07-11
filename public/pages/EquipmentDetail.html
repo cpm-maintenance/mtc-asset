@@ -3,24 +3,24 @@
   <!-- Header with Back Button and Actions -->
   <div class="flex justify-between items-center glass p-4 rounded-2xl border-nexus-accent/10">
     <button @click="currentPage = 'equip'"
-      class="text-nexus-accent hover:text-white text-xs font-black uppercase tracking-widest transition-all flex items-center">
+      class="text-amber-400 hover:text-white text-xs font-black uppercase tracking-widest transition-all flex items-center">
       <i class="fas fa-arrow-left mr-2"></i> Return to Nexus
     </button>
     <div class="flex gap-2">
       <button @click="generateQR(selectedEquip.EquipmentID)"
-        class="glass border-nexus-accent/20 text-nexus-accent px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-nexus-accent hover:text-nexus-black transition-all">
+        class="glass border-nexus-accent/20 text-amber-400 px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-nexus-accent hover:text-nexus-black transition-all">
         <i class="fas fa-qrcode mr-1"></i> QR
       </button>
       <button @click="exportToPDF(selectedEquip)"
-        class="glass border-nexus-purple/20 text-nexus-purple px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-nexus-purple hover:text-white transition-all">
+        class="glass border-nexus-purple/20 text-nexus-purple px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-nexus-purple hover:text-white transition-all">
         <i class="fas fa-file-pdf mr-1"></i> PDF
       </button>
       <button x-show="isAdmin" @click="openEquipModal(true, selectedEquip)"
-        class="glass border-blue-500/20 text-blue-400 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+        class="glass border-blue-500/20 text-blue-400 px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 hover:text-white transition-all">
         <i class="fas fa-edit mr-1"></i> Modify
       </button>
       <button x-show="isAdmin" @click="deleteItem('Equipment', selectedEquip.EquipmentID)"
-        class="glass border-rose-500/20 text-rose-400 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-500 hover:text-white transition-all">
+        class="glass border-rose-500/20 text-rose-400 px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-rose-500 hover:text-white transition-all">
         <i class="fas fa-trash mr-1"></i> Purge
       </button>
     </div>
@@ -41,26 +41,26 @@
       <!-- Name and ID -->
       <div class="flex flex-wrap items-center gap-4 mb-4">
         <h2 class="text-4xl font-black text-white tracking-tight nexus-glow-text" x-text="selectedEquip?.Nama"></h2>
-        <span class="text-[10px] px-4 py-1.5 rounded-full glass text-nexus-accent font-black border-nexus-accent/20 uppercase tracking-widest" x-text="selectedEquip?.EquipmentID"></span>
+        <span class="text-xs px-4 py-1.5 rounded-full glass text-amber-400 font-black border-nexus-accent/20 uppercase tracking-widest" x-text="selectedEquip?.EquipmentID"></span>
       </div>
       <p class="text-nexus-purple font-black mb-8 uppercase text-xs tracking-[0.4em]" x-text="selectedEquip?.Tipe"></p>
 
       <!-- Metadata Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div>
-          <p class="text-nexus-accent/40 text-[9px] uppercase font-black tracking-widest mb-2">Location Sector</p>
+          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Location Sector</p>
           <p class="text-white font-bold text-sm" x-text="selectedEquip?.Lokasi || '-'"></p>
         </div>
         <div>
-          <p class="text-nexus-accent/40 text-[9px] uppercase font-black tracking-widest mb-2">Priority Level</p>
+          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Priority Level</p>
           <p :class="critColor(selectedEquip?.Criticality)" class="font-black text-sm uppercase" x-text="selectedEquip?.Criticality || '-'"></p>
         </div>
         <div>
-          <p class="text-nexus-accent/40 text-[9px] uppercase font-black tracking-widest mb-2">Serial Signature</p>
+          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Serial Signature</p>
           <p class="text-white font-mono text-xs font-bold" x-text="selectedEquip?.SerialNumber || '-'"></p>
         </div>
         <div>
-          <p class="text-nexus-accent/40 text-[9px] uppercase font-black tracking-widest mb-2">Vendor Origin</p>
+          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Vendor Origin</p>
           <p class="text-white font-bold text-sm" x-text="selectedEquip?.Vendor || '-'"></p>
         </div>
       </div>
@@ -70,26 +70,26 @@
         <!-- Health Score Card -->
         <div class="p-4 glass border-nexus-accent/5 rounded-2xl flex items-center gap-6">
           <div class="flex-1">
-            <p class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-widest mb-2">System Integrity (Health)</p>
+            <p class="text-sm text-amber-400/40 uppercase font-black tracking-widest mb-2">System Integrity (Health)</p>
             <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
               <div class="h-full transition-all duration-1000" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color.replace('text-', 'bg-')" :style="'width: ' + (selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).score : 100) + '%'"></div>
             </div>
           </div>
           <div class="text-right">
             <p class="font-black text-xl nexus-glow-text" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color" x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).score + '%' : '100%'"></p>
-            <p class="text-[8px] font-black uppercase tracking-widest" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color" x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).status : 'Optimal'"></p>
+            <p class="text-xs font-black uppercase tracking-widest" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color" x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).status : 'Optimal'"></p>
           </div>
         </div>
         
         <!-- Neural Prediction Card -->
         <div class="p-4 glass border-nexus-purple/10 rounded-2xl flex items-center gap-6">
           <div class="flex-1">
-            <p class="text-[9px] text-nexus-purple/40 uppercase font-black tracking-widest mb-2">Neural Prediction (Failure)</p>
+            <p class="text-sm text-nexus-purple/40 uppercase font-black tracking-widest mb-2">Neural Prediction (Failure)</p>
             <p class="text-white font-black text-sm nexus-glow-text" x-text="'EST: ' + (selectedEquip ? predictNextFailure(selectedEquip.EquipmentID) : 'N/A')"></p>
           </div>
           <div class="text-right">
             <p class="text-white font-black text-lg nexus-glow-text" x-text="selectedEquip ? calculateMTBF(selectedEquip.EquipmentID) : '0'"></p>
-            <p class="text-[8px] text-slate-500 font-black uppercase tracking-widest">MTBF Hours</p>
+            <p class="text-xs text-slate-500 font-black uppercase tracking-widest">MTBF Hours</p>
           </div>
         </div>
       </div>
@@ -99,11 +99,14 @@
   <!-- Tabs Navigation -->
   <div class="flex gap-10 border-b border-white/5 px-4">
     <button @click="activeTab = 'hist'"
-      :class="activeTab === 'hist' ? 'border-b-2 border-nexus-accent text-nexus-accent' : 'text-slate-500 hover:text-nexus-accent/60'"
-      class="pb-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all">Neural Log History</button>
+      :class="activeTab === 'hist' ? 'border-b-2 border-nexus-accent text-amber-400' : 'text-slate-500 hover:text-amber-400/60'"
+      class="pb-5 text-xs font-black uppercase tracking-[0.2em] transition-all">Neural Log History</button>
     <button @click="activeTab = 'parts'"
-      :class="activeTab === 'parts' ? 'border-b-2 border-nexus-accent text-nexus-accent' : 'text-slate-500 hover:text-nexus-accent/60'"
-      class="pb-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all">Integrated Parts</button>
+      :class="activeTab === 'parts' ? 'border-b-2 border-nexus-accent text-amber-400' : 'text-slate-500 hover:text-amber-400/60'"
+      class="pb-5 text-xs font-black uppercase tracking-[0.2em] transition-all">Integrated Parts</button>
+    <button @click="activeTab = 'pm'"
+      :class="activeTab === 'pm' ? 'border-b-2 border-nexus-accent text-amber-400' : 'text-slate-500 hover:text-amber-400/60'"
+      class="pb-5 text-xs font-black uppercase tracking-[0.2em] transition-all">PM Schedule</button>
   </div>
 
   <!-- Tabs Content -->
@@ -114,13 +117,13 @@
         <div class="card-modern p-5 border-l-4 relative group" :style="'border-left-color: ' + getStatColor(logColor(log.Jenis))">
           <div class="flex justify-between items-start mb-3">
             <div class="flex items-center gap-3">
-              <span class="text-[10px] font-black text-nexus-accent uppercase tracking-widest px-2 py-1 glass rounded-lg" x-text="log.Tanggal"></span>
-              <span class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]" x-text="log.Jenis"></span>
+              <span class="text-xs font-black text-amber-400 uppercase tracking-widest px-2 py-1 glass rounded-lg" x-text="log.Tanggal"></span>
+              <span class="text-sm font-black text-slate-500 uppercase tracking-[0.2em]" x-text="log.Jenis"></span>
             </div>
-            <span class="px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Completed'"></span>
+            <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Completed'"></span>
           </div>
           <h4 class="text-base font-black text-white mb-2 nexus-glow-text" x-text="log.Deskripsi"></h4>
-          <p class="text-[11px] text-slate-400 border-l border-white/10 pl-4 italic" x-text="log.Catatan || 'No technical notes recorded.'"></p>
+          <p class="text-sm text-slate-400 border-l border-white/10 pl-4 italic" x-text="log.Catatan || 'No technical notes recorded.'"></p>
           
           <div class="mt-4 flex flex-wrap gap-2" x-show="log.PartsUsed && safeParseLogParts(log.PartsUsed).length > 0">
             <template x-for="p in safeParseLogParts(log.PartsUsed)">
@@ -142,7 +145,7 @@
       <!-- Empty State -->
       <div x-show="logs.filter(l => l.EquipmentID === selectedEquip?.EquipmentID).length === 0" class="text-center py-16 card-modern border-dashed border-2 border-white/5">
         <i class="fas fa-history text-4xl text-slate-700 mb-4 block"></i>
-        <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">No neural logs recorded for this node</p>
+        <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No neural logs recorded for this node</p>
       </div>
     </div>
 
@@ -151,17 +154,17 @@
       <template x-for="p in allParts.filter(part => (part.EquipmentIDs && part.EquipmentIDs.includes(selectedEquip?.EquipmentID)) || part.EquipmentID === selectedEquip?.EquipmentID)" :key="p.PartID">
         <div class="card-modern p-5 flex justify-between items-center group hover:border-nexus-accent/40 transition-all">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl glass flex items-center justify-center text-nexus-accent group-hover:scale-110 transition-transform">
+            <div class="w-12 h-12 rounded-xl glass flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
               <i class="fas fa-cog"></i>
             </div>
             <div>
               <h4 class="text-sm font-black text-white uppercase tracking-tight" x-text="p.NamaPart"></h4>
-              <p class="text-[10px] text-nexus-accent/60 font-mono font-bold" x-text="p.PartID"></p>
+              <p class="text-xs text-amber-400/60 font-mono font-bold" x-text="p.PartID"></p>
             </div>
           </div>
           <div class="text-right">
-            <p class="text-[9px] text-slate-500 uppercase font-black mb-1 tracking-widest">In Stock</p>
-            <p class="text-2xl font-black nexus-glow-text" :class="isLowStock(p.Stok, p.MinStock) ? 'text-rose-500' : 'text-nexus-accent'" x-text="p.Stok"></p>
+            <p class="text-sm text-slate-500 uppercase font-black mb-1 tracking-widest">In Stock</p>
+            <p class="text-2xl font-black nexus-glow-text" :class="isLowStock(p.Stok, p.MinStock) ? 'text-rose-500' : 'text-amber-400'" x-text="p.Stok"></p>
           </div>
         </div>
       </template>
@@ -169,7 +172,41 @@
       <!-- Empty State -->
       <div x-show="allParts.filter(part => (part.EquipmentIDs && part.EquipmentIDs.includes(selectedEquip?.EquipmentID)) || part.EquipmentID === selectedEquip?.EquipmentID).length === 0" class="col-span-full text-center py-16 card-modern border-dashed border-2 border-white/5">
         <i class="fas fa-microchip text-4xl text-slate-700 mb-4 block"></i>
-        <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">No integrated parts detected for this node</p>
+        <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No integrated parts detected for this node</p>
+      </div>
+    </div>
+    
+    <!-- 🔧 TAB: PM SCHEDULE -->
+    <div x-show="activeTab === 'pm'" class="space-y-4">
+      <template x-for="pm in pmList.filter(l => l.equipmentId === selectedEquip?.EquipmentID).sort((a,b) => (a.date||'').localeCompare(b.date||''))" :key="pm.pmId">
+        <div class="card-modern p-5 border-l-4 group" :class="pm.status === 'completed' ? 'border-l-emerald-500/50' : (isPMOverdue(pm) ? 'border-l-rose-500/50' : 'border-l-amber-500/50')">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-xs font-black text-amber-400 uppercase tracking-widest px-2 py-1 glass rounded-lg" x-text="pm.date"></span>
+                <span class="text-sm px-2 py-0.5 rounded-full font-bold"
+                  :class="{
+                    'bg-amber-500/20 text-amber-400': pm.status === 'pending',
+                    'bg-emerald-500/20 text-emerald-400': pm.status === 'completed',
+                    'bg-slate-500/20 text-slate-400': pm.status === 'skipped',
+                  }" x-text="pm.status"></span>
+                <span x-show="isPMOverdue(pm)" class="text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold">OVERDUE</span>
+              </div>
+              <h4 class="text-sm font-black text-white" x-text="pm.taskName"></h4>
+              <p x-show="pm.notes" class="text-sm text-slate-500 mt-1 italic" x-text="pm.notes"></p>
+            </div>
+            <div x-show="pm.technician" class="text-right shrink-0 ml-4">
+              <p class="text-sm text-slate-500 uppercase tracking-widest font-black">Technician</p>
+              <p class="text-xs font-bold text-amber-400" x-text="pm.technician"></p>
+            </div>
+          </div>
+        </div>
+      </template>
+      
+      <!-- Empty State -->
+      <div x-show="!pmList.filter(l => l.equipmentId === selectedEquip?.EquipmentID).length" class="text-center py-16 card-modern border-dashed border-2 border-white/5">
+        <i class="fas fa-calendar-check text-4xl text-slate-700 mb-4 block"></i>
+        <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No PM schedule for this equipment</p>
       </div>
     </div>
   </div>

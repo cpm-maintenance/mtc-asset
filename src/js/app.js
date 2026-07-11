@@ -11,6 +11,7 @@ import { aiModule } from './modules/ai.js';
 import { pmScheduleModule } from './modules/pm-schedule.js';
 import { requisitionModule } from './modules/requisition.js';
 import { chartModule } from './charts.js';
+import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
 import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants.js';
@@ -21,7 +22,7 @@ export function app() {
         // --- APP STATE ---
         currentPage: 'dash', sidebarCollapsed: false, activeTab: 'hist', search: '', searchPart: '', partFilterEquip: '',
         // Work Order filters
-        searchWO: '', filterWOStatus: '', filterWOPriority: '',
+        searchWO: '', filterWOStatus: '', filterWOPriority: '', filterDateFrom: '', filterDateTo: '',
         selectedWODetail: null,
         
         // ponytail: AI state + methods (clearAIChat, rotateApiKey, sendAIChat, updateModelOptions,
@@ -66,7 +67,10 @@ export function app() {
         selectedPMDate: '',
         showPMModal: false,
 
-        // --- AUTH METHODS (Moved from module for stability) ---
+        // --- CROP MODAL STATE ---
+        showCropModalOpen: false,
+        cropImageSrc: '',
+        cropCallback: null,
         async login() {
             const form = this.loginform.email ? this.loginform : this.loginForm;
             if (!form.email || !form.password) {
@@ -140,25 +144,54 @@ if (confirm('Are you sure you want to logout?')) {
         isEditingPerformance: false,
         kpiFilter: 'yearly',
         kpiFilterDate: new Date().getFullYear().toString(),
+        enterpriseSummary: {},
+        enterpriseKPIList: [],
+        enterpriseCritical: [],
+        enterpriseUpcomingPM: [],
+        enterpriseCriticalWO: [],
+        enterpriseLowStock: [],
+        enterpriseInsights: [],
+        enterpriseOEE: { oee: 0, status: 'N/A', availability: 0, performance: 0, quality: 0, hexColor: '#6b7280' },
+        expandedEquip: null,
+        plantFilter: '', deptFilter: '', kpiDateFrom: '', kpiDateTo: '',
+        aiLoading: false,
 
         menuItems: [
-            { id: 'dash', name: 'Dashboard', icon: 'fas fa-chart-pie', mobile: true },
-            { id: 'equip', name: 'Equipment', icon: 'fas fa-tools', mobile: true },
-            { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true },
-            { id: 'hist', name: 'All Logs', icon: 'fas fa-history', mobile: true },
-            { id: 'wo', name: 'Work Orders', icon: 'fas fa-clipboard-list', mobile: true },
-            { id: 'pms', name: 'PM Schedule', icon: 'fas fa-calendar-alt', mobile: true, allowedRole: 'admin' },
-            { id: 'perf', name: 'Performance', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'admin' },
-            { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin' },
-            { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin' },
-            { id: 'request', name: 'Request Part', icon: 'fas fa-shopping-cart', mobile: true },
+            // --- MONITORING ---
+            { id: 'dash', name: 'Dashboard', icon: 'fas fa-chart-pie', mobile: true, group: 'Monitoring' },
+            { id: 'enterprise', name: 'Enterprise KPI', icon: 'fas fa-industry', mobile: true, allowedRole: 'admin', group: 'Monitoring' },
+
+            // --- MAINTENANCE ---
+            { id: 'wo', name: 'Work Orders', icon: 'fas fa-clipboard-list', mobile: true, group: 'Maintenance' },
+            { id: 'pms', name: 'PM Schedule', icon: 'fas fa-calendar-alt', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
+            { id: 'perf', name: 'Performance', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
+            { id: 'equip', name: 'Equipment', icon: 'fas fa-tools', mobile: true, group: 'Maintenance' },
+            { id: 'hist', name: 'All Logs', icon: 'fas fa-history', mobile: true, group: 'Maintenance' },
+
+            // --- INVENTORY ---
+            { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true, group: 'Inventory' },
+            { id: 'request', name: 'Request Part', icon: 'fas fa-shopping-cart', mobile: true, group: 'Inventory' },
+
+            // --- ANALYTICS ---
+            { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin', group: 'Analytics' },
         ],
 
         // --- ROLE-BASED NAVIGATION ---
+        get menuGroups() {
+            const groups = {};
+            this.menuItems.filter(m => this.canAccess(m)).forEach(item => {
+                const g = item.group || 'Other';
+                if (!groups[g]) groups[g] = { name: g, items: [] };
+                groups[g].items.push(item);
+            });
+            const order = ['Monitoring', 'Maintenance', 'Inventory', 'Analytics', 'Other'];
+            return order.filter(k => groups[k]).map(k => groups[k]);
+        },
         navigateTo(pageId) {
             const page = this.menuItems.find(m => m.id === pageId);
-            if (page?.allowedRole && page.allowedRole === 'admin' && !this.isAdmin) {
-                this.showNotification("Access denied: admin only", "error");
+            if (page && !this.canAccess(page)) {
+                this.showNotification("Access denied", "error");
                 return;
             }
             this.currentPage = pageId;
@@ -180,17 +213,42 @@ if (confirm('Are you sure you want to logout?')) {
         ...chartModule,
         ...errorHandlerModule,
         ...bootstrapModule,
+        ...enterpriseKPI,
 
         // --- CALCULATED PROPERTIES (GETTERS) ---
         // ponytail: init, loadModalsCSS, checkUserRole extracted to bootstrap.js
         get isAdmin() { return this.userRole === 'admin'; },
+        get isSupervisor() { return this.userRole === 'supervisor'; },
+        get isAdminOrSupervisor() { return this.userRole === 'admin' || this.userRole === 'supervisor'; },
+        // allowedRole: undefined=all, 'admin'=admin only, 'supervisor'=admin+supervisor
+        canAccess(menuItem) {
+            if (!menuItem.allowedRole) return true;
+            if (menuItem.allowedRole === 'admin') return this.isAdmin;
+            if (menuItem.allowedRole === 'supervisor') return this.isAdminOrSupervisor;
+            return true;
+        },
 
         get calculatedStats() {
+            // WO completion rate
+            const wos = (this.logs || []).filter(l => l.woNumber || l.Status === 'Pending' || l.Status === 'Approved');
+            const woTotal = wos.length;
+            const woDone = wos.filter(l => l.Status === 'Completed').length;
+            const woRate = woTotal > 0 ? Math.round((woDone / woTotal) * 100) : 0;
+            // Avg health score
+            let healthSum = 0, healthCount = 0;
+            const equips = this.equipment || [];
+            equips.forEach(e => {
+                if (this.calculateHealthScore) {
+                    const h = this.calculateHealthScore(e.EquipmentID);
+                    if (h && h.score) { healthSum += h.score; healthCount++; }
+                }
+            });
+            const avgHealth = healthCount > 0 ? Math.round(healthSum / healthCount) : 0;
             return {
-                totalEquip: { label: 'Total Assets', value: this.dashboardStats.totalEquip || 0, color: 'border-blue-500' },
-                overduePM: { label: 'Overdue PM', value: this.dashboardStats.overduePM || 0, color: 'border-red-500' },
+                totalEquip: { label: 'Total Assets', value: equips.length || 0, color: 'border-blue-500' },
+                woCompletionRate: { label: 'WO Completion', value: woRate + '%', color: 'border-emerald-500' },
+                avgHealthScore: { label: 'Avg Health Score', value: avgHealth + '%', color: 'border-cyan-500' },
                 lowStock: { label: 'Low Stock Parts', value: this.dashboardStats.lowStock || 0, color: 'border-yellow-500' },
-                totalDowntime: { label: 'Total Down Hrs', value: parseFloat(this.dashboardStats.totalDowntime || 0).toFixed(1), color: 'border-green-500' }
             };
         },
 
@@ -361,37 +419,24 @@ if (confirm('Are you sure you want to logout?')) {
         // extracted to pm-schedule.js (as pmGetMonthLabel, pmGetCalendarDays, pmGetStats, etc.)
 
         get filteredWorkOrders() {
-            // Guard: if logs is undefined/null, return empty to avoid crash
+            // Guard: if logs is undefined/null, return empty
             if (!this.logs || !Array.isArray(this.logs)) {
-                console.log('[filteredWorkOrders] logs not ready yet, returning []');
                 return [];
             }
             
-            // Show loading state when logs are empty but isLoading is true
-            if (this.logs.length === 0 && this.isLoading) {
-                return [];
-            }
+            // Use pre-filtered activeWorkOrders if available (faster)
+            // Falls back to filtering all logs if activeWorkOrders is empty but logs exist
+            const source = (this.activeWorkOrders && this.activeWorkOrders.length > 0)
+                ? this.activeWorkOrders
+                : this.logs.filter(l => l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved'));
             
-            // Ensure we're tracking reactivity through this.logs (not activeWorkOrders)
-            // This ensures Alpine re-evaluates when logs change
-            const logsSnapshot = [...this.logs];
-            
-            // Filter only items that have work order characteristics
-            let logsArray = logsSnapshot.filter(l => 
-                l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved')
-            );
-            
-            console.log('[filteredWorkOrders] total logs:', logsSnapshot.length, 'filtered WOs:', logsArray.length);
-            
-            // Filter out corrupt entries
-            logsArray = logsArray.filter(l => l.Jenis || l.Deskripsi || l.woNumber || l.EquipmentID);
-            
-            let result = logsArray;
+            let result = source.filter(l => l.Jenis || l.Deskripsi || l.woNumber || l.EquipmentID);
             
             // Apply filters
-            const hasFilters = this.searchWO || this.filterWOStatus || this.filterWOPriority;
+            const hasFilters = this.searchWO || this.filterWOStatus || this.filterWOPriority || this.filterDateFrom || this.filterDateTo;
             
             if (hasFilters) {
+                // ...existing WO filters...
                 if (this.searchWO) {
                     const s = this.searchWO.toLowerCase();
                     result = result.filter(l => 
@@ -409,6 +454,16 @@ if (confirm('Are you sure you want to logout?')) {
                 if (this.filterWOPriority) {
                     result = result.filter(l => l.woPriority === this.filterWOPriority);
                 }
+                
+                // Date range filter
+                if (this.filterDateFrom) {
+                    const from = this.filterDateFrom;
+                    result = result.filter(l => l.Tanggal && l.Tanggal >= from);
+                }
+                if (this.filterDateTo) {
+                    const to = this.filterDateTo;
+                    result = result.filter(l => l.Tanggal && l.Tanggal <= to);
+                }
             }
             
             return result;
@@ -418,10 +473,22 @@ if (confirm('Are you sure you want to logout?')) {
             if (!this.logs || !Array.isArray(this.logs)) return [];
             
             // All Logs: only real equipment logs (non-EXTERNAL)
-            return this.logs.filter(l => 
+            let result = this.logs.filter(l => 
                 l.EquipmentID && 
                 l.EquipmentID !== 'EXTERNAL'
             );
+            
+            // Date range filter
+            if (this.filterDateFrom) {
+                const from = this.filterDateFrom;
+                result = result.filter(l => l.Tanggal && l.Tanggal >= from);
+            }
+            if (this.filterDateTo) {
+                const to = this.filterDateTo;
+                result = result.filter(l => l.Tanggal && l.Tanggal <= to);
+            }
+            
+            return result;
         },
 
         get filteredParts() {
@@ -462,6 +529,46 @@ if (confirm('Are you sure you want to logout?')) {
         },
         getLifetimeBgColorLabel(status) {
             return getLifetimeBgColor(status);
-        }
+        },
+        getPartStock(partId) {
+            if (!partId || !this.allParts) return 0;
+            const part = this.allParts.find(p => p.PartID === partId);
+            return part ? Number(part.Stok) || 0 : 0;
+        },
+        // --- CROP ---
+        showCropModal(imageSrc, cb) {
+            this.cropImageSrc = imageSrc;
+            this.cropCallback = cb;
+            this.showCropModalOpen = true;
+            this.$nextTick(() => {
+                const img = document.getElementById('cropImage');
+                if (!img) return;
+                if (this._cropper) this._cropper.destroy();
+                this._cropper = new Cropper(img, {
+                    aspectRatio: NaN, viewMode: 1, autoCropArea: 1,
+                    responsive: true, background: false,
+                });
+            });
+        },
+        applyCrop() {
+            if (!this._cropper) return;
+            this._cropper.getCroppedCanvas().toBlob((blob) => {
+                if (this.cropCallback) this.cropCallback(blob);
+                this._cropper.destroy();
+                this._cropper = null;
+                this.showCropModalOpen = false;
+            }, 'image/jpeg', 0.92);
+        },
+        handleLogPhotoDrop(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const max = 4 - (this.logForm.photos?.length || 0);
+            if (max <= 0) { this.showNotification('Max 4 photos', 'error'); return; }
+            const preview = URL.createObjectURL(file);
+            this.showCropModal(preview, (croppedBlob) => {
+                if (!this.logForm.photos) this.logForm.photos = [];
+                if (this.logForm.photos.length >= 4) return;
+                this.logForm.photos.push({ file: croppedBlob, preview: URL.createObjectURL(croppedBlob), base64: null });
+            });
+        },
     };
 }

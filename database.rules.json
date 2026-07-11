@@ -21,43 +21,83 @@
 
     "Equipment": {
       ".read": "auth !== null",
+      ".indexOn": ["NextPMDate"],
       "$equipmentId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
         ".read": "auth !== null",
-        ".validate": "newData.hasChildren(['EquipmentID', 'Nama', 'Lokasi'])"
+        ".validate": "newData.hasChildren(['EquipmentID', 'Nama', 'Lokasi']) &&
+          newData.child('EquipmentID').isString() && newData.child('EquipmentID').val().length <= 50 &&
+          newData.child('Nama').isString() && newData.child('Nama').val().length <= 200 &&
+          newData.child('Lokasi').isString() && newData.child('Lokasi').val().length <= 200"
       }
     },
 
     "SpareParts": {
       ".read": "auth !== null",
+      ".indexOn": ["isLowStock"],
       "$partId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
         ".read": "auth !== null",
-        ".validate": "newData.hasChildren(['NamaPart', 'Stok', 'MinStock'])"
+        ".validate": "newData.hasChildren(['NamaPart', 'Stok', 'MinStock']) &&
+          newData.child('NamaPart').isString() && newData.child('NamaPart').val().length <= 200 &&
+          newData.child('Stok').isNumber() && newData.child('Stok').val() >= 0 &&
+          newData.child('MinStock').isNumber() && newData.child('MinStock').val() >= 0"
       }
     },
 
     "HistoryLog": {
       ".read": "auth !== null",
+      ".indexOn": ["EquipmentID", "Status"],
       "$logId": {
-        ".write": "auth !== null && ((!data.exists() && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')) || (data.exists() && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor' || root.child('Users').child(auth.uid).child('role').val() === 'technician')))",
-        ".read": "auth !== null"
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['LogID', 'EquipmentID', 'Jenis', 'Deskripsi']) &&
+          newData.child('LogID').isString() && newData.child('LogID').val().length <= 50 &&
+          newData.child('EquipmentID').isString() && newData.child('EquipmentID').val().length <= 50 &&
+          newData.child('Jenis').isString() && newData.child('Jenis').val().length <= 50 &&
+          newData.child('Deskripsi').isString() && newData.child('Deskripsi').val().length <= 500 &&
+          newData.child('Status').val().matches(/^(Pending|Approved|In Progress|Completed|Rejected|Draft)$/) &&
+          (!newData.hasChild('Downtime') || newData.child('Downtime').isNumber()) &&
+          (!newData.hasChild('Cost') || newData.child('Cost').isNumber()) &&
+          (!newData.hasChild('HM') || newData.child('HM').isString())"
       }
     },
 
     "Performance": {
       ".read": "auth !== null",
       "$perfId": {
-        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
-        ".read": "auth !== null"
+        ".write": "auth !== null",
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['equipmentId', 'date']) &&
+          newData.child('equipmentId').isString() && newData.child('equipmentId').val().length <= 50 &&
+          newData.child('date').isString() && newData.child('date').val().length <= 20"
       }
     },
 
-    "WorkOrders": {
+    "PM_Schedule": {
       ".read": "auth !== null",
-      "$woId": {
+      ".indexOn": ["EquipmentID", "status"],
+      "$pmId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
-        ".read": "auth !== null"
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['pmId', 'equipmentId', 'taskName', 'status']) &&
+          newData.child('taskName').isString() && newData.child('taskName').val().length <= 200 &&
+          newData.child('equipmentId').isString() &&
+          newData.child('status').val().matches(/^(pending|completed|skipped)$/)"
+      }
+    },
+
+    "Requisitions": {
+      ".read": "auth !== null",
+      ".indexOn": ["status", "itemType"],
+      "$reqId": {
+        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+        ".read": "auth !== null",
+        ".validate": "newData.hasChildren(['itemName', 'quantity', 'status']) &&
+          newData.child('itemName').isString() && newData.child('itemName').val().length <= 200 &&
+          newData.child('quantity').isNumber() && newData.child('quantity').val() >= 1 &&
+          newData.child('status').val().matches(/^(pending|approved|arrived|closed)$/) &&
+          (!newData.hasChild('partId') || newData.child('partId').isString())"
       }
     },
 
@@ -68,14 +108,6 @@
       }
     },
 
-    "ImageUploads": {
-      ".read": "auth !== null",
-      "$imageId": {
-        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor' || root.child('Users').child(auth.uid).child('role').val() === 'technician')",
-        ".read": "auth !== null"
-      }
-    },
-
     "AI_Settings": {
       ".read": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'",
       "$settingId": {
@@ -83,20 +115,11 @@
       }
     },
 
-    "PM_Schedule": {
+    "ImageUploads": {
       ".read": "auth !== null",
-      "$pmId": {
-        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+      "$imageId": {
+        ".write": "auth !== null",
         ".read": "auth !== null"
-      }
-    },
-
-    "Requisitions": {
-      ".read": "auth !== null",
-      "$reqId": {
-        ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor' || root.child('Users').child(auth.uid).child('role').val() === 'technician')",
-        ".read": "auth !== null",
-        ".validate": "newData.hasChildren(['itemName', 'quantity', 'status']) && newData.child('status').val().matches(/^(pending|approved|arrived|closed)$/) && (!data.exists() || data.child('status').val() === 'pending' || root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')"
       }
     },
 

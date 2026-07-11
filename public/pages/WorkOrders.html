@@ -5,7 +5,7 @@
     <h3 class="font-black text-xl lg:text-2xl text-purple-400 nexus-glow-text uppercase tracking-tight">Work Orders</h3>
     <div class="flex flex-wrap gap-2 items-center">
       <button @click="exportData('logs', 'csv')" class="btn-nexus-small"><i class="fas fa-download"></i> CSV</button>
-      <button x-show="isAdmin" @click="openLogModal(false)" class="btn-nexus-gold"><i class="fas fa-plus"></i> Input</button>
+      <button x-show="isAdminOrSupervisor" @click="openLogModal(false)" class="btn-nexus-gold"><i class="fas fa-plus"></i> Input</button>
     </div>
   </div>
 
@@ -25,33 +25,43 @@
       <option value="Normal">Normal</option>
       <option value="Planned">Planned</option>
     </select>
+    <input type="date" x-model="filterDateFrom" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-36" title="From date">
+    <input type="date" x-model="filterDateTo" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-36" title="To date">
+    <button x-show="filterDateFrom || filterDateTo" @click="filterDateFrom=''; filterDateTo=''" class="text-[11px] text-slate-500 hover:text-rose-400 font-bold uppercase tracking-widest">
+      <i class="fas fa-times"></i> Clear
+    </button>
   </div>
 
   <!-- Stats Cards -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-orange-500">
       <div class="text-xl md:text-2xl font-black text-orange-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && (l.Status === 'Pending' || l.Status === 'Draft')).length || '0'"></div>
-      <div class="text-[8px] text-slate-500 uppercase tracking-widest">Open</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Open</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-blue-500">
       <div class="text-xl md:text-2xl font-black text-blue-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'In Progress').length || '0'"></div>
-      <div class="text-[8px] text-slate-500 uppercase tracking-widest">In Progress</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">In Progress</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-green-500">
       <div class="text-xl md:text-2xl font-black text-green-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'Completed').length || '0'"></div>
-      <div class="text-[8px] text-slate-500 uppercase tracking-widest">Completed</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Completed</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-rose-500">
       <div class="text-xl md:text-2xl font-black text-rose-500" x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'Cancelled').length || '0'"></div>
-      <div class="text-[8px] text-slate-500 uppercase tracking-widest">Cancelled</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Cancelled</div>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div x-show="isLoading" class="text-center py-16">
-    <div class="inline-flex flex-col items-center gap-4">
-      <i class="fas fa-spinner fa-spin text-4xl text-nexus-accent"></i>
-      <p class="text-slate-400">Loading Work Orders...</p>
+  <!-- Loading State (Skeleton) -->
+  <div x-show="isLoading" class="space-y-4">
+    <div class="space-y-3">
+      <template x-for="i in 4" :key="i">
+        <div class="skeleton skeleton-card p-4">
+          <div class="skeleton skeleton-line skeleton-sm" style="width:40%"></div>
+          <div class="skeleton skeleton-line skeleton-md" style="width:70%"></div>
+          <div class="skeleton skeleton-line skeleton-sm" style="width:25%"></div>
+        </div>
+      </template>
     </div>
   </div>
   
@@ -76,16 +86,16 @@
             <div class="flex items-center gap-2">
               <span x-show="log.woNumber" class="px-3 py-1 rounded-lg glass text-purple-400 font-bold font-mono" x-text="'#'+log.woNumber"></span>
               <span x-show="!log.woNumber && log.Jenis" class="px-3 py-1 rounded-lg glass text-blue-400 font-bold font-mono text-xs" x-text="log.Jenis"></span>
-              <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[7px]" :class="woPriorityColor(log.woPriority || 'Normal')" x-text="log.woPriority || 'Normal'"></span>
-              <span x-show="log.EquipmentID === 'EXTERNAL'" class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 font-bold uppercase text-[7px]">EXT</span>
+              <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]" :class="woPriorityColor(log.woPriority || 'Normal')" x-text="log.woPriority || 'Normal'"></span>
+              <span x-show="log.EquipmentID === 'EXTERNAL'" class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 font-bold uppercase text-[10px]">EXT</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="px-2 py-1 rounded-lg text-[7px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
+              <span class="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
               <i :class="selectedWODetail === log.LogID ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-slate-500"></i>
             </div>
           </div>
           <h4 class="font-black text-sm text-nexus-text nexus-glow-text truncate mt-2" x-text="log.Deskripsi"></h4>
-          <div class="flex flex-wrap items-center gap-4 mt-2 text-[8px] text-slate-500 font-bold uppercase tracking-widest">
+          <div class="flex flex-wrap items-center gap-4 mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
             <div class="flex items-center gap-1"><i class="far fa-calendar-alt text-purple-400"></i> <span x-text="log.Tanggal"></span></div>
             <div class="flex items-center gap-1"><i class="far fa-user-astronaut text-purple-400"></i> <span x-text="log.assignedTo || '-'"></span></div>
             <div x-show="log.dueDate" class="flex items-center gap-1 text-orange-400"><i class="far fa-clock"></i> <span x-text="'Due: ' + log.dueDate"></span></div>
@@ -97,41 +107,41 @@
           <div class="p-4 space-y-3">
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
               <div class="bg-slate-800/50 p-2 rounded">
-                <span class="text-slate-500 uppercase text-[8px]">Asset</span>
+                <span class="text-slate-500 uppercase text-[10px]">Asset</span>
                 <p class="text-white font-bold" x-text="log.EquipmentID === 'EXTERNAL' ? (log.externalEquipName || 'External') : getEquipName(log.EquipmentID)"></p>
               </div>
               <div class="bg-slate-800/50 p-2 rounded">
-                <span class="text-slate-500 uppercase text-[8px]">Requester</span>
+                <span class="text-slate-500 uppercase text-[10px]">Requester</span>
                 <p class="text-white font-bold" x-text="log.requestedBy || '-'"></p>
               </div>
               <div class="bg-slate-800/50 p-2 rounded">
-                <span class="text-slate-500 uppercase text-[8px]">Department</span>
+                <span class="text-slate-500 uppercase text-[10px]">Department</span>
                 <p class="text-white font-bold" x-text="log.requestSource || '-'"></p>
               </div>
               <div class="bg-slate-800/50 p-2 rounded">
-                <span class="text-slate-500 uppercase text-[8px]">Type</span>
+                <span class="text-slate-500 uppercase text-[10px]">Type</span>
                 <p class="text-white font-bold" x-text="log.Jenis || '-'"></p>
               </div>
               <div class="bg-slate-800/50 p-2 rounded">
-                <span class="text-slate-500 uppercase text-[8px]">Est. Hours</span>
+                <span class="text-slate-500 uppercase text-[10px]">Est. Hours</span>
                 <p class="text-white font-bold" x-text="log.estimatedHours || 0"></p>
               </div>
               <div class="bg-slate-800/50 p-2 rounded">
-                <span class="text-slate-500 uppercase text-[8px]">Downtime</span>
+                <span class="text-slate-500 uppercase text-[10px]">Downtime</span>
                 <p class="text-white font-bold" x-text="log.Downtime + ' hrs'"></p>
               </div>
             </div>
             <div x-show="log.Catatan" class="bg-slate-800/50 p-3 rounded">
-              <span class="text-slate-500 uppercase text-[8px]">Notes</span>
+              <span class="text-slate-500 uppercase text-[10px]">Notes</span>
               <p class="text-white text-sm" x-text="log.Catatan"></p>
             </div>
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2 pt-3 border-t border-white/10">
-              <button x-show="isAdmin && log.Status === 'Pending'" @click.stop="approveWO(log.LogID)" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-check"></i> Approve</button>
-              <button x-show="isAdmin && log.Status === 'Pending'" @click.stop="rejectReason = ''; activeRejectId = log.LogID; showRejectModal = true" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-times"></i> Reject</button>
-              <button x-show="isAdmin && log.Status === 'Approved'" @click.stop="startWO(log.LogID)" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-play"></i> Start</button>
-              <button x-show="isAdmin && (log.Status === 'Approved' || log.Status === 'In Progress')" @click.stop="completeWO(log.LogID)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-check-double"></i> Complete</button>
+              <button x-show="isAdminOrSupervisor && log.Status === 'Pending'" @click.stop="approveWO(log.LogID)" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-check"></i> Approve</button>
+              <button x-show="isAdminOrSupervisor && log.Status === 'Pending'" @click.stop="rejectReason = ''; activeRejectId = log.LogID; showRejectModal = true" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-times"></i> Reject</button>
+              <button x-show="isAdminOrSupervisor && log.Status === 'Approved'" @click.stop="startWO(log.LogID)" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-play"></i> Start</button>
+              <button x-show="isAdminOrSupervisor && (log.Status === 'Approved' || log.Status === 'In Progress')" @click.stop="completeWO(log.LogID)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-check-double"></i> Complete</button>
               <button x-show="isAdmin" @click.stop="exportWOToPDF(log.LogID)" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-file-pdf"></i> PDF</button>
               <button x-show="isAdmin" @click.stop="openLogModal(true, log)" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-edit"></i> Edit</button>
               <button x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold flex items-center gap-2"><i class="fas fa-trash"></i> Delete</button>

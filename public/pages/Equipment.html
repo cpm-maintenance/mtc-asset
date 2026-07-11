@@ -4,7 +4,7 @@
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-2">
     <!-- Search Bar -->
     <div class="relative flex-1 min-w-[200px]">
-      <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-nexus-accent/40"></i>
+      <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-amber-400/40"></i>
       <input type="text" x-model="search" placeholder="Search..."
         class="w-full pl-12 p-3 glass">
     </div>
@@ -45,27 +45,27 @@
           
           <!-- Status Badge -->
           <span :class="statusColor(e.Status)"
-            class="text-[8px] md:text-[9px] px-2 md:px-3 py-1 md:py-1.5 rounded-full font-black uppercase tracking-[0.1em] border border-current bg-transparent"
+            class="text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-full font-black uppercase tracking-[0.1em] border border-current bg-transparent"
             x-text="e.Status"></span>
           
           <!-- Equipment ID -->
-          <span class="text-[9px] md:text-[10px] text-nexus-accent/40 font-mono font-bold" x-text="'ID: ' + e.EquipmentID"></span>
+          <span class="text-sm md:text-xs text-amber-400/40 font-mono font-bold" x-text="'ID: ' + e.EquipmentID"></span>
         </div>
         
         <!-- Equipment Name -->
-        <h4 class="font-black text-base md:text-xl text-nexus-text group-hover:text-nexus-accent transition-colors mb-1 md:mb-2 nexus-glow-text" x-text="e.Nama"></h4>
+        <h4 class="font-black text-base md:text-xl text-nexus-text group-hover:text-amber-400 transition-colors mb-1 md:mb-2 nexus-glow-text" x-text="e.Nama"></h4>
         
         <!-- Equipment Type -->
-        <p class="text-[9px] md:text-[10px] font-black text-nexus-purple uppercase tracking-[0.2em] mb-3 md:mb-6" x-text="e.Tipe"></p>
+        <p class="text-sm md:text-xs font-black text-nexus-purple uppercase tracking-[0.2em] mb-3 md:mb-6" x-text="e.Tipe"></p>
         
         <!-- Metadata Row -->
-        <div class="text-[9px] md:text-[10px] border-t border-nexus-accent/10 pt-3 md:pt-5 text-slate-400 flex justify-between font-bold uppercase tracking-widest mb-2 md:mb-4">
+        <div class="text-sm md:text-xs border-t border-nexus-accent/10 pt-3 md:pt-5 text-slate-400 flex justify-between font-bold uppercase tracking-widest mb-2 md:mb-4">
           <span class="flex items-center gap-1 md:gap-2">
-            <i class="fas fa-calendar-check text-nexus-accent"></i> 
+            <i class="fas fa-calendar-check text-amber-400"></i> 
             <span x-text="e.NextPMDate || '-'"></span>
           </span>
           <span class="flex items-center gap-1 md:gap-2">
-            <i class="fas fa-map-marker-alt text-nexus-accent"></i> 
+            <i class="fas fa-map-marker-alt text-amber-400"></i> 
             <span x-text="e.Lokasi || '-'"></span>
           </span>
         </div>
@@ -73,8 +73,8 @@
         <!-- Health Score Badge -->
         <div class="flex items-center justify-between glass p-2 md:p-3 rounded-xl border-nexus-accent/10">
           <div class="flex flex-col">
-            <span class="text-[7px] md:text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 md:mb-1">Health Score</span>
-            <span :class="calculateHealthScore(e.EquipmentID).color" class="text-[10px] md:text-xs font-black" x-text="calculateHealthScore(e.EquipmentID).score + '%'"></span>
+            <span class="text-xs md:text-xs text-slate-500 uppercase font-black tracking-widest mb-0.5 md:mb-1">Health Score</span>
+            <span :class="calculateHealthScore(e.EquipmentID).color" class="text-xs md:text-xs font-black" x-text="calculateHealthScore(e.EquipmentID).score + '%'"></span>
           </div>
           <div class="w-16 md:w-24 h-1 bg-white/5 rounded-full overflow-hidden">
             <div class="h-full transition-all duration-1000" :style="'width: ' + calculateHealthScore(e.EquipmentID).score + '%'" :class="calculateHealthScore(e.EquipmentID).color.replace('text-', 'bg-')"></div>
@@ -84,8 +84,14 @@
     </template>
   </div>
 
-  <!-- Load More Equipment Button -->
-  <div x-show="canLoadMoreEquip" class="text-center pt-4">
+  <!-- Infinite Scroll Sentinel (auto-loads on viewport intersect) -->
+  <div x-show="canLoadMoreEquip" x-init="$nextTick(() => { const el = $el; const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { obs.disconnect(); loadMoreEquipment(); } }, { rootMargin: '200px' }); obs.observe(el); })" class="text-center pt-4">
+    <div class="inline-flex items-center gap-3 text-slate-500 text-xs">
+      <i class="fas fa-spinner fa-spin"></i> Loading more...
+    </div>
+  </div>
+  <!-- Fallback manual button (if IntersectionObserver not supported) -->
+  <div x-show="canLoadMoreEquip" class="text-center pt-4 lg:hidden">
     <button @click="loadMoreEquipment()" :disabled="isLoading"
       class="btn-nexus-small">
       <i class="fas fa-sync-alt" :class="isLoading ? 'animate-spin' : ''"></i>

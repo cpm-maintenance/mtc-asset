@@ -19,7 +19,7 @@
   <div class="card-modern overflow-hidden border-nexus-accent/10">
     <div class="overflow-x-auto">
       <table id="perfTable" class="w-full text-left">
-        <thead class="glass text-[10px] uppercase font-black tracking-widest text-nexus-accent/60">
+        <thead class="glass text-xs uppercase font-black tracking-widest text-amber-400/60">
           <tr>
             <th class="p-5">Timeline</th>
             <th class="p-5">Asset Node</th>
@@ -38,7 +38,7 @@
           <template x-for="p in filteredPerformanceData" :key="p.id">
             <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
               <td class="p-5 font-bold text-nexus-text" x-text="p.date"></td>
-              <td class="p-5 text-nexus-accent font-black" x-text="getEquipName(p.equipmentId)"></td>
+              <td class="p-5 text-amber-400 font-black" x-text="getEquipName(p.equipmentId)"></td>
               <td class="p-5"><span class="tag-nexus" x-text="p.category || 'Mechanical'"></span></td>
               <td class="p-5 text-slate-400" x-text="p.area"></td>
               <td class="p-5 text-center font-bold" x-text="p.wh"></td>
@@ -53,9 +53,9 @@
                 </div>
               </td>
               <td class="p-5 text-right">
-                <div x-show="isAdmin" class="flex justify-end gap-2">
-                  <button @click="openPerformanceModal(true, p)" class="w-8 h-8 glass rounded-lg text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/20"><i class="fas fa-edit text-[10px]"></i></button>
-                  <button @click="deleteItem('Performance', p.id)" class="w-8 h-8 glass rounded-lg text-rose-400 flex items-center justify-center hover:bg-rose-500/20"><i class="fas fa-trash text-[10px]"></i></button>
+                <div x-show="isAdminOrSupervisor" class="flex justify-end gap-2">
+                  <button @click="openPerformanceModal(true, p)" class="w-8 h-8 glass rounded-lg text-amber-400 flex items-center justify-center hover:bg-nexus-accent/20"><i class="fas fa-edit text-xs"></i></button>
+                  <button @click="deleteItem('Performance', p.id)" class="w-8 h-8 glass rounded-lg text-rose-400 flex items-center justify-center hover:bg-rose-500/20"><i class="fas fa-trash text-xs"></i></button>
                 </div>
               </td>
             </tr>
@@ -79,7 +79,7 @@
       <button x-show="performanceData.length === 0" @click="refreshData()" class="btn-nexus-gold">
         <i class="fas fa-sync-alt mr-2"></i> Muat Ulang Data
       </button>
-      <button x-show="isAdmin && performanceData.length === 0" @click="openPerformanceModal(false)" class="btn-nexus-small">
+      <button x-show="isAdminOrSupervisor && performanceData.length === 0" @click="openPerformanceModal(false)" class="btn-nexus-small">
         <i class="fas fa-plus mr-1"></i> Tambah Data Pertama
       </button>
     </div>

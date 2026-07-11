@@ -1,0 +1,325 @@
+<!-- 🏭 PAGE: ENTERPRISE DASHBOARD -->
+<div x-cloak>
+  <!-- GLOBAL FILTER BAR -->
+  <div class="flex flex-wrap gap-2 items-center mb-5 pb-4 border-b border-white/10">
+    <div class="flex items-center gap-1.5 glass px-3 py-2 rounded-xl text-sm">
+      <i class="fas fa-industry text-blue-400 text-sm"></i>
+      <select x-model="plantFilter" class="bg-transparent border-0 text-sm font-bold w-24 p-0 focus:ring-0">
+        <option value="">All Plants</option>
+        <option value="Mill1">Mill 1</option>
+        <option value="Mill2">Mill 2</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-1.5 glass px-3 py-2 rounded-xl text-sm">
+      <i class="fas fa-sitemap text-blue-400 text-sm"></i>
+      <select x-model="deptFilter" class="bg-transparent border-0 text-sm font-bold w-24 p-0 focus:ring-0">
+        <option value="">All Dept</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Instrument">Instrument</option>
+        <option value="Civil">Civil</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-1.5 glass px-3 py-2 rounded-xl text-sm">
+      <i class="fas fa-calendar text-blue-400 text-sm"></i>
+      <input type="date" x-model="kpiDateFrom" class="bg-transparent border-0 text-sm font-bold w-28 p-0 focus:ring-0">
+      <span class="text-slate-600">→</span>
+      <input type="date" x-model="kpiDateTo" class="bg-transparent border-0 text-sm font-bold w-28 p-0 focus:ring-0">
+    </div>
+    <button @click="refreshDashboard()" class="glass px-3 py-2 rounded-xl text-sm font-bold text-amber-400 hover:border-amber-500/30"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
+  </div>
+
+  <!-- ═══ HERO: OEE + KPI Cards ═══ -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5 mb-6">
+    <!-- OEE Hero -->
+    <div class="glass rounded-2xl p-4 md:col-span-1 relative overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+      @click="kpiClick('oee')">
+      <div class="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
+        :style="'background: radial-gradient(circle at 30% 30%, ' + enterpriseOEE.hexColor + ' 0%, transparent 70%)'"></div>
+      <div class="relative">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Overall OEE</p>
+        <div class="flex items-baseline gap-1">
+          <span class="text-4xl font-black tracking-tight nexus-glow-text transition-colors duration-500" 
+            :style="'color: ' + enterpriseOEE.hexColor" x-text="enterpriseOEE.oee + '%'"></span>
+          <span class="text-xs font-bold uppercase rounded-full px-2 py-0.5"
+            :class="enterpriseOEE.status === 'Optimal' ? 'bg-emerald-500/15 text-emerald-400' : enterpriseOEE.status === 'Good' ? 'bg-blue-500/15 text-blue-400' : enterpriseOEE.status === 'Warning' ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400'"
+            x-text="enterpriseOEE.status"></span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/5">
+          <div><p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">A</p><p class="text-sm font-black text-white" x-text="enterpriseOEE.availability + '%'"></p></div>
+          <div><p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">P</p><p class="text-sm font-black text-white" x-text="enterpriseOEE.performance + '%'"></p></div>
+          <div><p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Q</p><p class="text-sm font-black text-white" x-text="enterpriseOEE.quality + '%'"></p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6 KPI Cards -->
+    <div class="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+      <template x-for="kpi in enterpriseKPIList.slice(0,6)" :key="kpi.key">
+        <div class="glass rounded-xl p-3 border-l-[3px] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
+          :style="'border-left-color: ' + kpi.color" @click="kpiClick(kpi.key)">
+          <div class="flex items-start justify-between mb-1">
+            <i :class="'fas ' + kpi.icon" class="text-base opacity-60" :style="'color: ' + kpi.color"></i>
+            <span class="text-xs font-black px-1.5 py-0.5 rounded" :class="kpi.trend > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'"
+              x-text="(kpi.trend > 0 ? '+' : '') + kpi.trend + '%'"></span>
+          </div>
+          <p class="text-xl font-black text-white nexus-glow-text tracking-tight" x-text="kpi.value"></p>
+          <p class="text-xs font-bold text-slate-400 mt-0.5" x-text="kpi.label"></p>
+          <div class="h-5 mt-1 opacity-40 group-hover:opacity-70 transition-opacity" x-html="kpi.sparkline || ''"></div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 1: Health Dist (compact) + WO Status (expanded) ═══ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+    <div class="glass rounded-2xl p-4 md:p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-heartbeat text-emerald-400 mr-2"></i>Equipment Health</h4>
+        <span class="text-xs font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-full" x-text="enterpriseSummary.avgHealth + '% avg'"></span>
+      </div>
+      <div class="relative h-[260px]"><canvas id="eHealthChart"></canvas></div>
+    </div>
+    <div class="glass rounded-2xl p-4 md:p-5 lg:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-tasks text-blue-400 mr-2"></i>Work Order Status</h4>
+        <span class="text-xs font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-full" x-text="enterpriseSummary.openWO + ' open'"></span>
+      </div>
+      <div class="relative h-[260px]"><canvas id="woStatusChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 2: Critical Table (expanded) ═══ -->
+  <div class="glass rounded-2xl p-4 md:p-5 mb-5">
+    <div class="flex items-center justify-between mb-3">
+      <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-exclamation-triangle text-rose-400 mr-2"></i>Top 10 Critical Equipment</h4>
+      <button @click="exportPDF('critical')" class="text-sm text-slate-500 hover:text-amber-400"><i class="fas fa-file-pdf mr-1"></i>Export</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
+          <th class="text-left py-2 font-black">ID</th><th class="text-left py-2 font-black">Name</th>
+          <th class="text-center py-2 font-black">Health</th><th class="text-center py-2 font-black">Criticality</th>
+          <th class="text-center py-2 font-black">Last Failure</th><th class="text-center py-2 font-black">Run Hrs</th>
+          <th class="text-center py-2 font-black">MTBF</th><th class="text-center py-2 font-black">MTTR</th>
+          <th class="text-center py-2 font-black">Priority</th>
+        </tr></thead>
+        <template x-for="e in enterpriseCritical" :key="e.EquipmentID">
+          <tbody>
+              <tr class="border-b border-white/[0.02] hover:bg-white/[0.03] cursor-pointer transition-colors"
+                @click="$el.nextElementSibling.classList.toggle('hidden')">
+                <td class="py-2 font-mono text-amber-400" x-text="e.EquipmentID"></td>
+                <td class="py-2 font-bold text-white/90" x-text="e.Nama">
+                  <i class="fas fa-chevron-down ml-1 text-[9px] text-amber-400/60"></i>
+                </td>
+                <td class="py-2 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold" 
+                  :class="e.healthColor === 'green' ? 'bg-emerald-500/10 text-emerald-400' : e.healthColor === 'orange' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'"
+                  x-text="e.score"></span></td>
+                <td class="py-2 text-center text-slate-400" x-text="e.Criticality || '-'"></td>
+                <td class="py-2 text-center text-slate-400" x-text="e.lastFailure"></td>
+                <td class="py-2 text-center text-slate-400" x-text="e.runningHrs"></td>
+                <td class="py-2 text-center font-mono" x-text="e.mtbf"></td>
+                <td class="py-2 text-center font-mono" x-text="e.mttr"></td>
+                <td class="py-2 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold"
+                  :class="e.priority === 'Critical' ? 'bg-rose-500/15 text-rose-400' : e.priority === 'High' ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-500/15 text-amber-400'"
+                  x-text="e.priority"></span></td>
+              </tr>
+              <!-- Expandable detail row -->
+              <tr class="hidden border-b border-white/5">
+                <td colspan="9" class="p-0 border-b border-white/5">
+                  <div class="bg-white/[0.02] p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Status</span><span class="text-white font-bold" x-text="e.Status || '-'"></span></div>
+                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Location</span><span class="text-white font-bold" x-text="e.Lokasi || '-'"></span></div>
+                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Department</span><span class="text-white font-bold" x-text="e.Departemen || '-'"></span></div>
+                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Health</span><span class="font-bold" :class="e.healthColor === 'green' ? 'text-emerald-400' : e.healthColor === 'orange' ? 'text-amber-400' : 'text-rose-400'" x-text="e.healthStatus"></span></div>
+                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">SPV</span><span class="text-white font-bold" x-text="e.Supervisor || '-'"></span></div>
+                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Next PM</span><span class="text-white font-bold" x-text="e.NextPMDate || '-'"></span></div>
+                    <div class="md:col-span-2 flex items-end">
+                      <button @click.stop="goToDetail(e.EquipmentID)" class="text-xs px-3 py-1.5 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-lg font-bold hover:bg-amber-500/30 transition-all">
+                        <i class="fas fa-external-link-alt mr-1"></i> Open Equipment Detail
+                      </button>
+                    </div>
+                  </div>
+                </td>
+                </td>
+              </tr>
+          </tbody>
+        </template>
+        <tbody x-show="!enterpriseCritical.length">
+          <tr><td colspan="9" class="text-center py-8 text-slate-600 text-sm">No equipment data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ ROW 3: PM Compliance Trend (expanded) + Downtime Trend ═══ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+    <div class="glass rounded-2xl p-4 md:p-5 lg:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-clipboard-check text-amber-400 mr-2"></i>PM Compliance Trend</h4>
+        <span class="text-lg font-black text-amber-400" x-text="enterpriseSummary.pmc.pct + '%'"></span>
+      </div>
+      <div class="relative h-[260px]"><canvas id="pmTrendChart"></canvas></div>
+    </div>
+    <div class="glass rounded-2xl p-4 md:p-5">
+      <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-chart-line text-rose-400 mr-2"></i>Downtime Trend (hrs)</h4>
+      <div class="relative h-[260px]"><canvas id="downtimeTrendChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══ SECONDARY SECTION: Collapsible extra charts & tables ═══ -->
+  <div x-data="{ showExtra: false }" class="mb-5">
+    <button @click="showExtra = !showExtra" 
+      class="w-full flex items-center justify-center gap-2 py-3 glass rounded-2xl text-sm font-bold text-slate-400 hover:text-white transition-all border border-white/5">
+      <i class="fas" :class="showExtra ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      <span x-text="showExtra ? 'Hide Secondary Charts' : 'Show More Analytics'"></span>
+    </button>
+
+    <div x-show="showExtra" class="mt-5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+        <!-- Upcoming PM -->
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-calendar-alt text-amber-400 mr-2"></i>Upcoming PM Schedule</h4>
+          <div class="space-y-1.5 max-h-[280px] overflow-y-auto">
+            <template x-for="pm in enterpriseUpcomingPM" :key="pm.date + pm.taskName">
+              <div class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white/[0.03] transition-colors">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-black"
+                  :class="pm.due === 'today' ? 'bg-rose-500/10 text-rose-400' : pm.due === 'tomorrow' ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-500/10 text-amber-400'">
+                  <i class="fas" :class="pm.due === 'today' ? 'fa-exclamation' : pm.due === 'tomorrow' ? 'fa-clock' : 'fa-calendar-day'"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-bold text-white/90 truncate" x-text="pm.taskName"></p>
+                  <p class="text-xs text-slate-500" x-text="pm.date + ' · ' + (equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId)"></p>
+                </div>
+                <span class="text-xs px-2 py-0.5 rounded-full font-bold uppercase"
+                  :class="pm.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : pm.status === 'cancelled' ? 'bg-slate-500/10 text-slate-400' : 'bg-amber-500/10 text-amber-400'"
+                  x-text="pm.status"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+        <!-- Critical WO -->
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-exclamation-circle text-rose-400 mr-2"></i>Critical Work Orders</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
+                <th class="text-left py-2 font-black">WO</th><th class="text-left py-2 font-black">Equip</th>
+                <th class="text-center py-2 font-black">Priority</th><th class="text-center py-2 font-black">Due</th>
+                <th class="text-center py-2 font-black">Status</th>
+              </tr></thead>
+              <tbody>
+                <template x-for="wo in enterpriseCriticalWO" :key="wo.LogID || wo.woNumber">
+                  <tr class="border-b border-white/[0.02] hover:bg-white/[0.03] cursor-pointer transition-colors" @click="openLogModal(true, wo)">
+                    <td class="py-2 font-mono text-amber-400" x-text="wo.woNumber || wo.LogID"></td>
+                    <td class="py-2 text-white/90" x-text="equipment.find(e => e.EquipmentID === wo.EquipmentID)?.Nama || wo.EquipmentID"></td>
+                    <td class="py-2 text-center"><span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase"
+                      :class="{'bg-rose-500/15 text-rose-400': wo.woPriority === 'Emergency', 'bg-orange-500/15 text-orange-400': wo.woPriority === 'Urgent', 'bg-amber-500/15 text-amber-400': wo.woPriority === 'Normal' || !wo.woPriority}"
+                      x-text="wo.woPriority || 'Normal'"></span></td>
+                    <td class="py-2 text-center text-slate-400" x-text="wo.dueDate || wo.Tanggal || '-'"></td>
+                    <td class="py-2 text-center text-slate-400" x-text="wo.Status"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-coins text-amber-400 mr-2"></i>Maintenance Cost</h4>
+          <div class="relative h-[260px]"><canvas id="costTrendChart"></canvas></div>
+        </div>
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-layer-group text-purple-400 mr-2"></i>Inventory ABC Analysis</h4>
+          <div class="relative h-[180px]"><canvas id="abcChart"></canvas></div>
+          <div class="flex gap-3 mt-2 justify-center text-xs">
+            <span class="bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded font-bold">A (80%)</span>
+            <span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold">B (15%)</span>
+            <span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold">C (5%)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-microchip text-purple-400 mr-2"></i>MTBF / MTTR</h4>
+          <div class="space-y-4">
+            <div><p class="text-xs font-bold text-slate-400 mb-1">Avg MTBF</p>
+              <p class="text-2xl font-black text-white" x-text="enterpriseSummary.avgMTBF + ' h'"></p>
+              <div class="h-1.5 bg-white/5 rounded-full mt-1"><div class="h-full bg-emerald-500 rounded-full" :style="'width: ' + Math.min(100, (enterpriseSummary.avgMTBF / 500) * 100) + '%'"></div></div>
+            </div>
+            <div><p class="text-xs font-bold text-slate-400 mb-1">Avg MTTR</p>
+              <p class="text-2xl font-black text-white" x-text="enterpriseSummary.avgMTTR + ' h'"></p>
+              <div class="h-1.5 bg-white/5 rounded-full mt-1"><div class="h-full bg-amber-500 rounded-full" :style="'width: ' + Math.min(100, (enterpriseSummary.avgMTTR / 50) * 100) + '%'"></div></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+              <div><p class="text-xs font-bold text-slate-400">Availability</p><p class="text-sm font-black text-emerald-400" x-text="enterpriseSummary.avgAvail + '%'"></p></div>
+              <div><p class="text-xs font-bold text-slate-400">Reliability</p><p class="text-sm font-black text-blue-400" x-text="enterpriseSummary.avgRel + '%'"></p></div>
+            </div>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Low Stock Spare Parts</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
+                <th class="text-left py-2 font-black">No</th><th class="text-left py-2 font-black">Part</th>
+                <th class="text-center py-2 font-black">Stock</th><th class="text-center py-2 font-black">Min</th>
+                <th class="text-center py-2 font-black">Max</th><th class="text-center py-2 font-black">Status</th>
+              </tr></thead>
+              <tbody>
+                <template x-for="(p, i) in enterpriseLowStock" :key="p.PartID">
+                  <tr class="border-b border-white/[0.02] hover:bg-white/[0.03] transition-colors">
+                    <td class="py-2 text-slate-500" x-text="i+1"></td>
+                    <td class="py-2 text-white/90 font-medium" x-text="p.NamaPart || p.PartID"></td>
+                    <td class="py-2 text-center font-mono text-rose-400 font-bold" x-text="p.Stok"></td>
+                    <td class="py-2 text-center text-slate-400" x-text="p.MinStock || 0"></td>
+                    <td class="py-2 text-center text-slate-400" x-text="p.MaxStock || '-'"></td>
+                    <td class="py-2 text-center"><span class="px-1.5 py-0.5 rounded text-xs font-bold bg-rose-500/10 text-rose-400">LOW</span></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-4 md:p-5">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-stopwatch text-amber-400 mr-2"></i>Shutdown Progress</h4>
+          <div class="space-y-3">
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Preparation</span><span class="text-white font-bold">85%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-amber-500 rounded-full" style="width:85%"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Material Ready</span><span class="text-white font-bold">70%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-blue-500 rounded-full" style="width:70%"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Manpower Ready</span><span class="text-white font-bold">90%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:90%"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Completed</span><span class="text-white font-bold">60%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-purple-500 rounded-full" style="width:60%"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Insights (breakout — full width, accent tinted background) -->
+      <div class="rounded-2xl p-5 mt-5 border border-white/5 transition-all"
+        style="background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(217,119,6,0.08) 50%, rgba(5,7,10,0.8) 100%);">
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-robot text-amber-400 mr-2"></i>AI Maintenance Insights</h4>
+          <span class="flex items-center gap-1.5 text-sm text-slate-500"><i class="fas fa-sync-alt text-amber-400" :class="{'animate-spin': aiLoading}"></i> Real-time</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <template x-for="ins in enterpriseInsights" :key="ins.msg">
+            <div class="p-3 rounded-xl backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+              :style="'background: rgba(' + (ins.type === 'critical' ? '239,68,68' : ins.type === 'warning' ? '245,158,11' : ins.type === 'success' ? '34,197,94' : '59,130,246') + ',0.08); border-left: 3px solid ' + (ins.type === 'critical' ? '#ef4444' : ins.type === 'warning' ? '#f59e0b' : ins.type === 'success' ? '#22c55e' : '#3b82f6')">
+              <div class="flex items-center gap-2 mb-1.5">
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
+                  :style="'background: rgba(' + (ins.type === 'critical' ? '239,68,68' : ins.type === 'warning' ? '245,158,11' : ins.type === 'success' ? '34,197,94' : '59,130,246') + ',0.15)'">
+                  <i :class="'fas ' + (ins.icon || 'fa-robot')" :style="'color: ' + (ins.type === 'critical' ? '#ef4444' : ins.type === 'warning' ? '#f59e0b' : ins.type === 'success' ? '#22c55e' : '#3b82f6')"></i>
+                </div>
+                <span class="text-xs font-black uppercase tracking-wider"
+                  :style="'color: ' + (ins.type === 'critical' ? '#ef4444' : ins.type === 'warning' ? '#f59e0b' : ins.type === 'success' ? '#22c55e' : '#3b82f6')"
+                  x-text="ins.type.toUpperCase()"></span>
+              </div>
+              <p class="text-sm text-slate-300 leading-relaxed" x-text="ins.msg"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

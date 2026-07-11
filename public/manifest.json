@@ -1,17 +1,51 @@
 {
-  "name": "MTC-ASSET Management",
+  "name": "MTC-ASSET — Industrial Maintenance Management",
   "short_name": "MTC-ASSET",
-  "description": "Maintenance & Asset Tracking System",
+  "description": "Industrial asset & maintenance tracking with real-time PM scheduling, work orders, and KPI dashboards.",
   "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0B0F1A",
-  "theme_color": "#D4AF37",
+  "orientation": "any",
+  "background_color": "#05070a",
+  "theme_color": "#00f2ff",
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Work Orders",
+      "short_name": "WO",
+      "description": "View and manage work orders",
+      "url": "/index.html?page=wo",
+      "icons": [{ "src": "logo.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "PM Schedule",
+      "short_name": "PM",
+      "description": "Preventive maintenance schedule",
+      "url": "/index.html?page=pms",
+      "icons": [{ "src": "logo.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Request Part",
+      "short_name": "Parts",
+      "description": "Request spare parts or materials",
+      "url": "/index.html?page=req",
+      "icons": [{ "src": "logo.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

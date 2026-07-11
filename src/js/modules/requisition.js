@@ -21,6 +21,8 @@
  *   - createdAt, updatedAt
  */
 
+import { sendBrowserNotification } from './notification.js';
+
 const NEW_LINE_ITEM = () => ({
     itemType: 'part',
     itemName: '',
@@ -44,7 +46,9 @@ export const requisitionModule = {
     reqLoading: true,
     reqEditMode: false,
     reqEditId: null,
+    reqSelectedIds: [],
     _reqUnsubscribe: null,
+    _reqPrevStatuses: {},  // { reqId: 'pending' } for transition detection
 
     // --- FIREBASE REALTIME LISTENER ---
     setupRequisitionsListener() {
@@ -60,7 +64,33 @@ export const requisitionModule = {
             try {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    this.requisitions = Object.keys(data).map(id => ({ id, ...data[id] }));
+                    const entries = Object.keys(data).map(id => ({ id, ...data[id] }));
+                    
+                    // Detect status transitions for browser notification
+                    if (!this._reqPrevStatuses) this._reqPrevStatuses = {};
+                    entries.forEach(req => {
+                        const prev = this._reqPrevStatuses[req.id];
+                        const cur = req.status;
+                        if (prev && prev !== cur) {
+                            const isPending = prev === 'pending';
+                            const isApproved = cur === 'approved';
+                            const isArrived = cur === 'arrived';
+                            const isClosed = cur === 'closed';
+                            if (isPending && isApproved) {
+                                sendBrowserNotification('✅ Request Approved', `${req.itemName} — approved by ${req.approvedBy || 'system'}`);
+                                this.showNotification(`📋 ${req.itemName} approved!`, 'success');
+                            } else if (isApproved && isArrived) {
+                                sendBrowserNotification('📦 Request Arrived', `${req.itemName} — stock has arrived`);
+                                this.showNotification(`📦 ${req.itemName} arrived!`, 'success');
+                            } else if (isArrived && isClosed) {
+                                sendBrowserNotification('🔒 Request Closed', `${req.itemName} — request closed`);
+                                this.showNotification(`🔒 ${req.itemName} closed`, 'info');
+                            }
+                        }
+                        this._reqPrevStatuses[req.id] = cur;
+                    });
+                    
+                    this.requisitions = entries;
                 } else {
                     this.requisitions = [];
                 }
@@ -261,6 +291,40 @@ export const requisitionModule = {
         } catch (e) {
             this.showNotification('Error: ' + e.message, 'error');
         }
+    },
+
+    async bulkApproveRequisitions() {
+        const ids = [...this.reqSelectedIds];
+        if (!ids.length) return;
+        if (!confirm(`Approve ${ids.length} request(s)? This will update stock.`)) return;
+        
+        const now = new Date().toISOString();
+        const today = now.split('T')[0];
+        let success = 0;
+        let errors = 0;
+        
+        for (const id of ids) {
+            const req = this.requisitions.find(r => r.id === id);
+            if (!req || req.status !== 'pending') continue;
+            
+            try {
+                const updates = {
+                    status: 'approved',
+                    approvedBy: this.currentUser?.email || 'unknown',
+                    approvedAt: now,
+                    updatedAt: now,
+                };
+                await window.update(window.ref(window.db, `Requisitions/${id}`), updates);
+                Object.assign(req, updates);
+                success++;
+            } catch (e) {
+                console.error(`[Requisition] bulk approve fail for ${id}:`, e);
+                errors++;
+            }
+        }
+        
+        this.reqSelectedIds = [];
+        this.showNotification(`✅ ${success} approved${errors ? ', ' + errors + ' failed' : ''}`);
     },
 
     async deleteRequisition(reqId) {

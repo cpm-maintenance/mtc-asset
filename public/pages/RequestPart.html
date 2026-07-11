@@ -3,13 +3,18 @@
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
     <div>
-      <h3 class="font-black text-xl lg:text-2xl text-cyan-400 nexus-glow-text uppercase tracking-tight">Request Part</h3>
+      <h3 class="font-black text-xl lg:text-2xl text-amber-400 nexus-glow-text uppercase tracking-tight">Request Part</h3>
       <p class="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Spare Part &amp; General Material Request</p>
     </div>
     <div class="flex flex-wrap gap-2 items-center">
-      <button x-show="isAdmin" @click="openRequisitionModal()"
-        class="px-4 py-2 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded-xl text-xs font-bold hover:bg-cyan-500/30 transition-all flex items-center gap-2">
+      <button @click="openRequisitionModal()"
+        class="px-4 py-2 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-xl text-xs font-bold hover:bg-amber-500/30 transition-all flex items-center gap-2">
         <i class="fas fa-plus"></i> New Request
+      </button>
+      <!-- Bulk Approve -->
+      <button x-show="isAdminOrSupervisor && reqSelectedIds.length > 0" @click="bulkApproveRequisitions()"
+        class="px-4 py-2 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-500/30 transition-all flex items-center gap-2 animate-pulse">
+        <i class="fas fa-check-double"></i> Approve (<span x-text="reqSelectedIds.length"></span>)
       </button>
     </div>
   </div>
@@ -30,12 +35,19 @@
     </select>
   </div>
 
-  <!-- Loading -->
-  <div x-show="reqLoading" class="text-center py-16">
-    <div class="inline-flex flex-col items-center gap-4">
-      <i class="fas fa-spinner fa-spin text-4xl text-cyan-400"></i>
-      <p class="text-slate-400">Loading requests...</p>
-    </div>
+  <!-- Loading (Skeleton) -->
+  <div x-show="reqLoading" class="space-y-3">
+    <template x-for="i in 4" :key="i">
+      <div class="skeleton skeleton-card p-4">
+        <div class="flex items-center gap-3">
+          <div class="skeleton skeleton-circle" style="width:44px;height:44px"></div>
+          <div class="flex-1 space-y-2">
+            <div class="skeleton skeleton-line skeleton-md" style="width:60%"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:35%"></div>
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 
   <!-- Request List -->
@@ -55,7 +67,7 @@
               }">
               <i class="fas text-sm" :class="{
                 'fa-clock text-amber-400': req.status === 'pending',
-                'fa-check-circle text-cyan-400': req.status === 'approved',
+                'fa-check-circle text-amber-400': req.status === 'approved',
                 'fa-box-open text-emerald-400': req.status === 'arrived',
                 'fa-check-double text-slate-400': req.status === 'closed',
               }"></i>
@@ -67,7 +79,7 @@
                 <span class="text-[9px] px-2 py-0.5 rounded-full font-bold"
                   :class="{
                     'bg-amber-500/20 text-amber-400': req.status === 'pending',
-                    'bg-cyan-500/20 text-cyan-400': req.status === 'approved',
+                    'bg-cyan-500/20 text-amber-400': req.status === 'approved',
                     'bg-emerald-500/20 text-emerald-400': req.status === 'arrived',
                     'bg-slate-500/20 text-slate-400': req.status === 'closed',
                   }" x-text="req.status"></span>
@@ -77,7 +89,7 @@
                 <span class="text-slate-600">·</span>
                 <span class="text-[10px] text-slate-400" x-text="'Qty: ' + req.quantity"></span>
                 <span class="text-slate-600">·</span>
-                <span class="text-[10px] text-cyan-400/80" x-text="req.requesterName || req.createdBy"></span>
+                <span class="text-[10px] text-amber-400/80" x-text="req.requesterName || req.createdBy"></span>
                 <span class="text-slate-600">·</span>
                 <span class="text-[10px] text-slate-500" x-text="req.requestDate"></span>
                 <template x-if="req.priority">
@@ -89,19 +101,24 @@
               </div>
               <div x-show="req.notes" class="mt-1 text-[10px] text-slate-600 italic truncate" x-text="req.notes"></div>
             </div>
-            <!-- Action Buttons -->
-            <div x-show="isAdmin" class="flex items-center gap-2 shrink-0" @click.stop>
-              <button x-show="req.status === 'pending'" @click="openRequisitionModal(req)"
-                class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/25 transition-all flex items-center justify-center"
-                title="Edit">
-                <i class="fas fa-pen text-xs"></i>
-              </button>
-              <button x-show="req.status === 'pending'" @click="deleteRequisition(req.id)"
-                class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/25 transition-all flex items-center justify-center"
-                title="Delete">
-                <i class="fas fa-trash text-xs"></i>
-              </button>
-            </div>
+          <div class="flex items-center gap-3 shrink-0" @click.stop>
+            <!-- Bulk checkbox -->
+            <input type="checkbox" x-model="reqSelectedIds" :value="req.id"
+              x-show="req.status === 'pending'"
+              class="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer">
+            <!-- Edit -->
+            <button x-show="req.status === 'pending'" @click="openRequisitionModal(req)"
+              class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-cyan-500/25 transition-all flex items-center justify-center"
+              title="Edit">
+              <i class="fas fa-pen text-xs"></i>
+            </button>
+            <!-- Delete -->
+            <button x-show="req.status === 'pending'" @click="deleteRequisition(req.id)"
+              class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/25 transition-all flex items-center justify-center"
+              title="Delete">
+              <i class="fas fa-trash text-xs"></i>
+            </button>
+          </div>
           </div>
         </div>
       </template>
@@ -110,7 +127,7 @@
       <div x-show="reqGetFilteredList().length === 0" class="text-center py-16 text-slate-500">
         <i class="fas fa-shopping-cart text-5xl text-slate-700 mb-4 block"></i>
         <p class="font-bold text-base">No Requests Found</p>
-        <p class="text-sm mt-1">Click <span class="text-cyan-400 font-bold">+ New Request</span> to create one</p>
+        <p class="text-sm mt-1">Click <span class="text-amber-400 font-bold">+ New Request</span> to create one</p>
       </div>
     </div>
   </div>
@@ -122,10 +139,10 @@
     @click.self="showReqModal = false">
     <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
       x-transition:enter-end="opacity-100 scale-100"
-      class="w-full max-w-3xl card-modern p-8 border-cyan-500/30 max-h-[92vh] overflow-y-auto">
+      class="w-full max-w-3xl card-modern p-8 border-amber-500/30 max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-2xl font-black text-white nexus-glow-text flex items-center gap-3">
-          <i class="fas fa-shopping-cart text-cyan-400"></i>
+          <i class="fas fa-shopping-cart text-amber-400"></i>
           <span x-text="reqEditMode ? 'Edit Request' : 'New Multi-Request'"></span>
         </h3>
         <button @click="showReqModal = false" class="w-10 h-10 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
@@ -143,7 +160,7 @@
             <div class="p-5 bg-slate-800/40 rounded-xl border border-white/10 space-y-3 relative">
               <!-- Header item number + remove -->
               <div class="flex items-center justify-between">
-                <span class="text-xs font-black text-cyan-400 uppercase tracking-widest" x-text="'Item #' + (idx+1)"></span>
+                <span class="text-xs font-black text-amber-400 uppercase tracking-widest" x-text="'Item #' + (idx+1)"></span>
                 <button type="button" @click="reqRemoveLineItem(idx)"
                   class="text-rose-400 hover:text-rose-300 text-sm font-bold transition-all"
                   x-show="reqLineItems.length > 1">
@@ -194,7 +211,7 @@
 
         <!-- Add Item Button (hidden in edit mode) -->
         <button type="button" @click="reqAddLineItem()" x-show="!reqEditMode"
-          class="w-full py-3 border-2 border-dashed border-cyan-500/30 text-cyan-400 rounded-xl text-sm font-bold hover:bg-cyan-500/10 transition-all flex items-center justify-center gap-2">
+          class="w-full py-3 border-2 border-dashed border-amber-500/30 text-amber-400 rounded-xl text-sm font-bold hover:bg-amber-500/10 transition-all flex items-center justify-center gap-2">
           <i class="fas fa-plus"></i> Tambah Item Lain
         </button>
 
@@ -216,7 +233,7 @@
 
         <div class="flex gap-3 pt-3">
           <button type="button" @click="showReqModal = false" class="flex-1 px-4 py-4 glass text-slate-400 rounded-xl text-sm font-bold hover:text-white transition-all">Batal</button>
-          <button type="submit" class="flex-1 px-4 py-4 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded-xl text-sm font-bold hover:bg-cyan-500/30 transition-all">
+          <button type="submit" class="flex-1 px-4 py-4 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-xl text-sm font-bold hover:bg-amber-500/30 transition-all">
             <i class="fas fa-paper-plane mr-2"></i>
             <span x-text="reqEditMode ? 'Update' : ('Kirim Semua (' + reqLineItems.filter(i => i.itemName && i.quantity > 0).length + ' item)')"></span>
           </button>
@@ -232,10 +249,10 @@
     @click.self="reqShowDetail = false">
     <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
       x-transition:enter-end="opacity-100 scale-100"
-      class="w-full max-w-lg card-modern p-6 border-cyan-500/30 max-h-[90vh] overflow-y-auto">
+      class="w-full max-w-lg card-modern p-6 border-amber-500/30 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-xl font-black text-white nexus-glow-text flex items-center gap-3">
-          <i class="fas fa-clipboard-list text-cyan-400"></i>
+          <i class="fas fa-clipboard-list text-amber-400"></i>
           Request Detail
         </h3>
         <button @click="reqShowDetail = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
@@ -254,7 +271,7 @@
               }">
               <i class="fas text-xl" :class="{
                 'fa-clock text-amber-400': selectedRequisition.status === 'pending',
-                'fa-check-circle text-cyan-400': selectedRequisition.status === 'approved',
+                'fa-check-circle text-amber-400': selectedRequisition.status === 'approved',
                 'fa-box-open text-emerald-400': selectedRequisition.status === 'arrived',
                 'fa-check-double text-slate-400': selectedRequisition.status === 'closed',
               }"></i>
@@ -270,7 +287,7 @@
               <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Status</p>
               <p class="font-bold text-sm" :class="{
                 'text-amber-400': selectedRequisition.status === 'pending',
-                'text-cyan-400': selectedRequisition.status === 'approved',
+                'text-amber-400': selectedRequisition.status === 'approved',
                 'text-emerald-400': selectedRequisition.status === 'arrived',
                 'text-slate-400': selectedRequisition.status === 'closed',
               }" x-text="selectedRequisition.status"></p>
@@ -291,6 +308,12 @@
               <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Part ID</p>
               <p class="text-white font-bold text-sm" x-text="selectedRequisition.partId"></p>
             </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl" x-show="selectedRequisition.partId">
+              <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Current Stock</p>
+              <p class="font-bold text-sm"
+                :class="getPartStock(selectedRequisition.partId) >= selectedRequisition.quantity ? 'text-emerald-400' : 'text-rose-400'"
+                x-text="getPartStock(selectedRequisition.partId) + ' ' + (selectedRequisition.unit || 'pcs')"></p>
+            </div>
             <div class="bg-slate-800/50 p-3 rounded-xl" x-show="selectedRequisition.priority">
               <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Priority</p>
               <p class="text-sm font-bold uppercase" :class="selectedRequisition.priority === 'urgent' ? 'text-red-400' : 'text-slate-300'" x-text="selectedRequisition.priority"></p>
@@ -299,7 +322,7 @@
 
           <div x-show="selectedRequisition.approvedBy" class="bg-slate-800/50 p-3 rounded-xl">
             <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Approved By</p>
-            <p class="text-cyan-400 font-bold text-sm" x-text="selectedRequisition.approvedBy + ' on ' + selectedRequisition.approvedAt"></p>
+            <p class="text-amber-400 font-bold text-sm" x-text="selectedRequisition.approvedBy + ' on ' + selectedRequisition.approvedAt"></p>
           </div>
 
           <div x-show="selectedRequisition.arrivedDate" class="bg-slate-800/50 p-3 rounded-xl">
@@ -316,7 +339,7 @@
           <div x-show="isAdmin || currentUserRole === 'supervisor'" class="flex flex-wrap gap-2 pt-2">
             <button x-show="selectedRequisition.status === 'pending'"
               @click="approveRequisition(selectedRequisition.id)"
-              class="flex-1 px-4 py-3 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded-xl text-xs font-bold hover:bg-cyan-500/30 transition-all">
+              class="flex-1 px-4 py-3 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-xl text-xs font-bold hover:bg-amber-500/30 transition-all">
               <i class="fas fa-check-circle mr-2"></i> Approve &amp; Order
             </button>
             <button x-show="selectedRequisition.status === 'approved'"
@@ -329,7 +352,7 @@
               class="flex-1 px-4 py-3 bg-slate-600/20 border border-slate-500/30 text-slate-400 rounded-xl text-xs font-bold hover:bg-slate-500/30 transition-all">
               <i class="fas fa-check-double mr-2"></i> Close
             </button>
-            <button x-show="isAdmin && selectedRequisition.status === 'pending'"
+            <button x-show="selectedRequisition.status === 'pending'"
               @click="deleteRequisition(selectedRequisition.id)"
               class="px-4 py-3 bg-red-600/20 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold hover:bg-red-500/30 transition-all">
               <i class="fas fa-trash"></i>
