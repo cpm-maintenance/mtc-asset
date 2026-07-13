@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mtc-push-proxy
+    runtime: node
+    repo: https://github.com/YOUR_USERNAME/mtc-asset
+    branch: main
+    rootDir: onesignal-server
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: ONESIGNAL_API_KEY
+        sync: false

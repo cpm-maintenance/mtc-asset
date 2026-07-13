@@ -4,6 +4,8 @@
  * Extracted from app.js
  */
 
+import { initOneSignal, subscribeOneSignal } from './modules/onesignal.js';
+
 export const bootstrapModule = {
     init() {
         try {
@@ -51,6 +53,10 @@ export const bootstrapModule = {
                             window.notificationAPI.registerFCMToken();
                             // Run initial notification check after data loads
                             setTimeout(() => window.notificationAPI?.checkAllNotifications?.(), 6000);
+                            // Init OneSignal push notifications
+                            initOneSignal().then(subscribed => {
+                                setTimeout(() => subscribeOneSignal(), 1000);
+                            });
                         }
                     }, 3000);
                 }

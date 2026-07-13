@@ -1,0 +1,13 @@
+{
+  "name": "mtc-push-proxy",
+  "version": "1.0.0",
+  "description": "OneSignal push proxy for MTC.NEXUS",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  }
+}

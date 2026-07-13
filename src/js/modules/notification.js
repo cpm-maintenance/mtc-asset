@@ -246,7 +246,6 @@ function pushInAppNotif(type, message, icon, color = 'border-cyan-500 bg-cyan-50
  * - Manual via window.notificationAPI.checkAllNotifications()
  */
 export function checkAllNotifications() {
-  checkLowStockParts();
   checkPendingWorkOrders();
   checkPMOverdue();
 }

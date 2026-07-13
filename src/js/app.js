@@ -48,7 +48,189 @@ export function app() {
         showRejectModal: false,
         activeRejectId: null,
         rejectReason: '',
-        
+
+        // Usage History
+        closeUsageHistory() { this.showUsageHistory = false; },
+
+        // History Card state
+        historyEquipId: 'all',
+        historySearch: '',
+        historyFilterType: '',
+        historyFilterStatus: '',
+        historyDateFrom: '',
+        historyDateTo: '',
+        historySortField: 'Tanggal',
+        historySortDir: 'desc',
+        historyPage: 1,
+        historyPerPage: 20,
+
+        get historySelectedEquip() {
+            if (!this.historyEquipId || this.historyEquipId === 'all') return null;
+            return this.equipment?.find(e => e.EquipmentID === this.historyEquipId) || null;
+        },
+
+        get historyFilteredLogs() {
+            let logs = [...(this.logs || [])];
+
+            // Filter by equipment
+            if (this.historyEquipId && this.historyEquipId !== 'all') {
+                logs = logs.filter(l => l.EquipmentID === this.historyEquipId);
+            }
+
+            // Date range
+            if (this.historyDateFrom) logs = logs.filter(l => (l.Tanggal || '') >= this.historyDateFrom);
+            if (this.historyDateTo) logs = logs.filter(l => (l.Tanggal || '') <= this.historyDateTo);
+
+            // Maintenance type
+            if (this.historyFilterType) logs = logs.filter(l => l.Jenis === this.historyFilterType);
+
+            // Status
+            if (this.historyFilterStatus) logs = logs.filter(l => l.Status === this.historyFilterStatus);
+
+            // Text search
+            const q = (this.historySearch || '').toLowerCase().trim();
+            if (q) {
+                logs = logs.filter(l => {
+                    const woNum = (l.woNumber || '').toLowerCase();
+                    const desc = (l.Deskripsi || '').toLowerCase();
+                    const tech = (l.Technician || '').toLowerCase();
+                    const equipId = (l.EquipmentID || '').toLowerCase();
+                    const parts = this.historyGetParts(l);
+                    const partMatch = Array.isArray(parts) && parts.some(p => {
+                        const part = (this.allParts || []).find(a => a.PartID === p.id);
+                        return part && (
+                            (part.NamaPart || '').toLowerCase().includes(q) ||
+                            (part.PartNumber || '').toLowerCase().includes(q)
+                        );
+                    });
+                    return woNum.includes(q) || desc.includes(q) || tech.includes(q) || equipId.includes(q) || partMatch;
+                });
+            }
+
+            // Sort
+            const field = this.historySortField || 'Tanggal';
+            const dir = this.historySortDir === 'asc' ? 1 : -1;
+            logs.sort((a, b) => {
+                let va = a[field] || '';
+                let vb = b[field] || '';
+                if (field === 'Downtime' || field === 'Cost') {
+                    va = Number(va); vb = Number(vb);
+                } else {
+                    va = String(va); vb = String(vb);
+                }
+                return va < vb ? -dir : va > vb ? dir : 0;
+            });
+
+            return logs;
+        },
+
+        get historyTotalPages() {
+            return Math.ceil(this.historyFilteredLogs.length / (this.historyPerPage || 20));
+        },
+
+        get historyCurrentPageLogs() {
+            const start = (this.historyPage - 1) * (this.historyPerPage || 20);
+            return this.historyFilteredLogs.slice(start, start + (this.historyPerPage || 20));
+        },
+
+        // Flatten logs into per-part rows (each part = separate row)
+        get historyPartRows() {
+            const rows = [];
+            for (const log of this.historyCurrentPageLogs) {
+                const parts = this.historyGetParts(log);
+                if (parts.length === 0) {
+                    rows.push({ log, part: null });
+                } else {
+                    for (const part of parts) {
+                        rows.push({ log, part });
+                    }
+                }
+            }
+            return rows;
+        },
+
+        historyGetPartName(partId) {
+            if (!partId || !this.allParts) return partId;
+            const p = this.allParts.find(a => a.PartID === partId);
+            return p ? (p.NamaPart || partId) : partId;
+        },
+
+        historyGetPartNumber(partId) {
+            if (!partId || !this.allParts) return '';
+            const p = this.allParts.find(a => a.PartID === partId);
+            return p ? (p.PartNumber || '') : '';
+        },
+
+        historyGetParts(log) {
+            if (!log) return [];
+            try {
+                // Unwrap Alpine Proxy first
+                let raw = log.PartsUsed;
+                if (typeof raw === 'object' && window.Alpine?.raw) {
+                    raw = window.Alpine.raw(raw);
+                }
+                if (!raw) return [];
+                if (Array.isArray(raw)) return raw;
+                if (typeof raw === 'string') {
+                    const trimmed = raw.trim();
+                    if (!trimmed) return [];
+                    if (trimmed.startsWith('[')) {
+                        const parsed = JSON.parse(trimmed);
+                        return Array.isArray(parsed) ? parsed : [];
+                    }
+                }
+                // Handle Firebase object format {key: {id: ..., qty: ...}}
+                if (typeof raw === 'object') {
+                    const vals = Object.values(raw);
+                    if (vals.length > 0 && vals[0] && vals[0].id !== undefined) return vals;
+                }
+            } catch (e) {}
+            return [];
+        },
+
+        historySetSort(field) {
+            if (this.historySortField === field) {
+                this.historySortDir = this.historySortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.historySortField = field;
+                this.historySortDir = 'desc';
+            }
+        },
+
+        historyPrevPage() { if (this.historyPage > 1) this.historyPage--; },
+        historyNextPage() { if (this.historyPage < this.historyTotalPages) this.historyPage++; },
+
+        historyExportPDF() {
+            if (!this.historyEquipId || this.historyEquipId === 'all') {
+                this.showNotification('Select an equipment first', 'warning');
+                return;
+            }
+            if (window.exportModule?.exportHistoryPDF) {
+                window.exportModule.exportHistoryPDF(this.historyFilteredLogs, this.historySelectedEquip);
+            } else {
+                this.showNotification('Export module not ready', 'error');
+            }
+        },
+
+        historyExportExcel() {
+            if (window.exportModule?.exportHistoryExcel) {
+                window.exportModule.exportHistoryExcel(this.historyFilteredLogs, this.historySelectedEquip);
+            } else {
+                window.exportHistoryFallback?.();
+            }
+        },
+
+        historyPrint() { window.print(); },
+
+        get usageHistoryLogs() {
+            if (!this.usageHistoryPartId || !this.logs) return [];
+            return this.logs.filter(l => {
+                if (!l.PartsUsed) return false;
+                const parts = typeof l.PartsUsed === 'string' ? JSON.parse(l.PartsUsed) : l.PartsUsed;
+                return Array.isArray(parts) && parts.some(p => p.id === this.usageHistoryPartId);
+            });
+        },
+
         // --- DATA STATE (Explicitly initialized to avoid undefined errors) ---
         equipment: [],
         allParts: [],
@@ -170,6 +352,7 @@ if (confirm('Are you sure you want to logout?')) {
 
             // --- INVENTORY ---
             { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true, group: 'Inventory' },
+            { id: 'history', name: 'History Card', icon: 'fas fa-clipboard-list', mobile: true, group: 'Inventory' },
             { id: 'request', name: 'Request Part', icon: 'fas fa-shopping-cart', mobile: true, group: 'Inventory' },
 
             // --- ANALYTICS ---

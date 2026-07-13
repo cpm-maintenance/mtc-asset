@@ -4,6 +4,16 @@
 import { validatePartForm, withRetry, isNetworkError, sanitizeDataForFirebase } from '../utils.js';
 
 export const partsModule = {
+    showUsageHistory: false,
+    usageHistoryPartId: null,
+    usageHistoryPartName: '',
+
+    showPartUsageHistory(partId, partName) {
+        this.usageHistoryPartId = partId;
+        this.usageHistoryPartName = partName;
+        this.showUsageHistory = true;
+    },
+
 openPartModal(isEdit = false, data = null) {
         this.isEditingPart = isEdit;
         this.showPartModal = true;

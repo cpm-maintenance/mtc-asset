@@ -55,9 +55,14 @@
   <div x-show="filteredAllParts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 xl:gap-8">
     <template x-for="p in filteredAllParts" :key="p.PartID">
       <div class="card-modern p-3 md:p-6 relative group overflow-hidden">
-        <!-- Admin Actions (Hover) -->
-        <div x-show="isAdmin" class="absolute top-2 md:top-4 right-2 md:right-4 hidden group-hover:flex space-x-1 md:space-x-2 z-20">
-          <button @click="openPartModal(true, p)"
+        <!-- Hover Actions -->
+        <div class="absolute top-2 md:top-4 right-2 md:right-4 hidden group-hover:flex space-x-1 md:space-x-2 z-20">
+          <button @click="showPartUsageHistory(p.PartID, p.NamaPart)"
+            class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-white flex items-center justify-center transition-all"
+            title="Usage History">
+            <i class="fas fa-history text-xs md:text-xs"></i>
+          </button>
+          <button x-show="isAdmin" @click="openPartModal(true, p)"
             class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
             <i class="fas fa-edit text-xs md:text-xs"></i>
           </button>
@@ -96,5 +101,48 @@
         </div>
       </div>
     </template>
+  </div>
+
+  <!-- 📊 Usage History Modal -->
+  <div x-cloak x-show="showUsageHistory"
+       class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-nexus-black/60 backdrop-blur-md transition-opacity">
+    <div class="card-modern w-full max-w-2xl p-8 lg:p-10 rounded-[3rem] max-h-[80vh] overflow-y-auto border-nexus-accent/20 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+        <h3 class="text-xl font-black text-white flex items-center gap-3 uppercase tracking-tighter">
+          <i class="fas fa-history text-amber-400"></i>
+          <span x-text="'Usage: ' + (usageHistoryPartName || usageHistoryPartId)"></span>
+        </h3>
+        <button @click="closeUsageHistory()"
+                class="text-slate-500 hover:text-nexus-accent w-10 h-10 rounded-xl glass flex items-center justify-center transition-all">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div x-show="usageHistoryLogs.length === 0" class="text-center py-16">
+        <i class="fas fa-inbox text-5xl text-slate-600 mb-4"></i>
+        <p class="text-slate-400 font-bold">No usage history found for this part</p>
+        <p class="text-slate-500 text-sm mt-2">Part will appear here when used in Work Orders</p>
+      </div>
+      <div x-show="usageHistoryLogs.length > 0" class="space-y-3">
+        <template x-for="log in usageHistoryLogs" :key="log.LogID">
+          <div class="glass p-4 rounded-2xl border border-white/5 hover:border-amber-500/20 transition-all">
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-bold text-amber-400" x-text="log.LogID"></span>
+                <span class="text-xs px-2 py-0.5 rounded-lg font-black uppercase tracking-widest"
+                      :class="{'text-emerald-400 bg-emerald-500/10': log.Status === 'Completed', 'text-amber-400 bg-amber-500/10': log.Status === 'Pending' || log.Status === 'In Progress', 'text-rose-400 bg-rose-500/10': log.Status === 'Cancelled' || log.Status === 'Rejected'}"
+                      x-text="log.Status"></span>
+              </div>
+              <span class="text-xs text-slate-500" x-text="log.Tanggal"></span>
+            </div>
+            <p class="text-sm text-slate-300 mb-2" x-text="log.Deskripsi || log.Jenis"></p>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span class="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 font-bold" x-text="log.EquipmentID"></span>
+              <span class="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400" x-text="'WO: ' + (log.woNumber || '-')"></span>
+              <span class="px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400" x-text="log.Technician || '-'"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
 </div>

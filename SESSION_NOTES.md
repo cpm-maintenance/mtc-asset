@@ -15,11 +15,34 @@
 | **Bug: Alpine x-for TypeError (tbody)** | ✅ Fixed | Reverted `x-for` to `<template>` after putting it on `<tbody>` broke Alpine 3. Wrap in `<tbody>` inside `<template>`. |
 | **Bug: Performance PERMISSION_DENIED** | ✅ Fixed | DB rule write restricted to admin/supervisor → relaxed to all auth users. Validate rule mismatched field names (`EquipmentID` vs `equipmentId`). Deployed. |
 
+# SESSION NOTES — 2026-07-12
+
+## Task Progress
+
+| Task | Status | Detail |
+|------|--------|--------|
+| **Bug: Parts hilang di Edit WO** | ✅ Fixed | 3-layer root cause: (1) `sanitizeInput()` corrupts JSON string (`"` → `&quot;`), (2) corrupted data di Firebase, (3) Alpine `x-model` timing bug dgn nested `x-for` |
+| **Bug: Equipment dropdown reset di Edit WO** | ✅ Fixed | Same `x-model` + nested `x-for` timing issue. Fix: `x-model` → `:value` + `@change` for equipment & parts selects |
+| **HistoryCard — Parts breakdown per baris** | ✅ Done | `historyPartRows` getter flattens log+parts jadi 1 baris per part. Log tanpa parts tetap 1 baris dgn `-` |
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| [logs.js](src/js/modules/logs.js) | Restore `PartsUsed`/`PhotoURLs` after `sanitizeDataForFirebase`; Alpine.raw unwraps; diagnostic console.log |
+| [data.js](src/js/modules/data.js) | Unescape HTML entities (`&quot;` → `"`, `&#x2F;` → `/`) in `safeParseJSONField` |
+| [LogModal.html](public/components/modals/LogModal.html) | `x-model` → `:value` + `@change` for equipment & parts `<select>` |
+| [HistoryCard.html](public/pages/HistoryCard.html) | Iterate `historyPartRows` (per-part rows) instead of `historyCurrentPageLogs` |
+| [app.js](src/js/app.js) | Added `historyPartRows` computed getter |
+
+### Bug Diagnosis Flow (for next session)
+- **Parts hilang**: Firebase data periksa dulu — `PartsUsed` string mengandung `&quot;` atau `[]`?
+- **Dropdown reset**: Pastikan value match option value — kalau pakai `x-model` + nested `x-for`, ganti ke `:value` + `@change`
+
 ## Deploy
 - **Live:** https://mtc-asset.web.app
 - **Test:** `npm run test:run` — 96/96 pass
 - **Build:** `npm run build` — 0 errors
 
-## Next Session (Besok)
-- Lanjut fitur selanjutnya (belum ditentukan)
-- Possible: activity log / audit trail, E2E Playwright tests
+## Next Session
+- Parts sudah muncul di HistoryCard & Edit WO
+- Lanjut fitur berikutnya atau bug lain

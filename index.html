@@ -572,6 +572,26 @@
       <div x-page="'EnterpriseDashboard'"></div>
     </template>
 
+    <!-- 📋 PAGE: HISTORY CARD -->
+    <template x-if="currentPage === 'history'">
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'HistoryCard'"></div>
+        </div>
+      </div>
+    </template>
+
     <!-- 🛒 PAGE: REQUEST PART / MATERIAL GENERAL -->
     <template x-if="currentPage === 'request'">
       <div>
