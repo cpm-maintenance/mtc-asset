@@ -1,4 +1,7 @@
-module.exports = async (req, res) => {
+// Vercel serverless function — OneSignal push proxy
+// Reads ONESIGNAL_API_KEY from env (set in Vercel dashboard)
+
+export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -33,4 +36,4 @@ module.exports = async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
-};
+}
