@@ -7,8 +7,8 @@
  */
 const ONE_SIGNAL_APP_ID = '08770479-20e7-4414-8f10-abe1c1240bf7';
 
-// Webhook proxy — deploy sendiri (lihat /onesignal-server/)
-const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'http://localhost:4000/push';
+// Webhook proxy — Vercel Serverless (see /api/push.js)
+const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset.vercel.app/api/push';
 
 let _onesignalReady = false;
 let _onesignalInitPromise = null;
