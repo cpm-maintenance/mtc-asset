@@ -27,22 +27,60 @@ export const logsModule = {
         this.oldLogParts = [];
 
         if (isEdit && data) {
+            // ════════════════════════════════════════════
+            // DIAGNOSTIC: Trace what data looks like
+            // ════════════════════════════════════════════
+            console.log('[DIAG] openLogModal EDIT', {
+                isAlpineRaw: typeof window.Alpine?.raw,
+                dataType: typeof data,
+                dataIsArray: Array.isArray(data),
+                dataKeys: data ? Object.keys(data) : 'null',
+                dataLogID: data?.LogID,
+                dataEquipID: data?.EquipmentID,
+                dataPartsUsed: data?.PartsUsed,
+                dataPartsUsedType: typeof data?.PartsUsed,
+                dataPartsUsedIsArray: Array.isArray(data?.PartsUsed),
+                dataPartsUsedStr: data?.PartsUsed ? JSON.stringify(data?.PartsUsed).slice(0,200) : 'empty',
+            });
+            // ════════════════════════════════════════════
+
             let parsedParts = [];
             try {
-                if (typeof data.PartsUsed === 'string') {
-                    const trimmed = data.PartsUsed.trim();
-                    if (trimmed && trimmed.startsWith('[')) {
-                        parsedParts = JSON.parse(trimmed);
-                    }
-                } else if (Array.isArray(data.PartsUsed)) {
-                    parsedParts = data.PartsUsed;
+                // Step 1: unwrap entire data object from Alpine Proxy
+                let rawData = data;
+                if (window.Alpine?.raw) {
+                    try { rawData = window.Alpine.raw(data); } catch(e) {}
                 }
+                // Step 2: get PartsUsed value
+                let rawParts = rawData?.PartsUsed ?? data?.PartsUsed;
+                // Step 3: unwrap if still proxy
+                if (rawParts && window.Alpine?.raw) {
+                    try { rawParts = window.Alpine.raw(rawParts); } catch(e) {}
+                }
+                // Step 4: parse based on type
+                if (typeof rawParts === 'string' && rawParts.trim()) {
+                    parsedParts = JSON.parse(rawParts);
+                } else if (Array.isArray(rawParts)) {
+                    parsedParts = rawParts;
+                } else if (rawParts && typeof rawParts === 'object') {
+                    // Firebase object format {key: {id, qty}}
+                    const vals = Object.values(rawParts);
+                    if (vals.length > 0 && vals[0]?.id !== undefined) {
+                        parsedParts = vals;
+                    }
+                }
+                if (!Array.isArray(parsedParts)) parsedParts = [];
+                // Step 5: deep-clean each part object to remove any Proxy
+                parsedParts = parsedParts.map(p => {
+                    const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch(e) { return p; }})() : p;
+                    return { id: clean.id || clean.PartID || '', qty: Number(clean.qty) || 1 };
+                });
             } catch (e) {
-                console.warn('Parsing PartsUsed:', e);
+                console.warn('[openLogModal] PartsUsed parse error:', e);
             }
 
-// ponytail: structuredClone native, handles Date properly
-            this.oldLogParts = structuredClone(parsedParts);
+// ponytail: JSON.parse/stringify instead of structuredClone — Alpine Proxy not clonable
+            this.oldLogParts = JSON.parse(JSON.stringify(parsedParts));
 
             let existingPhotos = [];
             if (typeof data.PhotoURLs === 'string' && data.PhotoURLs) {
@@ -89,6 +127,19 @@ export const logsModule = {
                 // External fields
                 externalEquipName: data.externalEquipName || ''
             };
+
+            // ════════════════════════════════════════════
+            // DIAGNOSTIC: Check logForm after assignment
+            // ════════════════════════════════════════════
+            console.log('[DIAG] logForm AFTER assignment', {
+                equipId: this.logForm.equipmentId,
+                partsLen: Array.isArray(this.logForm.parts) ? this.logForm.parts.length : 'NOT_ARRAY',
+                partsVal: this.logForm.parts,
+                partsStr: JSON.stringify(this.logForm.parts).slice(0,200),
+                logFormKeys: Object.keys(this.logForm),
+            });
+            // ════════════════════════════════════════════
+
         } else {
             // Generate WO number: MTC-001 format
             const existingWOs = this.logs.filter(l => l.woNumber && l.woNumber.startsWith('MTC-')).map(l => l.woNumber);
@@ -200,19 +251,22 @@ export const logsModule = {
         try {
             // First, ensure logForm.parts is a plain array - handle Alpine Proxy
             let plainParts = [];
-            const rawParts = this.logForm?.parts;
-            if (Array.isArray(rawParts)) {
-                plainParts = rawParts.map(p => ({ id: p.id, qty: Number(p.qty) || 1 }));
-            } else if (rawParts && typeof rawParts === 'object') {
-                // Try unwrap Alpine proxy
-                try {
-                    const unwrapped = window.Alpine?.raw?.(rawParts);
-                    if (Array.isArray(unwrapped)) {
-                        plainParts = unwrapped.map(p => ({ id: p.id, qty: Number(p.qty) || 1 }));
-                    }
-                } catch(e) {
-                    console.log('[SubmitLog] Unwrap error:', e);
+            try {
+                let rawParts = this.logForm?.parts;
+                if (rawParts && window.Alpine?.raw) {
+                    try { rawParts = window.Alpine.raw(rawParts); } catch(e) {}
                 }
+                if (Array.isArray(rawParts)) {
+                    plainParts = rawParts.map(p => {
+                        let clean = p;
+                        if (clean && window.Alpine?.raw) {
+                            try { clean = window.Alpine.raw(p); } catch(e) {}
+                        }
+                        return { id: clean?.id || '', qty: Number(clean?.qty) || 1 };
+                    });
+                }
+            } catch(e) {
+                console.warn('[SubmitLog] Parts extraction error:', e);
             }
             console.log('[SubmitLog] Parts to save:', plainParts);
             
@@ -282,6 +336,9 @@ export const logsModule = {
 
             // Sanitize data before saving
             const sanitizedLogData = sanitizeDataForFirebase(logDataToSave);
+            // Restore pre-stringified fields — sanitizeInput corrupts JSON (replaces " → &quot;, / → &#x2F;)
+            sanitizedLogData.PartsUsed = logDataToSave.PartsUsed;
+            sanitizedLogData.PhotoURLs = logDataToSave.PhotoURLs;
 
             let downtimeDiff = Number(this.logForm.downtime) || 0;
             if (this.isEditingLog) {

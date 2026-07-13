@@ -1,0 +1,210 @@
+<!-- 📋 PAGE: HISTORY CARD -->
+<div x-cloak class="space-y-4 p-3 md:p-6">
+  <!-- Equipment Selector -->
+  <div class="card-modern p-4 md:p-6 rounded-2xl">
+    <div class="flex flex-col lg:flex-row gap-4 mb-4">
+      <div class="flex-1">
+        <label class="text-[9px] text-amber-400/60 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Equipment</label>
+        <select x-model="historyEquipId" @change="historyPage=1"
+          class="w-full p-3 glass rounded-xl text-sm font-bold">
+          <option value="all">-- Select Equipment --</option>
+          <template x-for="e in equipment" :key="e.EquipmentID">
+            <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+          </template>
+        </select>
+      </div>
+      <div class="flex-1">
+        <label class="text-[9px] text-amber-400/60 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Search</label>
+        <input type="text" x-model="historySearch" placeholder="WO#, Part, Technician..."
+          class="w-full p-3 glass rounded-xl text-sm">
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-3 items-center">
+      <div class="flex gap-2">
+        <input type="date" x-model="historyDateFrom"
+          class="p-2 glass rounded-lg text-xs font-bold w-36">
+        <span class="text-slate-500 text-xs self-center">→</span>
+        <input type="date" x-model="historyDateTo"
+          class="p-2 glass rounded-lg text-xs font-bold w-36">
+      </div>
+      <select x-model="historyFilterType" class="p-2 glass rounded-lg text-xs font-bold w-32">
+        <option value="">All Types</option>
+        <option value="PM">PM</option>
+        <option value="Repair">Repair</option>
+        <option value="Breakdown">Breakdown</option>
+        <option value="Inspection">Inspection</option>
+        <option value="Calibration">Calibration</option>
+        <option value="Installation">Installation</option>
+        <option value="Other">Other</option>
+      </select>
+      <select x-model="historyFilterStatus" class="p-2 glass rounded-lg text-xs font-bold w-32">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+      <div class="flex gap-2 ml-auto">
+        <button @click="historyExportPDF()" class="btn-nexus-small"><i class="fas fa-file-pdf"></i> PDF</button>
+        <button @click="historyExportExcel()" class="btn-nexus-small"><i class="fas fa-file-excel"></i> Excel</button>
+        <button @click="historyPrint()" class="btn-nexus-small"><i class="fas fa-print"></i> Print</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equipment Info Header (when selected) -->
+  <template x-if="historySelectedEquip">
+    <div class="card-modern p-4 md:p-6 rounded-2xl border-l-4 border-l-amber-500">
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 text-xs">
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Equip ID</span><span class="text-white font-bold" x-text="historySelectedEquip.EquipmentID"></span></div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Name</span><span class="text-white font-bold" x-text="historySelectedEquip.Nama"></span></div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Brand</span><span class="text-white" x-text="historySelectedEquip.Merk || '-'"></span></div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Model</span><span class="text-white" x-text="historySelectedEquip.Model || '-'"></span></div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Serial</span><span class="text-white" x-text="historySelectedEquip.SerialNumber || '-'"></span></div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Area</span><span class="text-white" x-text="historySelectedEquip.Lokasi || '-'"></span></div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Status</span>
+          <span class="px-2 py-0.5 rounded-lg font-black uppercase text-[9px]"
+            :class="historySelectedEquip.Status === 'Active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10'"
+            x-text="historySelectedEquip.Status || '-'"></span>
+        </div>
+        <div><span class="text-slate-500 uppercase font-black tracking-wider block">Total Logs</span><span class="text-amber-400 font-black text-base" x-text="historyFilteredLogs.length"></span></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Empty State -->
+  <div x-show="!historyEquipId || historyEquipId === 'all'"
+    class="text-center py-16">
+    <i class="fas fa-clipboard-list text-5xl text-slate-600 mb-4"></i>
+    <p class="text-slate-400 font-bold text-lg">Select Equipment</p>
+    <p class="text-slate-500 text-sm mt-2">Choose equipment above to view maintenance history</p>
+  </div>
+
+  <!-- DEBUG -->
+  <template x-if="historyEquipId && historyEquipId !== 'all' && historyFilteredLogs.length > 0">
+    <div class="text-[10px] text-slate-500 font-mono p-2 glass rounded-xl mb-2">
+      Total logs: <span x-text="historyFilteredLogs.length"></span> |
+      With parts: <span x-text="historyFilteredLogs.filter(l => historyGetParts(l).length > 0).length"></span> |
+      First log PartsUsed: <span x-text="JSON.stringify(historyFilteredLogs[0]?.PartsUsed)"></span> |
+      Parts length: <span x-text="historyGetParts(historyFilteredLogs[0])?.length || 0"></span>
+    </div>
+  </template>
+
+  <!-- Table -->
+  <div x-show="historyEquipId && historyEquipId !== 'all' && historyCurrentPageLogs.length > 0" class="overflow-x-auto rounded-2xl glass border border-white/5">
+    <table class="w-full text-xs" id="history-card-table">
+      <thead>
+        <tr class="border-b border-white/5">
+          <th @click="historySetSort('Tanggal')" class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-amber-400 cursor-pointer hover:text-white whitespace-nowrap">
+            Date <i :class="historySortField === 'Tanggal' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
+          </th>
+          <th @click="historySetSort('woNumber')" class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-amber-400 cursor-pointer hover:text-white whitespace-nowrap">
+            WO# <i :class="historySortField === 'woNumber' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
+          </th>
+          <th class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-slate-400 whitespace-nowrap">Type</th>
+          <th class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-slate-400 whitespace-nowrap">Description</th>
+          <th class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-slate-400 whitespace-nowrap">Parts Used</th>
+          <th @click="historySetSort('Technician')" class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-amber-400 cursor-pointer hover:text-white whitespace-nowrap">
+            Technician <i :class="historySortField === 'Technician' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
+          </th>
+          <th @click="historySetSort('Downtime')" class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-amber-400 cursor-pointer hover:text-white whitespace-nowrap">
+            Down <i :class="historySortField === 'Downtime' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
+          </th>
+          <th class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-slate-400 whitespace-nowrap">Status</th>
+          <th class="sticky top-0 bg-nexus-black/90 backdrop-blur-xl p-3 text-left font-black uppercase tracking-wider text-slate-400 whitespace-nowrap">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(row, idx) in historyPartRows" :key="row.log.LogID + '-' + (row.part?.id || '__nopart')">
+          <!-- Only render log columns on first part (or the single row if no parts) -->
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+            <td class="p-3 font-mono text-white font-bold whitespace-nowrap" x-text="row.log.Tanggal"></td>
+            <td class="p-3 font-mono text-amber-400 font-bold whitespace-nowrap" x-text="row.log.woNumber || '-'"></td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-lg font-black uppercase text-[9px] tracking-wider whitespace-nowrap"
+                :class="{
+                  'text-emerald-400 bg-emerald-500/10': row.log.Jenis === 'PM',
+                  'text-blue-400 bg-blue-500/10': row.log.Jenis === 'Repair',
+                  'text-rose-400 bg-rose-500/10': row.log.Jenis === 'Breakdown',
+                  'text-purple-400 bg-purple-500/10': row.log.Jenis === 'Calibration',
+                  'text-amber-400 bg-amber-500/10': row.log.Jenis === 'Inspection',
+                  'text-cyan-400 bg-cyan-500/10': row.log.Jenis === 'Installation',
+                  'text-slate-400 bg-slate-500/10': !['PM','Repair','Breakdown','Calibration','Inspection','Installation'].includes(row.log.Jenis)
+                }" x-text="row.log.Jenis || '-'"></span>
+            </td>
+            <td class="p-3 text-slate-300 max-w-xs truncate" x-text="row.log.Deskripsi || '-'" :title="row.log.Deskripsi"></td>
+            <td class="p-3">
+              <template x-if="row.part">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-amber-400 font-bold" x-text="historyGetPartName(row.part.id)"></span>
+                  <span class="text-slate-500 text-[8px]" x-text="historyGetPartNumber(row.part.id) ? '('+historyGetPartNumber(row.part.id)+')' : ''"></span>
+                  <span class="text-amber-400/60 font-mono text-[9px]">x<span x-text="row.part.qty || 1"></span></span>
+                </div>
+              </template>
+              <span x-show="!row.part" class="text-slate-600">-</span>
+            </td>
+            <td class="p-3 text-white" x-text="row.log.Technician || '-'"></td>
+            <td class="p-3 font-mono font-bold" x-text="row.log.Downtime ? row.log.Downtime + 'h' : '-'"></td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-lg font-black uppercase text-[9px] tracking-wider whitespace-nowrap"
+                :class="{
+                  'text-emerald-400 bg-emerald-500/10': row.log.Status === 'Completed' || row.log.Status === 'Approved',
+                  'text-amber-400 bg-amber-500/10': row.log.Status === 'Pending' || row.log.Status === 'In Progress',
+                  'text-rose-400 bg-rose-500/10': row.log.Status === 'Rejected' || row.log.Status === 'Cancelled',
+                  'text-blue-400 bg-blue-500/10': row.log.Status === 'Draft'
+                }" x-text="row.log.Status || 'Pending'"></span>
+            </td>
+            <td class="p-3 text-slate-500 max-w-[120px] truncate" x-text="row.log.Catatan || '-'" :title="row.log.Catatan"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty table -->
+  <div x-show="historyEquipId && historyEquipId !== 'all' && historyCurrentPageLogs.length === 0 && !historyFilteredLogs.length"
+    class="text-center py-16">
+    <i class="fas fa-inbox text-5xl text-slate-600 mb-4"></i>
+    <p class="text-slate-400 font-bold">No maintenance history found</p>
+    <p class="text-slate-500 text-sm mt-2">Select a different equipment or adjust filters</p>
+  </div>
+
+  <!-- Pagination -->
+  <div x-show="historyEquipId && historyEquipId !== 'all' && historyFilteredLogs.length > 0"
+    class="flex items-center justify-between p-3">
+    <div class="flex items-center gap-2 text-xs text-slate-400">
+      <span x-text="'Showing ' + ((historyPage-1)*historyPerPage+1) + '-' + Math.min(historyPage*historyPerPage, historyFilteredLogs.length) + ' of ' + historyFilteredLogs.length"></span>
+      <select x-model="historyPerPage" @change="historyPage=1" class="p-1 glass rounded text-[9px]">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <span class="text-[9px]">per page</span>
+    </div>
+    <div class="flex gap-2">
+      <button @click="historyPrevPage()" :disabled="historyPage <= 1"
+        class="px-3 py-1.5 glass rounded-lg text-xs font-bold disabled:opacity-40"
+        :class="historyPage > 1 ? 'text-amber-400 hover:bg-amber-500/10' : 'text-slate-600'">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <span class="px-3 py-1.5 text-xs font-bold text-white self-center" x-text="historyPage + '/' + historyTotalPages"></span>
+      <button @click="historyNextPage()" :disabled="historyPage >= historyTotalPages"
+        class="px-3 py-1.5 glass rounded-lg text-xs font-bold disabled:opacity-40"
+        :class="historyPage < historyTotalPages ? 'text-amber-400 hover:bg-amber-500/10' : 'text-slate-600'">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Print Styles -->
+<style media="print">
+  @page { margin: 10mm; size: landscape; }
+  body * { visibility: hidden; }
+  #history-card-table, #history-card-table * { visibility: visible; }
+  #history-card-table { position: absolute; top: 0; left: 0; width: 100%; }
+  .card-modern { border: 1px solid #ccc; background: white !important; }
+</style>

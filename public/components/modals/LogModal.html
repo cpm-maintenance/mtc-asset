@@ -22,7 +22,7 @@
       <div x-show="!isLogDetailView || isEditingLog" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Neural Target (Asset)</label>
-          <select x-model="logForm.equipmentId" required
+          <select :value="logForm.equipmentId" @change="logForm.equipmentId = $event.target.value; if($event.target.value !== 'EXTERNAL') logForm.externalEquipName = ''" required
                   class="w-full p-3 glass text-xs font-bold">
             <option value="">-- Choose Asset Index --</option>
             <template x-for="e in equipment">
@@ -205,7 +205,7 @@
         </div>
         <template x-for="(part, index) in logForm.parts" :key="index">
           <div class="flex gap-3 mb-4 items-center">
-            <select x-model="part.id"
+            <select :value="part.id" @change="part.id = $event.target.value"
                     class="flex-1 p-4 glass text-[10px] font-bold">
               <option value="">Select Component...</option>
               <template x-for="p in filteredPartsForLog">

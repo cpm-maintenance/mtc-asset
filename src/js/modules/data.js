@@ -3,6 +3,8 @@
  */
 import { withRetry, isNetworkError } from '../utils.js';
 import { idbManager, CAN_USE_IDB } from './indexeddb.js';
+import { sendBrowserNotification } from './notification.js';
+import { sendPushViaProxy } from './onesignal.js';
 
 // Clean URL from encoding issues (e.g., &#x2F; -> /, %2F -> /)
 function cleanFirebaseUrl(url) {
@@ -25,8 +27,10 @@ function cleanFirebaseUrl(url) {
 function safeParseJSONField(data, fieldName, fallback = []) {
     try {
         if (data && typeof data[fieldName] === 'string') {
-            const str = data[fieldName].trim();
+            let str = data[fieldName].trim();
             if (!str || str.length < 2) return fallback;
+            // Fix: unescape HTML entities from sanitizeInput corruption
+            str = str.replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&#x2F;/g, '/').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
             // Only parse if starts with [ or { 
             if (str.startsWith('[') || str.startsWith('{')) {
                 const parsed = JSON.parse(str);
@@ -267,7 +271,20 @@ export const dataModule = {
                 
                 // Sort by LogID descending
                 allLogs = allLogs.sort((a, b) => String(b.LogID).localeCompare(String(a.LogID)));
-                
+
+                // --- NEW WO DETECTION ---
+                if (!this._woSeenIds) this._woSeenIds = new Set();
+                const woLogs = allLogs.filter(l => l.woNumber || (l.Jenis && (l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service')));
+                woLogs.forEach(log => {
+                    if (this._woSeenIds.size > 0 && !this._woSeenIds.has(log.LogID)) {
+                        const requester = log.requestedBy || log.createdBy || log.Technician || 'Someone';
+                        sendBrowserNotification('🔧 New Work Order', `${requester}: ${(log.Deskripsi || log.Jenis || 'WO').substring(0, 60)}`);
+                        sendPushViaProxy('🔧 Work Order Baru', `${requester}: ${(log.Deskripsi || log.Jenis || 'WO').substring(0, 80)}`);
+                        this.showNotification(`🔧 ${requester} created WO: ${(log.Deskripsi || log.Jenis || '').substring(0, 40)}`, 'info');
+                    }
+                    this._woSeenIds.add(log.LogID);
+                });
+
                 this.logs = [...allLogs];
                 this.logsHasMore = false;
                 

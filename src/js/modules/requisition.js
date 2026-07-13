@@ -22,6 +22,7 @@
  */
 
 import { sendBrowserNotification } from './notification.js';
+import { sendPushViaProxy } from './onesignal.js';
 
 const NEW_LINE_ITEM = () => ({
     itemType: 'part',
@@ -30,6 +31,7 @@ const NEW_LINE_ITEM = () => ({
     quantity: 1,
     unit: 'pcs',
     equipmentId: '',
+    noResv: '',
 });
 
 export const requisitionModule = {
@@ -66,24 +68,37 @@ export const requisitionModule = {
                     const data = snapshot.val();
                     const entries = Object.keys(data).map(id => ({ id, ...data[id] }));
                     
-                    // Detect status transitions for browser notification
+                    // Detect status transitions & new items
                     if (!this._reqPrevStatuses) this._reqPrevStatuses = {};
+                    if (!this._reqSeenIds) this._reqSeenIds = new Set(Object.keys(this._reqPrevStatuses));
                     entries.forEach(req => {
+                        // --- NEW REQUEST DETECTION ---
+                        if (this._reqSeenIds.size > 0 && !this._reqSeenIds.has(req.id)) {
+                            const requester = req.requesterName || req.createdBy || 'Someone';
+                            const itemLabel = req.items && req.items.length > 1
+                                ? `${req.items[0].itemName} +${req.items.length -1} others`
+                                : (req.itemName || 'Item');
+                            sendBrowserNotification('📦 New Request Part', `${requester} requested: ${itemLabel}`);
+                            sendPushViaProxy('📦 Request Part Baru', `${requester} meminta: ${itemLabel}`);
+                            this.showNotification(`📦 ${requester} requested: ${itemLabel}`, 'info');
+                        }
+                        this._reqSeenIds.add(req.id);
+
+                        // --- STATUS TRANSITION DETECTION ---
                         const prev = this._reqPrevStatuses[req.id];
                         const cur = req.status;
                         if (prev && prev !== cur) {
-                            const isPending = prev === 'pending';
-                            const isApproved = cur === 'approved';
-                            const isArrived = cur === 'arrived';
-                            const isClosed = cur === 'closed';
-                            if (isPending && isApproved) {
-                                sendBrowserNotification('✅ Request Approved', `${req.itemName} — approved by ${req.approvedBy || 'system'}`);
+                            if (prev === 'pending' && cur === 'approved') {
+                                sendBrowserNotification('✅ Request Approved', `${req.itemName} was approved`);
+                                sendPushViaProxy('✅ Request Disetujui', `${req.itemName} telah disetujui`);
                                 this.showNotification(`📋 ${req.itemName} approved!`, 'success');
-                            } else if (isApproved && isArrived) {
+                            } else if (prev === 'approved' && cur === 'arrived') {
                                 sendBrowserNotification('📦 Request Arrived', `${req.itemName} — stock has arrived`);
+                                sendPushViaProxy('📦 Barang Tiba', `${req.itemName} sudah sampai`);
                                 this.showNotification(`📦 ${req.itemName} arrived!`, 'success');
-                            } else if (isArrived && isClosed) {
+                            } else if (prev === 'arrived' && cur === 'closed') {
                                 sendBrowserNotification('🔒 Request Closed', `${req.itemName} — request closed`);
+                                sendPushViaProxy('🔒 Request Ditutup', `${req.itemName} selesai`);
                                 this.showNotification(`🔒 ${req.itemName} closed`, 'info');
                             }
                         }
@@ -115,13 +130,14 @@ export const requisitionModule = {
         if (req) {
             this.reqEditMode = true;
             this.reqEditId = req.id;
-            this.reqLineItems = [{
+            this.reqLineItems = req.items && req.items.length ? req.items.map(i => ({...i})) : [{
                 itemType: req.itemType || 'part',
                 itemName: req.itemName || '',
                 partId: req.partId || '',
                 quantity: Number(req.quantity) || 1,
                 unit: req.unit || 'pcs',
                 equipmentId: req.equipmentId || '',
+                noResv: req.noResv || '',
             }];
             this.reqPriority = req.priority || 'normal';
             this.reqNotes = req.notes || '';
@@ -152,21 +168,13 @@ export const requisitionModule = {
             const today = now.split('T')[0];
 
             if (this.reqEditMode && this.reqEditId) {
-                // --- UPDATE EXISTING (pending only) ---
-                const existing = this.requisitions.find(r => r.id === this.reqEditId);
-                if (existing && existing.status !== 'pending') {
-                    this.showNotification('Can only edit pending requests', 'error');
-                    this.showReqModal = false;
-                    return;
-                }
+                // --- UPDATE EXISTING (all statuses) ---
                 const item = validItems[0];
                 const updates = {
-                    itemName: item.itemName,
-                    itemType: item.itemType || 'part',
-                    partId: item.partId || '',
-                    quantity: Number(item.quantity),
-                    unit: item.unit || 'pcs',
-                    equipmentId: item.equipmentId || '',
+                    items: validItems,
+                    itemName: validItems[0]?.itemName || item.itemName,
+                    itemType: validItems[0]?.itemType || 'part',
+                    quantity: validItems.reduce((s, i) => s + Number(i.quantity || 0), 0),
                     priority: this.reqPriority || 'normal',
                     notes: this.reqNotes || '',
                     updatedAt: now,
@@ -177,32 +185,26 @@ export const requisitionModule = {
                 if (this.selectedRequisition?.id === this.reqEditId) Object.assign(this.selectedRequisition, updates);
                 this.showNotification('✅ Permintaan diupdate');
             } else {
-                // --- NEW ---
-                const promises = validItems.map(item => {
-                    const id = `REQ_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-                    const record = {
-                        id,
-                        itemName: item.itemName,
-                        itemType: item.itemType || 'part',
-                        partId: item.partId || '',
-                        quantity: Number(item.quantity),
-                        unit: item.unit || 'pcs',
-                        equipmentId: item.equipmentId || '',
-                        priority: this.reqPriority || 'normal',
-                        notes: this.reqNotes || '',
-                        status: 'pending',
-                        requesterName: this.user?.email || 'Unknown',
-                        createdBy: this.user?.uid || 'unknown',
-                        requestDate: today,
-                        createdAt: now,
-                        updatedAt: now,
-                        batchGroup: `${Date.now()}`,
-                    };
-                    return window.set(window.ref(window.db, `Requisitions/${id}`), record)
-                        .then(() => { this.requisitions.unshift(record); });
-                });
-                await Promise.all(promises);
-                this.showNotification(`✅ ${validItems.length} permintaan berhasil diajukan`);
+                // --- NEW: single record with items array ---
+                const id = `REQ_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                const record = {
+                    id,
+                    items: validItems,
+                    itemName: validItems[0]?.itemName || '',
+                    itemType: validItems[0]?.itemType || 'part',
+                    quantity: validItems.reduce((s, i) => s + Number(i.quantity || 0), 0),
+                    priority: this.reqPriority || 'normal',
+                    notes: this.reqNotes || '',
+                    status: 'pending',
+                    requesterName: this.user?.email || 'Unknown',
+                    createdBy: this.user?.uid || 'unknown',
+                    requestDate: today,
+                    createdAt: now,
+                    updatedAt: now,
+                };
+                await window.set(window.ref(window.db, `Requisitions/${id}`), record);
+                this.requisitions.unshift(record);
+                this.showNotification(`✅ ${validItems.length} item berhasil diajukan dalam 1 permintaan`);
             }
 
             this.showReqModal = false;
@@ -328,11 +330,6 @@ export const requisitionModule = {
     },
 
     async deleteRequisition(reqId) {
-        const existing = this.requisitions.find(r => r.id === reqId);
-        if (existing && existing.status !== 'pending') {
-            this.showNotification('Can only delete pending requests', 'error');
-            return;
-        }
         if (!confirm('Hapus permintaan ini?')) return;
         try {
             await window.remove(window.ref(window.db, `Requisitions/${reqId}`));
