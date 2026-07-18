@@ -11,8 +11,9 @@ const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    environment: import.meta.env.MODE, // 'development' vs 'production'
+    environment: import.meta.env.MODE,
     tracesSampleRate: import.meta.env.PROD ? 0.5 : 0.0,
+    autoSessionTracking: false, // supress SW postMessage noise — our Workbox SW doesn't have Sentry handler
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({
