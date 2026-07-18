@@ -1,11 +1,13 @@
+// OneSignal SW must be imported FIRST for background push to work
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
 const CACHE_NAME = 'goldtrack-v2';
+// self.__WB_MANIFEST will be replaced by workbox with the precache manifest
+self.__WB_MANIFEST;
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/firebase-config.js'
 ];
 
 // Install Service Worker

@@ -29,6 +29,9 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: '.',
+      filename: 'sw.js',
       includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js'],
       manifest: {
         name: 'MTC.NEXUS',
@@ -58,6 +61,7 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    allowedHosts: true,
   },
   optimizeDeps: {
     exclude: ['jspdf', 'jspdf-autotable']

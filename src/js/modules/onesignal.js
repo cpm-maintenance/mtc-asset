@@ -1,88 +1,81 @@
 /**
  * OneSignal — Web Push Notification Module
  * 
- * Handles:
- * 1. OneSignal SDK init + registration (subscribes device)
- * 2. Trigger push via webhook proxy (keeps API key server-side)
+ * Uses OneSignalDeferred pattern (v16+) for clean init.
+ * Push config BEFORE script loads, SDK auto-initializes.
  */
 const ONE_SIGNAL_APP_ID = '08770479-20e7-4414-8f10-abe1c1240bf7';
 
-// Webhook proxy — Vercel Serverless (see /api/push.js)
-const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset.vercel.app/api/push';
+// Webhook proxy — Vercel Serverless FCM Push (see /api/fcm-push.js)
+const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset.vercel.app/api/fcm-push';
 
-let _onesignalReady = false;
-let _onesignalInitPromise = null;
+let _initCalled = false;
+let _initComplete = false;
+let _initResolve = null;
+
+const _readyPromise = new Promise((resolve) => { _initResolve = resolve; });
 
 /**
- * Init OneSignal SDK — call once after login
+ * Init OneSignal — push config + load SDK once
  */
 export async function initOneSignal() {
-  if (_onesignalInitPromise) return _onesignalInitPromise;
+  if (_initComplete) return true;
+  if (_initCalled) return _readyPromise;
+  _initCalled = true;
   if (typeof window === 'undefined') return false;
 
-  _onesignalInitPromise = new Promise(async (resolve) => {
-    try {
-      // Load OneSignal SDK
-      if (!window.OneSignal) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-        script.defer = true;
-        document.head.appendChild(script);
-        await new Promise((r) => { script.onload = r; });
-      }
-
-      // Init
-      await window.OneSignal.Deferred.setup({
-        appId: ONE_SIGNAL_APP_ID,
-        notifyButton: { enable: false },
-        serviceWorkerParam: { scope: '/' },
-        serviceWorkerPath: '/OneSignalSDKWorker.js',
-      });
-
-      _onesignalReady = true;
-      console.log('[OneSignal] Initialized');
-      resolve(true);
-    } catch (e) {
-      console.warn('[OneSignal] Init error:', e.message);
-      resolve(false);
-    }
-  });
-  return _onesignalInitPromise;
-}
-
-/**
- * Get OneSignal user ID (player ID) — returns null if not subscribed
- */
-export async function getOneSignalUserId() {
-  if (!_onesignalReady) await initOneSignal();
   try {
-    const userId = await window.OneSignal.User.getOnesignalId();
-    return userId || null;
-  } catch {
-    return null;
+    // Push config before script loads (OneSignalDeferred pattern)
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async (OneSignal) => {
+      try {
+        await OneSignal.init({
+          appId: ONE_SIGNAL_APP_ID,
+          notifyButton: { enable: false },
+          allowLocalhostAsSecureOrigin: true,
+        });
+        _initComplete = true;
+        console.log('[OneSignal] Initialized');
+        _initResolve(true);
+      } catch (e) {
+        console.warn('[OneSignal] Init error:', e.message);
+        _initResolve(false);
+      }
+    });
+
+    // Load SDK script once
+    if (!document.querySelector('script[src*="OneSignalSDK.page.js"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  } catch (e) {
+    console.warn('[OneSignal] Setup error:', e.message);
+    _initResolve(false);
   }
+
+  // Timeout fallback
+  setTimeout(() => { if (!_initComplete) _initResolve(false); }, 10000);
+  return _readyPromise;
 }
 
 /**
  * Subscribe user to push notifications
  */
 export async function subscribeOneSignal() {
-  if (!_onesignalReady) await initOneSignal();
+  await initOneSignal();
   try {
-    await window.OneSignal.Notifications.requestPermission();
-    return true;
-  } catch (e) {
-    console.warn('[OneSignal] Subscribe error:', e.message);
+    return await window.OneSignal?.Notifications?.requestPermission(true);
+  } catch {
     return false;
   }
 }
 
 /**
- * Send push notification via webhook proxy
- * Called from Firebase listeners when new data detected
+ * Send push notification via Vercel proxy
  */
 export async function sendPushViaProxy(title, body, data = {}) {
-  // Send via webhook (server-side OneSignal API)
   try {
     await fetch(PUSH_PROXY_URL, {
       method: 'POST',
