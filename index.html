@@ -321,10 +321,16 @@
                 </div>
               </div>
             </div>
-            <button @click="deleteUser(u.uid)" x-show="u.uid !== this.user?.uid"
-              class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 opacity-0 group-hover:opacity-100 transition-all">
-              <i class="fas fa-trash-can text-xs"></i>
-            </button>
+            <div class="flex gap-1.5">
+              <button @click="openEditUser(u)" x-show="u.uid !== this.user?.uid"
+                class="w-8 h-8 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-400 opacity-0 group-hover:opacity-100 transition-all">
+                <i class="fas fa-pen-to-square text-xs"></i>
+              </button>
+              <button @click="deleteUser(u.uid)" x-show="u.uid !== this.user?.uid"
+                class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 opacity-0 group-hover:opacity-100 transition-all">
+                <i class="fas fa-trash-can text-xs"></i>
+              </button>
+            </div>
           </div>
         </template>
         <div x-show="allUsers.length === 0" class="text-center py-12">
@@ -339,6 +345,51 @@
         class="w-full px-4 py-3.5 rounded-xl glass border-slate-500/10 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-slate-500/10 hover:text-white transition-all relative">
         Close
       </button>
+    </div>
+  </div>
+
+  <!-- ✏️ Edit User Modal (Admin Only) -->
+  <div x-show="showEditUserModal" x-cloak class="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-[20px]" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-[20px]"
+      class="w-full max-w-md card-modern p-6 border-amber-500/30 relative overflow-hidden">
+
+      <!-- Accent glow -->
+      <div class="absolute -top-20 -right-20 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+      <div class="text-center mb-6 relative">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 flex items-center justify-center mx-auto mb-4 ring-1 ring-amber-500/20">
+          <i class="fas fa-user-pen text-amber-400 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-black text-white">Edit User</h3>
+        <p class="text-slate-400 text-sm mt-2 leading-relaxed">Update user role or email.</p>
+      </div>
+      <form @submit.prevent="saveEditUser()" class="space-y-4 relative">
+        <div>
+          <label class="text-[9px] text-slate-500 uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Email</label>
+          <input type="email" x-model="editUserForm.email" required placeholder="user@company.com" 
+            class="w-full p-4 glass text-white text-sm placeholder-slate-500 rounded-xl border border-white/5 focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all outline-none">
+        </div>
+        <div>
+          <label class="text-[9px] text-slate-500 uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Role</label>
+          <select x-model="editUserForm.role" 
+            class="w-full p-4 glass text-white text-sm rounded-xl border border-white/5 focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all outline-none">
+            <option value="user" class="bg-slate-900">User</option>
+            <option value="admin" class="bg-slate-900">Admin</option>
+            <option value="supervisor" class="bg-slate-900">Supervisor</option>
+          </select>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" @click="closeEditUserModal()" 
+            class="flex-1 px-4 py-3.5 rounded-xl glass border-slate-500/10 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-slate-500/10 hover:text-white transition-all">
+            Cancel
+          </button>
+          <button type="submit" :disabled="isLoading" 
+            class="flex-1 px-4 py-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-500/10 border border-amber-500/30 text-amber-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:from-amber-500/30 hover:to-amber-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            Save
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

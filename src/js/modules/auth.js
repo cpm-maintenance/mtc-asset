@@ -168,6 +168,44 @@ export const authModule = {
     
     allUsers: [],
     
+    // Edit User
+    showEditUserModal: false,
+    editUserForm: { uid: '', email: '', role: 'user' },
+    
+    openEditUser(user) {
+        this.editUserForm = { uid: user.uid, email: user.email, role: user.role || 'user' };
+        this.showEditUserModal = true;
+    },
+    
+    closeEditUserModal() {
+        this.showEditUserModal = false;
+        this.editUserForm = { uid: '', email: '', role: 'user' };
+    },
+    
+    async saveEditUser() {
+        if (!this.isAdmin || !this.editUserForm.uid) return;
+        if (!this.editUserForm.email.trim()) return;
+        this.isLoading = true;
+        try {
+            await window.update(window.ref(window.db, `Users/${this.editUserForm.uid}`), {
+                email: this.editUserForm.email.trim(),
+                role: this.editUserForm.role,
+                updatedAt: new Date().toISOString(),
+            });
+            const idx = this.allUsers.findIndex(u => u.uid === this.editUserForm.uid);
+            if (idx !== -1) {
+                this.allUsers[idx] = { ...this.allUsers[idx], email: this.editUserForm.email.trim(), role: this.editUserForm.role };
+            }
+            this.showNotification('User updated successfully');
+            this.closeEditUserModal();
+        } catch (error) {
+            console.error('[Auth] Edit user error:', error);
+            this.showNotification('Failed to update user', 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    },
+    
     async loadAllUsers() {
         if (!window.db || !this.isAdmin) return;
         
