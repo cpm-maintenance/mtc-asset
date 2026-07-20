@@ -46,18 +46,16 @@ export const bootstrapModule = {
                     this.loadPMSchedule();
                     this.setupRequisitionsListener();
 
-                    // Request notification permission after login
+                    // Notification permission di-trigger oleh user click (bell icon)
+                    // setTimeout requestPermission tidak work di mobile Chrome
                     setTimeout(() => {
-                        if (window.notificationAPI?.requestNotificationPermission) {
-                            window.notificationAPI.requestNotificationPermission();
-                            window.notificationAPI.registerFCMToken();
-                            // Run initial notification check after data loads
+                        if (window.notificationAPI?.checkAllNotifications) {
                             setTimeout(() => window.notificationAPI?.checkAllNotifications?.(), 6000);
-                            // Init OneSignal push notifications
-                            initOneSignal().then(subscribed => {
-                                setTimeout(() => subscribeOneSignal(), 1000);
-                            });
                         }
+                        // Init OneSignal push notifications
+                        initOneSignal().then(subscribed => {
+                            setTimeout(() => subscribeOneSignal(), 1000);
+                        });
                     }, 3000);
                 }
             });
