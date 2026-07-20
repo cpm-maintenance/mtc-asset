@@ -1,6 +1,4 @@
-// OneSignal SW must be imported FIRST for background push to work
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-
+// No OneSignal — app uses FCM directly via Firebase Messaging
 const CACHE_NAME = 'goldtrack-v2';
 // self.__WB_MANIFEST will be replaced by workbox with the precache manifest
 self.__WB_MANIFEST;
@@ -32,8 +30,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Strategy: Network First (Fixes update issues)
+// Fetch Strategy: Network First — cache fallback for app, stale-while-revalidate for CDN
 self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+
+  // Cache CDN assets (FontAwesome, CropperJS) with stale-while-revalidate
+  if (url.includes('cdnjs.cloudflare.com')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const fetchAndCache = fetch(event.request).then((response) => {
+          caches.open(CACHE_NAME).put(event.request, response.clone());
+          return response;
+        });
+        return cached || fetchAndCache;
+      })
+    );
+    return;
+  }
+
+  // Default: network first for app routes
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);
