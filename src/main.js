@@ -12,8 +12,9 @@ if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
-    tracesSampleRate: import.meta.env.PROD ? 0.5 : 0.0,
-    autoSessionTracking: true,
+    tracesSampleRate: 0.0,
+    defaultIntegrations: false, // kill WM noise — disables all SW-bound internal services
+    autoSessionTracking: false,
     integrations: [],
     replaysSessionSampleRate: 0.0,
     replaysOnErrorSampleRate: 0.0,
