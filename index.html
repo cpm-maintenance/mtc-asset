@@ -99,59 +99,93 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
-  <div class="fixed top-6 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+  <!-- 🍞 Toast Notification Stack -->
+  <div class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="perspective: 800px;">
     <template x-for="note in notifications" :key="note.id">
       <div x-show="!note.exiting"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-x-[50px] scale-90"
-        x-transition:enter-end="opacity-100 translate-x-0 scale-100"
-        x-transition:leave="transition ease-in duration-200" 
+        x-transition:enter="transition ease-out duration-400"
+        x-transition:enter-start="opacity-0 translate-x-[60px] translate-y-[-20px] rotate-z-[-3deg] scale-90"
+        x-transition:enter-end="opacity-100 translate-x-0 translate-y-0 rotate-z-0 scale-100"
+        x-transition:leave="transition ease-in duration-300" 
         x-transition:leave-start="opacity-100 scale-100 translate-x-0"
-        x-transition:leave-end="opacity-0 scale-90 translate-x-[50px]"
-        :class="note.color"
-        class="px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[320px] max-w-[400px] pointer-events-auto border backdrop-blur-xl">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0" :class="note.color.replace('bg-', 'bg-').replace('text-', 'text-') + '/30'">
-          <i :class="'fas ' + note.icon"></i>
+        x-transition:leave-end="opacity-0 scale-90 translate-x-[60px]"
+        :class="note.color + ' ' + note.glow"
+        class="px-5 pt-4 pb-3 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[340px] max-w-[420px] pointer-events-auto border backdrop-blur-2xl overflow-hidden relative">
+        
+        <!-- Progress bar -->
+        <div class="absolute bottom-0 left-0 right-0 h-[3px] bg-white/5">
+          <div :style="'width:' + note.progress + '%'" :class="note.bar" class="h-full transition-all duration-100 ease-linear rounded-full"></div>
         </div>
-        <div class="flex-1">
-          <p class="text-[9px] uppercase font-black opacity-70 tracking-widest mb-1" x-text="note.type"></p>
-          <p x-text="note.message" class="text-sm font-bold leading-tight"></p>
+
+        <div class="flex items-start gap-3.5">
+          <div :class="note.color" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ring-1 ring-white/10">
+            <i :class="'fas ' + note.icon"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-[9px] uppercase font-black opacity-60 tracking-[0.15em]" x-text="note.type"></span>
+              <span class="text-[8px] text-slate-600 font-mono">just now</span>
+            </div>
+            <p x-text="note.message" class="text-sm font-semibold leading-snug text-white/90"></p>
+          </div>
+          <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 400)" 
+            class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all shrink-0">
+            <i class="fas fa-xmark text-[10px] text-slate-500"></i>
+          </button>
         </div>
-        <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 300)" class="w-6 h-6 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity">
-          <i class="fas fa-times text-xs"></i>
-        </button>
       </div>
     </template>
   </div>
 
-  <!-- Notification Panel -->
-  <div x-show="showNotifications" x-cloak class="fixed inset-0 z-[250] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showNotifications = false">
-    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-      class="w-full max-w-md card-modern p-6 border-nexus-accent/30 max-h-[80vh] overflow-y-auto">
+  <!-- 🔔 Notification Panel Modal -->
+  <div x-show="showNotifications" x-cloak class="fixed inset-0 z-[250] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showNotifications = false">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-[20px]" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-[20px]"
+      class="w-full max-w-lg card-modern p-6 border-white/10 max-h-[80vh] overflow-y-auto relative">
+
+      <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-xl font-black text-white nexus-glow-text">Notifications</h3>
-        <button @click="showNotifications = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
-          <i class="fas fa-times"></i>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-nexus-accent/15 flex items-center justify-center">
+            <i class="fas fa-bell text-nexus-accent text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-white nexus-glow-text">Notifications</h3>
+            <p class="text-[10px] text-slate-500 font-mono" x-text="notifications.length + ' pending'"></p>
+          </div>
+        </div>
+        <button @click="showNotifications = false" class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all">
+          <i class="fas fa-xmark"></i>
         </button>
       </div>
-      <div x-show="notifications.length === 0" class="text-center py-8 text-slate-500">
-        <i class="fas fa-bell-slash text-4xl mb-4 opacity-30"></i>
-        <p>No notifications</p>
+
+      <!-- Empty state -->
+      <div x-show="notifications.length === 0" class="text-center py-12">
+        <div class="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-bell-slash text-2xl text-slate-600"></i>
+        </div>
+        <p class="text-slate-500 font-semibold">All caught up</p>
+        <p class="text-xs text-slate-600 mt-1">No new notifications</p>
       </div>
-      <div class="space-y-3">
+
+      <!-- List -->
+      <div class="space-y-2.5">
         <template x-for="note in notifications" :key="note.id">
-          <div :class="note.color" class="p-4 rounded-xl border flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0">
+          <div :class="note.color" class="p-4 rounded-2xl border flex items-start gap-3.5 group hover:scale-[1.01] transition-all cursor-default">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0 bg-white/5">
               <i :class="'fas ' + note.icon"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-[8px] uppercase font-black opacity-70 tracking-widest" x-text="note.type"></p>
-              <p x-text="note.message" class="text-sm font-bold truncate"></p>
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-[8px] uppercase font-black opacity-60 tracking-[0.15em]" x-text="note.type"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-40"></span>
+                <span class="text-[8px] text-slate-600">just now</span>
+              </div>
+              <p x-text="note.message" class="text-sm font-semibold text-white/85 leading-snug"></p>
             </div>
-            <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 300)" class="w-6 h-6 flex items-center justify-center opacity-50 hover:opacity-100">
-              <i class="fas fa-times text-xs"></i>
+            <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 400)" 
+              class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all shrink-0">
+              <i class="fas fa-xmark text-[10px] text-slate-500"></i>
             </button>
           </div>
         </template>
@@ -159,26 +193,32 @@
     </div>
   </div>
 
-  <!-- Reject Work Order Modal -->
-  <div x-show="showRejectModal" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-      class="w-full max-w-md card-modern p-6 border-rose-500/30">
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-          <i class="fas fa-times-circle text-rose-500 text-2xl"></i>
+  <!-- 🚫 Reject Work Order Modal -->
+  <div x-show="showRejectModal" x-cloak class="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-[20px]" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-[20px]"
+      class="w-full max-w-md card-modern p-6 border-rose-500/30 relative overflow-hidden">
+      
+      <!-- Accent glow -->
+      <div class="absolute -top-20 -right-20 w-40 h-40 bg-rose-500/10 rounded-full blur-3xl"></div>
+      
+      <div class="text-center mb-6 relative">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 flex items-center justify-center mx-auto mb-4 ring-1 ring-rose-500/20">
+          <i class="fas fa-ban text-rose-400 text-2xl"></i>
         </div>
-        <h3 class="text-xl font-black text-white nexus-glow-text">Reject Work Order</h3>
-        <p class="text-slate-400 text-sm mt-2">Please provide a reason for rejecting this Work Order.</p>
+        <h3 class="text-xl font-black text-white">Reject Work Order</h3>
+        <p class="text-slate-400 text-sm mt-2 leading-relaxed">This action will mark the WO as rejected. Please provide a reason.</p>
       </div>
-      <div class="mb-4">
-        <textarea x-model="rejectReason" placeholder="Rejection reason..." class="w-full p-4 glass text-white text-sm placeholder-slate-500" rows="4"></textarea>
+      <div class="mb-5 relative">
+        <textarea x-model="rejectReason" placeholder="Type rejection reason..." class="w-full p-4 glass text-white text-sm placeholder-slate-500 rounded-xl border border-white/5 focus:border-rose-500/40 focus:ring-1 focus:ring-rose-500/20 transition-all outline-none" rows="4"></textarea>
       </div>
-      <div class="flex gap-3">
-        <button @click="showRejectModal = false; rejectReason = ''; activeRejectId = null" class="flex-1 px-4 py-3 rounded-xl glass border-slate-500/20 text-slate-400 font-bold uppercase text-xs tracking-widest hover:bg-slate-500/20 transition-all">
+      <div class="flex gap-3 relative">
+        <button @click="showRejectModal = false; rejectReason = ''; activeRejectId = null" 
+          class="flex-1 px-4 py-3.5 rounded-xl glass border-slate-500/10 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-slate-500/10 hover:text-white transition-all">
           Cancel
         </button>
-        <button @click="rejectWO(activeRejectId, rejectReason); showRejectModal = false" :disabled="!rejectReason.trim()" class="flex-1 px-4 py-3 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold uppercase text-xs tracking-widest hover:bg-rose-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+        <button @click="rejectWO(activeRejectId, rejectReason); showRejectModal = false" :disabled="!rejectReason.trim()" 
+          class="flex-1 px-4 py-3.5 rounded-xl bg-gradient-to-r from-rose-500/20 to-rose-500/10 border border-rose-500/30 text-rose-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:from-rose-500/30 hover:to-rose-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-rose-500/20">
           Reject WO
         </button>
       </div>
@@ -267,22 +307,29 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div x-show="showDeleteConfirm" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-      class="w-full max-w-md card-modern p-6 border-rose-500/30">
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-          <i class="fas fa-trash-alt text-rose-500 text-2xl"></i>
+  <!-- 🗑️ Delete Confirm Modal -->
+  <div x-show="showDeleteConfirm" x-cloak class="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-[20px]" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-[20px]"
+      class="w-full max-w-md card-modern p-6 border-rose-500/30 relative overflow-hidden">
+
+      <!-- Accent glow -->
+      <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-rose-500/10 rounded-full blur-3xl"></div>
+
+      <div class="text-center mb-6 relative">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 flex items-center justify-center mx-auto mb-4 ring-1 ring-rose-500/20">
+          <i class="fas fa-trash-can text-rose-400 text-2xl"></i>
         </div>
-        <h3 class="text-xl font-black text-white nexus-glow-text">Confirm Delete</h3>
-        <p class="text-slate-400 text-sm mt-2">Are you sure you want to delete this item? This action cannot be undone.</p>
+        <h3 class="text-xl font-black text-white">Delete Item</h3>
+        <p class="text-slate-400 text-sm mt-2 leading-relaxed">Are you sure? This action <span class="text-rose-400 font-semibold">cannot be undone</span>. All associated data will be permanently removed.</p>
       </div>
-      <div class="flex gap-3">
-        <button @click="showDeleteConfirm = false; deleteConfirmCallback?.cancel?.()" class="flex-1 px-4 py-3 rounded-xl glass border-slate-500/20 text-slate-400 font-bold uppercase text-xs tracking-widest hover:bg-slate-500/20 transition-all">
+      <div class="flex gap-3 relative">
+        <button @click="showDeleteConfirm = false; deleteConfirmCallback?.cancel?.()" 
+          class="flex-1 px-4 py-3.5 rounded-xl glass border-slate-500/10 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-slate-500/10 hover:text-white transition-all">
           Cancel
         </button>
-        <button @click="showDeleteConfirm = false; deleteConfirmCallback?.confirm?.()" class="flex-1 px-4 py-3 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold uppercase text-xs tracking-widest hover:bg-rose-500/30 transition-all">
+        <button @click="showDeleteConfirm = false; deleteConfirmCallback?.confirm?.()" 
+          class="flex-1 px-4 py-3.5 rounded-xl bg-gradient-to-r from-rose-500/20 to-rose-500/10 border border-rose-500/30 text-rose-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:from-rose-500/30 hover:to-rose-500/20 transition-all">
           Delete
         </button>
       </div>
