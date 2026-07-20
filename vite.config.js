@@ -32,7 +32,7 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: '.',
       filename: 'sw.js',
-      includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js'],
+      includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js', 'public/icons/*.png'],
       manifest: {
         name: 'MTC.NEXUS',
         short_name: 'NEXUS',
@@ -44,15 +44,28 @@ export default defineConfig({
         gcm_sender_id: '400206066339',
         icons: [
           {
-            src: 'logo.png',
-            sizes: '192x192 512x512',
-            type: 'image/png'
+            src: 'public/icons/manifest-icon-192.maskable.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
           },
           {
-            src: 'logo.png',
-            sizes: '192x192 512x512',
+            src: 'public/icons/manifest-icon-192.maskable.png',
+            sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'maskable'
+          },
+          {
+            src: 'public/icons/manifest-icon-512.maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'public/icons/manifest-icon-512.maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       }
