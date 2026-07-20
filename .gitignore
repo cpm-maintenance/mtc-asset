@@ -76,3 +76,6 @@ dist/
 *.zip
 *.7z
 *.rar
+
+.vercel
+.env*
