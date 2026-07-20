@@ -187,7 +187,11 @@ export const authModule = {
         if (!this.editUserForm.email.trim()) return;
         this.isLoading = true;
         try {
-            await window.update(window.ref(window.db, `Users/${this.editUserForm.uid}`), {
+            const userRef = window.ref(window.db, `Users/${this.editUserForm.uid}`);
+            const snap = await window.get(userRef);
+            const existing = snap.val() || {};
+            await window.set(userRef, {
+                ...existing,
                 email: this.editUserForm.email.trim(),
                 role: this.editUserForm.role,
                 updatedAt: new Date().toISOString(),
