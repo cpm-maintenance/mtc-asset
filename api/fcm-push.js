@@ -5,7 +5,7 @@
 //   FIREBASE_SERVICE_ACCOUNT = full JSON service account key from Firebase Console
 //     Project Settings → Service Accounts → Generate new private key
 
-import admin from 'firebase-admin';
+import * as admin from 'firebase-admin';
 
 const DATABASE_URL = 'https://mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app';
 
