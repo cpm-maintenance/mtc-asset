@@ -1,9 +1,3 @@
-/**
- * Charts Module - Dashboard & KPI chart rendering
- */
-import { Chart, registerables } from 'chart.js';
-Chart.register(...registerables);
-
 export const chartModule = {
     // Safe deep clone helper
     safeDeepClone(data) {
@@ -11,9 +5,13 @@ export const chartModule = {
         catch (e) { return Array.isArray(data) ? [...data] : data || {}; }
     },
 
-    // Lazy load Chart.js
+    // Lazy load Chart.js — dynamic import (198KB, only when dashboard renders)
     async loadChartJS() {
-        if (!window._chartJS) window._chartJS = Chart;
+        if (!window._chartJS) {
+            const { Chart, registerables } = await import('chart.js');
+            Chart.register(...registerables);
+            window._chartJS = Chart;
+        }
         return window._chartJS;
     },
 
