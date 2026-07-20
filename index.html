@@ -372,6 +372,12 @@
         <i class="fas fa-users w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
         <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Manage Users</span>
       </button>
+      <!-- Install App Button (PWA) -->
+      <button x-show="showInstallButton" @click="installApp()"
+        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all group">
+        <i class="fas fa-download w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-y-1 transition-transform"></i>
+        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Install App</span>
+      </button>
       <button @click="logout()" 
         class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group">
         <i class="fas fa-sign-out-alt w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>

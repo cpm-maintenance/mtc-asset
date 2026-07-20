@@ -40,14 +40,12 @@ mtc-asset.web.app (Firebase hosting)
 - FCM push test belum bisa jalan sebelum `FIREBASE_SERVICE_ACCOUNT` env var di-set di Vercel
 - `[WM] No SW registration for postMessage` — harmless, OneSignal internal warning
 
-## Deploy
-- **Frontend:** https://mtc-asset.web.app
-- **Push API (lama):** https://mtc-asset.vercel.app/api/push
-- **Push API (baru):** https://mtc-asset.vercel.app/api/fcm-push
-- **Env var:** `ONESIGNAL_API_KEY` set di Vercel dashboard
-- **Env var (baru):** `FIREBASE_SERVICE_ACCOUNT` — **BELUM SET, SET DULU BESOK**
+### Deploy (updated 20 Juli)
+- **Frontend:** [https://mtc-asset.web.app](https://mtc-asset.web.app) — ✅ Firebase Hosting
+- **Push API:** [https://mtc-asset.vercel.app/api/fcm-push](https://mtc-asset.vercel.app/api/fcm-push) — ✅ Vercel with FCM Admin SDK
+- **Env var:** `FIREBASE_SERVICE_ACCOUNT` ✅ set di Vercel
 - **Build:** `npm run build` → 0 errors
-- **Commit:** `5911414` — feat: FCM push proxy Vercel
+- **Commit:** `18ad3e7` — feat: FCM background push handler + notificationclick in SW
 
 ## Next Session
 - [x] 🔴 **SET** `FIREBASE_SERVICE_ACCOUNT` di Vercel env vars (Firebase Console → Service Accounts)

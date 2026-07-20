@@ -142,8 +142,6 @@ setTimeout(() => {
       if (token) setupForegroundListener();
     });
 
-    setTimeout(checkAllNotifications, 5000);
-    setInterval(checkAllNotifications, 5 * 60 * 1000);
     console.log('[Notif] Notification system initialized');
   } else if (Notification.permission === 'default') {
     console.log('[Notif] Permission not yet requested');
@@ -151,3 +149,23 @@ setTimeout(() => {
     console.log('[Notif] Permission denied');
   }
 }, 4000);
+
+// ============================================================
+// PWA Install Prompt
+// ============================================================
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  if (window.app) {
+    window.app.installPromptEvent = e;
+    window.app.showInstallButton = true;
+  }
+  console.log('[PWA] Install prompt available');
+});
+
+window.addEventListener('appinstalled', () => {
+  if (window.app) {
+    window.app.installPromptEvent = null;
+    window.app.showInstallButton = false;
+  }
+  console.log('[PWA] App installed successfully');
+});
