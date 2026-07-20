@@ -29,7 +29,10 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const { title, body, data = {} } = req.body;
+  // Support both direct {title,body} and OneSignal {headings,contents} format
+  let title = req.body.title || req.body.headings?.en || req.body.headings?.default;
+  let body = req.body.body || req.body.contents?.en || req.body.contents?.default;
+  const { data = {} } = req.body;
   if (!title || !body) return res.status(400).json({ error: 'title and body required' });
 
   try {
