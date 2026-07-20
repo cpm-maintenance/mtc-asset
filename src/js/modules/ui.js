@@ -21,32 +21,48 @@ export const uiModule = {
         }
     },
 
-    showNotification(message, type = 'success') {
-        const id = Date.now();
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-times-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
+    showNotification(message, type = 'success', duration = 4500) {
+        const id = Date.now() + Math.random();
+        const config = {
+            success: { icon: 'fa-check-circle', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400', glow: 'shadow-emerald-500/20', bar: 'bg-emerald-400' },
+            error: { icon: 'fa-times-circle', color: 'border-rose-500/40 bg-rose-500/10 text-rose-400', glow: 'shadow-rose-500/20', bar: 'bg-rose-400' },
+            warning: { icon: 'fa-exclamation-triangle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
+            info: { icon: 'fa-info-circle', color: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400', glow: 'shadow-cyan-500/20', bar: 'bg-cyan-400' },
         };
-        const colors = {
-            success: 'border-emerald-500 bg-emerald-500/20 text-emerald-400',
-            error: 'border-rose-500 bg-rose-500/20 text-rose-400',
-            warning: 'border-amber-500 bg-amber-500/20 text-amber-400',
-            info: 'border-blue-500 bg-blue-500/20 text-blue-400'
-        };
-        this.notifications.push({ id, message, type, icon: icons[type], color: colors[type] });
-        
-        // Auto remove with animation
+        const c = config[type] || config.info;
+        this.notifications.push({
+            id,
+            message,
+            type,
+            icon: c.icon,
+            color: c.color,
+            bar: c.bar,
+            glow: c.glow,
+            exiting: false,
+            progress: 100,
+            _start: Date.now(),
+            _duration: duration,
+        });
+
+        // Animate progress bar
+        const interval = setInterval(() => {
+            const n = this.notifications.find(x => x.id === id);
+            if (!n || n.exiting) { clearInterval(interval); return; }
+            const elapsed = Date.now() - n._start;
+            n.progress = Math.max(0, 100 - (elapsed / n._duration) * 100);
+        }, 50);
+
+        // Auto remove
         setTimeout(() => {
-            const notif = this.notifications.find(n => n.id === id);
-            if (notif) {
-                notif.exiting = true;
+            clearInterval(interval);
+            const n = this.notifications.find(x => x.id === id);
+            if (n) {
+                n.exiting = true;
                 setTimeout(() => {
-                    this.notifications = this.notifications.filter(n => n.id !== id);
-                }, 300);
+                    this.notifications = this.notifications.filter(x => x.id !== id);
+                }, 400);
             }
-        }, 4000);
+        }, duration);
     },
 
     // QR Scanner
