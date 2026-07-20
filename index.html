@@ -7,7 +7,11 @@
   <title>MTC-ASSET | Industrial Maintenance Management</title>
   <meta name="description"
     content="Professional maintenance tracking and asset management for industrial equipment. Integrated with Firebase and PWA support.">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    media="print" onload="this.media='all'; this.onload=null">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <link rel="stylesheet" href="/src/css/style.css">
@@ -908,7 +912,7 @@
             @drop.prevent="$el.classList.remove('border-amber-400'); const f = $event.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) { equipForm.foto = URL.createObjectURL(f); tempEquipFile = f; showCropModal(equipForm.foto, (croppedBlob) => { tempEquipFile = croppedBlob; equipForm.foto = URL.createObjectURL(croppedBlob); }); } else { showNotification('Only image files allowed','error'); }">
             <div class="w-28 h-28 rounded-2xl bg-white/5 overflow-hidden border-2 border-dashed border-nexus-accent/20 flex items-center justify-center relative group">
               <template x-if="equipForm.foto">
-                <img :src="equipForm.foto" class="w-full h-full object-cover">
+                <img :src="equipForm.foto" loading="lazy" class="w-full h-full object-cover">
               </template>
               <template x-if="!equipForm.foto">
                 <i class="fas fa-camera text-nexus-accent/20 text-3xl"></i>
@@ -1374,7 +1378,7 @@
             <template x-for="(p, idx) in logForm.photos">
               <div
                 class="relative group aspect-square rounded-2xl overflow-hidden glass border-nexus-accent/20 shadow-xl">
-                <img :src="p.preview" class="w-full h-full object-cover">
+                <img :src="p.preview" loading="lazy" class="w-full h-full object-cover">
                 <button type="button" @click="removeLogPhoto(idx)"
                   class="absolute top-2 right-2 w-7 h-7 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"><i
                     class="fas fa-times text-[10px]"></i></button>
@@ -1486,7 +1490,7 @@
       </div>
       
       <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-8 mx-auto w-fit border-8 border-nexus-accent/5">
-        <img :src="qrCodeDataUrl" class="w-48 h-48 mx-auto" alt="Asset QR Code">
+        <img :src="qrCodeDataUrl" loading="lazy" class="w-48 h-48 mx-auto" alt="Asset QR Code">
       </div>
       
       <div class="space-y-3 mb-10">
@@ -1556,7 +1560,7 @@
           </button>
         </div>
         <div class="bg-black/40 rounded-2xl overflow-hidden mb-4 max-h-[60vh]">
-          <img id="cropImage" :src="cropImageSrc" class="max-w-full" style="display:block;max-height:60vh;width:auto">
+          <img id="cropImage" :src="cropImageSrc" loading="lazy" class="max-w-full" style="display:block;max-height:60vh;width:auto">
         </div>
         <div class="flex gap-3">
           <button @click="showCropModalOpen = false" class="flex-1 px-4 py-3 glass text-slate-400 rounded-xl text-sm font-bold hover:text-white transition-all">Cancel</button>

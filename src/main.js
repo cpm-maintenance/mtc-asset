@@ -5,23 +5,24 @@ import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
 import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification, resetNotifBlocker } from './js/modules/notification.js';
 
-// Sentry Error Tracking (Production only)
-import * as Sentry from '@sentry/browser';
+// Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
-if (SENTRY_DSN) {
-  Sentry.init({
+if (SENTRY_DSN && import.meta.env.PROD) {
+  const Sentry = await import('@sentry/browser').then(m => m.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
     tracesSampleRate: 0.0,
-    defaultIntegrations: false, // kill WM noise — disables all SW-bound internal services
+    defaultIntegrations: false,
     autoSessionTracking: false,
     integrations: [],
     replaysSessionSampleRate: 0.0,
     replaysOnErrorSampleRate: 0.0,
-  });
+  }));
+  window.Sentry = { captureException: (e) => Sentry.captureException?.(e) };
   console.log('[Sentry] Initialized, env:', import.meta.env.MODE);
 } else {
-  console.log('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
+  window.Sentry = { captureException: (e) => console.warn('[Sentry] Not available:', e) };
+  if (!SENTRY_DSN) console.log('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
 }
 
 window.Alpine = Alpine;
