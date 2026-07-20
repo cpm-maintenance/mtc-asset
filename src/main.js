@@ -8,20 +8,33 @@ import { requestNotificationPermission, registerFCMToken, setupForegroundListene
 // Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 if (SENTRY_DSN && import.meta.env.PROD) {
-  const Sentry = await import('@sentry/browser').then(m => m.init({
-    dsn: SENTRY_DSN,
-    environment: import.meta.env.MODE,
-    tracesSampleRate: 0.0,
-    defaultIntegrations: false,
-    autoSessionTracking: false,
-    integrations: [],
-    replaysSessionSampleRate: 0.0,
-    replaysOnErrorSampleRate: 0.0,
-  }));
-  window.Sentry = { captureException: (e) => Sentry.captureException?.(e) };
+  const Sentry = await import('@sentry/browser').then(m => {
+    m.init({
+      dsn: SENTRY_DSN,
+      environment: import.meta.env.MODE,
+      tracesSampleRate: 0.0,
+      defaultIntegrations: false,
+      autoSessionTracking: false,
+      integrations: [],
+      replaysSessionSampleRate: 0.0,
+      replaysOnErrorSampleRate: 0.0,
+    });
+    return m;
+  });
+  window.Sentry = {
+    setUser: (u) => Sentry.setUser?.(u),
+    captureException: (e, c) => Sentry.captureException?.(e, c),
+    withScope: (cb) => Sentry.withScope?.(cb),
+    setContext: (k, v) => Sentry.setContext?.(k, v),
+  };
   console.log('[Sentry] Initialized, env:', import.meta.env.MODE);
 } else {
-  window.Sentry = { captureException: (e) => console.warn('[Sentry] Not available:', e) };
+  window.Sentry = {
+    setUser: () => {},
+    captureException: (e) => console.warn('[Sentry] Not available:', e),
+    withScope: () => {},
+    setContext: () => {},
+  };
   if (!SENTRY_DSN) console.log('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
 }
 
