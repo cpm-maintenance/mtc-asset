@@ -40,3 +40,48 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// ============================================================
+// FCM Background Push — notif muncul walau app tertutup
+// ============================================================
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    const notif = data.notification || data.data || {};
+
+    const title = notif.title || 'MTC.Asset';
+    const options = {
+      body: notif.body || '',
+      icon: notif.icon || '/logo.png',
+      badge: notif.badge || '/logo.png',
+      vibrate: notif.vibrate || [200, 100, 200],
+      requireInteraction: true,
+      tag: notif.tag || 'mtc-push',
+      data: {
+        url: notif.clickAction || data.data?.url || '/',
+        ...data.data,
+      },
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (e) {
+    console.error('[SW Push] Error:', e);
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((list) => {
+      for (const client of list) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
+  );
+});
