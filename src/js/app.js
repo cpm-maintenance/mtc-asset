@@ -21,6 +21,15 @@ export function app() {
     return {
         // --- APP STATE ---
         currentPage: 'dash', sidebarCollapsed: false, activeTab: 'hist', search: '', searchPart: '', partFilterEquip: '',
+        installPromptEvent: null, showInstallButton: false,
+        async installApp() {
+          if (!this.installPromptEvent) return;
+          this.installPromptEvent.prompt();
+          const result = await this.installPromptEvent.userChoice;
+          this.installPromptEvent = null;
+          this.showInstallButton = false;
+          console.log('[PWA] Install result:', result.outcome);
+        },
         // Work Order filters
         searchWO: '', filterWOStatus: '', filterWOPriority: '', filterDateFrom: '', filterDateTo: '',
         selectedWODetail: null,
