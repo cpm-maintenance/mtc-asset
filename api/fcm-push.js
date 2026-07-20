@@ -52,17 +52,19 @@ export default async function handler(req, res) {
 
     const messages = tokens.map(token => ({
       token,
-      notification: { title, body },
-      data: { ...data, clickAction: data.url || '/' },
+      data: {
+        title,
+        body,
+        icon: '/logo.png',
+        badge: '/logo.png',
+        vibrate: JSON.stringify([200, 100, 200]),
+        requireInteraction: 'true',
+        tag: data.tag || 'mtc-push',
+        clickAction: data.url || '/',
+        ...data,
+      },
       webpush: {
         headers: { Urgency: 'high' },
-        notification: {
-          icon: '/logo.png',
-          badge: '/logo.png',
-          vibrate: [200, 100, 200],
-          requireInteraction: true,
-          tag: data.tag || 'mtc-push',
-        },
         fcmOptions: { link: data.url || '/' },
       },
     }));

@@ -48,20 +48,20 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   try {
-    const data = event.data.json();
-    const notif = data.notification || data.data || {};
+    // Data-only FCM payload (reliable on mobile)
+    const payload = event.data.json();
+    const data = payload.data || payload || {};
 
-    const title = notif.title || 'MTC.Asset';
+    const title = data.title || 'MTC.Asset';
     const options = {
-      body: notif.body || '',
-      icon: notif.icon || '/logo.png',
-      badge: notif.badge || '/logo.png',
-      vibrate: notif.vibrate || [200, 100, 200],
-      requireInteraction: true,
-      tag: notif.tag || 'mtc-push',
+      body: data.body || '',
+      icon: data.icon || '/logo.png',
+      badge: data.badge || '/logo.png',
+      vibrate: data.vibrate ? JSON.parse(data.vibrate) : [200, 100, 200],
+      requireInteraction: data.requireInteraction !== 'false',
+      tag: data.tag || 'mtc-push',
       data: {
-        url: notif.clickAction || data.data?.url || '/',
-        ...data.data,
+        url: data.clickAction || '/',
       },
     };
 
