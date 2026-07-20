@@ -209,6 +209,19 @@ export const authModule = {
             this.isLoading = false;
         }
     },
+
+    async sendPasswordReset(uid) {
+        const user = this.allUsers.find(u => u.uid === uid);
+        if (!user?.email) return;
+        if (!confirm(`Send password reset email to ${user.email}?`)) return;
+        try {
+            await window.sendPasswordResetEmail(window.auth, user.email);
+            this.showNotification(`Reset email sent to ${user.email}`);
+        } catch (error) {
+            console.error('[Auth] Password reset error:', error);
+            this.showNotification('Failed to send reset email', 'error');
+        }
+    },
     
     async loadAllUsers() {
         if (!window.db || !this.isAdmin) return;
