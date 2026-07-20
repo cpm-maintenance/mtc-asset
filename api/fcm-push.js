@@ -10,7 +10,7 @@ import * as admin from 'firebase-admin';
 const DATABASE_URL = 'https://mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 function initAdmin() {
-  if (admin.apps.length) return;
+  try { admin.app(); return; } catch {}
   const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
   admin.initializeApp({
     credential: admin.credential.cert(sa),
