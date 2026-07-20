@@ -12,9 +12,9 @@ import { getMessaging } from 'firebase-admin/messaging';
 const DATABASE_URL = 'https://mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 function initAdmin() {
-  try { getApp(); return; } catch {}
+  try { return getApp(); } catch {}
   const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  initializeApp({
+  return initializeApp({
     credential: cert(sa),
     databaseURL: DATABASE_URL,
   });
@@ -33,10 +33,10 @@ export default async function handler(req, res) {
   if (!title || !body) return res.status(400).json({ error: 'title and body required' });
 
   try {
-    initAdmin();
+    const app = initAdmin();
 
     // Read all FCM tokens
-    const db = getDatabase(DATABASE_URL);
+    const db = getDatabase(app);
     const snap = await db.ref('_fcmTokens').once('value');
     const entries = snap.val();
     if (!entries) return res.json({ ok: true, sent: 0, reason: 'no tokens' });
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       },
     }));
 
-    const messaging = getMessaging();
+    const messaging = getMessaging(app);
     const result = await messaging.sendEach(messages);
 
     return res.json({
