@@ -32,6 +32,7 @@ export async function initOneSignal() {
         await OneSignal.init({
           appId: ONE_SIGNAL_APP_ID,
           notifyButton: { enable: false },
+          session: false, // kill WM noise — disables SessionManager postMessage to SW
           allowLocalhostAsSecureOrigin: true,
         });
         _initComplete = true;
