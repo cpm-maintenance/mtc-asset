@@ -98,6 +98,13 @@ export const dataModule = {
     equipLastKey: null,
     equipLoadingMore: false,
 
+    // Firebase listener tracking — cleanup to prevent listener leaks
+    _listeners: [],
+    _cleanupFirebaseListeners() {
+        this._listeners.forEach(unsub => { try { unsub(); } catch(e) {} });
+        this._listeners = [];
+    },
+
     async checkPendingWorkOrders() {
         try {
             const logRef = window.ref(window.db, 'HistoryLog');
@@ -143,6 +150,9 @@ export const dataModule = {
 
     setupFirebaseListeners() {
         if (!this.isLoggedIn) return;
+
+        // 🔥 Cleanup old listeners before re-attaching (prevent listener leak)
+        this._cleanupFirebaseListeners();
 
         try {
         // Reset pagination state
@@ -190,20 +200,20 @@ export const dataModule = {
 
         // User Role
         const userRef = window.ref(window.db, `Users/${this.user.uid}`);
-        window.onValue(userRef, (snap) => {
+        this._listeners.push(window.onValue(userRef, (snap) => {
             const data = snap.val();
             this.userRole = data ? (data.role || 'user') : 'user';
-        }, (error) => console.error('User Role Listener:', error));
+        }, (error) => console.error('User Role Listener:', error)));
 
         // Connection State
         const connectedRef = window.ref(window.db, ".info/connected");
-        window.onValue(connectedRef, (snap) => {
+        this._listeners.push(window.onValue(connectedRef, (snap) => {
             this.isOnline = snap.val() === true;
-        });
+        }));
 
         // Equipment (Full data for reference, pagination for display handled in filteredEquip)
         const eqRef = window.ref(window.db, 'Equipment');
-        window.onValue(eqRef, (snapshot) => {
+        this._listeners.push(window.onValue(eqRef, (snapshot) => {
             const data = snapshot.val();
             let equipList = [];
             if (data && typeof data === 'object') {
@@ -229,12 +239,12 @@ export const dataModule = {
                 window._firebaseReadyResolve();
                 window._firebaseReadyResolve = null; // Ensure it runs only once
             }
-        }, (error) => console.error('Equipment Listener:', error));
+        }, (error) => console.error('Equipment Listener:', error)));
 
         // Spare Parts (Full data) - direct ref for reliability
         console.log('[DEBUG] Setting up SpareParts listener...');
         const spRef = window.ref(window.db, 'SpareParts');
-        window.onValue(spRef, (snapshot) => {
+        this._listeners.push(window.onValue(spRef, (snapshot) => {
             try {
                 console.log('[DEBUG] SpareParts exists:', snapshot.exists());
                 const data = snapshot.val();
@@ -259,12 +269,12 @@ export const dataModule = {
         }, (error) => {
             console.error('Spare Parts Listener Error:', error);
             this.allParts = [];
-        });
+        }));
 
         // Load ALL HistoryLog with real-time listener (replaces paginated load)
         const histRef = window.ref(window.db, 'HistoryLog');
         let _firebaseLogsLoaded = false;
-        window.onValue(histRef, (snapshot) => {
+        this._listeners.push(window.onValue(histRef, (snapshot) => {
             try {
                 const data = snapshot.val();
                 let allLogs = safeProcessFirebaseData(data);
@@ -307,11 +317,11 @@ export const dataModule = {
             console.error('HistoryLog Listener Error:', error);
             this.logs = [];
             this.activeWorkOrders = [];
-        });
+        }));
 
 // Performance Data - use direct ref without query for reliability
         const perfRef = window.ref(window.db, 'Performance');
-        window.onValue(perfRef, (snapshot) => {
+        this._listeners.push(window.onValue(perfRef, (snapshot) => {
             try {
                 const data = snapshot.val();
                 let rawData = [];
@@ -336,34 +346,33 @@ export const dataModule = {
                 console.error('Performance Listener Error:', e);
                 this.performanceData = [];
             }
-        }, (error) => console.error('Performance Listener:', error));
+        }, (error) => console.error('Performance Listener:', error)));
 
-        // --- DASHBOARD AGGREGATE STATS LISTENERS ---
         // 1. Listen to static Stats node
-        window.onValue(window.ref(window.db, 'Stats'), (snap) => {
+        this._listeners.push(window.onValue(window.ref(window.db, 'Stats'), (snap) => {
             const val = snap.val() || {};
             if (this.dashboardStats) {
                 this.dashboardStats.totalEquip = val.totalEquip || 0;
                 this.dashboardStats.totalDowntime = val.totalDowntime || 0;
             }
-        });
+        }));
 
         // 2. Query Overdue PM (only fetch overdue items, highly efficient)
         const todayStr = new Date().toISOString().split('T')[0];
         const overdueQuery = window.query(window.ref(window.db, 'Equipment'), window.orderByChild('NextPMDate'), window.endAt(todayStr));
-        window.onValue(overdueQuery, (snap) => {
+        this._listeners.push(window.onValue(overdueQuery, (snap) => {
             let count = 0;
             snap.forEach((child) => {
                 if (child.val().NextPMDate && child.val().NextPMDate !== '') count++;
             });
             if (this.dashboardStats) this.dashboardStats.overduePM = count;
-        });
+        }));
 
         // 3. Query Low Stock Parts
         const lowStockQuery = window.query(window.ref(window.db, 'SpareParts'), window.orderByChild('isLowStock'), window.equalTo(true));
-        window.onValue(lowStockQuery, (snap) => {
+        this._listeners.push(window.onValue(lowStockQuery, (snap) => {
             if (this.dashboardStats) this.dashboardStats.lowStock = snap.exists() ? snap.size : 0;
-        });
+        }));
         } catch (e) {
             console.error('Firebase listeners setup error:', e);
             this.showNotification('Error loading data, please refresh', 'error');
