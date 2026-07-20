@@ -6,8 +6,8 @@
     "Users": {
       ".read": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'",
       "$uid": {
-        ".read": "auth !== null && auth.uid === $uid",
-        ".write": "auth !== null && auth.uid === $uid",
+        ".read": "auth !== null && (auth.uid === $uid || root.child('Users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth !== null && (auth.uid === $uid || root.child('Users').child(auth.uid).child('role').val() === 'admin')",
         "role": {
           ".write": "auth !== null && root.child('Users').child(auth.uid).child('role').val() === 'admin'"
         }
