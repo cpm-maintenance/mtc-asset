@@ -50,10 +50,11 @@ mtc-asset.web.app (Firebase hosting)
 - **Commit:** `5911414` — feat: FCM push proxy Vercel
 
 ## Next Session
-- [ ] 🔴 **SET** `FIREBASE_SERVICE_ACCOUNT` di Vercel env vars (Firebase Console → Service Accounts)
-- [ ] 🔴 **Deploy ulang Vercel** setelah env var di-set
-- [ ] Test FCM push: Allow notif → bikin Request Part → notif harus muncul walau app ditutup
+- [x] 🔴 **SET** `FIREBASE_SERVICE_ACCOUNT` di Vercel env vars (Firebase Console → Service Accounts)
+- [x] 🔴 **Deploy ulang Vercel** setelah env var di-set
+- [x] Test FCM push: Allow notif → bikin Request Part → **✅ NOTIF MUNCUL**
 - [ ] Tes background push on mobile (PWA / Chrome)
 - [ ] OneSignal bisa di-nonaktifkan kalo FCM udah jalan
+- [ ] 🔴 **Work Orders list hilang setelah refresh** — masih open
 
 
