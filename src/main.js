@@ -1,6 +1,7 @@
 import './js/firebase-config.js';
 import { app } from './js/app.js';
 import './css/style.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
 import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification, resetNotifBlocker } from './js/modules/notification.js';
