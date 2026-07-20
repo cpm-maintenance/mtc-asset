@@ -15,11 +15,14 @@ export const chartModule = {
         return window._chartJS;
     },
 
-    // Safe Chart creation with error boundary
+    // Safe Chart creation with error boundary — auto-destroy existing chart on same canvas
     async safeCreateChart(ctx, config) {
         try {
             const Chart = await this.loadChartJS();
             if (!Chart) return null;
+            // Destroy existing chart on this canvas (handles concurrent renderDashboardCharts)
+            const existing = Chart.getChart(ctx);
+            if (existing) existing.destroy();
             return new Chart(ctx, config);
         } catch (e) {
             console.error('Chart creation failed:', e);
