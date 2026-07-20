@@ -13,16 +13,10 @@ if (SENTRY_DSN) {
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
     tracesSampleRate: import.meta.env.PROD ? 0.5 : 0.0,
-    autoSessionTracking: false, // supress SW postMessage noise — our Workbox SW doesn't have Sentry handler
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
+    autoSessionTracking: true,
+    integrations: [],
+    replaysSessionSampleRate: 0.0,
+    replaysOnErrorSampleRate: 0.0,
   });
   console.log('[Sentry] Initialized, env:', import.meta.env.MODE);
 } else {
