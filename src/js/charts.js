@@ -36,7 +36,7 @@ export const chartModule = {
         Object.values(window._appCharts || {}).forEach(c => { 
             if(c) { try { c.destroy(); } catch(e) {} }
         });
-        window._appCharts = { status: null, cost: null, downtime: null, reliability: null };
+        window._appCharts = { status: null, cost: null, downtime: null, reliability: null, woCompletion: null };
 
         try {
             const equipment = this.safeDeepClone(this.equipment);
