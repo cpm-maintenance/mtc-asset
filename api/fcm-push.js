@@ -5,15 +5,17 @@
 //   FIREBASE_SERVICE_ACCOUNT = full JSON service account key from Firebase Console
 //     Project Settings → Service Accounts → Generate new private key
 
-import * as admin from 'firebase-admin';
+import { cert, initializeApp, getApp } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
+import { getMessaging } from 'firebase-admin/messaging';
 
 const DATABASE_URL = 'https://mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 function initAdmin() {
-  try { admin.app(); return; } catch {}
+  try { getApp(); return; } catch {}
   const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  admin.initializeApp({
-    credential: admin.credential.cert(sa),
+  initializeApp({
+    credential: cert(sa),
     databaseURL: DATABASE_URL,
   });
 }
@@ -34,7 +36,8 @@ export default async function handler(req, res) {
     initAdmin();
 
     // Read all FCM tokens
-    const snap = await admin.database().ref('_fcmTokens').once('value');
+    const db = getDatabase(DATABASE_URL);
+    const snap = await db.ref('_fcmTokens').once('value');
     const entries = snap.val();
     if (!entries) return res.json({ ok: true, sent: 0, reason: 'no tokens' });
 
@@ -61,7 +64,8 @@ export default async function handler(req, res) {
       },
     }));
 
-    const result = await admin.messaging().sendEach(messages);
+    const messaging = getMessaging();
+    const result = await messaging.sendEach(messages);
 
     return res.json({
       ok: true,
