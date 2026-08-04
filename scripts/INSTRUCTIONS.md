@@ -52,3 +52,16 @@ Tambahkan juga secrets ini (bisa copy dari `.env`):
 Setelah setup, backup akan otomatis:
 - **Manual**: `npm run backup` → backup Firebase + git push
 - **Otomatis**: GitHub Actions setiap hari jam 02:00 WIB
+
+---
+
+## 🧹 Catatan Script (2026-08-04)
+
+Helper satu-kali-pakai (`.mjs`) sudah DIHAPUS dari folder ini (v1-palette, r1-aging, r2-score, r3, r5-pred, dll) — kode sudah di-merge permanen ke `src/js` & `public/pages/*.html`.
+
+**Yang disimpan** (dipakai buat backup):
+- `backup-firebase.js` — backup data Firebase (dijalankan via `npm run backup:firebase`)
+- `backup.js` — backup + git push (`npm run backup`)
+- `backup.bat` — quick backup (`npm run backup:quick`)
+
+> Note CRLF: file proyek (html/js) pakai CRLF → edit tools konvensional gagal. Kalau perlu edit sebentar, pakai node `.mjs` + regex \r?\n, lalu hapus.
