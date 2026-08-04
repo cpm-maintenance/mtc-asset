@@ -17,11 +17,11 @@
 - [x] Jadikan WO = golden source downtime — `Performance.bd` auto-sync dari WO breakdown (computeBDFromLogs) saat submitLog/completeWO
 - [x] Rekonsiliasi — `wh`/`stb` tetap manual (produksi), `bd`+`freq` otomatis dari WO; badge `auto` + tombol Sync BD di Performance; fix bug calcDowntime (bd+stb → bd)
 
-## 🧹 Housekeeping — Bersihkan scripts/*.mjs (done, tak terpakai)
+## 🧹 Housekeeping — Bersihkan scripts/*.mjs ✅
 
-- [ ] Hapus helper lama: regroup-menu, add-badges, p0-bottombar, p2-header, p3-nav, v1-palette, v2-chartpolish, v3-micro, v4-type, r1-aging, r2-score, r457, r5-pred, fix-notes, scan
-- [ ] Keep: backup-firebase.js, backup.js, backup.bat
-- [ ] Update `scripts/INSTRUCTIONS.md` agar konsisten dgn file tersisa
+- [x] Hapus helper lama: 15 file .mjs (regroup-menu s/d scan) — commit ed653dc
+- [x] Keep: backup-firebase.js, backup.js, backup.bat
+- [x] Update `scripts/INSTRUCTIONS.md` — tambah section catatan script + CRLF note
 
 ## 📱 QA — Visual di Device Real
 
@@ -39,7 +39,7 @@
 | Session 1-3d (R1,R2,R4,R5,R7 + V1-V4 + Mobile UX) | ✅ live `mtc-asset.web.app` |
 | R3 Part↔WO linkage | ✅ done (commit dc46edf) |
 | R6 Single source truth | ✅ done (commit 74f3833) |
-| Housekeeping scripts | ⏳ belum |
+| Housekeeping scripts | ✅ done (commit ed653dc) |
 
 ## Known Issues
 
