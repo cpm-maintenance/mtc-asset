@@ -377,3 +377,15 @@ export function applyStockDeduction(part, qty) {
   const cur = Number(part?.Stok) || 0;
   return { ...part, Stok: Math.max(0, cur - (Number(qty) || 0)) };
 }
+
+/**
+ * R6 — Single source truth: compute breakdown duration (bd) from WO logs
+ * Sum Downtime of Breakdown logs for given equipment + date.
+ */
+export function computeBDFromLogs(logs, equipId, date) {
+  return (logs || []).reduce((sum, l) => {
+    if (!l || l.EquipmentID !== equipId || l.Jenis !== 'Breakdown') return sum;
+    if (date && l.Tanggal !== date) return sum;
+    return sum + (Number(l.Downtime) || 0);
+  }, 0);
+}
