@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction } from '../src/js/utils.js';
+import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction, computeBDFromLogs } from '../src/js/utils.js';
 import { kpiEngineModule } from '../src/js/modules/kpi-engine.js';
 import { performanceModule } from '../src/js/modules/performance.js';
 
@@ -733,5 +733,26 @@ describe('R3 Part-WO Linkage', () => {
     expect(applyStockDeduction({ Stok: 5 }, 7)).toEqual({ Stok: 0 });
     expect(applyStockDeduction({ Stok: 5 }, 2)).toEqual({ Stok: 3 });
     expect(applyStockDeduction(undefined, 1)).toEqual({ Stok: 0 });
+  });
+});
+
+
+describe('R6 Single Source Truth', () => {
+  it('computeBDFromLogs: sum Downtime breakdown per equip+date', () => {
+    const logs = [
+      { EquipmentID: 'EQ1', Jenis: 'Breakdown', Downtime: 2, Tanggal: '2026-08-01' },
+      { EquipmentID: 'EQ1', Jenis: 'Breakdown', Downtime: 3, Tanggal: '2026-08-01' },
+      { EquipmentID: 'EQ1', Jenis: 'PM', Downtime: 9, Tanggal: '2026-08-01' },
+      { EquipmentID: 'EQ2', Jenis: 'Breakdown', Downtime: 5, Tanggal: '2026-08-01' },
+      { EquipmentID: 'EQ1', Jenis: 'Breakdown', Downtime: 4, Tanggal: '2026-08-02' },
+    ];
+    expect(computeBDFromLogs(logs, 'EQ1', '2026-08-01')).toBe(5);
+    expect(computeBDFromLogs(logs, 'EQ1', '2026-08-02')).toBe(4);
+    expect(computeBDFromLogs(logs, 'EQ2', '2026-08-01')).toBe(5);
+    expect(computeBDFromLogs(logs, 'EQ1', '2026-08-03')).toBe(0);
+  });
+  it('computeBDFromLogs: null/empty safe', () => {
+    expect(computeBDFromLogs(null, 'EQ1', '2026-08-01')).toBe(0);
+    expect(computeBDFromLogs([], 'EQ1', '2026-08-01')).toBe(0);
   });
 });

@@ -131,7 +131,8 @@ export const enterpriseKPI = {
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - months);
     const filtered = data.filter(p => p.date && new Date(p.date) > cutoff);
-    return filtered.reduce((s, p) => s + (Number(p.bd) || 0) + (Number(p.stb) || 0), 0);
+    // R6: downtime = breakdown duration (bd) only — stb is standing time, bukan breakdown
+    return filtered.reduce((s, p) => s + (Number(p.bd) || 0), 0);
   },
 
   // ─── Maintenance Cost ───
@@ -267,6 +268,15 @@ export const enterpriseKPI = {
     return Object.keys(months).sort().slice(-12).map(m => ({
       month: m, pct: months[m].total > 0 ? Math.round((months[m].done / months[m].total) * 100) : 0,
     }));
+  },
+
+  calcPMCompliance() {
+    const pm = this._raw(this.pmList) || [];
+    const total = pm.filter(p => p.status === 'completed' || (p.status === 'pending' && p.date)).length;
+    if (total === 0) return { pct: 0, completed: 0, total: 0 };
+    const completed = pm.filter(p => p.status === 'completed').length;
+    const pct = Math.round((completed / total) * 100);
+    return { pct, completed, total };
   },
 
   // ─── WO Status Counts ───
