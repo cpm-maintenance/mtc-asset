@@ -1,7 +1,7 @@
 /**
  * History log management module
  */
-import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase } from '../utils.js';
+import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability } from '../utils.js';
 import { DEFAULT_LOG_FORM } from '../constants.js';
 import { safeProcessFirebaseData } from './data.js';
 
@@ -392,19 +392,13 @@ export const logsModule = {
                 await window.update(eqRef, updates);
             }
 
-            // Deduct Stock (only for new logs)
-            if (!this.isEditingLog && this.logForm.parts && this.logForm.parts.length > 0) {
+            // Deduct Stock (skip for WOs — deduct on approve instead, Part Reservation & Kitting)
+            if (!this.isEditingLog && this.logForm.parts && this.logForm.parts.length > 0 && !this.logForm.woNumber) {
                 for (const p of this.logForm.parts) {
-                    if (!p.id) {
-                        console.log('[DeductStock] Skipping - no part id');
-                        continue;
-                    }
-                    console.log('[DeductStock] Deducting:', p.id, 'qty:', p.qty);
+                    if (!p.id) continue;
                     try {
                         await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (curr) => {
-                            const newVal = (curr || 0) - Number(p.qty);
-                            console.log('[DeductStock] Transaction:', curr, '->', newVal);
-                            return newVal;
+                            return (curr || 0) - Number(p.qty);
                         });
                     } catch(e) {
                         console.error('[DeductStock] Error:', e);
@@ -442,6 +436,31 @@ export const logsModule = {
         }
     },
 
+    // R3: parse PartsUsed (string JSON or array) -> [{id, qty, ...}]
+    parsePartsUsed(parts) {
+        if (typeof parts === 'string') {
+            try { return JSON.parse(parts); } catch { return []; }
+        }
+        return Array.isArray(parts) ? parts : [];
+    },
+
+    // R3: availability check utk WO (pakai pure helper, allParts dari store)
+    woAvailability(wo) {
+        const parts = this.parsePartsUsed(wo?.PartsUsed).map(p => ({ partId: p.id, quantity: p.qty }));
+        return checkPartAvailability(parts, this.allParts || []);
+    },
+
+    // R3: summary utk badge — jumlah item kurang + total shortage
+    woShortageSummary(wo) {
+        const res = this.woAvailability(wo);
+        const missing = res.filter(r => !r.ok);
+        return {
+            ok: missing.length === 0,
+            total: missing.reduce((s, r) => s + (r.shortage || 0), 0),
+            count: missing.length,
+        };
+    },
+
 async approveWO(logId) {
         const log = this.logs.find(l => l.LogID === logId);
         if (!log) {
@@ -463,6 +482,25 @@ async approveWO(logId) {
                 rejectionDate: '',
                 rejectionReason: ''
             };
+            // Part Reservation & Kitting: Deduct stock on approve
+            const parts = this.parsePartsUsed(log.PartsUsed);
+            // R3: availability guard — warn bila stok kurang (OK=tetap approve / Batal)
+            const missing = this.woAvailability(log).filter(a => !a.ok);
+            if (missing.length > 0) {
+                const names = missing.map(m => (m.partId || '?') + ' (-' + (m.shortage || 0) + ')').join(', ');
+                if (!confirm('Stok tidak cukup untuk ' + names + '. Tetap approve (part dipesan via requisition) / batalkan?\n\nOK = tetap approve\nBatal = batalkan approve')) {
+                    this.showNotification('Approve dibatalkan — stok kurang', 'info');
+                    return;
+                }
+            }
+            if (Array.isArray(parts) && parts.length > 0) {
+                for (const p of parts) {
+                    if (!p.id) continue;
+                    await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (curr) => {
+                        return (curr || 0) - Number(p.qty);
+                    });
+                }
+            }
             
             await window.update(window.ref(window.db, 'HistoryLog/' + logId), updates);
             this.showNotification("Work Order Approved!");
@@ -636,13 +674,25 @@ async approveWO(logId) {
         }
 
         try {
+            // Downtime Cost Calculator: Auto-calculate cost from Downtime × DowntimeCostPerHour
+            let calculatedCost = Number(log.Cost) || 0;
+            const downtime = Number(log.Downtime) || 0;
+            if (downtime > 0 && log.EquipmentID) {
+                const equip = this.equipment?.find(e => e.EquipmentID === log.EquipmentID);
+                const rate = Number(equip?.DowntimeCostPerHour) || 0;
+                if (rate > 0) {
+                    calculatedCost = downtime * rate;
+                }
+            }
+
             const updates = {
-                Status: 'Completed'
+                Status: 'Completed',
+                Cost: calculatedCost,
+                actualHours: log.estimatedHours || log.actualHours || 0
             };
             
-            // Use update() instead of set() to preserve existing data
             await window.update(window.ref(window.db, 'HistoryLog/' + logId), updates);
-            this.showNotification("Work Order Completed");
+            this.showNotification(`Work Order Completed — Cost: $${calculatedCost.toFixed(0)}`);
             
             // Update local state for immediate UI 反应
             const logIdx = this.logs.findIndex(l => l.LogID === logId);
