@@ -569,7 +569,7 @@
           <span class="hidden sm:inline" x-text="isOnline ? 'LIVE' : 'OFF'"></span>
         </div>
         <button @click="toggleDarkMode()" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/10 transition-colors">
-          <i :class="darkMode ? 'fas fa-sun text-sm' : 'fas fa-moon text-sm'"></i>
+          <i :class="themeMode === 'night' ? 'fas fa-sun text-sm' : 'fas fa-moon text-sm'"></i>
         </button>
         <button @click="refreshData()" title="Refresh Data" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:text-nexus-accent transition-colors">
           <i class="fas fa-sync-alt text-sm"></i>
