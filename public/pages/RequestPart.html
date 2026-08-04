@@ -148,6 +148,7 @@
                           <span x-show="item.noResv"><i class="fas fa-tag text-cyan-400/70 mr-1"></i>NO RESV: <span class="text-cyan-400" x-text="item.noResv"></span></span>
                           <span x-show="item.partId"><i class="fas fa-barcode text-amber-400/70 mr-1"></i>Part: <span x-text="item.partId"></span></span>
                           <span x-show="item.equipmentId"><i class="fas fa-industry text-amber-400/70 mr-1"></i>Equip: <span x-text="item.equipmentId"></span></span>
+                          <span x-show="req.woId || req.woNumber" class="text-purple-400"><i class="fas fa-link text-purple-400/70 mr-1"></i>WO: <span x-text="req.woNumber || req.woId"></span></span>
                         </div>
                       </div>
                     </div>
@@ -308,6 +309,14 @@
                     </template>
                   </select>
                 </div>
+                <!-- R3: Live availability badge per line item -->
+                <div class="col-span-6 flex items-end pb-2" x-show="item.itemType === 'part' && item.partId">
+                  <span class="px-3 py-2 rounded-lg text-xs font-black flex items-center gap-2 border"
+                    :class="itemAvail(item).ok ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'">
+                    <i class="fas" :class="itemAvail(item).ok ? 'fa-check-circle' : 'fa-exclamation-triangle'"></i>
+                    <span x-text="itemAvail(item).ok ? ('Stock: ' + itemAvail(item).available) : ('Kurang ' + itemAvail(item).shortage + ' (stock ' + itemAvail(item).available + ')')"></span>
+                  </span>
+                </div>
               </div>
             </div>
           </template>
@@ -319,6 +328,17 @@
         </button>
 
         <div x-show="!reqEditMode" class="grid grid-cols-12 gap-3 pt-3 border-t border-white/5">
+          <div class="col-span-12">
+            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">
+              <i class="fas fa-link text-purple-400/70 mr-1"></i>Link ke Work Order (opsional)
+            </label>
+            <select x-model="reqWoId" class="w-full p-3 glass border-nexus-accent/10 text-sm font-bold rounded-xl">
+              <option value="">— Tanpa WO —</option>
+              <template x-for="wo in openWOs" :key="wo.LogID">
+                <option :value="wo.LogID" x-text="(wo.woNumber || wo.LogID) + ' — ' + (wo.Deskripsi || wo.Jenis || '').substring(0, 40)"></option>
+              </template>
+            </select>
+          </div>
           <div class="col-span-4">
             <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Prioritas (global)</label>
             <select x-model="reqPriority" class="w-full p-3 glass border-nexus-accent/10 text-sm font-bold rounded-xl">
