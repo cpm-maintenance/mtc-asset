@@ -1,7 +1,7 @@
 /**
  * Performance & KPI module
  */
-import { validatePerformanceForm, withRetry, isNetworkError, sanitizeDataForFirebase } from '../utils.js';
+import { validatePerformanceForm, withRetry, isNetworkError, sanitizeDataForFirebase, computeBDFromLogs } from '../utils.js';
 
 export const performanceModule = {
     openPerformanceModal(edit = false, data = null) {
@@ -188,6 +188,30 @@ export const performanceModule = {
         } finally {
             this.isLoading = false;
         }
+    },
+
+    // R6: recompute bd for all Performance records from WO breakdown logs
+    async recomputeBD() {
+        if (!this.isAdminOrSupervisor) {
+            this.showNotification('Admin access required', 'error');
+            return;
+        }
+        if (!window.db) return;
+        const perf = (this.performanceData || []).filter(p => p && p.EquipmentID);
+        if (!perf.length) { this.showNotification('Tidak ada data Performance', 'info'); return; }
+        let updated = 0;
+        for (const p of perf) {
+            try {
+                const bd = computeBDFromLogs(this.logs, p.EquipmentID, p.date);
+                const freq = (this.logs || []).filter(l => l && l.EquipmentID === p.EquipmentID
+                    && l.Jenis === 'Breakdown' && l.Tanggal === p.date).length;
+                const updates = { bd: Number(bd.toFixed(2)), freq, bdSource: 'wo', updatedAt: new Date().toISOString() };
+                await window.update(window.ref(window.db, 'Performance/' + (p.id || p.Id)), updates);
+                Object.assign(p, updates);
+                updated++;
+            } catch (e) { console.warn('[R6] recomputeBD fail:', p.id, e.message); }
+        }
+        this.showNotification('BD disinkronkan dari WO: ' + updated + ' record', 'success');
     },
 
     calculateKPI(p) {

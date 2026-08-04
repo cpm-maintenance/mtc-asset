@@ -11,6 +11,7 @@
         <input type="file" @change="importCSV($event, 'perf')" class="hidden" accept=".csv, .xlsx">
       </label>
       <button @click="exportKPIToPDF()" class="btn-nexus-small"><i class="fas fa-file-pdf"></i><span class="hidden lg:inline ml-1">PDF</span></button>
+      <button @click="recomputeBD()" class="btn-nexus-small" title="Hitung ulang BD dari WO breakdown"><i class="fas fa-sync-alt"></i><span class="hidden lg:inline ml-1">Sync BD</span></button>
       <button @click="openPerformanceModal(false)" class="btn-nexus-gold"><i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Log</span></button>
     </div>
   </div>
@@ -18,7 +19,7 @@
   <!-- Performance Table -->
   <div class="card-modern overflow-hidden border-nexus-accent/10">
     <div class="overflow-x-auto">
-      <table id="perfTable" class="w-full text-left">
+      <div class="overflow-x-auto"><table id="perfTable" class="w-full text-left">
         <thead class="glass text-xs uppercase font-black tracking-widest text-amber-400/60">
           <tr>
             <th class="p-5">Timeline</th>
@@ -42,7 +43,10 @@
               <td class="p-5"><span class="tag-nexus" x-text="p.category || 'Mechanical'"></span></td>
               <td class="p-5 text-slate-400" x-text="p.area"></td>
               <td class="p-5 text-center font-bold" x-text="p.wh"></td>
-              <td class="p-5 text-center text-rose-400 font-bold" x-text="p.bd"></td>
+              <td class="p-5 text-center text-rose-400 font-bold">
+                <span x-text="p.bd"></span>
+                <span x-show="p.bdSource === 'wo'" class="ml-1 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest border border-cyan-500/30" title="Dari WO breakdown (auto-sync)">auto</span>
+              </td>
               <td class="p-5 text-center font-bold text-white"><span class="px-2 py-0.5 glass rounded-md border border-white/10" x-text="(p.events && p.events.length > 0) ? p.events.length : (p.freq || 0)"></span></td>
               <td class="p-5 text-center font-black text-white"><div class="flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_#3b82f6]"></div><span x-text="calculateKPI(p).ma + '%'"></span></div></td>
               <td class="p-5 text-center font-black text-white"><div class="flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]"></div><span x-text="calculateKPI(p).pa + '%'"></span></div></td>
@@ -61,7 +65,7 @@
             </tr>
           </template>
         </tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 
