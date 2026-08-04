@@ -6,19 +6,15 @@ import { CONSTANTS } from '../constants.js';
 
 export const uiModule = {
     toggleDarkMode() {
-        this.darkMode = !this.darkMode;
-        localStorage.setItem('darkMode', this.darkMode);
+        this.themeMode = this.themeMode === 'night' ? 'light' : 'night';
+        localStorage.setItem('themeMode', this.themeMode);
         this.applyTheme();
     },
 
     applyTheme() {
-        const theme = this.darkMode ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        if (this.darkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        const isNight = this.themeMode !== 'light';
+        document.documentElement.setAttribute('data-theme', isNight ? 'dark' : 'light');
+        document.documentElement.classList.toggle('dark', isNight);
     },
 
     showNotification(message, type = 'success', duration = 4500) {
