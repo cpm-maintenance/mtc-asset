@@ -1,7 +1,7 @@
 /**
  * History log management module
  */
-import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability } from '../utils.js';
+import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs } from '../utils.js';
 import { DEFAULT_LOG_FORM } from '../constants.js';
 import { safeProcessFirebaseData } from './data.js';
 
@@ -235,6 +235,27 @@ export const logsModule = {
         this.logForm.parts.splice(index, 1);
     },
 
+
+    // --- R6: SINGLE SOURCE TRUTH ---
+    // Sync Performance.bd (breakdown duration) from WO breakdown logs per equipment+date.
+    async syncPerformanceBD(equipId, date) {
+        if (!equipId || !window.db) return;
+        try {
+            const bd = computeBDFromLogs(this.logs, equipId, date);
+            const freq = (this.logs || []).filter(l => l && l.EquipmentID === equipId
+                && l.Jenis === 'Breakdown' && (!date || l.Tanggal === date)).length;
+            // Find existing Performance record for equipment+date
+            const perf = (this.performanceData || []).find(p => p && p.EquipmentID === equipId && p.date === date);
+            if (!perf) return; // no record to sync — leave manual entry alone
+            const id = perf.id || perf.Id;
+            const updates = { bd: Number(bd.toFixed(2)), freq, bdSource: 'wo', updatedAt: new Date().toISOString() };
+            await window.update(window.ref(window.db, 'Performance/' + id), updates);
+            Object.assign(perf, updates);
+        } catch (e) {
+            console.warn('[R6] syncPerformanceBD failed:', e.message);
+        }
+    },
+
     async submitLog() {
         const errors = validateLogForm(this.logForm);
         if (errors.length > 0) {
@@ -406,6 +427,11 @@ export const logsModule = {
                 }
             }
             
+            // R6: golden source — sync Performance.bd dari WO breakdown
+            if (this.logForm.type === 'Breakdown' && sanitizedLogData.EquipmentID) {
+                await this.syncPerformanceBD(sanitizedLogData.EquipmentID, sanitizedLogData.Tanggal);
+            }
+
             this.showNotification("Log entry successfully saved!");
             
             // Add to local array immediately for instant UI update
