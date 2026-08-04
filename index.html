@@ -774,6 +774,32 @@
     </template>
 
 
+
+    <!-- 📋 PAGE: PLANNING BOARD (Kanban + Gantt) -->
+    <template x-if="currentPage === 'planning'">
+      <div x-page="'PlanningBoard'"></div>
+    </template>
+
+    <!-- 📄 PAGE: MONTHLY PLAN -->
+    <template x-if="currentPage === 'monthlyplan'">
+      <div x-page="'MonthlyPlan'"></div>
+    </template>
+
+    <!-- 👷 PAGE: TECHNICIAN WORKLOAD -->
+    <template x-if="currentPage === 'workload'">
+      <div x-page="'TechnicianWorkload'"></div>
+    </template>
+
+    <!-- 📋 PAGE: AUDIT TRAIL -->
+    <template x-if="currentPage === 'audit'">
+      <div x-page="'AuditTrail'"></div>
+    </template>
+
+    <!-- 📊 PAGE: MTBF/MTTR -->
+    <template x-if="currentPage === 'mtbfmttr'">
+      <div x-page="'MTBFMTTR'"></div>
+    </template>
+
       <div x-show="showAPISettings" x-cloak class="fixed inset-0 z-[250] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showAPISettings = false">
         <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
           x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
