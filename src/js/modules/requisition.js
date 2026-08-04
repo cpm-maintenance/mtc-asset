@@ -22,6 +22,7 @@
  */
 
 import { sendBrowserNotification } from './notification.js';
+import { checkPartAvailability } from '../utils.js';
 import { sendPushViaProxy } from './onesignal.js';
 
 const NEW_LINE_ITEM = () => ({
@@ -362,6 +363,20 @@ export const requisitionModule = {
         } catch (e) {
             this.showNotification('Error: ' + e.message, 'error');
         }
+    },
+
+    // --- R3: WO LINK & AVAILABILITY ---
+
+    // WO terbuka (belum Completed/Cancelled) utk dropdown picker
+    get openWOs() {
+        return (this.logs || []).filter(l => l.woNumber && l.Status !== 'Completed' && l.Status !== 'Cancelled')
+            .sort((a, b) => String(b.woNumber || '').localeCompare(String(a.woNumber || '')));
+    },
+
+    // Availability per line item (live badge di form)
+    itemAvail(item) {
+        if (!item || !item.partId) return { ok: true, available: null, shortage: 0 };
+        return checkPartAvailability([{ partId: item.partId, quantity: item.quantity }], this.allParts || [])[0];
     },
 
     // --- FILTER ---
