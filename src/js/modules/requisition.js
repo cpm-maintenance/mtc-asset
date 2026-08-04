@@ -48,6 +48,8 @@ export const requisitionModule = {
     reqLoading: true,
     reqEditMode: false,
     reqEditId: null,
+    reqWoId: '',
+    reqWoNumber: '',
     reqSelectedIds: [],
     _reqUnsubscribe: null,
     _reqPrevStatuses: {},  // { reqId: 'pending' } for transition detection
@@ -127,9 +129,13 @@ export const requisitionModule = {
         this.reqNotes = '';
         this.reqEditMode = false;
         this.reqEditId = null;
+        this.reqWoId = '';
+        this.reqWoNumber = '';
         if (req) {
             this.reqEditMode = true;
             this.reqEditId = req.id;
+            this.reqWoId = req.woId || '';
+            this.reqWoNumber = req.woNumber || '';
             this.reqLineItems = req.items && req.items.length ? req.items.map(i => ({...i})) : [{
                 itemType: req.itemType || 'part',
                 itemName: req.itemName || '',
@@ -177,6 +183,8 @@ export const requisitionModule = {
                     quantity: validItems.reduce((s, i) => s + Number(i.quantity || 0), 0),
                     priority: this.reqPriority || 'normal',
                     notes: this.reqNotes || '',
+                    woId: this.reqWoId || '',
+                    woNumber: this.reqWoNumber || '',
                     updatedAt: now,
                 };
                 await window.update(window.ref(window.db, `Requisitions/${this.reqEditId}`), updates);
@@ -195,6 +203,8 @@ export const requisitionModule = {
                     quantity: validItems.reduce((s, i) => s + Number(i.quantity || 0), 0),
                     priority: this.reqPriority || 'normal',
                     notes: this.reqNotes || '',
+                    woId: this.reqWoId || '',
+                    woNumber: this.reqWoNumber || (this.reqWoId ? ((this.logs || []).find(l => l.LogID === this.reqWoId)?.woNumber || '') : ''),
                     status: 'pending',
                     requesterName: this.user?.email || 'Unknown',
                     createdBy: this.user?.uid || 'unknown',
@@ -205,6 +215,19 @@ export const requisitionModule = {
                 await window.set(window.ref(window.db, `Requisitions/${id}`), record);
                 this.requisitions.unshift(record);
                 this.showNotification(`✅ ${validItems.length} item berhasil diajukan dalam 1 permintaan`);
+
+                // R3: backlink requisition ke WO (reqIds array uniq)
+                if (this.reqWoId) {
+                    try {
+                        const wo = (this.logs || []).find(l => l.LogID === this.reqWoId);
+                        const cur = Array.isArray(wo?.reqIds) ? wo.reqIds : [];
+                        const next = cur.includes(id) ? cur : [...cur, id];
+                        await window.update(window.ref(window.db, `HistoryLog/${this.reqWoId}`), { reqIds: next });
+                        if (wo) wo.reqIds = next;
+                    } catch (e) {
+                        console.warn('[Requisition] WO backlink failed:', e.message);
+                    }
+                }
             }
 
             this.showReqModal = false;
