@@ -18,6 +18,10 @@
       <option value="In Progress">In Progress</option>
       <option value="Completed">Completed</option>
     </select>
+      <label class="flex items-center gap-1.5 cursor-pointer select-none">
+        <input type="checkbox" x-model="sortByScore" class="accent-amber-500">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">By priority</span>
+      </label>
     <select x-model="filterWOPriority" class="p-3 glass border-nexus-accent/10 text-xs font-bold">
       <option value="">All Priority</option>
       <option value="Emergency">Emergency</option>
@@ -78,8 +82,10 @@
 
   <!-- Work Orders List -->
   <div x-show="!isLoading && filteredWorkOrders.length > 0" class="flex flex-col gap-4">
-    <template x-for="log in filteredWorkOrders" :key="log.LogID">
-      <div class="glass border-nexus-accent/10 rounded-xl border-l-4 overflow-hidden" :style="'border-left-color:' + (log.EquipmentID === 'EXTERNAL' ? 'orange' : getStatColor(logColor(log.Jenis)))">
+    <template x-for="log in (sortByScore ? sortedByPriority : filteredWorkOrders)" :key="log.LogID">
+      <div class="glass border-nexus-accent/10 rounded-xl border-l-4 overflow-hidden"
+          :style="log.Status && log.Status !== 'Completed' ? 'border-left-color:' + getStatColor(logColor(log.Jenis)) : 'border-left-color:' + (log.EquipmentID === 'EXTERNAL' ? 'orange' : getStatColor(logColor(log.Jenis)))"
+          :class="log.Status && log.Status !== 'Completed' && woAgeDays(log) > 3 ? 'shadow-[0_0_0_1px_rgba(251,113,133,0.15)]' : ''">
         <!-- Header - Click to expand -->
         <div @click="selectedWODetail = selectedWODetail === log.LogID ? null : log.LogID" class="p-4 cursor-pointer hover:bg-white/5 transition-all">
           <div class="flex justify-between items-start">
@@ -87,7 +93,26 @@
               <span x-show="log.woNumber" class="px-3 py-1 rounded-lg glass text-purple-400 font-bold font-mono" x-text="'#'+log.woNumber"></span>
               <span x-show="!log.woNumber && log.Jenis" class="px-3 py-1 rounded-lg glass text-blue-400 font-bold font-mono text-xs" x-text="log.Jenis"></span>
               <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]" :class="woPriorityColor(log.woPriority || 'Normal')" x-text="log.woPriority || 'Normal'"></span>
+              <span x-show="log.Status && log.Status !== 'Completed' && woAgeDays(log) >= 1"
+                class="px-2 py-0.5 rounded-full border font-bold uppercase text-[9px]"
+                :class="woAgeColor(woAgeDays(log))"
+                x-text="woAgeDays(log) + 'd'"></span>
+              <span x-show="log.Status && log.Status !== 'Completed'"
+                class="px-2 py-0.5 rounded-full border font-black text-[9px]"
+                :class="backlogScoreColor(backlogScore(log))"
+                :title="'Priority score: ' + backlogScore(log) + '/9'"
+                x-text="backlogScore(log)"></span>
               <span x-show="log.EquipmentID === 'EXTERNAL'" class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 font-bold uppercase text-[10px]">EXT</span>
+              <!-- R3: Part availability badge -->
+              <span x-show="woShortageSummary(log).count > 0"
+                class="px-2 py-0.5 rounded-full border font-bold uppercase text-[9px] bg-rose-500/20 text-rose-400 border-rose-500/40"
+                :title="woAvailability(log).filter(a => !a.ok).map(a => a.partId + ' short ' + a.shortage).join(', ')">
+                &#9888; -<span x-text="woShortageSummary(log).total"></span> parts
+              </span>
+              <span x-show="woShortageSummary(log).ok && log.PartsUsed"
+                class="px-2 py-0.5 rounded-full border font-bold uppercase text-[9px] bg-emerald-500/20 text-emerald-400 border-emerald-500/40">
+                &#10003; Stock ok
+              </span>
             </div>
             <div class="flex items-center gap-2">
               <span class="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
@@ -98,7 +123,8 @@
           <div class="flex flex-wrap items-center gap-4 mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
             <div class="flex items-center gap-1"><i class="far fa-calendar-alt text-purple-400"></i> <span x-text="log.Tanggal"></span></div>
             <div class="flex items-center gap-1"><i class="far fa-user-astronaut text-purple-400"></i> <span x-text="log.assignedTo || '-'"></span></div>
-            <div x-show="log.dueDate" class="flex items-center gap-1 text-orange-400"><i class="far fa-clock"></i> <span x-text="'Due: ' + log.dueDate"></span></div>
+            <div x-show="log.dueDate && log.Status !== 'Completed' && log.dueDate < new Date().toISOString().split('T')[0]" class="flex items-center gap-1 text-rose-400"><i class="fas fa-exclamation-triangle"></i> <span x-text="'OVERDUE: ' + log.dueDate"></span></div>
+            <div x-show="log.dueDate && (log.Status === 'Completed' || log.dueDate >= new Date().toISOString().split('T')[0])" class="flex items-center gap-1 text-orange-400"><i class="far fa-clock"></i> <span x-text="'Due: ' + log.dueDate"></span></div>
           </div>
         </div>
 
@@ -129,6 +155,10 @@
               <div class="bg-slate-800/50 p-2 rounded">
                 <span class="text-slate-500 uppercase text-[10px]">Downtime</span>
                 <p class="text-white font-bold" x-text="log.Downtime + ' hrs'"></p>
+              </div>
+              <div class="bg-slate-800/50 p-2 rounded" x-show="(log.reqIds || []).length > 0">
+                <span class="text-slate-500 uppercase text-[10px]">Linked Requests</span>
+                <p class="text-white font-bold text-xs" x-text="log.reqIds.length + ' requisition(s)'"></p>
               </div>
             </div>
             <div x-show="log.Catatan" class="bg-slate-800/50 p-3 rounded">
