@@ -12,10 +12,10 @@
 - [x] Stock deduction otomatis — sudah ada di approveWO (WO) & saveLog (non-WO); dedup jadi `parsePartsUsed` shared
 - [x] UI: availability badge di WO card + live badge per item di RequestPart + WO picker + link badge
 
-## 🎯 R6 — Single Source Truth
+## 🎯 R6 — Single Source Truth ✅
 
-- [ ] Jadikan WO = golden source downtime (sync/derive dari HistoryLog)
-- [ ] Rekonsiliasi Performance vs WO gap (hapus duplikasi, satu sumber kebenaran)
+- [x] Jadikan WO = golden source downtime — `Performance.bd` auto-sync dari WO breakdown (computeBDFromLogs) saat submitLog/completeWO
+- [x] Rekonsiliasi — `wh`/`stb` tetap manual (produksi), `bd`+`freq` otomatis dari WO; badge `auto` + tombol Sync BD di Performance; fix bug calcDowntime (bd+stb → bd)
 
 ## 🧹 Housekeeping — Bersihkan scripts/*.mjs (done, tak terpakai)
 
@@ -38,7 +38,7 @@
 |------|--------|
 | Session 1-3d (R1,R2,R4,R5,R7 + V1-V4 + Mobile UX) | ✅ live `mtc-asset.web.app` |
 | R3 Part↔WO linkage | ✅ done (commit dc46edf) |
-| R6 Single source truth | ⏳ belum |
+| R6 Single source truth | ✅ done (commit 74f3833) |
 | Housekeeping scripts | ⏳ belum |
 
 ## Known Issues

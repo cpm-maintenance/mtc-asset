@@ -92,3 +92,55 @@
 - [ ] Lanjut **R6** — Single source truth (WO = golden source downtime)
 - [ ] Bersihkan scripts/*.mjs helper lama
 - [ ] Cek visual R3 di device real (badge availability, WO picker, linked requests)
+
+---
+
+# Session Notes — 2026-08-04 (Session 4, part 2)
+
+## Ringkasan
+
+**R6 Single Source Truth ✅** — WO (HistoryLog) kini golden source downtime. Performance.bd otomatis dari WO breakdown; wh/stb tetap manual. Bug calcDowntime fixed. 103/103 tests pass, deploy live.
+
+## Baru di Session Ini (part 2)
+
+### R6 Single Source Truth ✅
+- **computeBDFromLogs(logs, equipId, date)** — pure helper: sum Downtime dari log Jenis=Breakdown per equipment+date (utils.js, 2 tests).
+- **Auto-sync**: submitLog (Jenis=Breakdown) & completeWO → syncPerformanceBD() update Performance.bd + freq + bdSource='wo'.
+- **recomputeBD()** — button "Sync BD" di Performance page: hitung ulang semua record dari WO.
+- **UI**: badge cyan "auto" di sel BD bila bdSource='wo'.
+- **Fix bug**: calcDowntime jumlah bd+stb (stb = standing time) → bd saja.
+
+### Fix Runtime (dev)
+- **sortByScore undefined** (3053b87) — state hilang, WO view crash.
+- **log.reqIds undefined** (1607172) — guard (log.reqIds || []).
+
+## Deploy Status
+
+| Deploy | Status | Catatan |
+|--------|--------|---------|
+| mtc-asset.web.app (hosting) | ✅ Live (R3+R6) | R1-R7 complete, 68 files |
+
+## Commits (session 4)
+
+| Hash | Deskripsi |
+|------|-----------|
+| e4edd78 | R3: pure helpers availability + tests |
+| 23a8877 | R3: requisition↔WO data layer |
+| dc46edf | R3: availability check + approve guard + badges |
+| 8ca6c39 | R3: WO picker + live availability RequestPart UI |
+| 11dae31 | docs: R3 |
+| 3053b87 | fix: sortByScore |
+| 1607172 | fix: reqIds guard |
+| d48265b | R6: computeBDFromLogs + calcDowntime fix |
+| 8e899a9 | R6: auto-sync Performance.bd |
+| 74f3833 | R6: UI sync indicator + recompute button |
+
+## Known Issues (Still Open)
+
+- Semua R1-R7 ✅ complete — roadmap maintenance intelligence selesai.
+
+## Next Session
+
+- [ ] Housekeeping: hapus scripts/*.mjs helper lama (15 files)
+- [ ] QA visual device real (mobile nav, charts, R3/R6 badges)
+- [ ] Optional: R8 ideas dari planner/analyst feedback
