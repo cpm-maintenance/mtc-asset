@@ -144,3 +144,52 @@
 - [ ] Housekeeping: hapus scripts/*.mjs helper lama (15 files)
 - [ ] QA visual device real (mobile nav, charts, R3/R6 badges)
 - [ ] Optional: R8 ideas dari planner/analyst feedback
+
+---
+
+# Session Notes — 2026-08-04 (Session 4, part 3) — QA + Bugfix Marathon
+
+## Ringkasan
+
+R6 + Housekeeping + QA selesai di part 2. Part 3: QA visual via Playwright + 4 bug fix + deploy. **Semua menu kini render**.
+
+## QA Setup (baru)
+
+- **Browser subagent GAGAL permanen** — "No active credentials for provider: antigravity" (model 404 di sisi system, bukan browser). Solusi: **Python Playwright + Chrome channel** (tanpa download browser binary).
+- Install: `pip install playwright` → pakai `p.chromium.launch(channel='chrome')` (Chrome/Edge existing di C:\Program Files).
+- QA flow: login (admin@planner.com / adhy23) → cek bottom nav mobile (390×844) → More modal → semua page.
+- **Temuan QA**: bottom nav More = `button[aria-label="More menu"]` (bukan <a>); sidebar hidden di mobile → navigasi via More modal; "Canvas not found" di KPI = benign (chart render on-demand saat page dibuka).
+
+## Bug Fixes (semua live)
+
+| Hash | Bug | Fix |
+|------|-----|-----|
+| 8b52fed | `PAGE_ROUTE_MAP` missing export → ES module crash | Hapus import + getter dead `pageComponentName` |
+| 330705c | `darkMode is not defined` Alpine error | Align `toggleDarkMode`/`applyTheme` → `themeMode` ('night'/'light'); icon index.html pakai themeMode |
+| 091ce9e | 5 menu blank (Planning Board, Monthly Plan, Workload, Audit Trail, MTBF/MTTR) | Tambah 5 `template x-if` + `div x-page` container di index.html (26 lines) — HTML page files ada tapi tak pernah di-mount |
+
+## Root Cause Chain (error beruntun)
+
+1. `npm install` tambah `@fortawesome/fontawesome-free` (dependency ada di package.json tapi tak ter-install) → dev server stale (task-199) error resolve fontawesome
+2. MIME `NS_ERROR_CORRUPTED_CONTENT` di Firefox = server error state
+3. Restart dev server → muncul 2 bug tersembunyi (PAGE_ROUTE_MAP, darkMode) yang sebelumnya tak terlihat karena server selalu error duluan
+4. Fix keduanya → user report 5 menu blank → akar: container x-if hilang
+
+## Verifikasi Final (Playwright)
+
+- 5 page render: Planning Board (2 WO completed + teknisi), Monthly Plan (selector + Export), Workload (stats), Audit (0 entries), MTBF/MTTR (select UI)
+- 0 console errors seluruh alur login → nav → page
+- Build pass + 103/103 tests
+- **Live: mtc-asset.web.app**
+
+## Known Issues / Catatan
+
+- Data Firebase dev minim: 18 equip, 50 parts, 2 logs, 0 PM schedule → beberapa page tampil empty state (Workload 0 tech, Monthly 0 tasks, Audit 0) — **bukan bug**
+- CRLF quirk tetap: semua edit via node .mjs script
+- `git checkout -- .` berbahaya: revert juga untracked working-copy changes (pernah hilang PAGE_ROUTE_MAP context) — hindari, pakai `git restore <file>` per-file
+
+## Next Session
+
+- [ ] Isi data nyata: assign teknisi ke WO (Workload page), input PM schedule (Monthly Plan)
+- [ ] Optional: audit trail capture (AuditTrail node Firebase masih kosong)
+- [ ] Deploy workflow di .github masih modified (line-ending) — cek sebelum push
