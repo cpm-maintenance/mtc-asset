@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor } from '../src/js/utils.js';
+import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction } from '../src/js/utils.js';
 import { kpiEngineModule } from '../src/js/modules/kpi-engine.js';
 import { performanceModule } from '../src/js/modules/performance.js';
 
@@ -705,5 +705,33 @@ describe('PM ID Uniqueness', () => {
       ids.add(pmId);
     }
     expect(ids.size).toBe(count);
+  });
+});
+
+describe('R3 Part-WO Linkage', () => {
+  it('checkPartAvailability: cukup stok -> available', () => {
+    const items = [{ partId: 'P001', quantity: 2 }];
+    const parts = [{ PartID: 'P001', Stok: 5 }];
+    const res = checkPartAvailability(items, parts);
+    expect(res[0]).toMatchObject({ partId: 'P001', available: 5, ok: true });
+  });
+  it('checkPartAvailability: stok kurang -> ok false + shortage', () => {
+    const items = [{ partId: 'P001', quantity: 7 }];
+    const parts = [{ PartID: 'P001', Stok: 5 }];
+    expect(checkPartAvailability(items, parts)[0]).toMatchObject({ ok: false, shortage: 2 });
+  });
+  it('checkPartAvailability: partId kosong/material -> ok true', () => {
+    const items = [{ partId: '', quantity: 1 }, { partId: null, quantity: 3 }];
+    const res = checkPartAvailability(items, []);
+    expect(res.every(r => r.ok)).toBe(true);
+  });
+  it('checkPartAvailability: part tak dikenal -> available 0, ok false', () => {
+    const items = [{ partId: 'P999', quantity: 1 }];
+    expect(checkPartAvailability(items, [])[0]).toMatchObject({ available: 0, ok: false, shortage: 1 });
+  });
+  it('applyStockDeduction: clamp >= 0', () => {
+    expect(applyStockDeduction({ Stok: 5 }, 7)).toEqual({ Stok: 0 });
+    expect(applyStockDeduction({ Stok: 5 }, 2)).toEqual({ Stok: 3 });
+    expect(applyStockDeduction(undefined, 1)).toEqual({ Stok: 0 });
   });
 });

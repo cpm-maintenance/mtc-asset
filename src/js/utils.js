@@ -358,3 +358,22 @@ export function getLifetimeBgColor(status) {
     default: return 'bg-emerald-500/20 border-emerald-500';
   }
 }
+
+/**
+ * R3 — Part availability check & stock deduction (pure, testable)
+ */
+
+export function checkPartAvailability(items, allParts) {
+  return (items || []).map(it => {
+    if (!it.partId) return { ...it, available: null, ok: true };
+    const part = (allParts || []).find(p => p.PartID === it.partId);
+    const available = part ? Number(part.Stok) || 0 : 0;
+    const qty = Number(it.quantity) || 0;
+    return { ...it, available, ok: available >= qty, shortage: Math.max(0, qty - available) };
+  });
+}
+
+export function applyStockDeduction(part, qty) {
+  const cur = Number(part?.Stok) || 0;
+  return { ...part, Stok: Math.max(0, cur - (Number(qty) || 0)) };
+}
