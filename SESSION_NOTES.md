@@ -49,3 +49,46 @@
 - [ ] Lanjut **R6** — Single source truth (WO = golden source downtime)
 - [ ] Bersihkan `scripts/*.mjs` helper lama (sudah tidak dipakai: regroup-menu, add-badges, p0-bottombar, p2-header, p3-nav, v1-palette, v2-chartpolish, v3-micro, v4-type, r1-aging, r2-score, r457, r5-pred, fix-notes, scan)
 - [ ] Cek visual di device real (mobile nav, chart, widget baru)
+
+---
+
+# Session Notes — 2026-08-04 (Session 4)
+
+## Ringkasan
+
+**R3 Part ↔ WO Linkage ✅** — requisition kini terhubung ke Work Order + material availability check + UI badges. 101/101 tests pass, deploy live.
+
+## Baru di Session Ini
+
+### R3 Part ↔ WO Linkage ✅
+- **Link requisition→WO**: field woId/woNumber di Requisitions, backlink reqIds[] di HistoryLog (WO). Dropdown WO picker di modal RequestPart (list open WOs).
+- **Material availability**: checkPartAvailability(items, allParts) pure helper (utils.js, testable). Badge "⚠ -N parts" / "✓ Stock ok" di WO card. Live badge per line item di RequestPart form. Guard di approveWO — konfirmasi bila stok kurang.
+- **Refactor**: parsePartsUsed() shared (dedup inline JSON.parse di approveWO), woAvailability()/woShortageSummary() methods, itemAvail().
+- **Restock auto-reflect**: markArrived sudah update part.Stok live → availability WO hijau otomatis setelah barang tiba.
+- **UI**: Linked Requests count di WO detail.
+
+## Deploy Status
+
+| Deploy | Status | Catatan |
+|--------|--------|---------|
+| mtc-asset.web.app (hosting) | ✅ Live (R3) | R1+R2+R3+R4+R5+R7, 68 files |
+
+## Commits
+
+| Hash | Deskripsi |
+|------|-----------|
+| e4edd78 | pure helpers availability + stock deduction + 5 tests |
+| 23a8877 | requisition↔WO data layer (woId/woNumber + reqIds backlink) |
+| dc46edf | availability check + approve guard + WO badges |
+| 8ca6c39 | WO picker + live availability + link badge RequestPart UI |
+| f5342d0 | docs: R3 complete + session notes |
+
+## Known Issues (Still Open)
+
+- **R6 Single source truth** — belum (WO = golden source downtime, rekonsiliasi Performance vs WO)
+
+## Next Session
+
+- [ ] Lanjut **R6** — Single source truth (WO = golden source downtime)
+- [ ] Bersihkan scripts/*.mjs helper lama
+- [ ] Cek visual R3 di device real (badge availability, WO picker, linked requests)

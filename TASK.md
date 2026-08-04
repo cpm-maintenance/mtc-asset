@@ -5,12 +5,12 @@
 
 ---
 
-## 🎯 R3 — Part ↔ WO Linkage (besar, butuh redesign requisition flow)
+## 🎯 R3 — Part ↔ WO Linkage ✅
 
-- [ ] `requisitions` terhubung ke WO id (flow: requisition → WO)
-- [ ] Material availability check sebelum WO dijadwalkan / part di-assign
-- [ ] Stock deduction otomatis saat WO completed
-- [ ] UI: part availability visual di flow requisition/WO
+- [x] `requisitions` terhubung ke WO id (flow: requisition → WO) — field `woId`/`woNumber` + backlink `reqIds` di WO
+- [x] Material availability check sebelum WO dijadwalkan / part di-assign — `checkPartAvailability` + guard approveWO
+- [x] Stock deduction otomatis — sudah ada di approveWO (WO) & saveLog (non-WO); dedup jadi `parsePartsUsed` shared
+- [x] UI: availability badge di WO card + live badge per item di RequestPart + WO picker + link badge
 
 ## 🎯 R6 — Single Source Truth
 
@@ -37,7 +37,7 @@
 | Item | Status |
 |------|--------|
 | Session 1-3d (R1,R2,R4,R5,R7 + V1-V4 + Mobile UX) | ✅ live `mtc-asset.web.app` |
-| R3 Part↔WO linkage | ⏳ belum |
+| R3 Part↔WO linkage | ✅ done (commit dc46edf) |
 | R6 Single source truth | ⏳ belum |
 | Housekeeping scripts | ⏳ belum |
 
