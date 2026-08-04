@@ -14,7 +14,7 @@ import { chartModule } from './charts.js';
 import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
-import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM, PAGE_ROUTE_MAP } from './constants.js';
+import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants.js';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
 export function app() {
@@ -754,11 +754,7 @@ if (confirm('Are you sure you want to logout?')) {
             });
         },
 
-        // Unified page router: resolves currentPage to component name for dynamic loading
-        get pageComponentName() {
-            return PAGE_ROUTE_MAP[this.currentPage] || null;
-        },
-
+        
         get filteredEquip() {
             if (!this.equipment || !Array.isArray(this.equipment)) return [];
             let result = this.equipment.filter(e =>
