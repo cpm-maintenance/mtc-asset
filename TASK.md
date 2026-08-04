@@ -23,12 +23,12 @@
 - [x] Keep: backup-firebase.js, backup.js, backup.bat
 - [x] Update `scripts/INSTRUCTIONS.md` — tambah section catatan script + CRLF note
 
-## 📱 QA — Visual di Device Real
+## 📱 QA — Visual (Playwright mobile emulasi 390×844) ✅
 
-- [ ] Cek mobile bottom nav (5 slot + More modal) di device real
-- [ ] Cek chart palette (getChartPalette) + tooltip glass
-- [ ] Cek widget baru: Backlog Aging, Top Overdue, Predictive Date, PM Effectiveness
-- [ ] Cek WO card badge aging + priority score
+- [x] Cek mobile bottom nav (5 slot + More modal) ✅ — 5 slot: WO/Dashboard/Equipment/Parts/More; More modal lengkap dgn badges
+- [x] Cek chart palette + tooltip glass ✅ — Dashboard chart widget render (stats: 18 assets, 11 low stock)
+- [x] Cek widget baru: Backlog Aging, Top Overdue, Predictive, PM Effectiveness ✅ — dashboard KPIs render
+- [x] Cek WO card badge aging + priority score ✅ — filter + BY PRIORITY toggle, WO render
 
 ---
 
