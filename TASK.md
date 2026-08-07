@@ -1,34 +1,35 @@
-# TASK LIST — MTC-Asset — Session 4 (2026-08-04)
+# TASK LIST — MTC-Asset — Session 5 (2026-08-07)
 
-> **Baseline**: Session 3d selesai — Visual V1-V4 ✅ + Maintenance Inteligence R1,R2,R4,R5,R7 ✅. Deploy live `mtc-asset.web.app`. Build pass + 96/96 tests.
-> **Fokus hari ini**: tuntaskan gap R3 + R6 + housekeeping scripts + QA device real.
+> **Baseline**: Session 4 selesai — R1-R7 complete + QA + 4 bug fix. Deploy live `mtc-asset.web.app`.
+> **Fokus hari ini**: tema gold + 4 tema (navy/purple), form font themed, fix bottom nav mobile, deploy.
 
 ---
 
-## 🎯 R3 — Part ↔ WO Linkage ✅
+## 🎨 Multi-Theme (4 tema) ✅
 
-- [x] `requisitions` terhubung ke WO id (flow: requisition → WO) — field `woId`/`woNumber` + backlink `reqIds` di WO
-- [x] Material availability check sebelum WO dijadwalkan / part di-assign — `checkPartAvailability` + guard approveWO
-- [x] Stock deduction otomatis — sudah ada di approveWO (WO) & saveLog (non-WO); dedup jadi `parsePartsUsed` shared
-- [x] UI: availability badge di WO card + live badge per item di RequestPart + WO picker + link badge
+- [x] Gold dark theme — accent `#00f2ff` (cyan) → `#f5c542` (gold), border/glow/gradient ikut
+- [x] Dropdown theme menu di header — Gold, Navy, Purple, Light (swatch warna)
+- [x] CSS vars per tema (accent, glow, border, text, bg, card)
+- [x] Charts ikut tema — `themeAccent()`/`themeAccentSoft()`/`themeGrid()`
+- [x] Light theme tetap biru (tidak berubah)
 
-## 🎯 R6 — Single Source Truth ✅
+## 🔤 Form Font Themed ✅
 
-- [x] Jadikan WO = golden source downtime — `Performance.bd` auto-sync dari WO breakdown (computeBDFromLogs) saat submitLog/completeWO
-- [x] Rekonsiliasi — `wh`/`stb` tetap manual (produksi), `bd`+`freq` otomatis dari WO; badge `auto` + tombol Sync BD di Performance; fix bug calcDowntime (bd+stb → bd)
+- [x] Input/select/textarea text → `var(--text-main)` (override hardcoded `text-white`/`text-slate-400`)
+- [x] Placeholder → `var(--text-muted)`
+- [x] `select option` themed + `color-scheme` dark/light
 
-## 🧹 Housekeeping — Bersihkan scripts/*.mjs ✅
+## 📱 Mobile Bottom Nav Fix ✅
 
-- [x] Hapus helper lama: 15 file .mjs (regroup-menu s/d scan) — commit ed653dc
-- [x] Keep: backup-firebase.js, backup.js, backup.bat
-- [x] Update `scripts/INSTRUCTIONS.md` — tambah section catatan script + CRLF note
+- [x] 15 item → 5 slot grid (Home, WO, Assets, Parts + More button)
+- [x] More modal (bottom sheet, grid 4 kolom, 15 item, auto-close on navigate)
+- [x] `mobilePrimaryItems` getter + `short` label field
+- [x] Safe-area-inset (notch iPhone)
 
-## 📱 QA — Visual (Playwright mobile emulasi 390×844) ✅
+## 🧹 Housekeeping ✅
 
-- [x] Cek mobile bottom nav (5 slot + More modal) ✅ — 5 slot: WO/Dashboard/Equipment/Parts/More; More modal lengkap dgn badges
-- [x] Cek chart palette + tooltip glass ✅ — Dashboard chart widget render (stats: 18 assets, 11 low stock)
-- [x] Cek widget baru: Backlog Aging, Top Overdue, Predictive, PM Effectiveness ✅ — dashboard KPIs render
-- [x] Cek WO card badge aging + priority score ✅ — filter + BY PRIORITY toggle, WO render
+- [x] Hapus scratch/ (32 file)
+- [x] Commit file untracked lama (5 pages HTML + db.js, icons.js, lucide-icons.js, audit.js) — diverifikasi dipakai
 
 ---
 
@@ -36,12 +37,18 @@
 
 | Item | Status |
 |------|--------|
-| Session 1-3d (R1,R2,R4,R5,R7 + V1-V4 + Mobile UX) | ✅ live `mtc-asset.web.app` |
-| R3 Part↔WO linkage | ✅ done (commit dc46edf) |
-| R6 Single source truth | ✅ done (commit 74f3833) |
-| Housekeeping scripts | ✅ done (commit ed653dc) |
+| Session 1-4 (R1-R7 + V1-V4 + QA) | ✅ live `mtc-asset.web.app` |
+| Session 5 (4 tema + form font + nav fix) | ✅ live (72 files) — commit 63b6d86 |
 
 ## Known Issues
 
-- **R3** & **R6** = satu-satunya gap fitur tersisa dari roadmap maintenance intelligence.
-- Script CRLF quirk: edit tools gagal di CRLF files → pakai node `.mjs` + regex `\r?\n`.
+- `.open/skills` submodule dirty — skip saat commit
+- CRLF quirk: edit tools gagal di CRLF files → pakai node `.mjs` + regex `\r?\n`
+- Data Firebase dev minim → beberapa page empty state (bukan bug)
+
+## Next Session
+
+- [ ] Isi data nyata: assign teknisi ke WO (Workload), input PM schedule (Monthly Plan)
+- [ ] Optional: audit trail capture (AuditTrail Firebase masih kosong)
+- [ ] Cek deploy workflow .github (line-ending)
+- [ ] Opsional R8: ide feedback planner/analyst

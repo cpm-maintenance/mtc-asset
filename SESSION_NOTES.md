@@ -1,195 +1,61 @@
-# Session Notes — 2026-08-03 (Session 3 + 3b + 3c + 3d)
+# Session Notes — 2026-08-07 (Session 5)
 
 ## Ringkasan
 
-**Sidebar P1-P5** ✅ → **Mobile UX P0-P3** ✅ → **Visual Design V1-V4** ✅ → **Maintenance Intelligence R1-R7 (5/7 done)** ✅. Build pass + 96/96 tests + deploy live.
+**4 tema (Gold/Navy/Purple/Light) + form font themed + mobile bottom nav fix + deploy live.** Build pass + 103/103 tests. Commit `63b6d86`.
 
 ---
 
 ## Baru di Session Ini
 
-### Mobile UX Fix (P0-P3) ✅
-- **P0 Bottom nav overflow (KRITIS)**: 16 item → 5 slot grid (Dashboard, WO, Equipment, Parts + **More button** → `showMoreMenu`). Labels, safe-area inset.
-- **P1 More modal**: terhubung, badge count tiap item, `max-h-[55vh]` scroll.
-- **P2 Header mobile**: title truncate, compact actions, live pill hidden xs.
-- **P3 Nav polish**: active indicator, slot badges rose-red.
+### 🎨 Multi-Theme (4 tema) ✅
+- **Dropdown theme** di header (icon moon/sun) → menu 4 pilihan: Gold, Navy, Purple, Light (swatch warna)
+- **CSS vars per tema**: `--nexus-accent`, `--nexus-accent-2`, `--nexus-accent-glow`, `--nexus-border`, `--text-main`, `--text-muted`, `--nexus-bg`, `--nexus-card`
+- **ui.js**: `toggleDarkMode()` → `setTheme(t)`; `applyTheme()` set `data-theme` (night→dark mapping) + sync `darkMode` untuk charts
+- **charts.js**: helper `themeAccent()`/`themeAccentSoft()`/`themeGrid()` — chart warna ikut tema (gold/navy/purple/blue)
+- **Tema palette**:
+  - Gold (`night`): accent `#f5c542`, bg `#05070a`
+  - Navy: accent `#3b82f6`, bg `#0a0f1e`
+  - Purple: accent `#a855f7`, bg `#0d0714`
+  - Light: accent `#0061ff` (tetap)
 
-### Visual Design (V1-V4) ✅
-- **V1 Chart palette ikut tema**: `getChartPalette()` resolve CSS vars → semantic colors. No hardcode hex.
-- **V2 Chart polish**: `getTooltipStyle()` glass tooltip, `centerTextPlugin` donut total, `lineGradient()`, legend point-style.
-- **V3 Micro-interactions**: count-up stat cards, card lift, badge pop, empty fade.
-- **V4 Typography**: `.font-display` Space Grotesk, `.glow-ring`, `:focus-visible`, WCAG AA pass.
+### 🔤 Form Font Themed ✅
+- Input/select/textarea: override `text-white`/`text-slate-400` hardcoded → `var(--text-main)`
+- Placeholder → `var(--text-muted)`
+- `select option` → bg `var(--nexus-card)` + text `var(--text-main)`
+- `color-scheme: dark/light` per tema (dropdown arrow, date picker native)
 
-### Maintenance Intelligence (R1-R7, 5/7 done) ✅
-- **R1 WO Aging**: `woAgeDays/Bucket/Color` helpers, `backlogAging` + `topOverdueWO` computed. WO card badge `Nd` + OVERDUE. Dashboard **Backlog Aging** widget + **Top Overdue** list.
-- **R2 Priority Score**: `backlogScore()` = WO prio (0.5-3) × criticality (1-3) × health risk (0-3) → 0-9. Score badge di WO card + "By priority" sort toggle.
-- **R4 PM Effectiveness**: `pmEffectiveness(daysWindow=14)` — failure setelah PM → badge ⚠ INEFFECTIVE di PM Schedule.
-- **R5 Predictive Date**: linear projection dari `firstUsedDate/installedDate` → ETA tanggal + confidence (70-95%). Dashboard widget upgrade.
-- **R7 MTTR per Teknisi**: `mttrByTech()` — MTTR + breakdown count di TechnicianWorkload header.
+### 📱 Mobile Bottom Nav Fix ✅
+- **Masalah**: 15 item render di nav 390px (sempit, tanpa label) — P0 5-slot hilang/ke-revert
+- **Fix**: grid 5 kolom (Home, WO, Assets, Parts + More) + **More modal** (bottom sheet, grid 4 kolom, 15 item)
+- Getter `mobilePrimaryItems` + field `short` label per menu item
+- Safe-area-inset untuk notch iPhone
 
-## Fix Lain
-
-- **CRLF quirk**: edit tools gagal di CRLF files → workaround script node `.mjs` + regex `\r?\n`. Grep rusak di CRLF — pakai node scan.
-- **edit_* tools fail** ("No active credentials"): selalu pakai node script untuk edit index.html/app.js.
-
-## Deploy Status
-
-| Deploy | Status | Catatan |
-|--------|--------|---------|
-| `mtc-asset.web.app` (hosting) | ✅ Live | R1+R2+R4+R5+R7, 69 files |
-
-## Known Issues (Still Open)
-
-- **R3 Part ↔ WO linkage** — belum (besar, butuh redesign flow requisition)
-- **R6 Single source truth** — belum (rekonsiliasi Performance vs WO)
-
-## Next Session (Besok)
-
-- [ ] Lanjut **R3** — Part ↔ WO linkage (requisition → WO id, material availability, stock deduction)
-- [ ] Lanjut **R6** — Single source truth (WO = golden source downtime)
-- [ ] Bersihkan `scripts/*.mjs` helper lama (sudah tidak dipakai: regroup-menu, add-badges, p0-bottombar, p2-header, p3-nav, v1-palette, v2-chartpolish, v3-micro, v4-type, r1-aging, r2-score, r457, r5-pred, fix-notes, scan)
-- [ ] Cek visual di device real (mobile nav, chart, widget baru)
-
----
-
-# Session Notes — 2026-08-04 (Session 4)
-
-## Ringkasan
-
-**R3 Part ↔ WO Linkage ✅** — requisition kini terhubung ke Work Order + material availability check + UI badges. 101/101 tests pass, deploy live.
-
-## Baru di Session Ini
-
-### R3 Part ↔ WO Linkage ✅
-- **Link requisition→WO**: field woId/woNumber di Requisitions, backlink reqIds[] di HistoryLog (WO). Dropdown WO picker di modal RequestPart (list open WOs).
-- **Material availability**: checkPartAvailability(items, allParts) pure helper (utils.js, testable). Badge "⚠ -N parts" / "✓ Stock ok" di WO card. Live badge per line item di RequestPart form. Guard di approveWO — konfirmasi bila stok kurang.
-- **Refactor**: parsePartsUsed() shared (dedup inline JSON.parse di approveWO), woAvailability()/woShortageSummary() methods, itemAvail().
-- **Restock auto-reflect**: markArrived sudah update part.Stok live → availability WO hijau otomatis setelah barang tiba.
-- **UI**: Linked Requests count di WO detail.
+### 🧹 Housekeeping
+- Hapus scratch/ (32 file script patch + screenshots)
+- Commit file untracked lama yang belum pernah di-commit (5 pages HTML, db.js, icons.js, lucide-icons.js, audit.js) — diverifikasi DIPAKAI via component-loader fetch `/pages/{name}.html`
 
 ## Deploy Status
 
 | Deploy | Status | Catatan |
 |--------|--------|---------|
-| mtc-asset.web.app (hosting) | ✅ Live (R3) | R1+R2+R3+R4+R5+R7, 68 files |
+| mtc-asset.web.app (hosting) | ✅ Live (S5) | 72 files, release complete |
 
 ## Commits
 
 | Hash | Deskripsi |
 |------|-----------|
-| e4edd78 | pure helpers availability + stock deduction + 5 tests |
-| 23a8877 | requisition↔WO data layer (woId/woNumber + reqIds backlink) |
-| dc46edf | availability check + approve guard + WO badges |
-| 8ca6c39 | WO picker + live availability + link badge RequestPart UI |
-| f5342d0 | docs: R3 complete + session notes |
-
-## Known Issues (Still Open)
-
-- **R6 Single source truth** — belum (WO = golden source downtime, rekonsiliasi Performance vs WO)
-
-## Next Session
-
-- [ ] Lanjut **R6** — Single source truth (WO = golden source downtime)
-- [ ] Bersihkan scripts/*.mjs helper lama
-- [ ] Cek visual R3 di device real (badge availability, WO picker, linked requests)
-
----
-
-# Session Notes — 2026-08-04 (Session 4, part 2)
-
-## Ringkasan
-
-**R6 Single Source Truth ✅** — WO (HistoryLog) kini golden source downtime. Performance.bd otomatis dari WO breakdown; wh/stb tetap manual. Bug calcDowntime fixed. 103/103 tests pass, deploy live.
-
-## Baru di Session Ini (part 2)
-
-### R6 Single Source Truth ✅
-- **computeBDFromLogs(logs, equipId, date)** — pure helper: sum Downtime dari log Jenis=Breakdown per equipment+date (utils.js, 2 tests).
-- **Auto-sync**: submitLog (Jenis=Breakdown) & completeWO → syncPerformanceBD() update Performance.bd + freq + bdSource='wo'.
-- **recomputeBD()** — button "Sync BD" di Performance page: hitung ulang semua record dari WO.
-- **UI**: badge cyan "auto" di sel BD bila bdSource='wo'.
-- **Fix bug**: calcDowntime jumlah bd+stb (stb = standing time) → bd saja.
-
-### Fix Runtime (dev)
-- **sortByScore undefined** (3053b87) — state hilang, WO view crash.
-- **log.reqIds undefined** (1607172) — guard (log.reqIds || []).
-
-## Deploy Status
-
-| Deploy | Status | Catatan |
-|--------|--------|---------|
-| mtc-asset.web.app (hosting) | ✅ Live (R3+R6) | R1-R7 complete, 68 files |
-
-## Commits (session 4)
-
-| Hash | Deskripsi |
-|------|-----------|
-| e4edd78 | R3: pure helpers availability + tests |
-| 23a8877 | R3: requisition↔WO data layer |
-| dc46edf | R3: availability check + approve guard + badges |
-| 8ca6c39 | R3: WO picker + live availability RequestPart UI |
-| 11dae31 | docs: R3 |
-| 3053b87 | fix: sortByScore |
-| 1607172 | fix: reqIds guard |
-| d48265b | R6: computeBDFromLogs + calcDowntime fix |
-| 8e899a9 | R6: auto-sync Performance.bd |
-| 74f3833 | R6: UI sync indicator + recompute button |
-
-## Known Issues (Still Open)
-
-- Semua R1-R7 ✅ complete — roadmap maintenance intelligence selesai.
-
-## Next Session
-
-- [ ] Housekeeping: hapus scripts/*.mjs helper lama (15 files)
-- [ ] QA visual device real (mobile nav, charts, R3/R6 badges)
-- [ ] Optional: R8 ideas dari planner/analyst feedback
-
----
-
-# Session Notes — 2026-08-04 (Session 4, part 3) — QA + Bugfix Marathon
-
-## Ringkasan
-
-R6 + Housekeeping + QA selesai di part 2. Part 3: QA visual via Playwright + 4 bug fix + deploy. **Semua menu kini render**.
-
-## QA Setup (baru)
-
-- **Browser subagent GAGAL permanen** — "No active credentials for provider: antigravity" (model 404 di sisi system, bukan browser). Solusi: **Python Playwright + Chrome channel** (tanpa download browser binary).
-- Install: `pip install playwright` → pakai `p.chromium.launch(channel='chrome')` (Chrome/Edge existing di C:\Program Files).
-- QA flow: login (admin@planner.com / adhy23) → cek bottom nav mobile (390×844) → More modal → semua page.
-- **Temuan QA**: bottom nav More = `button[aria-label="More menu"]` (bukan <a>); sidebar hidden di mobile → navigasi via More modal; "Canvas not found" di KPI = benign (chart render on-demand saat page dibuka).
-
-## Bug Fixes (semua live)
-
-| Hash | Bug | Fix |
-|------|-----|-----|
-| 8b52fed | `PAGE_ROUTE_MAP` missing export → ES module crash | Hapus import + getter dead `pageComponentName` |
-| 330705c | `darkMode is not defined` Alpine error | Align `toggleDarkMode`/`applyTheme` → `themeMode` ('night'/'light'); icon index.html pakai themeMode |
-| 091ce9e | 5 menu blank (Planning Board, Monthly Plan, Workload, Audit Trail, MTBF/MTTR) | Tambah 5 `template x-if` + `div x-page` container di index.html (26 lines) — HTML page files ada tapi tak pernah di-mount |
-
-## Root Cause Chain (error beruntun)
-
-1. `npm install` tambah `@fortawesome/fontawesome-free` (dependency ada di package.json tapi tak ter-install) → dev server stale (task-199) error resolve fontawesome
-2. MIME `NS_ERROR_CORRUPTED_CONTENT` di Firefox = server error state
-3. Restart dev server → muncul 2 bug tersembunyi (PAGE_ROUTE_MAP, darkMode) yang sebelumnya tak terlihat karena server selalu error duluan
-4. Fix keduanya → user report 5 menu blank → akar: container x-if hilang
-
-## Verifikasi Final (Playwright)
-
-- 5 page render: Planning Board (2 WO completed + teknisi), Monthly Plan (selector + Export), Workload (stats), Audit (0 entries), MTBF/MTTR (select UI)
-- 0 console errors seluruh alur login → nav → page
-- Build pass + 103/103 tests
-- **Live: mtc-asset.web.app**
+| 63b6d86 | feat(S5): 4 themes, themed form fonts, mobile bottom nav 5-slot + More modal, add missing pages/modules |
 
 ## Known Issues / Catatan
 
-- Data Firebase dev minim: 18 equip, 50 parts, 2 logs, 0 PM schedule → beberapa page tampil empty state (Workload 0 tech, Monthly 0 tasks, Audit 0) — **bukan bug**
-- CRLF quirk tetap: semua edit via node .mjs script
-- `git checkout -- .` berbahaya: revert juga untracked working-copy changes (pernah hilang PAGE_ROUTE_MAP context) — hindari, pakai `git restore <file>` per-file
+- `.open/skills` = submodule dirty (bukan project) — skip saat commit
+- CRLF quirk tetap: edit tools gagal di CRLF files → pakai node `.mjs` + regex `\r?\n`
+- Data Firebase dev minim (18 equip, 50 parts, 2 logs, 0 PM) — beberapa page empty state (bukan bug)
 
 ## Next Session
 
 - [ ] Isi data nyata: assign teknisi ke WO (Workload page), input PM schedule (Monthly Plan)
 - [ ] Optional: audit trail capture (AuditTrail node Firebase masih kosong)
-- [ ] Deploy workflow di .github masih modified (line-ending) — cek sebelum push
+- [ ] Cek deploy workflow .github (line-ending modified)
+- [ ] Opsional R8: ide dari feedback planner/analyst
