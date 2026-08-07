@@ -15,6 +15,24 @@ export const chartModule = {
         return window._chartJS;
     },
 
+    // Resolve accent color per theme (gold/navy/purple/blue)
+    themeAccent() {
+        const t = this.themeMode || 'night';
+        return {
+            night: '#f5c542', navy: '#3b82f6', purple: '#a855f7', light: '#0061ff'
+        }[t] || '#f5c542';
+    },
+    themeAccentSoft() {
+        const t = this.themeMode || 'night';
+        return {
+            night: 'rgba(245, 197, 66, 0.1)', navy: 'rgba(59, 130, 246, 0.1)', purple: 'rgba(168, 85, 247, 0.1)', light: 'rgba(0, 97, 255, 0.1)'
+        }[t] || 'rgba(245, 197, 66, 0.1)';
+    },
+    themeGrid() {
+        const t = this.themeMode || 'night';
+        const soft = { night: 'rgba(245, 197, 66, 0.05)', navy: 'rgba(59, 130, 246, 0.05)', purple: 'rgba(168, 85, 247, 0.05)' };
+        return this.themeMode === 'light' ? 'rgba(0, 0, 0, 0.05)' : (soft[t] || soft.night);
+    },
     // Safe Chart creation with error boundary — auto-destroy existing chart on same canvas
     async safeCreateChart(ctx, config) {
         try {
@@ -79,7 +97,7 @@ export const chartModule = {
 
             const renderCharts = async () => {
                 const tc = this.darkMode ? '#8b9eb7' : '#64748b';
-                const gc = this.darkMode ? 'rgba(0, 242, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+                const gc = this.themeGrid();
 
                 const ctxStatus = await waitForCanvas('statusChart');
                 if (this.currentPage !== 'dash') return;
@@ -97,7 +115,7 @@ export const chartModule = {
                     }
                     window._appCharts.status = await this.safeCreateChart(ctxStatus, {
                         type: 'doughnut',
-                        data: { labels: activeLabels, datasets: [{ data: activeData, backgroundColor: ['#00f2ff', '#bc13fe', '#334155', '#64748b'] }] },
+                        data: { labels: activeLabels, datasets: [{ data: activeData, backgroundColor: [`${this.themeAccent()}`, '#bc13fe', '#334155', '#64748b'] }] },
                         options: { animation: { duration: 1000, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 10 } } } } }
                     });
                 }
@@ -127,7 +145,7 @@ export const chartModule = {
                     }
                     window._appCharts.reliability = await this.safeCreateChart(ctxRel, {
                         type: 'line',
-                        data: { labels: sorted, datasets: [{ label: 'PA %', data: avg, borderColor: '#00f2ff', tension: 0.3, fill: true, backgroundColor: 'rgba(0, 242, 255, 0.1)' }] },
+                        data: { labels: sorted, datasets: [{ label: 'PA %', data: avg, borderColor: this.themeAccent(), tension: 0.3, fill: true, backgroundColor: this.themeAccentSoft() }] },
                         options: { animation: { duration: 1200, easing: 'easeOutQuart' }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc }, min: 0, max: 100 } }, plugins: { legend: { display: false } } }
                     });
                 }
@@ -151,7 +169,7 @@ export const chartModule = {
                     if (overdue + pending + completed + cancelled > 0) {
                         window._appCharts.pmStatus = await this.safeCreateChart(ctxPM, {
                             type: 'bar',
-                            data: { labels: ['Overdue', 'Pending', 'Completed', 'Cancelled'], datasets: [{ data: [overdue, pending, completed, cancelled], backgroundColor: ['rgba(239,68,68,0.7)', 'rgba(6,182,212,0.7)', 'rgba(34,197,94,0.7)', 'rgba(100,116,139,0.5)'], borderColor: ['#ef4444', '#06b6d4', '#22c55e', '#64748b'], borderWidth: 1, borderRadius: 4 }] },
+                            data: { labels: ['Overdue', 'Pending', 'Completed', 'Cancelled'], datasets: [{ data: [overdue, pending, completed, cancelled], backgroundColor: ['rgba(239,68,68,0.7)', this.themeAccentSoft(), 'rgba(34,197,94,0.7)', 'rgba(100,116,139,0.5)'], borderColor: ['#ef4444', this.themeAccent(), '#22c55e', '#64748b'], borderWidth: 1, borderRadius: 4 }] },
                             options: { indexAxis: 'y', animation: { duration: 800, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true }, y: { grid: { display: false }, ticks: { color: tc, font: { size: 10, weight: 'bold' } } } }, plugins: { legend: { display: false } } }
                         });
                     }
@@ -168,7 +186,7 @@ export const chartModule = {
                     if (wos.length > 0) {
                         if (window._appCharts.woCompletion) { try { window._appCharts.woCompletion.destroy(); } catch(e) {} }
                         window._appCharts.woCompletion = await this.safeCreateChart(ctxWo, {
-                            type: 'doughnut', data: { labels: ['Completed', 'In Progress', 'Pending'], datasets: [{ data: [woCompleted, woInProgress, woPending], backgroundColor: ['#22c55e', '#06b6d4', '#f59e0b'] }] },
+                            type: 'doughnut', data: { labels: ['Completed', 'In Progress', 'Pending'], datasets: [{ data: [woCompleted, woInProgress, woPending], backgroundColor: ['#22c55e', this.themeAccent(), '#f59e0b'] }] },
                             options: { animation: { duration: 1000, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 10 } } } } }
                         });
                     }
@@ -203,7 +221,7 @@ export const chartModule = {
             });
 
             const tc = this.darkMode ? '#8b9eb7' : '#64748b';
-            const gc = this.darkMode ? 'rgba(0, 242, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+            const gc = this.themeGrid();
 
             const safeRender = async (chartKey, canvasId, type, data, opts = {}) => {
                 const ctx = await waitForCanvas(canvasId);
@@ -240,7 +258,7 @@ export const chartModule = {
             const mtbfValues = mtbfAverages.map(e => e.mtbf);
             await safeRender('mtbfChart', 'mtbfChart', 'bar', {
                 labels: mtbfLabels.length > 0 ? mtbfLabels : ['No Data'],
-                datasets: [{ label: 'MTBF (hours)', data: mtbfValues.length > 0 ? mtbfValues : [0], backgroundColor: mtbfValues.length > 0 ? '#00f2ff' : '#64748b', borderRadius: 4 }]
+                datasets: [{ label: 'MTBF (hours)', data: mtbfValues.length > 0 ? mtbfValues : [0], backgroundColor: mtbfValues.length > 0 ? this.themeAccent() : '#64748b', borderRadius: 4 }]
             }, { indexAxis: 'y', scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { display: false }, ticks: { color: tc } } }, plugins: { legend: { display: false } } });
 
             // MTTR Chart
@@ -309,7 +327,7 @@ export const chartModule = {
             const compLabels = Object.keys(compMap).sort((a, b) => compMap[b] - compMap[a]).slice(0, 5);
             await safeRender('kpiTop5Components', 'top5Components', 'bar', {
                 labels: compLabels.length > 0 ? compLabels : ['No Components'],
-                datasets: compLabels.length > 0 ? [{ label: 'Hours', data: compLabels.map(c => compMap[c]), backgroundColor: '#00f2ff' }] : [{ label: 'Value', data: [0], backgroundColor: '#64748b' }]
+                datasets: compLabels.length > 0 ? [{ label: 'Hours', data: compLabels.map(c => compMap[c]), backgroundColor: this.themeAccent() }] : [{ label: 'Value', data: [0], backgroundColor: '#64748b' }]
             }, { indexAxis: 'y' });
 
             const schedCounts = { Scheduled: 0, Unscheduled: 0 };
@@ -331,7 +349,7 @@ export const chartModule = {
                 } else mechCounts.Operational++;
             });
             await safeRender('kpiFailureType', 'failureTypeChart', 'doughnut', {
-                labels: Object.keys(mechCounts), datasets: [{ data: Object.values(mechCounts), backgroundColor: ['#00f2ff', '#bc13fe', '#334155'] }]
+                labels: Object.keys(mechCounts), datasets: [{ data: Object.values(mechCounts), backgroundColor: [this.themeAccent(), '#bc13fe', '#334155'] }]
             });
 
             // Cost Data
@@ -347,7 +365,7 @@ export const chartModule = {
             const costValues = costMonths.map(m => Math.round(costByMonth[m] / 1e6));
             await safeRender('kpiCostChart', 'costChart', 'line', {
                 labels: costMonths.length > 0 ? costMonths.map(m => m.substring(5)) : ['-'],
-                datasets: [{ label: 'Cost (Rp M)', data: costValues.length > 0 ? costValues : [0], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }]
+                datasets: [{ label: 'Cost (Rp M)', data: costValues.length > 0 ? costValues : [0], borderColor: this.themeAccent(), backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }]
             }, { scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc }, beginAtZero: true } }, plugins: { legend: { display: false } } });
 
             // Reliability Pareto
@@ -359,8 +377,8 @@ export const chartModule = {
             await safeRender('kpiParetoChart', 'paretoChart', 'bar', {
                 labels: paretoData.length > 0 ? paretoData : ['No data'],
                 datasets: [
-                    { label: 'Downtime (hrs)', data: paretoValues.length > 0 ? paretoValues : [0], backgroundColor: '#00f2ff', borderRadius: 4, yAxisID: 'y' },
-                    { label: 'Cumulative %', data: paretoCum.length > 0 ? paretoCum : [0], type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.3, pointRadius: 3, yAxisID: 'y1' }
+                    { label: 'Downtime (hrs)', data: paretoValues.length > 0 ? paretoValues : [0], backgroundColor: this.themeAccent(), borderRadius: 4, yAxisID: 'y' },
+                    { label: 'Cumulative %', data: paretoCum.length > 0 ? paretoCum : [0], type: 'line', borderColor: this.themeAccent(), backgroundColor: 'transparent', tension: 0.3, pointRadius: 3, yAxisID: 'y1' }
                 ]
             }, { scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc }, beginAtZero: true }, y1: { position: 'right', grid: { display: false }, ticks: { color: tc }, min: 0, max: 100 } }, plugins: { legend: { position: 'top', labels: { color: tc, font: { size: 9 } } } } });
 
@@ -380,7 +398,7 @@ export const chartModule = {
             backgroundColor: this.darkMode ? 'rgba(13,17,23,0.95)' : 'rgba(255,255,255,0.95)',
             titleColor: this.darkMode ? '#f5f5f5' : '#0f172a',
             bodyColor: this.darkMode ? '#8b9eb7' : '#64748b',
-            borderColor: '#f59e0b',
+            borderColor: this.themeAccent(),
             borderWidth: 1,
             padding: 10,
             cornerRadius: 10,
@@ -398,7 +416,7 @@ export const chartModule = {
         ctx = await wait('downtimeTrendChart');
         if (ctx) { if (window._appCharts.downtimeTrend) { try { window._appCharts.downtimeTrend.destroy(); } catch(e) {} } const dt = this.calcDowntimeTrend(); window._appCharts.downtimeTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: dt.length ? dt.map(d => d.month.substring(5)) : ['-'], datasets: [{ label: 'Downtime (hrs)', data: dt.length ? dt.map(d => d.hours) : [0], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
         ctx = await wait('costTrendChart');
-        if (ctx) { if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} } const ct = this.calcCostTrend(); window._appCharts.costTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: ct.length ? ct.map(c => c.month.substring(5)) : ['-'], datasets: [{ label: 'Cost', data: ct.length ? ct.map(c => c.cost) : [0], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} } const ct = this.calcCostTrend(); window._appCharts.costTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: ct.length ? ct.map(c => c.month.substring(5)) : ['-'], datasets: [{ label: 'Cost', data: ct.length ? ct.map(c => c.cost) : [0], borderColor: this.themeAccent(), backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
         ctx = await wait('abcChart');
         if (ctx) { if (window._appCharts.abcChart) { try { window._appCharts.abcChart.destroy(); } catch(e) {} } const abc = this.calcInventoryABC(); const a = abc.filter(p => p.category === 'A').length; const b = abc.filter(p => p.category === 'B').length; const c = abc.filter(p => p.category === 'C').length; window._appCharts.abcChart = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['A (High Value)','B (Medium)','C (Low)'], datasets: [{ data: [a||1,b||1,c||1], backgroundColor: ['#ef4444','#f59e0b','#06b6d4'] }] }, options: { cutout: '65%', animation: { duration: 800 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
     },

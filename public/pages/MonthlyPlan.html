@@ -1,0 +1,124 @@
+<!-- 📄 PAGE: MONTHLY MAINTENANCE PLAN -->
+<div x-cloak class="space-y-4">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div>
+      <h3 class="font-black text-xl lg:text-2xl text-rose-400 nexus-glow-text uppercase tracking-tight">Monthly Plan</h3>
+      <p class="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Monthly Maintenance Plan Report</p>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <button @click="mpRefresh()" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-amber-400 transition-all">
+        <i class="fas fa-sync-alt text-xs"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Month Selector + Export -->
+  <div class="glass border-nexus-accent/10 p-4 rounded-2xl">
+    <div class="flex flex-wrap items-end gap-4">
+      <div>
+        <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Month</label>
+        <select x-model="mpMonth" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-40">
+          <option value="0">January</option>
+          <option value="1">February</option>
+          <option value="2">March</option>
+          <option value="3">April</option>
+          <option value="4">May</option>
+          <option value="5">June</option>
+          <option value="6">July</option>
+          <option value="7">August</option>
+          <option value="8">September</option>
+          <option value="9">October</option>
+          <option value="10">November</option>
+          <option value="11">December</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Year</label>
+        <input type="number" x-model="mpYear" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-24">
+      </div>
+      <button @click="mpExportPDF()" :disabled="mpLoading || (mpPMTasks.length === 0 && mpOpenWOs.length === 0)"
+        class="px-5 py-3 bg-rose-600/20 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
+        <i class="fas fa-file-pdf"></i> Export PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div x-show="mpLoading" class="space-y-3">
+    <template x-for="i in 2" :key="i">
+      <div class="skeleton skeleton-card p-4 space-y-2"><div class="skeleton skeleton-line skeleton-md" style="width:40%"></div><div class="skeleton skeleton-line skeleton-sm" style="width:70%"></div></div>
+    </template>
+  </div>
+
+  <!-- Summary -->
+  <div x-show="!mpLoading" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-amber-500">
+      <div class="text-xl md:text-2xl font-black text-amber-500" x-text="mpPMTasks.length"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">PM Tasks</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-cyan-500">
+      <div class="text-xl md:text-2xl font-black text-cyan-500" x-text="mpOpenWOs.length"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Open WOs</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-emerald-500">
+      <div class="text-xl md:text-2xl font-black text-emerald-500" x-text="mpTotalItems"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Total Items</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-purple-500">
+      <div class="text-xl md:text-2xl font-black text-purple-500" x-text="mpTotalHours.toFixed(0)"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Est. Hours</div>
+    </div>
+  </div>
+
+  <!-- PM Tasks Section -->
+  <div x-show="!mpLoading" class="glass border-nexus-accent/10 rounded-2xl overflow-hidden">
+    <div class="p-4 border-b border-white/5 flex items-center gap-2">
+      <i class="fas fa-tasks text-amber-400"></i>
+      <span class="text-sm font-black text-white uppercase tracking-widest">PM Tasks <span class="text-slate-500 font-mono" x-text="mpPMTasks.length"></span></span>
+    </div>
+    <div x-show="mpPMTasks.length === 0" class="p-6 text-center text-slate-600"><i class="fas fa-calendar-check text-2xl mb-2 block"></i><p class="text-xs font-bold">No PM tasks this month</p></div>
+    <div x-show="mpPMTasks.length > 0" class="overflow-x-auto">
+      <div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead><tr class="border-b border-white/5 text-slate-500 font-black uppercase tracking-widest"><th class="text-left p-3">Task</th><th class="text-left p-3 hidden md:table-cell">Equipment</th><th class="text-left p-3">Date</th><th class="text-left p-3 hidden md:table-cell">Assigned</th><th class="text-left p-3">Status</th></tr></thead>
+        <tbody class="divide-y divide-white/5">
+          <template x-for="pm in mpPMTasks" :key="pm.id">
+            <tr class="hover:bg-white/[0.02]">
+              <td class="p-3 font-bold text-white" x-text="pm.taskName || pm.description || '-'"></td>
+              <td class="p-3 text-slate-400 hidden md:table-cell" x-text="mpEquipName(pm.equipmentId)"></td>
+              <td class="p-3 text-slate-400" x-text="pm.date"></td>
+              <td class="p-3 text-slate-400 hidden md:table-cell" x-text="pm.assignedTo || '-'"></td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded font-bold uppercase text-[9px]" :class="pm.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : pm.status === 'cancelled' ? 'bg-slate-500/20 text-slate-400' : 'bg-amber-500/20 text-amber-400'" x-text="pm.status || 'pending'"></span></td>
+            </tr>
+          </template>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- Open WOs Section -->
+  <div x-show="!mpLoading" class="glass border-nexus-accent/10 rounded-2xl overflow-hidden">
+    <div class="p-4 border-b border-white/5 flex items-center gap-2">
+      <i class="fas fa-clipboard-list text-cyan-400"></i>
+      <span class="text-sm font-black text-white uppercase tracking-widest">Open Work Orders <span class="text-slate-500 font-mono" x-text="mpOpenWOs.length"></span></span>
+    </div>
+    <div x-show="mpOpenWOs.length === 0" class="p-6 text-center text-slate-600"><i class="fas fa-check-circle text-2xl mb-2 block"></i><p class="text-xs font-bold">No open WOs this month</p></div>
+    <div x-show="mpOpenWOs.length > 0" class="overflow-x-auto">
+      <div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead><tr class="border-b border-white/5 text-slate-500 font-black uppercase tracking-widest"><th class="text-left p-3">WO</th><th class="text-left p-3 hidden md:table-cell">Equipment</th><th class="text-left p-3">Description</th><th class="text-left p-3">Due</th><th class="text-left p-3 hidden md:table-cell">Tech</th><th class="text-left p-3">Priority</th></tr></thead>
+        <tbody class="divide-y divide-white/5">
+          <template x-for="wo in mpOpenWOs" :key="wo.LogID">
+            <tr class="hover:bg-white/[0.02]">
+              <td class="p-3 font-mono text-purple-400 font-bold" x-text="wo.woNumber || wo.LogID?.slice(0,8) || '-'"></td>
+              <td class="p-3 text-slate-400 hidden md:table-cell" x-text="mpEquipName(wo.EquipmentID)"></td>
+              <td class="p-3 font-bold text-white max-w-[200px] truncate" x-text="wo.Deskripsi || wo.Jenis || '-'"></td>
+              <td class="p-3 text-slate-400" x-text="wo.dueDate || wo.Tanggal || '-'"></td>
+              <td class="p-3 text-slate-400 hidden md:table-cell" x-text="wo.assignedTo || '-'"></td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded font-bold uppercase text-[9px]" :class="mpPriorityColor(wo.woPriority || 'Normal')" x-text="wo.woPriority || 'Normal'"></span></td>
+            </tr>
+          </template>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>

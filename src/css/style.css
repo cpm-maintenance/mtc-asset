@@ -8,11 +8,14 @@
   /* Default to Dark (Industrial Look) */
   --nexus-bg: #05070a;
   --nexus-card: rgba(13, 17, 23, 0.8);
-  --nexus-accent: #f59e0b;
-  --nexus-accent-glow: rgba(245, 158, 11, 0.15);
-  --nexus-purple: #d97706;
-  --nexus-purple-glow: rgba(217, 119, 6, 0.15);
-  --nexus-border: rgba(245, 158, 11, 0.12);
+  --nexus-accent: #00f2ff;
+  --nexus-accent-glow: rgba(0, 242, 255, 0.15);
+  --nexus-accent-2: #0061ff;
+  --nexus-purple: #bc13fe;
+  --nexus-purple-glow: rgba(188, 19, 254, 0.15);
+  --nexus-border: rgba(0, 242, 255, 0.1);
+  --nexus-gold: #d4af37;
+  --nexus-gold-glow: rgba(212, 175, 55, 0.08);
   --text-main: #f0f4f8;
   --text-muted: #8b9eb7;
   --radius-xl: 1.25rem;
@@ -24,11 +27,12 @@
 [data-theme='dark'] {
   --nexus-bg: #05070a; 
   --nexus-card: rgba(13, 17, 23, 0.8);
-  --nexus-accent: #f59e0b;
-  --nexus-accent-glow: rgba(245, 158, 11, 0.15);
-  --nexus-purple: #d97706;
-  --nexus-purple-glow: rgba(217, 119, 6, 0.15);
-  --nexus-border: rgba(245, 158, 11, 0.12);
+  --nexus-accent: #f5c542;
+  --nexus-accent-glow: rgba(245, 197, 66, 0.15);
+  --nexus-accent-2: #c9a227;
+  --nexus-purple: #bc13fe;
+  --nexus-purple-glow: rgba(188, 19, 254, 0.15);
+  --nexus-border: rgba(245, 197, 66, 0.12);
   --text-main: #f0f4f8;
   --text-muted: #8b9eb7;
 }
@@ -36,12 +40,39 @@
 [data-theme='light'] {
   --nexus-bg: #f8fafc;
   --nexus-card: rgba(255, 255, 255, 0.9);
-  --nexus-accent: #b45309;
-  --nexus-accent-glow: rgba(180, 83, 9, 0.12);
-  --nexus-purple: #92400e;
-  --nexus-border: rgba(0, 0, 0, 0.12);
+  --nexus-accent: #0061ff;
+  --nexus-accent-glow: rgba(0, 97, 255, 0.1);
+  --nexus-accent-2: #3b82f6;
+  --nexus-purple: #7c3aed;
+  --nexus-border: rgba(0, 0, 0, 0.1);
   --text-main: #0f172a;
   --text-muted: #64748b;
+}
+
+[data-theme='navy'] {
+  --nexus-bg: #0a0f1e;
+  --nexus-card: rgba(15, 23, 42, 0.85);
+  --nexus-accent: #3b82f6;
+  --nexus-accent-glow: rgba(59, 130, 246, 0.2);
+  --nexus-accent-2: #1d4ed8;
+  --nexus-purple: #a855f7;
+  --nexus-purple-glow: rgba(168, 85, 247, 0.12);
+  --nexus-border: rgba(59, 130, 246, 0.15);
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+}
+
+[data-theme='purple'] {
+  --nexus-bg: #0d0714;
+  --nexus-card: rgba(24, 12, 36, 0.85);
+  --nexus-accent: #a855f7;
+  --nexus-accent-glow: rgba(168, 85, 247, 0.2);
+  --nexus-accent-2: #7c3aed;
+  --nexus-purple: #d946ef;
+  --nexus-purple-glow: rgba(217, 70, 239, 0.12);
+  --nexus-border: rgba(168, 85, 247, 0.15);
+  --text-main: #f3e8ff;
+  --text-muted: #a78bfa;
 }
 
 /* Force colors for light mode compatibility */
@@ -83,7 +114,8 @@ body {
   transition: background-color 0.4s ease, color 0.4s ease;
   background-image: 
     radial-gradient(circle at 50% 0%, var(--nexus-accent-glow) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, var(--nexus-purple-glow) 0%, transparent 50%);
+    radial-gradient(circle at 100% 100%, var(--nexus-purple-glow) 0%, transparent 50%),
+    radial-gradient(circle at 0% 100%, var(--nexus-gold-glow) 0%, transparent 45%);
   background-attachment: fixed;
 }
 
@@ -142,7 +174,7 @@ body {
   }
 
   .btn-nexus-gold {
-    background: linear-gradient(135deg, var(--nexus-accent) 0%, #0061ff 100%);
+    background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%);
     color: #05070a;
     padding: 0.75rem 1.5rem;
     border-radius: 1.25rem;
@@ -154,14 +186,14 @@ body {
     justify-content: center;
     gap: 0.6rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 20px rgba(0, 242, 255, 0.3);
+    box-shadow: 0 8px 20px var(--nexus-accent-glow);
     font-size: 12px;
     min-width: 2.75rem;
     min-height: 2.75rem;
   }
   .btn-nexus-gold:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 12px 24px rgba(0, 242, 255, 0.4);
+    box-shadow: 0 12px 24px var(--nexus-accent-glow);
   }
   .btn-nexus-gold i {
     font-size: 14px;
@@ -211,14 +243,14 @@ h1, h2, h3, h4 {
 }
 
 .gold-gradient { 
-  background: linear-gradient(135deg, var(--nexus-accent) 0%, #ea580c 100%); 
+  background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%); 
   color: #05070a;
   box-shadow: 0 8px 20px var(--nexus-accent-glow);
   font-weight: 700;
 }
 
 .gold-text {
-  background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-purple) 100%);
+  background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 5px var(--nexus-accent-glow));
@@ -241,11 +273,43 @@ input, select, textarea {
   transition: all 0.3s ease;
 }
 
+/* Form control text follows theme (override hardcoded text-white/slate classes) */
+input.text-white, select.text-white, textarea.text-white,
+input.text-slate-400, select.text-slate-400, textarea.text-slate-400,
+input.text-slate-500, select.text-slate-500, textarea.text-slate-500 {
+  color: var(--text-main) !important;
+}
+
+/* Placeholders follow theme muted color */
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.75;
+}
+input.placeholder-slate-500::placeholder, input.placeholder-slate-600::placeholder,
+textarea.placeholder-slate-500::placeholder, textarea.placeholder-slate-600::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.75;
+}
+
 input:focus, select:focus, textarea:focus {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: var(--nexus-accent) !important;
   box-shadow: 0 0 15px var(--nexus-accent-glow) !important;
   outline: none;
+}
+
+/* Native select dropdown follows theme */
+select option {
+  background-color: var(--nexus-card) !important;
+  color: var(--text-main) !important;
+}
+
+/* Native controls (dropdown arrow, date picker) follow theme */
+[data-theme='dark'], [data-theme='navy'], [data-theme='purple'] {
+  color-scheme: dark;
+}
+[data-theme='light'] {
+  color-scheme: light;
 }
 
 [x-cloak] { display: none !important; }
