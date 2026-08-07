@@ -584,7 +584,7 @@ Please provide:
         table { width: 100%; border-collapse: collapse; margin: 20px 0; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background: #f5f5f5; }
-        .metric { font-size: 24px; font-weight: bold; color: #00f2ff; }
+        .metric { font-size: 24px; font-weight: bold; color: #f5c542; }
         .section { margin: 30px 0; }
         .recommendations li { margin: 10px 0; }
     </style>

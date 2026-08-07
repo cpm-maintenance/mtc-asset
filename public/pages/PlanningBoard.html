@@ -1,0 +1,417 @@
+<!-- 📋 PAGE: PLANNING BOARD — Kanban + Gantt -->
+<div x-cloak class="space-y-4">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div>
+      <h3 class="font-black text-xl lg:text-2xl text-purple-400 nexus-glow-text uppercase tracking-tight">Planning Board</h3>
+      <p class="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Weekly/Daily Work Order Planner</p>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <!-- View Toggle -->
+      <div class="flex glass rounded-xl p-1 border-nexus-accent/10">
+        <button @click="planningView = 'kanban'" 
+          :class="planningView === 'kanban' ? 'bg-cyan-500/20 text-amber-400 border-amber-500/30' : 'text-slate-500 hover:text-slate-300'"
+          class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-transparent flex items-center gap-2">
+          <i class="fas fa-columns"></i> <span class="hidden sm:inline">Kanban</span>
+        </button>
+        <button @click="planningView = 'gantt'" 
+          :class="planningView === 'gantt' ? 'bg-cyan-500/20 text-amber-400 border-amber-500/30' : 'text-slate-500 hover:text-slate-300'"
+          class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-transparent flex items-center gap-2">
+          <i class="fas fa-chart-bar"></i> <span class="hidden sm:inline">Timeline</span>
+        </button>
+      </div>
+      <button @click="$refs.planningRefreshBtn.classList.add('animate-spin'); refreshData(); setTimeout(() => $refs.planningRefreshBtn.classList.remove('animate-spin'), 1000)"
+        class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-amber-400 transition-all">
+        <i x-ref="planningRefreshBtn" class="fas fa-sync-alt text-xs"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-orange-500">
+      <div class="text-xl md:text-2xl font-black text-orange-500" x-text="planningWOs.filter(w => w.Status === 'Pending' || w.Status === 'Draft').length"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Open</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-cyan-500">
+      <div class="text-xl md:text-2xl font-black text-cyan-500" x-text="planningWOs.filter(w => w.Status === 'Approved').length"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Approved</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-blue-500">
+      <div class="text-xl md:text-2xl font-black text-blue-500" x-text="planningWOs.filter(w => w.Status === 'In Progress').length"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">In Progress</div>
+    </div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-emerald-500">
+      <div class="text-xl md:text-2xl font-black text-emerald-500" x-text="planningWOs.filter(w => w.Status === 'Completed').length"></div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-widest">Completed</div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="flex flex-wrap gap-3 items-center">
+    <input type="text" x-model="planningSearch" placeholder="Search WO, equipment, tech..." class="w-full md:w-64 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40 text-xs font-bold">
+    <select x-model="planningFilterTech" class="p-3 glass border-nexus-accent/10 text-xs font-bold">
+      <option value="">All Technicians</option>
+      <template x-for="tech in planningTechList" :key="'tech-' + tech">
+        <option :value="tech" x-text="tech"></option>
+      </template>
+    </select>
+    <select x-model="planningFilterPriority" class="p-3 glass border-nexus-accent/10 text-xs font-bold">
+      <option value="">All Priority</option>
+      <option value="Emergency">Emergency</option>
+      <option value="Urgent">Urgent</option>
+      <option value="Normal">Normal</option>
+      <option value="Planned">Planned</option>
+    </select>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 1: KANBAN BOARD -->
+  <!-- ════════════════════════════════════════════ -->
+  <div x-show="planningView === 'kanban'" class="space-y-4">
+    <!-- Loading skeleton -->
+    <div x-show="isLoading" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <template x-for="i in 4" :key="i">
+        <div class="space-y-3">
+          <div class="skeleton skeleton-line skeleton-md" style="width:60%"></div>
+          <template x-for="j in 3" :key="j">
+            <div class="skeleton skeleton-card p-4 space-y-2">
+              <div class="skeleton skeleton-line skeleton-sm" style="width:70%"></div>
+              <div class="skeleton skeleton-line skeleton-xs" style="width:40%"></div>
+              <div class="skeleton skeleton-line skeleton-xs" style="width:50%"></div>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <!-- Kanban Columns -->
+    <div x-show="!isLoading" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Column: Open -->
+      <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden flex flex-col">
+        <div class="p-3 border-b border-white/5 bg-orange-500/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+            <span class="text-xs font-black uppercase tracking-widest text-orange-400">Open</span>
+          </div>
+          <span class="text-xs font-bold text-orange-400 bg-orange-500/20 px-2 py-0.5 rounded-full" x-text="planningFilteredByColumn('Pending','Draft').length"></span>
+        </div>
+        <div class="flex-1 p-2 space-y-2 min-h-[300px]" 
+          @dragover.prevent="$event.target.closest('[x-data]') ? $event.target.closest('[x-data]').__x.$data.planningDragOver = 'Pending' : null"
+          @dragleave="planningDragOver = null"
+          @drop="planningDrop('Pending')">
+          <template x-for="wo in planningFilteredByColumn('Pending','Draft')" :key="wo.LogID">
+            <div draggable="true"
+              @dragstart="planningDragStart(wo.LogID)"
+              @dragend="planningDragEnd"
+              :class="{ 'ring-2 ring-amber-400/50 opacity-60': planningDragging === wo.LogID, 'hover:border-orange-500/30': planningDragging !== wo.LogID }"
+              class="bg-slate-800/50 rounded-xl p-3 border border-white/5 cursor-grab active:cursor-grabbing transition-all hover:bg-slate-700/50 select-none"
+              @click="planningShowDetail(wo)">
+              <!-- Priority badge -->
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px]" :class="planningPriorityColor(wo.woPriority || 'Normal')" x-text="wo.woPriority || 'Normal'"></span>
+                <span x-show="wo.dueDate" class="text-[9px] text-slate-500 flex items-center gap-1"><i class="far fa-clock"></i> <span x-text="wo.dueDate"></span></span>
+              </div>
+              <!-- WO Number + Desc -->
+              <span x-show="wo.woNumber" class="text-xs font-mono text-purple-400 font-bold block" x-text="'#'+wo.woNumber"></span>
+              <p class="text-sm font-bold text-white truncate mt-0.5" x-text="wo.Deskripsi || wo.Jenis || 'WO'"></p>
+              <!-- Meta -->
+              <div class="flex items-center gap-2 mt-2 text-[9px] text-slate-500 uppercase tracking-widest font-bold">
+                <span x-show="wo.assignedTo" class="truncate"><i class="far fa-user mr-0.5"></i> <span x-text="wo.assignedTo"></span></span>
+                <span x-show="wo.EquipmentID && wo.EquipmentID !== 'EXTERNAL'" class="truncate"><i class="fas fa-tools mr-0.5"></i> <span x-text="planningEquipName(wo.EquipmentID)"></span></span>
+                <span x-show="wo.estimatedHours"><i class="far fa-hourglass mr-0.5"></i> <span x-text="wo.estimatedHours + 'h'"></span></span>
+              </div>
+            </div>
+          </template>
+          <!-- Empty -->
+          <div x-show="planningFilteredByColumn('Pending','Draft').length === 0" class="text-center py-8 text-slate-600">
+            <i class="fas fa-inbox text-2xl mb-2 block"></i>
+            <p class="text-xs font-bold">No Open WOs</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column: Approved -->
+      <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden flex flex-col">
+        <div class="p-3 border-b border-white/5 bg-cyan-500/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-cyan-500"></div>
+            <span class="text-xs font-black uppercase tracking-widest text-cyan-400">Approved</span>
+          </div>
+          <span class="text-xs font-bold text-cyan-400 bg-cyan-500/20 px-2 py-0.5 rounded-full" x-text="planningFilteredByColumn('Approved').length"></span>
+        </div>
+        <div class="flex-1 p-2 space-y-2 min-h-[300px]"
+          @dragover.prevent="planningDragOver = 'Approved'"
+          @dragleave="planningDragOver = null"
+          @drop="planningDrop('Approved')">
+          <template x-for="wo in planningFilteredByColumn('Approved')" :key="wo.LogID">
+            <div draggable="true"
+              @dragstart="planningDragStart(wo.LogID)"
+              @dragend="planningDragEnd"
+              :class="{ 'ring-2 ring-amber-400/50 opacity-60': planningDragging === wo.LogID }"
+              class="bg-slate-800/50 rounded-xl p-3 border border-white/5 cursor-grab active:cursor-grabbing transition-all hover:bg-slate-700/50 select-none"
+              @click="planningShowDetail(wo)">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px]" :class="planningPriorityColor(wo.woPriority || 'Normal')" x-text="wo.woPriority || 'Normal'"></span>
+                <span x-show="wo.dueDate" class="text-[9px] text-slate-500 flex items-center gap-1"><i class="far fa-clock"></i> <span x-text="wo.dueDate"></span></span>
+              </div>
+              <span x-show="wo.woNumber" class="text-xs font-mono text-purple-400 font-bold block" x-text="'#'+wo.woNumber"></span>
+              <p class="text-sm font-bold text-white truncate mt-0.5" x-text="wo.Deskripsi || wo.Jenis || 'WO'"></p>
+              <div class="flex items-center gap-2 mt-2 text-[9px] text-slate-500 uppercase tracking-widest font-bold">
+                <span x-show="wo.assignedTo" class="truncate"><i class="far fa-user mr-0.5"></i> <span x-text="wo.assignedTo"></span></span>
+                <span x-show="wo.EquipmentID && wo.EquipmentID !== 'EXTERNAL'" class="truncate"><i class="fas fa-tools mr-0.5"></i> <span x-text="planningEquipName(wo.EquipmentID)"></span></span>
+              </div>
+            </div>
+          </template>
+          <div x-show="planningFilteredByColumn('Approved').length === 0" class="text-center py-8 text-slate-600">
+            <i class="fas fa-check-circle text-2xl mb-2 block"></i>
+            <p class="text-xs font-bold">No Approved WOs</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column: In Progress -->
+      <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden flex flex-col">
+        <div class="p-3 border-b border-white/5 bg-blue-500/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+            <span class="text-xs font-black uppercase tracking-widest text-blue-400">In Progress</span>
+          </div>
+          <span class="text-xs font-bold text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded-full" x-text="planningFilteredByColumn('In Progress').length"></span>
+        </div>
+        <div class="flex-1 p-2 space-y-2 min-h-[300px]"
+          @dragover.prevent="planningDragOver = 'In Progress'"
+          @dragleave="planningDragOver = null"
+          @drop="planningDrop('In Progress')">
+          <template x-for="wo in planningFilteredByColumn('In Progress')" :key="wo.LogID">
+            <div draggable="true"
+              @dragstart="planningDragStart(wo.LogID)"
+              @dragend="planningDragEnd"
+              :class="{ 'ring-2 ring-amber-400/50 opacity-60': planningDragging === wo.LogID }"
+              class="bg-slate-800/50 rounded-xl p-3 border border-white/5 cursor-grab active:cursor-grabbing transition-all hover:bg-slate-700/50 select-none"
+              @click="planningShowDetail(wo)">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px]" :class="planningPriorityColor(wo.woPriority || 'Normal')" x-text="wo.woPriority || 'Normal'"></span>
+                <span x-show="wo.dueDate" class="text-[9px] text-slate-500 flex items-center gap-1"><i class="far fa-clock"></i> <span x-text="wo.dueDate"></span></span>
+              </div>
+              <span x-show="wo.woNumber" class="text-xs font-mono text-purple-400 font-bold block" x-text="'#'+wo.woNumber"></span>
+              <p class="text-sm font-bold text-white truncate mt-0.5" x-text="wo.Deskripsi || wo.Jenis || 'WO'"></p>
+              <div class="flex items-center gap-2 mt-2 text-[9px] text-slate-500 uppercase tracking-widest font-bold">
+                <span x-show="wo.assignedTo" class="truncate"><i class="far fa-user mr-0.5"></i> <span x-text="wo.assignedTo"></span></span>
+                <span x-show="wo.EquipmentID && wo.EquipmentID !== 'EXTERNAL'" class="truncate"><i class="fas fa-tools mr-0.5"></i> <span x-text="planningEquipName(wo.EquipmentID)"></span></span>
+              </div>
+            </div>
+          </template>
+          <div x-show="planningFilteredByColumn('In Progress').length === 0" class="text-center py-8 text-slate-600">
+            <i class="fas fa-play-circle text-2xl mb-2 block"></i>
+            <p class="text-xs font-bold">No Active WOs</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column: Completed -->
+      <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden flex flex-col">
+        <div class="p-3 border-b border-white/5 bg-emerald-500/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+            <span class="text-xs font-black uppercase tracking-widest text-emerald-400">Completed</span>
+          </div>
+          <span class="text-xs font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full" x-text="planningFilteredByColumn('Completed').length"></span>
+        </div>
+        <div class="flex-1 p-2 space-y-2 min-h-[300px]"
+          @dragover.prevent="planningDragOver = 'Completed'"
+          @dragleave="planningDragOver = null"
+          @drop="planningDrop('Completed')">
+          <template x-for="wo in planningFilteredByColumn('Completed')" :key="wo.LogID">
+            <div draggable="true"
+              @dragstart="planningDragStart(wo.LogID)"
+              @dragend="planningDragEnd"
+              :class="{ 'ring-2 ring-amber-400/50 opacity-60': planningDragging === wo.LogID }"
+              class="bg-slate-800/50 rounded-xl p-3 border border-white/5 cursor-grab active:cursor-grabbing transition-all hover:bg-slate-700/50 select-none opacity-60 hover:opacity-100"
+              @click="planningShowDetail(wo)">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[9px] bg-emerald-500/20 text-emerald-400">Done</span>
+              </div>
+              <span x-show="wo.woNumber" class="text-xs font-mono text-purple-400 font-bold block" x-text="'#'+wo.woNumber"></span>
+              <p class="text-sm font-bold text-white truncate mt-0.5" x-text="wo.Deskripsi || wo.Jenis || 'WO'"></p>
+              <div class="flex items-center gap-2 mt-2 text-[9px] text-slate-500 uppercase tracking-widest font-bold">
+                <span x-show="wo.assignedTo" class="truncate"><i class="far fa-user mr-0.5"></i> <span x-text="wo.assignedTo"></span></span>
+                <span x-show="wo.Tanggal" class="truncate"><i class="far fa-calendar mr-0.5"></i> <span x-text="wo.Tanggal"></span></span>
+              </div>
+            </div>
+          </template>
+          <div x-show="planningFilteredByColumn('Completed').length === 0" class="text-center py-8 text-slate-600">
+            <i class="fas fa-check-double text-2xl mb-2 block"></i>
+            <p class="text-xs font-bold">No Completed WOs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- TAB 2: TIMELINE / GANTT -->
+  <!-- ════════════════════════════════════════════ -->
+  <div x-show="!isLoading && planningView === 'gantt'" class="space-y-4">
+    <!-- Month quick-nav -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2">
+      <template x-for="(m, idx) in planningMonths" :key="idx">
+        <button @click="planningGanttScroll = idx"
+          :class="planningGanttScroll === idx ? 'bg-cyan-500/20 text-amber-400 border-amber-500/30' : 'text-slate-500 border-transparent hover:text-slate-300'"
+          class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest border glass whitespace-nowrap transition-all">
+          <span x-text="m.label"></span>
+        </button>
+      </template>
+    </div>
+
+    <div class="glass border-nexus-accent/10 rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <div class="min-w-[600px]">
+          <!-- Header row -->
+          <div class="flex border-b border-white/5 sticky top-0 bg-nexus-dark z-10">
+            <div class="w-[180px] shrink-0 p-3 border-r border-white/5">
+              <span class="text-xs font-black uppercase tracking-widest text-slate-500">WO / Equipment</span>
+            </div>
+            <div class="flex flex-1">
+              <template x-for="day in planningGanttDays" :key="day.dateStr">
+                <div 
+                  :class="{'bg-cyan-500/5': day.isToday, 'bg-slate-800/30': day.isWeekend && !day.isToday, 'border-white/5': true}"
+                  class="w-[20px] shrink-0 border-r text-center py-2" :title="day.label">
+                  <div class="text-[6px] font-black uppercase text-slate-500" x-text="day.dayName"></div>
+                  <div class="text-xs font-bold" :class="day.isToday ? 'text-amber-400' : 'text-slate-400'" x-text="day.date"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+          <!-- Rows -->
+          <template x-for="wo in planningFilteredWOs" :key="wo.LogID">
+            <div class="flex border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
+              <div class="w-[180px] shrink-0 p-3 border-r border-white/5 flex flex-col justify-center">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" :class="{
+                    'bg-orange-500': wo.Status === 'Pending' || wo.Status === 'Draft',
+                    'bg-cyan-500': wo.Status === 'Approved',
+                    'bg-blue-500': wo.Status === 'In Progress',
+                    'bg-emerald-500': wo.Status === 'Completed',
+                  }"></span>
+                  <span class="text-xs font-bold text-white truncate" x-text="wo.Deskripsi || wo.Jenis || 'WO'"></span>
+                </div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-[9px] text-slate-500 font-mono" x-show="wo.woNumber" x-text="'#'+wo.woNumber"></span>
+                  <span class="text-[9px] text-slate-500 truncate" x-text="planningEquipName(wo.EquipmentID)"></span>
+                </div>
+              </div>
+              <div class="flex flex-1 relative min-h-[48px]">
+                <template x-for="day in planningGanttDays" :key="day.dateStr">
+                  <div class="w-[20px] shrink-0 border-r border-white/5 relative"
+                    :class="{'bg-cyan-500/[0.03]': day.isToday, 'bg-slate-800/20': day.isWeekend}"></div>
+                </template>
+                <template x-if="planningGanttBar(wo)">
+                  <div @click="planningShowDetail(wo)"
+                    :style="'left: ' + planningGanttBar(wo).left + 'px; width: ' + planningGanttBar(wo).width + 'px;'"
+                    :class="{
+                      'bg-orange-500/40 border-orange-500/60': wo.Status === 'Pending' || wo.Status === 'Draft',
+                      'bg-cyan-500/40 border-cyan-500/60': wo.Status === 'Approved',
+                      'bg-blue-500/40 border-blue-500/60': wo.Status === 'In Progress',
+                      'bg-emerald-500/40 border-emerald-500/60': wo.Status === 'Completed',
+                    }"
+                    class="absolute top-1/2 -translate-y-1/2 h-6 rounded border cursor-pointer hover:brightness-125 transition-all z-10 overflow-hidden"
+                    :title="(wo.woNumber || '') + ' - ' + (wo.Deskripsi || wo.Jenis || '')">
+                    <div class="px-1 text-[6px] font-bold text-white truncate leading-6 opacity-0 hover:opacity-100 transition-opacity" x-text="wo.Deskripsi || wo.woNumber"></div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <!-- Empty -->
+          <div x-show="planningFilteredWOs.length === 0" class="text-center py-16 text-slate-500">
+            <i class="fas fa-chart-bar text-5xl text-slate-700 mb-4 block"></i>
+            <p class="font-bold">No Work Orders in this range</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- WO DETAIL MODAL (slideover-style) -->
+  <!-- ════════════════════════════════════════════ -->
+  <div x-show="planningDetailWO" x-cloak class="fixed inset-0 z-[300] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+    @click.self="planningDetailWO = null">
+    <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      class="w-full max-w-lg card-modern p-6 border-purple-500/30">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-black text-white nexus-glow-text flex items-center gap-3">
+          <i class="fas fa-clipboard-list text-purple-400"></i>
+          <span>WO Detail</span>
+          <span x-show="planningDetailWO && planningDetailWO.woNumber" class="text-sm font-mono text-purple-400" x-text="planningDetailWO ? '#'+planningDetailWO.woNumber : ''"></span>
+        </h3>
+        <button @click="planningDetailWO = null" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <template x-if="planningDetailWO">
+        <div class="space-y-4">
+          <!-- Status + Priority -->
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-lg font-bold uppercase text-xs" :class="logStatusColor(planningDetailWO.Status)" x-text="planningDetailWO.Status"></span>
+            <span class="px-3 py-1 rounded-lg font-bold uppercase text-xs" :class="planningPriorityColor(planningDetailWO.woPriority || 'Normal')" x-text="planningDetailWO.woPriority || 'Normal'"></span>
+          </div>
+          <!-- Description -->
+          <div>
+            <p class="text-sm text-slate-500 uppercase tracking-widest font-black mb-1">Description</p>
+            <p class="text-white font-bold" x-text="planningDetailWO.Deskripsi || '-'"></p>
+          </div>
+          <!-- Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Equipment</p>
+              <p class="text-white font-bold text-sm" x-text="planningEquipName(planningDetailWO.EquipmentID) || planningDetailWO.EquipmentID || '-'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Type</p>
+              <p class="text-white font-bold text-sm" x-text="planningDetailWO.Jenis || '-'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Assigned To</p>
+              <p class="text-white font-bold text-sm" x-text="planningDetailWO.assignedTo || '-'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Date</p>
+              <p class="text-white font-bold text-sm" x-text="planningDetailWO.Tanggal || '-'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Due Date</p>
+              <p class="text-white font-bold text-sm" :class="planningDetailWO.dueDate && planningDetailWO.dueDate < new Date().toISOString().split('T')[0] ? 'text-red-400' : ''" x-text="planningDetailWO.dueDate || '-'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Est. Hours</p>
+              <p class="text-white font-bold text-sm" x-text="planningDetailWO.estimatedHours || 0"></p>
+            </div>
+          </div>
+          <div x-show="planningDetailWO.Catatan" class="bg-slate-800/50 p-3 rounded-xl">
+            <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Notes</p>
+            <p class="text-white text-sm" x-text="planningDetailWO.Catatan"></p>
+          </div>
+          <!-- Actions -->
+          <div class="flex gap-2 pt-2 border-t border-white/10">
+            <button @click="planningMoveTo(planningDetailWO, 'In Progress')"
+              x-show="planningDetailWO.Status === 'Approved' || planningDetailWO.Status === 'Pending'"
+              class="px-4 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-500/30 transition-all">
+              <i class="fas fa-play mr-1"></i> Start
+            </button>
+            <button @click="planningMoveTo(planningDetailWO, 'Completed')"
+              x-show="planningDetailWO.Status === 'In Progress' || planningDetailWO.Status === 'Approved'"
+              class="px-4 py-2 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-500/30 transition-all">
+              <i class="fas fa-check mr-1"></i> Complete
+            </button>
+            <button @click="planningDetailWO = null" class="px-4 py-2 glass text-slate-400 rounded-xl text-xs font-bold hover:text-white transition-all ml-auto">
+              Close
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>

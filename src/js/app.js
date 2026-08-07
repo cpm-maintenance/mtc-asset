@@ -440,34 +440,40 @@ if (confirm('Are you sure you want to logout?')) {
 
         menuItems: [
             // --- MONITORING ---
-            { id: 'dash', name: 'Dashboard', icon: 'fas fa-chart-pie', mobile: true, group: 'Monitoring' },
+            { id: 'dash', name: 'Dashboard', short: 'Home', icon: 'fas fa-chart-pie', mobile: true, group: 'Monitoring' },
 
             // --- MAINTENANCE ---
-            { id: 'wo', name: 'Work Orders', icon: 'fas fa-clipboard-list', mobile: true, group: 'Maintenance' },
-            { id: 'pms', name: 'PM Schedule', icon: 'fas fa-calendar-alt', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
-            { id: 'equip', name: 'Equipment', icon: 'fas fa-tools', mobile: true, group: 'Maintenance' },
+            { id: 'wo', name: 'Work Orders', short: 'WO', icon: 'fas fa-clipboard-list', mobile: true, group: 'Maintenance' },
+            { id: 'pms', name: 'PM Schedule', short: 'PM', icon: 'fas fa-calendar-alt', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
+            { id: 'equip', name: 'Equipment', short: 'Assets', icon: 'fas fa-tools', mobile: true, group: 'Maintenance' },
 
             // --- PLANNING ---
-            { id: 'planning', name: 'Planning Board', icon: 'fas fa-columns', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
-            { id: 'monthlyplan', name: 'Monthly Plan', icon: 'fas fa-file-alt', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
-            { id: 'workload', name: 'Workload', icon: 'fas fa-user-hard-hat', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'planning', name: 'Planning Board', short: 'Plan', icon: 'fas fa-columns', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'monthlyplan', name: 'Monthly Plan', short: 'Monthly', icon: 'fas fa-file-alt', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'workload', name: 'Workload', short: 'Load', icon: 'fas fa-user-hard-hat', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
 
             // --- LOGS & REPORTS ---
-            { id: 'hist', name: 'All Logs', icon: 'fas fa-history', mobile: true, group: 'Logs & Reports' },
-            { id: 'history', name: 'History Card', icon: 'fas fa-clipboard-check', mobile: true, group: 'Logs & Reports' },
-            { id: 'audit', name: 'Audit Trail', icon: 'fas fa-scroll', mobile: false, allowedRole: 'admin', group: 'Logs & Reports' },
+            { id: 'hist', name: 'All Logs', short: 'Logs', icon: 'fas fa-history', mobile: true, group: 'Logs & Reports' },
+            { id: 'history', name: 'History Card', short: 'History', icon: 'fas fa-clipboard-check', mobile: true, group: 'Logs & Reports' },
+            { id: 'audit', name: 'Audit Trail', short: 'Audit', icon: 'fas fa-scroll', mobile: false, allowedRole: 'admin', group: 'Logs & Reports' },
 
             // --- INVENTORY ---
-            { id: 'parts', name: 'Spare Parts', icon: 'fas fa-box', mobile: true, group: 'Inventory' },
-            { id: 'request', name: 'Request Part', icon: 'fas fa-shopping-cart', mobile: true, group: 'Inventory' },
+            { id: 'parts', name: 'Spare Parts', short: 'Parts', icon: 'fas fa-box', mobile: true, group: 'Inventory' },
+            { id: 'request', name: 'Request Part', short: 'Request', icon: 'fas fa-shopping-cart', mobile: true, group: 'Inventory' },
 
             // --- ANALYTICS ---
-            { id: 'perf', name: 'Performance', icon: 'fas fa-chart-simple', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'mtbfmttr', name: 'MTBF/MTTR', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'enterprise', name: 'Enterprise KPI', icon: 'fas fa-industry', mobile: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'kpi', name: 'KPI Analytics', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'ai', name: 'AI Analysis', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', mobile: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'ai', name: 'AI Analysis', short: 'AI', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin', group: 'Analytics' },
         ],
+
+        // --- MOBILE PRIMARY NAV (5 slots + More) ---
+        get mobilePrimaryItems() {
+            const ids = ['dash', 'wo', 'equip', 'parts'];
+            return ids.map(id => this.menuItems.find(m => m.id === id)).filter(Boolean);
+        },
 
         // --- ROLE-BASED NAVIGATION ---
         get menuGroups() {

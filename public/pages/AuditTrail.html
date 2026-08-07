@@ -1,0 +1,94 @@
+<!-- 📋 PAGE: AUDIT TRAIL -->
+<div x-cloak class="space-y-5 md:space-y-7">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl md:text-3xl font-black text-white nexus-glow-text uppercase tracking-tighter">Audit Trail</h2>
+      <p class="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">
+        <span x-text="auditLogs.length + ' events'"></span>
+        <span x-show="auditLoading" class="text-nexus-accent ml-2">loading...</span>
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button @click="loadAuditLogs()" class="px-4 py-2 glass text-xs font-bold text-nexus-accent rounded-xl hover:bg-nexus-accent/10 transition-all uppercase tracking-wider flex items-center gap-2">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-2 p-3 glass rounded-2xl border-nexus-accent/10">
+    <input type="text" x-model="auditFilter" placeholder="Search action, user, details..." 
+      class="flex-1 min-w-[200px] px-3 py-2 glass text-xs font-bold text-slate-300 border border-white/5 rounded-xl outline-none">
+    <select x-model="auditActionFilter" @change="auditFilter = ''"
+      class="px-3 py-2 glass text-xs font-bold text-slate-300 border border-white/5 rounded-xl outline-none">
+      <option value="">All actions</option>
+      <option value="Login">Login</option>
+      <option value="Logout">Logout</option>
+      <option value="Create">Create</option>
+      <option value="Edit">Edit</option>
+      <option value="Delete">Delete</option>
+      <option value="Approve">Approve</option>
+      <option value="Reject">Reject</option>
+      <option value="Complete">Complete</option>
+      <option value="Cancel">Cancel</option>
+    </select>
+    <button @click="auditShowAll = !auditShowAll" class="px-3 py-2 glass text-xs font-bold rounded-xl transition-all"
+      :class="auditShowAll ? 'text-nexus-accent border border-nexus-accent/30 bg-nexus-accent/10' : 'text-slate-500 border border-transparent hover:text-white'">
+      {{ auditShowAll ? 'Admin only' : 'Show all' }}
+    </button>
+  </div>
+
+  <!-- Empty state -->
+  <div x-show="!auditLoading && filteredAudit.length === 0" class="text-center py-16">
+    <div class="inline-flex flex-col items-center gap-4">
+      <i class="fas fa-bars text-6xl text-slate-600"></i>
+      <div>
+        <p class="text-slate-400 text-lg font-bold">No audit entries yet</p>
+        <p class="text-slate-500 text-sm mt-2">Audit trail akan muncul saat pengguna melakukan aksi</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit List -->
+  <div x-show="filteredAudit.length > 0" class="space-y-2">
+    <template x-for="(entry, i) in filteredAudit" :key="entry._key || i">
+      <div class="glass rounded-2xl p-4 border border-white/5 hover:border-white/10 transition-all group">
+        <div class="flex items-start gap-3">
+          <!-- Role badge -->
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-black"
+            :class="{
+              'bg-rose-500/15 text-rose-400': entry.role === 'admin',
+              'bg-amber-500/15 text-amber-400': entry.role === 'supervisor',
+              'bg-slate-500/15 text-slate-400': !entry.role || entry.role === 'user',
+            }">
+            <i :class="entry.role === 'admin' ? 'fas fa-shield-alt' : 'fas fa-user'"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-white/90" x-text="entry.email || entry.uid"></span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider"
+                :class="{
+                  'bg-rose-500/10 text-rose-400': entry.action?.includes('Delete'),
+                  'bg-emerald-500/10 text-emerald-400': entry.action?.includes('Create') || entry.action === 'Login',
+                  'bg-amber-500/10 text-amber-400': entry.action?.includes('Edit') || entry.action?.includes('Update'),
+                  'bg-blue-500/10 text-blue-400': entry.action?.includes('Approve') || entry.action?.includes('Complete'),
+                  'bg-slate-500/10 text-slate-400': !entry.action,
+                }" x-text="entry.action"></span>
+              <span class="text-[10px] text-slate-600 font-mono" x-text="formatAuditTime(entry.date)"></span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 truncate" x-text="entry.details || entry.page || '-'"></p>
+          </div>
+          <div class="text-[10px] text-slate-600 font-mono shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" x-text="entry.uid?.substring(0, 8)"></div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Load more -->
+  <div x-show="auditLogs.length >= auditLimit && !auditLoading" class="text-center pt-2">
+    <button @click="auditLimit += 100" class="text-[10px] text-slate-600 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
+      Load more (<span x-text="auditLogs.length"></span> shown)
+    </button>
+  </div>
+</div>

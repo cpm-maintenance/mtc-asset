@@ -23,8 +23,8 @@ export default {
         }
       },
       backgroundImage: {
-        'nexus-gradient': 'linear-gradient(135deg, #00f2ff 0%, #0061ff 100%)',
-        'nexus-glass': 'radial-gradient(circle at top left, rgba(0, 242,255,0.05), transparent)',
+        'nexus-gradient': 'linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%)',
+        'nexus-glass': 'radial-gradient(circle at top left, rgba(245,197,66,0.05), transparent)',
       }
     }
   }

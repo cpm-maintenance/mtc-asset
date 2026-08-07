@@ -5,16 +5,19 @@ import QRCode from 'qrcode';
 import { CONSTANTS } from '../constants.js';
 
 export const uiModule = {
-    toggleDarkMode() {
-        this.themeMode = this.themeMode === 'night' ? 'light' : 'night';
-        localStorage.setItem('themeMode', this.themeMode);
+    setTheme(t) {
+        if (!['night', 'navy', 'purple', 'light'].includes(t)) t = 'night';
+        this.themeMode = t;
+        localStorage.setItem('themeMode', t);
         this.applyTheme();
     },
 
     applyTheme() {
-        const isNight = this.themeMode !== 'light';
-        document.documentElement.setAttribute('data-theme', isNight ? 'dark' : 'light');
-        document.documentElement.classList.toggle('dark', isNight);
+        const isDark = this.themeMode !== 'light';
+        const attr = this.themeMode === 'night' ? 'dark' : this.themeMode;
+        document.documentElement.setAttribute('data-theme', attr);
+        document.documentElement.classList.toggle('dark', isDark);
+        this.darkMode = isDark;
     },
 
     showNotification(message, type = 'success', duration = 4500) {
