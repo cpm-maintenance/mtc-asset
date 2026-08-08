@@ -36,7 +36,7 @@
 - [x] **Foto base64 → URL ImgBB** — `uploadToImgBB` di-fix (upload beneran ke api.imgbb.com), log photos di-upload (fix bug blob URL), `migrateLegacyImages()` pindahkan 12 base64 → URL (12/12 sukses)
 - [x] Patch node per tulis — ✅ sudah (`set`/`update` per-id, bukan resubmit dataset)
 - [x] Cache-Control immutable — firebase.json: `/assets/**`+`/icons/**` cache 1 tahun, sw.js/index no-cache
-- [ ] Split HistoryLog/SpareParts/Performance → query Terbatas / fetch periodik — **belum** (data kecil, risiko tinggi; target berikutnya)
+- [x] **Split HistoryLog/SpareParts/Performance → query Terbatas** — ✅ `onChildAdded` incremental + `limitToLast` (HistoryLog 500, SpareParts 500, Performance 200); delta sync, tak re-download penuh per tulis; WO detection tetap; saveCache debounce 250ms + JSON clone (fix Proxy clone flood)
 - [ ] Bundle < 300KB gzip — initial ~300KB (vendor 508K + firebase 286K + main 202K); lazy chunks jspdf/xlsx/sentry/chart sudah terpisah. Sisa optimasi vendor
 
 ## Phase 3 — Arsitektur
