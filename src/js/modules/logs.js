@@ -118,6 +118,7 @@ export const logsModule = {
                 dueDate: data.dueDate || '',
                 estimatedHours: data.estimatedHours || 0,
                 actualHours: data.actualHours || 0,
+                completedDate: data.completedDate || '',
                 // Department Request fields
                 requestSource: data.requestSource || 'Production',
                 requestedBy: data.requestedBy || '',
@@ -175,6 +176,7 @@ export const logsModule = {
                 dueDate: '',
                 estimatedHours: 0,
                 actualHours: 0,
+                completedDate: '',
                 // Department Request fields
                 requestSource: 'Production',
                 requestedBy: '',
@@ -256,6 +258,14 @@ export const logsModule = {
         }
     },
 
+    getLastHM(equipId) {
+        if (!equipId) return '-';
+        const logs = (this.logs || []).filter(l => l && l.EquipmentID === equipId && Number(l.HM) > 0);
+        if (!logs.length) return '-';
+        logs.sort((a, b) => (a.Tanggal || '').localeCompare(b.Tanggal || ''));
+        return Number(logs[logs.length - 1].HM).toLocaleString();
+    },
+
     async submitLog() {
         const errors = validateLogForm(this.logForm);
         if (errors.length > 0) {
@@ -329,6 +339,7 @@ export const logsModule = {
                 dueDate: this.logForm.dueDate || '',
                 estimatedHours: Number(this.logForm.estimatedHours) || 0,
                 actualHours: Number(this.logForm.actualHours) || 0,
+                completedDate: this.logForm.completedDate || '',
                 // Department Request fields
                 requestSource: this.logForm.requestSource || 'Production',
                 requestedBy: this.logForm.requestedBy || '',
@@ -714,7 +725,8 @@ async approveWO(logId) {
             const updates = {
                 Status: 'Completed',
                 Cost: calculatedCost,
-                actualHours: log.estimatedHours || log.actualHours || 0
+                actualHours: log.estimatedHours || log.actualHours || 0,
+                completedDate: new Date().toISOString().split('T')[0]
             };
             
             await window.update(window.ref(window.db, 'HistoryLog/' + logId), updates);

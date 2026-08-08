@@ -87,11 +87,11 @@
       <form @submit.prevent="login()" class="space-y-6">
         <div>
           <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Authentication ID</label>
-          <input type="email" x-model="loginForm.email" required placeholder="name@planner.com" class="w-full p-4 glass">
+          <input type="email" x-model="loginForm.email" required id="login-id" placeholder="name@planner.com" class="w-full p-4 glass">
         </div>
         <div>
           <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Secure Key</label>
-          <input type="password" x-model="loginForm.password" required placeholder="••••••••" class="w-full p-4 glass">
+          <input type="password" x-model="loginForm.password" required id="login-key" placeholder="••••••••" class="w-full p-4 glass">
         </div>
         <button type="submit" :disabled="isLoading"
           class="w-full gold-gradient font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black disabled:opacity-50 disabled:cursor-not-allowed"
@@ -576,7 +576,7 @@
           class="absolute right-0 mt-2 w-44 rounded-2xl glass border border-nexus-border shadow-2xl p-1.5 z-50">
           <button @click="setTheme('night'); open = false" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors hover:bg-nexus-accent/10"
             :class="themeMode === 'night' ? 'text-nexus-accent bg-nexus-accent/10' : 'text-slate-400'">
-            <span class="w-3.5 h-3.5 rounded-full border border-amber-400/50" style="background: linear-gradient(135deg,#f5c542,#c9a227)"></span> Gold
+            <span class="w-3.5 h-3.5 rounded-full border border-amber-400/50" style="background: linear-gradient(135deg,#ff8c1a,#ffb74d)"></span> Gold
           </button>
           <button @click="setTheme('navy'); open = false" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors hover:bg-nexus-accent/10"
             :class="themeMode === 'navy' ? 'text-nexus-accent bg-nexus-accent/10' : 'text-slate-400'">
@@ -715,7 +715,7 @@
             <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
             <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
             <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
             <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
@@ -762,7 +762,7 @@
             <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
             <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
             <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
             <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
@@ -984,6 +984,10 @@
             <option value="Low">Priority Gamma</option>
           </select>
         </div>
+        <div>
+          <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Current HM (Meter)</label>
+          <input type="number" x-model="equipForm.current" min="0" step="0.1" class="w-full p-4 glass">
+        </div>
         
         <!-- Asset Photo Upload -->
         <div class="md:col-span-2">
@@ -1108,7 +1112,7 @@
         <!-- Lifetime Tracking -->
         <div class="mt-4 pt-4 border-t border-nexus-accent/10">
           <h4 class="text-[10px] text-nexus-accent font-black uppercase tracking-widest mb-3">⚡ Lifetime Settings</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Last Replaced</label>
               <input type="date" x-model="partForm.lastReplaceDate"
@@ -1122,6 +1126,11 @@
             <div>
               <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Usage Hours</label>
               <input type="number" x-model="partForm.usageHours" placeholder="0" min="0"
+                class="w-full p-3 glass text-xs font-bold text-center">
+            </div>
+            <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Avg Lifetime (Hours)</label>
+              <input type="number" x-model="partForm.avgLifetimeHours" placeholder="0" min="0"
                 class="w-full p-3 glass text-xs font-bold text-center">
             </div>
           </div>
@@ -1156,7 +1165,7 @@
       </div>
       <form @submit.prevent="submitPerformance()" class="space-y-6">
         <!-- Section: Basic Info -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div class="md:col-span-1">
             <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
             <input type="date" x-model="performanceForm.date" required id="perf-date" name="perf-date"
@@ -1420,7 +1429,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
             <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operational Down (Hrs)</label>
             <input type="number" x-model="logForm.downtime" step="0.1" placeholder="0.0"
@@ -1431,7 +1440,11 @@
             <input type="number" x-model="logForm.cost" placeholder="0"
               class="w-full p-4 glass font-black text-white">
           </div>
-          <div>
+                      <div>
+              <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Running Hours (HM)</label>
+              <input type="number" x-model="logForm.hm" placeholder="0.0" min="0" step="0.1" class="w-full p-4 glass font-black text-white">
+            </div>
+<div>
             <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Root Cause (RCA)</label>
             <select x-model="logForm.rca" class="w-full p-4 glass text-[10px] font-bold">
               <option value="PM">Normal PM</option>

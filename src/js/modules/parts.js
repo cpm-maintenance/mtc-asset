@@ -23,7 +23,7 @@ openPartModal(isEdit = false, data = null) {
             this.partForm = { 
                 id: '', nama: '', namaSingkat: '', partNumber: '', equipIds: [], 
                 stok: 0, minStock: 0, lokasi: '', vendor: '', harga: 0, foto: '',
-                lastReplaceDate: '', avgLifetimeDays: '', usageHours: ''
+                lastReplaceDate: '', avgLifetimeDays: '', avgLifetimeHours: '', usageHours: ''
             };
         }
         
@@ -50,13 +50,14 @@ openPartModal(isEdit = false, data = null) {
                 foto: data?.FotoURL || '',
                 lastReplaceDate: data?.lastReplaceDate || '',
                 avgLifetimeDays: data?.avgLifetimeDays || '',
+                avgLifetimeHours: data?.avgLifetimeHours || '',
                 usageHours: data?.usageHours || ''
             };
         } else {
             this.partForm = { 
                 id: '', nama: '', namaSingkat: '', partNumber: '', equipIds: [], 
                 stok: 0, minStock: 0, lokasi: '', vendor: '', harga: 0, foto: '',
-                lastReplaceDate: '', avgLifetimeDays: '', usageHours: ''
+                lastReplaceDate: '', avgLifetimeDays: '', avgLifetimeHours: '', usageHours: ''
             };
         }
     },
@@ -97,6 +98,7 @@ openPartModal(isEdit = false, data = null) {
                 FotoURL: this.partForm.foto || '',
                 lastReplaceDate: this.partForm.lastReplaceDate || '',
                 avgLifetimeDays: this.partForm.avgLifetimeDays || '',
+                avgLifetimeHours: this.partForm.avgLifetimeHours || '',
                 usageHours: this.partForm.usageHours || '',
                 updatedBy: this.user?.uid || 'unknown',
                 updatedAt: new Date().toISOString()

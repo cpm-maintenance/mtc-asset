@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTC-ASSET | Flowchart</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #05070a;
+      --card: #0d1117;
+      --border: rgba(255, 140, 26, 0.2);
+      --accent: #ff8c1a;
+      --accent2: #ffb74d;
+      --text: #f0f4f8;
+      --muted: #8b9eb7;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 2rem 1rem 4rem;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 20px rgba(255, 140, 26, 0.06);
+    }
+    section h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-weight: 800;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+    }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 2rem;
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      section { break-inside: avoid; border-color: #ddd; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>MTC-ASSET · Flowchart</h1>
+      <p>Startup → Login → RBAC → Navigasi Modul</p>
+    </header>
+
+    <section>
+      <h2>1 · Flowchart Utama</h2>
+      <div class="mermaid">
+flowchart TD
+    START([Browser Buka App]) --> INIT["Kickoff Bootstrap<br/>bootstrap.js init()"]
+    INIT --> THEME["Apply Theme<br/>data-theme = localStorage<br/>(default dark)"]
+    THEME --> AUTHOBS["Firebase onAuthStateChanged<br/>pantau sesi"]
+    AUTHOBS --> CHECK{User sudah login?}
+    CHECK -- No --> LOGIN["Tampil Login Screen<br/>System Access"]
+    LOGIN --> LOGINFORM["Input Authentication ID +<br/>Secure Key (Firebase Auth)"]
+    LOGINFORM --> VALID{Valid?}
+    VALID -- No --> LOGINERR["Notification: Login failed"] --> LOGIN
+    VALID -- Yes --> ROLE["checkUserRole(uid)<br/>set userRole"]
+    CHECK -- Yes --> ROLE
+    ROLE --> ROLE_BRANCH{Role apa?}
+    ROLE_BRANCH -- admin --> ADMIN["AKSES PENUH<br/>semua menu + AI + Audit"]
+    ROLE_BRANCH -- supervisor --> SUP["Supervisor<br/>tanpa Audit/AI"]
+    ROLE_BRANCH -- user --> USR["User<br/>menu dasar + WO + parts"]
+    ADMIN --> LOAD["setupFirebaseListeners<br/>loadPMSchedule<br/>loadAISettings"]
+    SUP --> LOAD
+    USR --> LOAD
+    LOAD --> DB["Baca data Firebase<br/>(Equipment, WO, Parts, Performance)"]
+    DB --> DASH([Dashboard<br/>card + chart + stat])
+    DASH --> NAV["Navigasi sidebar / bottom-nav<br/>berdasarkan canAccess"]
+    classDef accent fill:#ff8c1a,stroke:#ffb74d,color:#05070a,font-weight:bold
+    class LOGIN,LOGINFORM,VALID,ROLE,ROLE_BRANCH,DASH accent
+      </div>
+    </section>
+
+    <section>
+      <h2>2 · Login &amp; Logout</h2>
+      <div class="mermaid">
+stateDiagram-v2
+    [*] --> NotLoggedIn
+    NotLoggedIn --> Validating: submit login
+    Validating --> NotLoggedIn: gagal (error notification)
+    Validating --> LoggedIn: sukses (setPersistence session)
+    LoggedIn --> NotLoggedIn: logout (konfirmasi + signOut)
+    LoggedIn --> LoggedIn: refresh token
+      </div>
+    </section>
+
+    <section>
+      <h2>3 · Role-Based Access (RBAC)</h2>
+      <div class="mermaid">
+graph LR
+    ROLE[userRole] -->|admin| A[Semua modul<br/>+ Audit, AI, Enterprise KPI]
+    ROLE -->|supervisor| S[PM Schedule, Planning,<br/>Monthly Plan, Workload,<br/>Perf, MTBF/MTTR]
+    ROLE -->|admin/supervisor| AS[WO Input, All Logs]
+    ROLE -->|user| U[WO, Equipment, Parts,<br/>Request Part, Logs, History]
+    classDef ace fill:#ff8c1a,stroke:#ffb74d,color:#05070a,font-weight:bold
+    class A ace
+      </div>
+    </section>
+
+    <section>
+      <h2>5 · Cara Penggunaan (Workflow)</h2>
+      <div class="mermaid">
+flowchart TD
+    START_USER([User Vul Login]) --> DSB[1. Dashboard<br/>lihat statistik &amp; status]
+    DSB --> EQ{Dibutuhkan aset baru<br/>/ cek data aset?}
+    EQ -- Ya --> EQP[2. Equipment<br/>register aset baru]
+    EQ -- Tidak --> WO[3. Work Orders<br/>buat + input WO]
+    EQP --> WO
+    WO --> PLAN{WO butuh Spare<br/>Part / PM / Planning?}
+    PLAN -- PM --> PMS[4a. PM Schedule<br/>jadwal maintenance]
+    PLAN -- Spare Part --> PART[5. Spare Parts<br/>cek stok &amp; gudang]
+    PART --> REQ[6. Request Part<br/>ajukan permintaan spare]
+    PLAN -- Kanban --> PLB[4b. Planning Board<br/>prioritas + gantt]
+    PMS --> EXEC[7. Pengerjaan WO<br/>load teknisi]
+    PLB --> EXEC
+    REQ --> EXEC
+    EXEC --> LOG2[8. All Logs / History Card<br/>riwayat perbaikan]
+    LOG2 --> PERF[9. Performance + MTBF/MTTR<br/>ukur availability &amp; reliability]
+    classDef accent fill:#ff8c1a,stroke:#ffb74d,color:#05070a,font-weight:bold
+    class DSB,WO,LOG2,PERF accent
+      </div>
+    </section>
+
+    <section>
+      <h2>4 · Modul Menu per Grup</h2>
+      <div class="mermaid">
+flowchart LR
+    MENU[Menu Items] --> MON[Monitoring:<br/>Dashboard]
+    MENU --> MNT[Maintenance:<br/>WO, PM, Equipment]
+    MENU --> PLN[Planning:<br/>Board, Monthly, Workload]
+    MENU --> LOG[Logs:<br/>All Logs, History, Audit]
+    MENU --> INV[Inventory:<br/>Spare Parts, Request]
+    MENU --> ANA[Analytics:<br/>Perf, MTBF, KPI, AI]
+    classDef gate fill:#05070a,stroke:#ffb74d,color:#ff8c1a,font-weight:bold
+    class MON,MNT,PLN,LOG,INV,ANA gate
+      </div>
+    </section>
+
+      
+
+    <footer>
+      MTC-ASSET · Akses dikontrol <code>canAccess()</code> — <code>allowedRole</code>: undefined=all, admin=admin-only, supervisor=admin+supervisor
+    </footer>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#0d1117',
+        primaryColor: '#ff8c1a',
+        primaryTextColor: '#05070a',
+        primaryBorderColor: '#ffb74d',
+        lineColor: '#ffb74d',
+        secondaryColor: '#1a1f2b',
+        tertiaryColor: '#05070a',
+        fontSize: '14px'
+      },
+      flowchart: { curve: 'basis', nodeSpacing: 40, rankSpacing: 50 }
+    });
+  </script>
+</body>
+</html>

@@ -14,8 +14,8 @@
   --nexus-purple: #bc13fe;
   --nexus-purple-glow: rgba(188, 19, 254, 0.15);
   --nexus-border: rgba(0, 242, 255, 0.1);
-  --nexus-gold: #d4af37;
-  --nexus-gold-glow: rgba(212, 175, 55, 0.08);
+  --nexus-gold: #ff8c1a;
+  --nexus-gold-glow: rgba(255, 140, 26, 0.08);
   --text-main: #f0f4f8;
   --text-muted: #8b9eb7;
   --radius-xl: 1.25rem;
@@ -27,12 +27,12 @@
 [data-theme='dark'] {
   --nexus-bg: #05070a; 
   --nexus-card: rgba(13, 17, 23, 0.8);
-  --nexus-accent: #f5c542;
-  --nexus-accent-glow: rgba(245, 197, 66, 0.15);
-  --nexus-accent-2: #c9a227;
+  --nexus-accent: #ff8c1a;
+  --nexus-accent-glow: rgba(255, 140, 26, 0.15);
+  --nexus-accent-2: #ffb74d;
   --nexus-purple: #bc13fe;
   --nexus-purple-glow: rgba(188, 19, 254, 0.15);
-  --nexus-border: rgba(245, 197, 66, 0.12);
+  --nexus-border: rgba(255, 140, 26, 0.12);
   --text-main: #f0f4f8;
   --text-muted: #8b9eb7;
 }
@@ -475,3 +475,10 @@ select option {
 }
 
 
+
+
+#login-id, #login-key {
+  color: #000 !important;
+  background-color: #fff !important;
+  caret-color: #000;
+}

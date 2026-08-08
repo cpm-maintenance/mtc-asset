@@ -43,14 +43,14 @@ export const BD_CATEGORIES = ['Mechanical', 'Electrical', 'Operational'];
 export const PERFORMANCE_TYPES = ['Unscheduled', 'Scheduled'];
 
 export const DEFAULT_EQUIP_FORM = () => ({
-  id: '', nama: '', tipe: 'Crusher', lokasi: '', status: 'Active', sn: '',
+  id: '', nama: '', tipe: 'Crusher', lokasi: '', status: 'Active', sn: '', current: 0,
   tglInstalasi: '', vendor: '', foto: '', nextPM: '', criticality: 'Medium'
 });
 
 export const DEFAULT_PART_FORM = () => ({
   id: '', nama: '', namaSingkat: '', partNumber: '', equipId: '', stok: 0, minStock: 0,
   lokasi: '', vendor: '', harga: 0, foto: '',
-  lastReplaceDate: '', avgLifetimeDays: 365, usageHours: 0
+  lastReplaceDate: '', avgLifetimeDays: 365, avgLifetimeHours: 0, usageHours: 0
 });
 
 export const DEFAULT_LOG_FORM = () => ({
@@ -80,6 +80,8 @@ export const DEFAULT_PM_FORM = () => ({
   description: '',
   date: new Date().toISOString().split('T')[0],
   frequency: 'none',
+  basis: 'calendar',
+  intervalHours: 0,
   assignedTo: 'Maintenance Team',
   status: 'pending',
   priority: 'Medium',

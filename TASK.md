@@ -1,54 +1,67 @@
-# TASK LIST — MTC-Asset — Session 5 (2026-08-07)
+# TASK LIST — MTC-Asset — Form Planner + Performa (S6, 2026-08-07)
 
-> **Baseline**: Session 4 selesai — R1-R7 complete + QA + 4 bug fix. Deploy live `mtc-asset.web.app`.
-> **Fokus hari ini**: tema gold + 4 tema (navy/purple), form font themed, fix bottom nav mobile, deploy.
-
----
-
-## 🎨 Multi-Theme (4 tema) ✅
-
-- [x] Gold dark theme — accent `#00f2ff` (cyan) → `#f5c542` (gold), border/glow/gradient ikut
-- [x] Dropdown theme menu di header — Gold, Navy, Purple, Light (swatch warna)
-- [x] CSS vars per tema (accent, glow, border, text, bg, card)
-- [x] Charts ikut tema — `themeAccent()`/`themeAccentSoft()`/`themeGrid()`
-- [x] Light theme tetap biru (tidak berubah)
-
-## 🔤 Form Font Themed ✅
-
-- [x] Input/select/textarea text → `var(--text-main)` (override hardcoded `text-white`/`text-slate-400`)
-- [x] Placeholder → `var(--text-muted)`
-- [x] `select option` themed + `color-scheme` dark/light
-
-## 📱 Mobile Bottom Nav Fix ✅
-
-- [x] 15 item → 5 slot grid (Home, WO, Assets, Parts + More button)
-- [x] More modal (bottom sheet, grid 4 kolom, 15 item, auto-close on navigate)
-- [x] `mobilePrimaryItems` getter + `short` label field
-- [x] Safe-area-inset (notch iPhone)
-
-## 🧹 Housekeeping ✅
-
-- [x] Hapus scratch/ (32 file)
-- [x] Commit file untracked lama (5 pages HTML + db.js, icons.js, lucide-icons.js, audit.js) — diverifikasi dipakai
+> **Baseline**: S5 (63b6d86). 103/103 tests. Tema gold diubah → perpaduan orange.
 
 ---
+
+## 🎨 Gold → Orange ✅
+
+- [x] `--nexus-accent` #f5c542 → #ff8c1a, `--nexus-accent-2` → #ffb74d (style.css)
+- [x] charts.js accent night → orange, swatch dropdown gold → orange
+
+## 🔐 Login Fields ✅
+
+- [x] ID + Secure Key input text hitam (override `.glass`, `!important`)
+
+## 📊 Flowchart ✅
+- [x] docs/FLOWCHART.md (4 diagram mermaid)
+- [x] public/flowchart.html (5 section render live, tema orange)
+
+## 📝 Form Improvement (Maintenance Planner) ✅
+- [x] LogModal: Actual Hours + Completed Date (auto-fill saat Completed)
+- [x] LogModal: Running Hours (HM) field (grid 4 kolom)
+- [x] Equipment: Current HM (Meter) + equipment.js save `CurrentHM`
+- [x] EquipmentDetail: Current HM + Last Log HM + HM chip di log
+- [x] MTBF/MTTR HM-aware (`_hmIntervalHours`, fallback kalender)
+- [x] PM Schedule: basis (`calendar`/`hours`) + intervalHours + targetHM + overdue HM-aware
+- [x] Spare: `avgLifetimeHours` (init/save/default/UI grid 3→4)
+
+## 🚀 PERFORMANCE (Task List Jangka Panjang)
+
+### Phase 1 — Quick Win (< 1 hari)
+- [ ] Precompute Map `equipById`/`partById` — hilangkan `find()` O(n²) di render loop
+- [ ] Cache hasil filter/calc (`logsForEquip`, `healthScores`) — render tak ulang per baris
+- [ ] Font: `preload` + `display=swap` + subset utk LCP 3G
+- [ ] Batasi render: `x-for` > 50 baris pakai slice/chunk
+- [ ] Verifikasi `jspdf` lazy (dynamic import)
+
+### Phase 2 — Menenga (1-2 hari)
+- [ ] Split HistoryLog/SpareParts/Performance → query Terbatas / fetch periodik
+- [ ] Foto base64 → URL Storage/ImgBB (node hemat)
+- [ ] Patch node per tulis (bukan resubmit dataset)
+- [ ] Cache-Control immutable (aset PWA)
+- [ ] Bundle < 300KB gzip
+
+### Phase 3 — Arsitektur
+- [ ] Time-series (HistoryLog, Performance) ke Firestore
+- [ ] AI/key card ke server function
+- [ ] RUM web-vitals → Analytics/Sentry
+- [ ] IndexedDB source-of-truth + sync bg
+- [ ] Perf budget CI
 
 ## Deploy Status
 
 | Item | Status |
 |------|--------|
-| Session 1-4 (R1-R7 + V1-V4 + QA) | ✅ live `mtc-asset.web.app` |
-| Session 5 (4 tema + form font + nav fix) | ✅ live (72 files) — commit 63b6d86 |
+| S5 (63b6d86) | ✅ live |
+| S6 form+orange+HM+MTBF+PM+spare | ✅ live (73 files) |
 
 ## Known Issues
 
-- `.open/skills` submodule dirty — skip saat commit
-- CRLF quirk: edit tools gagal di CRLF files → pakai node `.mjs` + regex `\r?\n`
-- Data Firebase dev minim → beberapa page empty state (bukan bug)
+- CRLF quirk tetap — edit tools gagal di CRLF files → node `.mjs` + regex `\r?\n`
+- 9 realtime listener muat seluruh dataset (Equipment/HistoryLog/SpareParts/Performance) → target utama Phase 2
+- Data dev minim → beberapa page empty state
 
 ## Next Session
-
-- [ ] Isi data nyata: assign teknisi ke WO (Workload), input PM schedule (Monthly Plan)
-- [ ] Optional: audit trail capture (AuditTrail Firebase masih kosong)
-- [ ] Cek deploy workflow .github (line-ending)
-- [ ] Opsional R8: ide feedback planner/analyst
+- [ ] Eksekusi Phase 1 performa
+- [ ] Isi data nyata (WO teknik, PM schedule)
