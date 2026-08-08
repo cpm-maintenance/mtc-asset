@@ -625,7 +625,7 @@ export const dataModule = {
                     const rawData = snapshot.val();
                     // Deep clone to get rid of any proxies
                     if (rawData) {
-                        logToDelete = structuredClone(rawData);
+                        logToDelete = JSON.parse(JSON.stringify(rawData));
                         console.log('[DeleteLog] Raw from Firebase - PartsUsed:', logToDelete.PartsUsed);
                     }
                 } catch(e) {

@@ -648,7 +648,7 @@ export const exportModule = {
         this.isLoading = true;
         try {
             const jsPDF = await loadJsPDF();
-            const list = structuredClone(this.pmList || []);
+            const list = JSON.parse(JSON.stringify(this.pmList || []));
             if (!list.length) {
                 this.showNotification('No PM tasks to export', 'warning');
                 return;
@@ -784,10 +784,10 @@ export const exportModule = {
             const jsPDF = await loadJsPDF();
             await import('jspdf-autotable');
             
-            const equipData = structuredClone(equip);
-            const logsData = structuredClone(this.logs || []);
-            const pmData = structuredClone(this.pmList || []);
-            const partsData = structuredClone(this.allParts || []);
+            const equipData = JSON.parse(JSON.stringify(equip));
+            const logsData = JSON.parse(JSON.stringify(this.logs || []));
+            const pmData = JSON.parse(JSON.stringify(this.pmList || []));
+            const partsData = JSON.parse(JSON.stringify(this.allParts || []));
             
             const doc = new jsPDF('p', 'mm', 'a4');
             const pageW = doc.internal.pageSize.getWidth();
