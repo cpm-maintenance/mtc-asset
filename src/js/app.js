@@ -899,8 +899,11 @@ if (confirm('Are you sure you want to logout?')) {
             const snap = await window.get(window.ref(window.db, 'ImageUploads'));
             const uploads = snap.val() || {};
             const ids = Object.keys(uploads);
-            if (!ids.length) { console.log('[Migrate] No ImageUploads found'); return results; }
-            console.log('[Migrate] Found', ids.length, 'legacy images');
+            if (!ids.length) {
+                console.log('[Migrate] No ImageUploads — continuing with inline base64 (Equipment/Logs)');
+            } else {
+                console.log('[Migrate] Found', ids.length, 'legacy images');
+            }
 
             // Load equipment + logs to map references
             const eqSnap = await window.get(window.ref(window.db, 'Equipment'));
