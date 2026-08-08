@@ -32,7 +32,7 @@
     
     <!-- Equipment Photo -->
     <div class="w-48 h-48 glass rounded-3xl overflow-hidden border-nexus-accent/20 shrink-0 shadow-2xl relative z-10 p-2">
-      <img :src="selectedEquip?.FotoURL ? cleanUrl(selectedEquip.FotoURL) : 'https://via.placeholder.com/150?text=No+Data'"
+      <img :src="selectedEquip?.FotoURL ? cleanUrl(selectedEquip.FotoURL) : 'https://via.placeholder.com/150?text=No+Data'" loading="lazy" decoding="async"
         class="w-full h-full object-cover rounded-2xl">
     </div>
     

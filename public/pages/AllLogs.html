@@ -39,7 +39,7 @@
         <div class="flex gap-3 md:gap-6">
           <!-- Compact Thumbnail -->
           <div x-show="log.PhotoURLs && log.PhotoURLs.length > 0" class="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden glass border-nexus-accent/10 flex-shrink-0 self-start p-0.5 md:p-1">
-            <img :src="cleanUrl(log.PhotoURLs?.[0])" class="w-full h-full object-cover rounded-lg md:rounded-xl" loading="lazy"
+            <img :src="cleanUrl(log.PhotoURLs?.[0])" class="w-full h-full object-cover rounded-lg md:rounded-xl" loading="lazy" decoding="async"
               @error="console.log('Image error - URL:', $el.src)"
               onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex')">
             <div class="w-full h-full items-center justify-center text-xs text-slate-500" style="display:none">

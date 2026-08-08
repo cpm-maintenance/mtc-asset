@@ -1501,11 +1501,27 @@ if (confirm('Are you sure you want to logout?')) {
             this.$nextTick(() => {
                 const img = document.getElementById('cropImage');
                 if (!img) return;
-                if (this._cropper) this._cropper.destroy();
-                this._cropper = new Cropper(img, {
-                    aspectRatio: NaN, viewMode: 1, autoCropArea: 1,
-                    responsive: true, background: false,
-                });
+                const ensureCropper = () => {
+                    if (this._cropper) this._cropper.destroy();
+                    this._cropper = new Cropper(img, {
+                        aspectRatio: NaN, viewMode: 1, autoCropArea: 1,
+                        responsive: true, background: false,
+                    });
+                };
+                if (window.Cropper) { ensureCropper(); return; }
+                // Lazy-load cropperjs (previously render-blocking CDN in head)
+                const css = document.createElement('link');
+                css.rel = 'stylesheet';
+                css.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';
+                document.head.appendChild(css);
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js';
+                script.onload = ensureCropper;
+                script.onerror = () => {
+                    this.showCropModalOpen = false;
+                    this.showNotification('Failed to load image editor', 'error');
+                };
+                document.head.appendChild(script);
             });
         },
         applyCrop() {
