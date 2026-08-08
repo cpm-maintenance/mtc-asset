@@ -63,6 +63,14 @@
           <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Vendor Origin</p>
           <p class="text-white font-bold text-sm" x-text="selectedEquip?.Vendor || '-'"></p>
         </div>
+        <div>
+          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Current HM</p>
+          <p class="text-white font-bold text-sm" x-text="selectedEquip?.CurrentHM ? Number(selectedEquip.CurrentHM).toLocaleString() : '-'"></p>
+        </div>
+        <div>
+          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Last Log HM</p>
+          <p class="text-white font-mono text-xs font-bold" x-text="getLastHM(selectedEquip?.EquipmentID)"></p>
+        </div>
       </div>
       
       <!-- Health & Prediction Cards -->
@@ -124,6 +132,9 @@
           </div>
           <h4 class="text-base font-black text-white mb-2 nexus-glow-text" x-text="log.Deskripsi"></h4>
           <p class="text-sm text-slate-400 border-l border-white/10 pl-4 italic" x-text="log.Catatan || 'No technical notes recorded.'"></p>
+          <div class="mt-2 flex flex-wrap gap-3" x-show="log.HM">
+            <span class="text-xs text-cyan-400 font-black"><i class="fas fa-tachometer-alt mr-1"></i>HM: <span x-text="Number(log.HM).toLocaleString()"></span></span>
+          </div>
           
           <div class="mt-4 flex flex-wrap gap-2" x-show="log.PartsUsed && safeParseLogParts(log.PartsUsed).length > 0">
             <template x-for="p in safeParseLogParts(log.PartsUsed)">

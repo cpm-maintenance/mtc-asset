@@ -513,6 +513,19 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="text-sm text-slate-500 font-black uppercase tracking-widest mb-1 block">Trigger Basis</label>
+            <select x-model="pmForm.basis" class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold rounded-xl">
+              <option value="calendar">Calendar (date)</option>
+              <option value="hours">Running Hours (HM)</option>
+            </select>
+          </div>
+          <div x-show="pmForm.basis === 'hours'">
+            <label class="text-sm text-slate-500 font-black uppercase tracking-widest mb-1 block">Interval (Hours)</label>
+            <input type="number" x-model="pmForm.intervalHours" min="0" step="100" placeholder="e.g. 500" class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold rounded-xl">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
             <label class="text-sm text-slate-500 font-black uppercase tracking-widest mb-1 block">Priority</label>
             <select x-model="pmForm.priority" class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold rounded-xl">
               <option value="High">High</option>
@@ -596,6 +609,18 @@
             <div class="bg-slate-800/50 p-3 rounded-xl">
               <p class="text-xs text-slate-500 uppercase font-black tracking-widest">Assigned To</p>
               <p class="text-white font-bold text-sm" x-text="selectedPM.assignedTo || 'Maintenance Team'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl">
+              <p class="text-xs text-slate-500 uppercase font-black tracking-widest">Trigger</p>
+              <p class="text-white font-bold text-sm capitalize" x-text="selectedPM.basis === 'hours' ? 'Running Hours (HM)' : 'Calendar'"></p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl" x-show="selectedPM.basis === 'hours' && selectedPM.targetHM">
+              <p class="text-xs text-cyan-500 uppercase font-black tracking-widest">Target HM</p>
+              <p class="text-cyan-400 font-bold text-sm"><span x-text="Number(selectedPM.targetHM).toLocaleString()"></span> hrs</p>
+            </div>
+            <div class="bg-slate-800/50 p-3 rounded-xl" x-show="selectedPM.basis === 'hours'">
+              <p class="text-xs text-cyan-500 uppercase font-black tracking-widest">Now HM</p>
+              <p class="text-white font-bold text-sm"><span x-text="pmCurrentHM(selectedPM.equipmentId).toLocaleString()"></span> hrs</p>
             </div>
             <div class="bg-slate-800/50 p-3 rounded-xl" x-show="selectedPM.completionDate">
               <p class="text-xs text-slate-500 uppercase font-black tracking-widest">Completed At</p>

@@ -58,6 +58,16 @@ export const kpiEngineModule = {
         return { score, color, status, breakdowns: breakdowns.length };
     },
 
+
+    // HM-aware interval: prefer meter delta if both logs have HM, else calendar hours
+    _hmIntervalHours(a, b) {
+        const hmA = Number(a?.HM); const hmB = Number(b?.HM);
+        if (hmA > 0 && hmB > 0) return Math.max(0, hmB - hmA);
+        const dA = new Date(a?.Tanggal), dB = new Date(b?.Tanggal);
+        if (!isNaN(dA) && !isNaN(dB)) return Math.max(0, (dB - dA) / (1000 * 60 * 60));
+        return 0;
+    },
+
     calculateMTBF(equipId) {
         // Guard
         if (!equipId) return 0;
@@ -78,10 +88,7 @@ export const kpiEngineModule = {
         for (let i = 1; i < breakdowns.length; i++) {
             const dateA = new Date(breakdowns[i].Tanggal);
             const dateB = new Date(breakdowns[i-1].Tanggal);
-            if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                const diff = dateA - dateB;
-                totalInterval += (diff / (1000 * 60 * 60)); // in hours
-            }
+            totalInterval += this._hmIntervalHours(breakdowns[i-1], breakdowns[i]);
         }
         return (totalInterval / (breakdowns.length - 1)).toFixed(1);
     },

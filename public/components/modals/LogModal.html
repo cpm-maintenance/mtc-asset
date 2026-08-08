@@ -56,7 +56,7 @@
         </div>
         <div>
           <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Mission Status</label>
-          <select x-model="logForm.status"
+          <select x-model="logForm.status" @change="if(logForm.status === 'Completed' && !logForm.completedDate) logForm.completedDate = new Date().toISOString().split('T')[0]"
                   class="w-full p-4 glass text-xs font-bold">
             <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
@@ -93,6 +93,16 @@
           <div>
             <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Est. Hours</label>
             <input type="number" x-model="logForm.estimatedHours" placeholder="0" min="0"
+                   class="w-full p-4 glass text-xs font-bold">
+          </div>
+          <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Actual Hours</label>
+            <input type="number" x-model="logForm.actualHours" placeholder="0" min="0" step="0.1"
+                   class="w-full p-4 glass text-xs font-bold">
+          </div>
+          <div x-show="logForm.status === 'Completed'">
+            <label class="text-[9px] text-emerald-400/70 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Completed Date</label>
+            <input type="date" x-model="logForm.completedDate" :max="new Date().toISOString().split('T')[0]"
                    class="w-full p-4 glass text-xs font-bold">
           </div>
         </div>
@@ -133,7 +143,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div>
           <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operational Down (Hrs)</label>
           <input type="number" x-model="logForm.downtime" step="0.1" placeholder="0.0"
@@ -144,7 +154,11 @@
           <input type="number" x-model="logForm.cost" placeholder="0"
                  class="w-full p-4 glass font-black text-white">
         </div>
-        <div>
+                  <div>
+            <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Running Hours (HM)</label>
+            <input type="number" x-model="logForm.hm" placeholder="0.0" min="0" step="0.1" class="w-full p-4 glass font-black text-white">
+          </div>
+<div>
           <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Root Cause (RCA)</label>
           <select x-model="logForm.rca" class="w-full p-4 glass text-[10px] font-bold">
             <option value="PM">Normal PM</option>

@@ -70,6 +70,8 @@ export const pmScheduleModule = {
         description: data.description || '',
         date: data.date || '',
         frequency: data.frequency || 'none',
+        basis: data.basis || 'calendar',
+        intervalHours: data.intervalHours || 0,
         assignedTo: data.assignedTo || 'Maintenance Team',
         status: data.status || 'pending',
         priority: data.priority || 'Medium',
@@ -107,6 +109,8 @@ export const pmScheduleModule = {
         description: this.pmForm.description || '',
         date: this.pmForm.date,
         frequency: this.pmForm.frequency || 'none',
+        basis: this.pmForm.basis || 'calendar',
+        intervalHours: Number(this.pmForm.intervalHours) || 0,
         assignedTo: this.pmForm.assignedTo || 'Maintenance Team',
         status: this.pmForm.status || 'pending',
         priority: this.pmForm.priority || 'Medium',
@@ -201,6 +205,17 @@ export const pmScheduleModule = {
     nextDate.setDate(nextDate.getDate() + days);
     const nextDateStr = nextDate.toISOString().split('T')[0];
 
+    // For hours-based PM, annotate the target meter reading (nextHM threshold)
+    let targetHM = null;
+    if (pm.basis === 'hours' && pm.intervalHours > 0 && pm.equipmentId) {
+      const lastLog = (this.logs || []).filter(l => l && l.EquipmentID === pm.equipmentId && Number(l.HM) > 0)
+        .sort((a, b) => (a.Tanggal || '').localeCompare(b.Tanggal || ''))
+        .pop();
+      const lastHM = Number(lastLog?.HM) || 0;
+      const equipHM = Number(this.equipment?.find(e => e.EquipmentID === pm.equipmentId)?.CurrentHM) || 0;
+      targetHM = Math.max(lastHM, equipHM) + pm.intervalHours;
+    }
+
     // Check if next already exists
     const exists = this.pmList.some(
       p => p.taskName === pm.taskName && p.equipmentId === pm.equipmentId && p.date === nextDateStr
@@ -219,6 +234,9 @@ export const pmScheduleModule = {
       assignedTo: pm.assignedTo || 'Maintenance Team',
       status: 'pending',
       priority: pm.priority || 'Medium',
+      basis: pm.basis || 'calendar',
+      intervalHours: pm.intervalHours || 0,
+      targetHM: targetHM,
       completionDate: '',
       completionNote: '',
       createdBy: this.user?.uid || 'unknown',
@@ -349,9 +367,25 @@ export const pmScheduleModule = {
         return (a.date || '').localeCompare(b.date || '');
       });
   },
+  /** Current HM for an equipment (meter or last log), 0 if none */
+  pmCurrentHM(equipId) {
+    if (!equipId) return 0;
+    const equip = (this.equipment || []).find(e => e.EquipmentID === equipId);
+    const equipHM = Number(equip?.CurrentHM) || 0;
+    if (equipHM > 0) return equipHM;
+    const logs = (this.logs || []).filter(l => l && l.EquipmentID === equipId && Number(l.HM) > 0)
+      .sort((a, b) => (a.Tanggal || '').localeCompare(b.Tanggal || ''));
+    return logs.length ? Number(logs[logs.length - 1].HM) : 0;
+  },
+
   isPMOverdue(pm) {
+    if (pm.status !== 'pending') return false;
+    // Hours-based PM: overdue when meter reading passes target
+    if (pm.basis === 'hours' && pm.targetHM > 0) {
+      return this.pmCurrentHM(pm.equipmentId) >= pm.targetHM;
+    }
     const today = new Date().toISOString().split('T')[0];
-    return pm.status === 'pending' && pm.date < today;
+    return pm.date < today;
   },
   isPMDueSoon(pm) {
     const today = new Date().toISOString().split('T')[0];

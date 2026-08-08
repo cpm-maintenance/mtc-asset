@@ -19,8 +19,8 @@ export const chartModule = {
     themeAccent() {
         const t = this.themeMode || 'night';
         return {
-            night: '#f5c542', navy: '#3b82f6', purple: '#a855f7', light: '#0061ff'
-        }[t] || '#f5c542';
+            night: '#ff8c1a', navy: '#3b82f6', purple: '#a855f7', light: '#0061ff'
+        }[t] || '#ff8c1a';
     },
     themeAccentSoft() {
         const t = this.themeMode || 'night';

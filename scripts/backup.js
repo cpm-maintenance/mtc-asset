@@ -54,10 +54,17 @@ try {
   // Step 4: Commit & Push
   console.log('\nStep 4/4: 🚀 Commit & Push');
   
-  // Check if there's anything to commit
-  const hasChanges = execSync('git diff --cached --quiet', { cwd: ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
-  
+  // Check if there's anything to commit.
+  // Note: `git diff --cached --quiet` exits 0 = no changes, 1 = changes exist.
+  // execSync throws on non-zero exit, so a throw here means "there are changes".
+  let hasChanges = false;
   try {
+    execSync('git diff --cached --quiet', { cwd: ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+  } catch {
+    hasChanges = true;
+  }
+
+  if (hasChanges) {
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0];
@@ -67,7 +74,7 @@ try {
 Automated backup of source code and Firebase data"`);
     run('git push');
     console.log('\n✅ Backup completed successfully!');
-  } catch {
+  } else {
     console.log('\n⚠️  No changes to commit');
   }
 
