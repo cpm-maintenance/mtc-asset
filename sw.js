@@ -48,6 +48,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Page fragments (component-loader /pages/**) — stale-while-revalidate
+  if (url.includes('/pages/') && url.endsWith('.html')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const fetchAndCache = fetch(event.request).then((response) => {
+          if (response && response.ok) {
+            caches.open(CACHE_NAME).put(event.request, response.clone());
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || fetchAndCache;
+      })
+    );
+    return;
+  }
+
   // Default: network first for app routes
   event.respondWith(
     fetch(event.request).catch(() => {
