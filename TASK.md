@@ -1,53 +1,53 @@
-# TASK LIST — MTC-Asset — Form Planner + Performa (S6, 2026-08-07)
+# TASK LIST — MTC-Asset — Session 7 (2026-08-08)
 
-> **Baseline**: S5 (63b6d86). 103/103 tests. Tema gold diubah → perpaduan orange.
+> **Baseline**: S6 (form+orange+HM+MTBF+PM+spare) live 73 files. 103/103 tests.
+> Hari ini: full backup ✅ + review histori ✅ → lanjut task pending.
 
 ---
 
-## 🎨 Gold → Orange ✅
+## ✅ Selesai Hari Ini (S7)
 
-- [x] `--nexus-accent` #f5c542 → #ff8c1a, `--nexus-accent-2` → #ffb74d (style.css)
-- [x] charts.js accent night → orange, swatch dropdown gold → orange
+- [x] Full backup (Firebase dump + commit `7d24aeb` + push GitHub) — 89 records
+- [x] Fix bug [scripts/backup.js](file:///d:/Coding/MTC-Asset/scripts/backup.js) — `git diff --cached --quiet` exit 1 salah dianggap error → commit/push skip
+- [x] Review histori project (kemarin: S5 themes + bottom nav, S6 form planner + performa)
 
-## 🔐 Login Fields ✅
+## 🚀 Phase 1 — Quick Win Performa ✅ (< 1 hari)
 
-- [x] ID + Secure Key input text hitam (override `.glass`, `!important`)
+- [x] Precompute Map `equipById`/`partById` — `_partMap()` (app.js), `_critMap`, `_ganttEqMap` (pm-schedule) — hilangkan `find()` O(n²)
+- [x] Cache hasil filter/calc — `getLastHM` (logs.js), `calculateHealthScore`/`calculateMTBF` (kpi-engine, `_kpiCache`), `mttrByTech` (app.js), `pmCurrentHM` (pm-schedule) — invalidasi via array ref
+- [x] Font: preload + preconnect Google Fonts di index.html, hapus `@import` render-blocking di style.css
+- [x] Batasi render: `visibleEquipLogs` (EquipmentDetail, cap 50 + load more lokal `detailLogLimit`)
+- [x] Verifikasi `jspdf` lazy — ✅ sudah `await import('jspdf')` (chunk 421KB terpisah, tidak di main)
 
-## 📊 Flowchart ✅
-- [x] docs/FLOWCHART.md (4 diagram mermaid)
-- [x] public/flowchart.html (5 section render live, tema orange)
+## 📊 Isi Data Nyata
 
-## 📝 Form Improvement (Maintenance Planner) ✅
-- [x] LogModal: Actual Hours + Completed Date (auto-fill saat Completed)
-- [x] LogModal: Running Hours (HM) field (grid 4 kolom)
-- [x] Equipment: Current HM (Meter) + equipment.js save `CurrentHM`
-- [x] EquipmentDetail: Current HM + Last Log HM + HM chip di log
-- [x] MTBF/MTTR HM-aware (`_hmIntervalHours`, fallback kalender)
-- [x] PM Schedule: basis (`calendar`/`hours`) + intervalHours + targetHM + overdue HM-aware
-- [x] Spare: `avgLifetimeHours` (init/save/default/UI grid 3→4)
+- [ ] Assign teknisi ke WO (Workload page)
+- [ ] Input PM schedule (Monthly Plan) — 0 PM saat ini
+- [ ] Tambah HistoryLog riil (baru 2 log)
 
-## 🚀 PERFORMANCE (Task List Jangka Panjang)
+## 🔧 Opsional / Perbaikan
 
-### Phase 1 — Quick Win (< 1 hari)
-- [ ] Precompute Map `equipById`/`partById` — hilangkan `find()` O(n²) di render loop
-- [ ] Cache hasil filter/calc (`logsForEquip`, `healthScores`) — render tak ulang per baris
-- [ ] Font: `preload` + `display=swap` + subset utk LCP 3G
-- [ ] Batasi render: `x-for` > 50 baris pakai slice/chunk
-- [ ] Verifikasi `jspdf` lazy (dynamic import)
+- [ ] Audit trail capture (AuditTrail node Firebase masih kosong)
+- [ ] Cek deploy workflow .github (line-ending modified)
+- [ ] Backup otomatis harian 02:00 WIB — verifikasi GitHub Actions jalan
 
-### Phase 2 — Menenga (1-2 hari)
+## Phase 2 — Menenga (1-2 hari)
+
 - [ ] Split HistoryLog/SpareParts/Performance → query Terbatas / fetch periodik
 - [ ] Foto base64 → URL Storage/ImgBB (node hemat)
 - [ ] Patch node per tulis (bukan resubmit dataset)
 - [ ] Cache-Control immutable (aset PWA)
 - [ ] Bundle < 300KB gzip
 
-### Phase 3 — Arsitektur
+## Phase 3 — Arsitektur
+
 - [ ] Time-series (HistoryLog, Performance) ke Firestore
 - [ ] AI/key card ke server function
 - [ ] RUM web-vitals → Analytics/Sentry
 - [ ] IndexedDB source-of-truth + sync bg
 - [ ] Perf budget CI
+
+---
 
 ## Deploy Status
 
@@ -59,9 +59,6 @@
 ## Known Issues
 
 - CRLF quirk tetap — edit tools gagal di CRLF files → node `.mjs` + regex `\r?\n`
-- 9 realtime listener muat seluruh dataset (Equipment/HistoryLog/SpareParts/Performance) → target utama Phase 2
+- 9 realtime listener muat seluruh dataset → target utama Phase 2
 - Data dev minim → beberapa page empty state
-
-## Next Session
-- [ ] Eksekusi Phase 1 performa
-- [ ] Isi data nyata (WO teknik, PM schedule)
+- `.open/skills` = submodule dirty — skip saat commit

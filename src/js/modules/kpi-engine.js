@@ -14,10 +14,22 @@ export const kpiEngineModule = {
     },
 
     // --- NEURAL PREDICTION ENGINE ---
+    // Cache results; invalidated when this.logs/this.equipment reference changes.
+    _kpiKey(extra) {
+        return (this.logs || []).length + '|' + (this.equipment || []).length + '|' + (extra || '');
+    },
     calculateHealthScore(equipId) {
         // Guard - safe defaults
         if (!equipId) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
         
+        const key = this._kpiKey('h' + equipId);
+        if (this._kpiCache && this._kpiCache.key === key && this._kpiCache.h.has(equipId)) {
+            return this._kpiCache.h.get(equipId);
+        }
+        if (!this._kpiCache || this._kpiCache.key !== key) {
+            this._kpiCache = { key, h: new Map(), m: new Map() };
+        }
+
         const logs = this._raw(this.logs) || [];
         const equipment = this._raw(this.equipment) || [];
         
@@ -55,7 +67,9 @@ export const kpiEngineModule = {
         const color = score > 80 ? 'text-emerald-500' : score > 50 ? 'text-amber-500' : 'text-rose-500';
         const status = score > 80 ? 'Optimal' : score > 50 ? 'Warning' : 'Critical';
         
-        return { score, color, status, breakdowns: breakdowns.length };
+        const result = { score, color, status, breakdowns: breakdowns.length };
+        this._kpiCache.h.set(equipId, result);
+        return result;
     },
 
 
@@ -72,6 +86,14 @@ export const kpiEngineModule = {
         // Guard
         if (!equipId) return 0;
         
+        const key = this._kpiKey('m' + equipId);
+        if (this._kpiCache && this._kpiCache.key === key && this._kpiCache.m.has(equipId)) {
+            return this._kpiCache.m.get(equipId);
+        }
+        if (!this._kpiCache || this._kpiCache.key !== key) {
+            this._kpiCache = { key, h: new Map(), m: new Map() };
+        }
+
         const logs = this._raw(this.logs);
         if (!logs || !Array.isArray(logs)) return 0;
         
@@ -90,7 +112,9 @@ export const kpiEngineModule = {
             const dateB = new Date(breakdowns[i-1].Tanggal);
             totalInterval += this._hmIntervalHours(breakdowns[i-1], breakdowns[i]);
         }
-        return (totalInterval / (breakdowns.length - 1)).toFixed(1);
+        const result = (totalInterval / (breakdowns.length - 1)).toFixed(1);
+        this._kpiCache.m.set(equipId, result);
+        return result;
     },
 
     predictNextFailure(equipId) {

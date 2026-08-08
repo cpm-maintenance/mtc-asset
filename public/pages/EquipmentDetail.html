@@ -121,7 +121,7 @@
   <div class="mt-6">
     <!-- 📜 TAB: LOG HISTORY -->
     <div x-show="activeTab === 'hist'" class="space-y-4">
-      <template x-for="log in logs.filter(l => l.EquipmentID === selectedEquip?.EquipmentID)" :key="log.LogID">
+      <template x-for="log in visibleEquipLogs" :key="log.LogID">
         <div class="card-modern p-5 border-l-4 relative group" :style="'border-left-color: ' + getStatColor(logColor(log.Jenis))">
           <div class="flex justify-between items-start mb-3">
             <div class="flex items-center gap-3">
@@ -138,23 +138,23 @@
           
           <div class="mt-4 flex flex-wrap gap-2" x-show="log.PartsUsed && safeParseLogParts(log.PartsUsed).length > 0">
             <template x-for="p in safeParseLogParts(log.PartsUsed)">
-              <span class="tag-nexus" x-text="(allParts.find(x => x.PartID === p.id)?.NamaSingkat || p.id) + ' x' + p.qty"></span>
+              <span class="tag-nexus" x-text="(historyGetPartName(p.id)) + ' x' + p.qty"></span>
             </template>
           </div>
         </div>
       </template>
       
-      <!-- Load More Logs -->
-      <div x-show="logsHasMore" class="text-center pt-4">
-        <button @click="loadMoreLogs()" :disabled="logsLoadingMore"
+      <!-- Load More Logs (local cap) -->
+      <div x-show="detailLogsHasMore" class="text-center pt-4">
+        <button @click="loadMoreDetailLogs()"
           class="btn-nexus-small">
-          <i class="fas fa-sync-alt" :class="logsLoadingMore ? 'animate-spin' : ''"></i>
-          Load More Logs <span x-text="'(' + logs.length + ' loaded)'"></span>
+          <i class="fas fa-sync-alt"></i>
+          Load More Logs <span x-text="'(' + visibleEquipLogs.length + '/' + filteredLogs.length + ' shown)'"></span>
         </button>
       </div>
       
       <!-- Empty State -->
-      <div x-show="logs.filter(l => l.EquipmentID === selectedEquip?.EquipmentID).length === 0" class="text-center py-16 card-modern border-dashed border-2 border-white/5">
+      <div x-show="filteredLogs.length === 0" class="text-center py-16 card-modern border-dashed border-2 border-white/5">
         <i class="fas fa-history text-4xl text-slate-700 mb-4 block"></i>
         <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No neural logs recorded for this node</p>
       </div>
