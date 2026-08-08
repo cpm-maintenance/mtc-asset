@@ -5,7 +5,7 @@
  */
 import { initializeApp } from 'firebase/app'
 import {
-  getDatabase, ref, onValue, set, update, remove,
+  getDatabase, ref, onValue, onChildAdded, set, update, remove,
   get, query, limitToLast, runTransaction,
   orderByChild, endAt, equalTo, endBefore
 } from 'firebase/database'
@@ -41,7 +41,7 @@ export { storage }
 export { auth }
 export { messaging }
 // DB functions
-export { ref, onValue, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore }
+export { ref, onValue, onChildAdded, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore }
 // Storage functions
 export { refStorage, uploadBytes, getDownloadURL }
 // Auth functions

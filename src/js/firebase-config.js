@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore } from "firebase/database";
+import { getDatabase, ref, onValue, onChildAdded, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore } from "firebase/database";
 import { getStorage, ref as refStorage, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth, signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword } from "firebase/auth";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
@@ -32,6 +32,7 @@ window.refStorage = refStorage;
 window.uploadBytes = uploadBytes;
 window.getDownloadURL = getDownloadURL;
 window.onValue = onValue;
+window.onChildAdded = onChildAdded;
 window.set = set;
 window.update = update;
 window.remove = remove;
