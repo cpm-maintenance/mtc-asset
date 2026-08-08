@@ -39,6 +39,46 @@ if (SENTRY_DSN && import.meta.env.PROD) {
   if (!SENTRY_DSN) console.log('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
 }
 
+// ============================================================
+// RUM: Core Web Vitals → Sentry (production only, passive)
+// ============================================================
+if (import.meta.env.PROD && window.Sentry?.captureMessage) {
+  try {
+    const vitals = { lcp: 0, fid: 0, cls: 0, inp: 0, ttfb: 0 };
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const name = entry.name || entry.entryType;
+        if (name === 'first-contentful-paint') vitals.fcp = entry.startTime;
+        if (!vitals.lcp && entry.entryType === 'largest-contentful-paint') vitals.lcp = entry.startTime;
+        if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) vitals.cls += entry.value;
+        if (entry.entryType === 'event' && entry.processingEnd) {
+          const delay = entry.processingEnd - entry.startTime;
+          vitals.inp = Math.max(vitals.inp || 0, delay);
+        }
+      }
+    });
+    observer.observe({ type: 'largest-contentful-paint', buffered: true });
+    observer.observe({ type: 'layout-shift', buffered: true });
+    observer.observe({ type: 'first-contentful-paint', buffered: true });
+    if (PerformanceObserver.supportedEntryTypes?.includes('event')) {
+      observer.observe({ type: 'event', buffered: true });
+    }
+    // Report after page load settles
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const nav = performance.getEntriesByType('navigation')[0];
+        if (nav) vitals.ttfb = nav.responseStart;
+        window.Sentry.captureMessage('web-vitals', {
+          level: 'info',
+          extra: { ...vitals, url: location.pathname }
+        });
+      }, 3000);
+    });
+  } catch (e) {
+    console.warn('[RUM] Vitals observer unavailable:', e);
+  }
+}
+
 window.Alpine = Alpine;
 
 // Create single instance
