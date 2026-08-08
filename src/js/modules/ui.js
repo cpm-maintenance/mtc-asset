@@ -136,6 +136,56 @@ export const uiModule = {
         link.click();
     },
 
+    // Bulk: generate QR for ALL equipment → single PDF (A4 grid 3×5)
+    async downloadAllQRs() {
+        const list = this.equipment || [];
+        if (!list.length) {
+            this.showNotification('No equipment to export', 'error');
+            return;
+        }
+        this.isLoading = true;
+        try {
+            const QRCode = (await import('qrcode')).default;
+            const { jsPDF } = await import('jspdf');
+
+            const doc = new jsPDF('l', 'mm', 'a4'); // landscape: 297×210mm
+            const cols = 3, rows = 5, perPage = cols * rows;
+            const cellW = 297 / cols, cellH = 210 / rows;
+            const qrSize = 36;
+            let idx = 0;
+
+            for (const eq of list) {
+                const id = eq.EquipmentID || '-1';
+                const name = (eq.Nama || id).substring(0, 24);
+                const qr = await QRCode.toDataURL(id, { width: 240, margin: 1, color: { dark: '#0B0F1A', light: '#FFFFFF' } });
+
+                const col = idx % cols, row = Math.floor(idx / cols) % rows;
+                const cx = col * cellW + cellW / 2, cy = row * cellH + cellH / 2;
+
+                // QR centered slightly above middle
+                doc.addImage(qr, 'PNG', cx - qrSize / 2, cy - qrSize / 2, qrSize, qrSize);
+                // Label below
+                doc.setFontSize(8); doc.setTextColor(30, 30, 30);
+                doc.text(id, cx, cy + qrSize / 2 + 4, { align: 'center' });
+                doc.setFontSize(6); doc.setTextColor(120, 120, 120);
+                doc.text(name, cx, cy + qrSize / 2 + 9, { align: 'center' });
+
+                idx++;
+                if (idx % perPage === 0 && idx < list.length) {
+                    doc.addPage();
+                }
+            }
+
+            doc.save(`QR_All_Equipment_${new Date().toISOString().split('T')[0]}.pdf`);
+            this.showNotification(`Exported ${list.length} QR codes`);
+        } catch (err) {
+            console.error('Bulk QR Export Error:', err);
+            this.showNotification('Failed to export QR PDF: ' + (err.message || 'Unknown error'), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    },
+
     // Helpers
     statusColor(s) {
         const colors = {
