@@ -53,9 +53,9 @@
 - [x] Lazy-load foto equipment: `loading="lazy"` + `decoding="async"` (Equipment.html, EquipmentDetail.html, AllLogs.html)
 - [x] CropperJS CDN sinkron → dynamic load on-demand (hapus script render-blocking di index.html) — main gzip tetap 56.6KB
 
-### P1 (2 jam) — Page cache + render scale
-- [ ] SW cache page fragments `pages/**` stale-while-revalidate (switch page tanpa network round-trip)
-- [ ] `filteredEquip` + search debounce 150ms (hindari full-filter per keystroke)
+### P1 (2 jam) — Page cache + render scale ✅ (selesai, 35ba9fa)
+- [x] SW cache page fragments `pages/**` stale-while-revalidate (switch page tanpa network round-trip)
+- [x] `filteredEquip`/`searchPart`/`searchWO` + Alpine `x-model.debounce.150ms` (hindari full-filter per keystroke)
 
 ### P2 (nanti) — Cost/robustness
 - [ ] Belah index.html shell u/ minify (42 template inline → chunk)
