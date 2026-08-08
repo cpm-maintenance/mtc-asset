@@ -219,7 +219,7 @@ export const uiModule = {
         });
     },
 
-    // Upload image - store directly in Firebase Database (no external storage needed)
+    // Upload image to ImgBB (URL) with fallback to Firebase DB base64 if ImgBB fails.
     async uploadToImgBB(file) {
         if (!file) return null;
         
@@ -234,13 +234,33 @@ export const uiModule = {
                 return null;
             }
             
-            // Convert to base64
             const base64 = await this.blobToBase64(compressed);
-            const dataUrl = `data:${compressed.type || 'image/jpeg'};base64,${base64.split(',')[1]}`;
+            const rawB64 = base64.split(',')[1] || base64;
             
-            // Store directly in Firebase Database
+            // Try ImgBB first (stores URL, keeps DB small)
+            const imgbbKey = import.meta.env.VITE_IMGBB_API_KEY;
+            if (imgbbKey) {
+                try {
+                    const form = new FormData();
+                    form.append('key', imgbbKey);
+                    form.append('image', rawB64);
+                    const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
+                    const json = await res.json();
+                    if (json.success && json.data?.url) {
+                        console.log('Image uploaded to ImgBB:', json.data.url);
+                        this.showNotification('Image uploaded successfully', 'success');
+                        return json.data.url;
+                    }
+                    console.warn('[ImgBB] Upload failed, falling back to DB:', json.error?.message || 'unknown');
+                } catch (e) {
+                    console.warn('[ImgBB] Network error, falling back to DB:', e.message);
+                }
+            }
+            
+            // Fallback: store base64 in Firebase Database (legacy behavior)
+            const dataUrl = `data:${compressed.type || 'image/jpeg'};base64,${rawB64}`;
             const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const truncatedData = dataUrl.substring(0, 400000); // Limit size for Firebase
+            const truncatedData = dataUrl.substring(0, 400000);
             
             await window.set(window.ref(window.db, `ImageUploads/${imageId}`), {
                 data: truncatedData,
@@ -248,10 +268,8 @@ export const uiModule = {
                 created: Date.now()
             });
             
-            console.log('Image saved to Firebase Database');
-            this.showNotification('Image uploaded successfully', 'success');
-            
-            // Return as data URL so it can be displayed immediately
+            console.log('Image saved to Firebase Database (fallback)');
+            this.showNotification('Image uploaded (database mode)', 'success');
             return truncatedData;
             
         } catch (e) {
