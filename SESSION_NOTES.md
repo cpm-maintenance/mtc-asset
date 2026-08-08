@@ -178,3 +178,47 @@
 
 
 
+
+## Session 9 — Performa P0-P2 (2026-08-08)
+
+### Analisa Mendalam (desktop + mobile)
+- Baseline: initial 252KB gzip; chart/jspdf/qrcode/sentry/all lazy; listener split (Phase 2)
+- Laporan lengkap: PERFORMANCE_ANALYSIS_2.md
+- Temuan: foto equipment eager (mobile data), cropper CDN render-blocking, page fragments network-first, search full-filter per keystroke
+
+### P0 ✅ (ab6db7b) — Mobile image + render-blocking
+- Lazy-load foto: `loading="lazy"` + `decoding="async"` (Equipment.html, EquipmentDetail.html, AllLogs.html)
+- CropperJS CDN sinkron → dynamic load on-demand di showCropModal (hapus render-blocking dari head index.html)
+
+### P1 ✅ (35ba9fa) — Page cache + render scale
+- SW stale-while-revalidate untuk /pages/** (component-loader) — switch page instan
+- Alpine `x-model.debounce.150ms` di search equip/parts/WO — full-filter tak per keystroke
+
+### P2 ✅ (d89e4a4, 3b786fa) — Cost/robustness
+- Split jspdf SVG chain (canvg+dompurify) → chunk lazy `pdfdeps` — **vendor 151.5→104.7KB gzip, initial ~212KB**
+- RUM: PerformanceObserver → Sentry (LCP/FID/CLS/INP/TTFB, produksi only, passive, 0 dep)
+- index.html shell split — **skipped** (YAGNI: modal shells + navigasi, bukan page fragment; 104KB di-cache SW)
+
+### Deploy
+| Deploy | Status | Catatan |
+|--------|--------|---------|
+| S8 fix (PDF, SW fallback, QR All) | ✅ Live | 74 files |
+| S9 P0-P2 (lazy img, SW page cache, vendor 104K, RUM) | ✅ Live | 74 files |
+
+### Commits
+| Hash | Deskripsi |
+|------|-----------|
+| 5dda807 | fix: structuredClone → JSON clone (Proxy error, PDF export) |
+| 3cc6992 | feat: QR All PDF |
+| 2654119 | fix(sw): navigation fallback |
+| ca1997c | chore: remove scratch/ |
+| ab6db7b | perf(P0): lazy images + cropper async |
+| 35ba9fa | perf(P1): SW page SWR + search debounce |
+| d89e4a4 | perf(P2): pdfdeps chunk, vendor 151→105KB |
+| 3b786fa | feat(P2): RUM web-vitals → Sentry |
+| 21955d1 | docs: mark P0 done |
+
+### Catatan
+- Initial gzip: **252 → 212KB** (sesudah P2)
+- Verify RUM: Sentry → event "web-vitals" (extra: LCP/FID/CLS/INP/TTFB)
+- Data dev minim tetap (18 equip, 50 parts, 2 logs, 0 PM)

@@ -58,9 +58,9 @@
 - [x] `filteredEquip`/`searchPart`/`searchWO` + Alpine `x-model.debounce.150ms` (hindari full-filter per keystroke)
 
 ### P2 (nanti) — Cost/robustness
-- [ ] Belah index.html shell u/ minify (42 template inline → chunk)
-- [ ] RUM web-vitals (ukur riil sebelum fase lanjut)
-- [ ] Opsional: hapus core-js 155K vendor bila target browser modern only
+- [x] ~~Belah index.html shell~~ — **skipped** (template = modal shells + navigasi, bukan page fragment; splitting = risiko tinggi, benefit kecil — 104KB di-cache SW)
+- [x] RUM web-vitals — PerformanceObserver → Sentry (LCP/FID/CLS/INP/TTFB, produksi only) — 3b786fa
+- [x] Pisah canvg+dompurify ke chunk `pdfdeps` lazy — vendor 151.5→104.7KB gzip, initial ~212KB — d89e4a4
 
 ## 📊 Isi Data Nyata
 
