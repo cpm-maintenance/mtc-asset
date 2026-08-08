@@ -1,7 +1,7 @@
 /**
  * UI & Utility module for MTC.NEXUS
  */
-import QRCode from 'qrcode';
+// Lazy-load qrcode (only used for QR modal — keeps it out of initial bundle)
 import { CONSTANTS } from '../constants.js';
 
 export const uiModule = {
@@ -112,6 +112,7 @@ export const uiModule = {
     async generateQR(id) {
         this.isLoading = true;
         try {
+            const QRCode = (await import('qrcode')).default;
             const url = await QRCode.toDataURL(id, {
                 width: 400,
                 margin: 2,
