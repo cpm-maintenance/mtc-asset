@@ -51,7 +51,14 @@ self.addEventListener('fetch', (event) => {
   // Default: network first for app routes
   event.respondWith(
     fetch(event.request).catch(() => {
-      return caches.match(event.request);
+      return caches.match(event.request).then((cached) => {
+        // Page (navigation) miss → serve index.html (SPA fallback)
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          return caches.match('/index.html') || caches.match('/');
+        }
+        return new Response('', { status: 404, statusText: 'Not Found' });
+      });
     })
   );
 });
