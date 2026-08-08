@@ -18,11 +18,12 @@ export default defineConfig({
         manualChunks(id) {
           if (id.includes('node_modules/xlsx')) return 'xlsx';
           if (id.includes('node_modules/jspdf')) return 'jspdf';
+          // jspdf's SVG chain (canvg + dompurify) — only used inside jspdf lazy chunk
+          if (id.includes('node_modules/canvg') || id.includes('node_modules/dompurify') || id.includes('node_modules/purify')) return 'pdfdeps';
           if (id.includes('node_modules/chart.js')) return 'chart';
           if (id.includes('node_modules/firebase')) return 'firebase';
           if (id.includes('node_modules/html2canvas')) return 'html2canvas';
           if (id.includes('node_modules/@sentry')) return 'sentry';
-          if (id.includes('node_modules/dompurify') || id.includes('node_modules/purify')) return 'purify';
           if (id.includes('node_modules/alpinejs')) return 'alpine';
           if (id.includes('node_modules/qrcode')) return 'qrcode';
           if (id.includes('node_modules')) return 'vendor';
