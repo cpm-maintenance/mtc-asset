@@ -17,6 +17,9 @@
       <button @click="exportData('equip', 'csv')" class="btn-nexus-small">
         <i class="fas fa-download"></i><span class="hidden lg:inline ml-1">Export</span>
       </button>
+      <button @click="downloadAllQRs()" class="btn-nexus-small" title="Download QR sheet (PDF) for all assets">
+        <i class="fas fa-qrcode"></i><span class="hidden lg:inline ml-1">QR All</span>
+      </button>
       <label class="btn-nexus-small cursor-pointer">
         <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
         <input type="file" @change="importCSV($event, 'equip')" class="hidden" accept=".csv, .xlsx">
