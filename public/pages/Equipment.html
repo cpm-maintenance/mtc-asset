@@ -42,7 +42,7 @@
           <!-- Equipment Photo -->
           <template x-if="e.FotoURL && e.FotoURL.length > 0">
             <div class="w-10 h-10 rounded-lg overflow-hidden mr-2 shrink-0 border border-nexus-accent/20">
-              <img :src="cleanUrl(e.FotoURL)" class="w-full h-full object-cover" onerror="this.style.display='none'">
+              <img :src="cleanUrl(e.FotoURL)" class="w-full h-full object-cover" loading="lazy" decoding="async" onerror="this.style.display='none'">
             </div>
           </template>
           

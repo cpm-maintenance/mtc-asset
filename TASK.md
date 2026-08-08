@@ -19,18 +19,6 @@
 - [x] Batasi render: `visibleEquipLogs` (EquipmentDetail, cap 50 + load more lokal `detailLogLimit`)
 - [x] Verifikasi `jspdf` lazy — ✅ sudah `await import('jspdf')` (chunk 421KB terpisah, tidak di main)
 
-## 📊 Isi Data Nyata
-
-- [ ] Assign teknisi ke WO (Workload page)
-- [ ] Input PM schedule (Monthly Plan) — 0 PM saat ini
-- [ ] Tambah HistoryLog riil (baru 2 log)
-
-## 🔧 Opsional / Perbaikan
-
-- [ ] Audit trail capture (AuditTrail masih kosong — helper `logAudit`, page, hook login/logout SUDAH ada; kurang call di aksi CRUD)
-- [ ] Cek deploy workflow .github (line-ending modified)
-- [ ] Backup otomatis harian 02:00 WIB — verifikasi GitHub Actions jalan
-
 ## Phase 2 — Menengah ✅ (selesai)
 
 - [x] **Foto base64 → URL ImgBB** — `uploadToImgBB` di-fix (upload beneran ke api.imgbb.com), log photos di-upload (fix bug blob URL), `migrateLegacyImages()` pindahkan 12 base64 → URL (12/12 sukses)
@@ -39,16 +27,6 @@
 - [x] **Split HistoryLog/SpareParts/Performance → query Terbatas** — ✅ `onChildAdded` incremental + `limitToLast` (HistoryLog 500, SpareParts 500, Performance 200); delta sync, tak re-download penuh per tulis; WO detection tetap; saveCache debounce 250ms + JSON clone (fix Proxy clone flood)
 - [x] **Bundle < 300KB gzip** — ✅ initial 351KB → **252KB gzip** (qrcode lazy, jspdf/qrcode/html2canvas/xlsx/sentry tak di-preload, `target: esnext` + `modulePreload.resolveDependencies` filter)
 
-## Phase 3 — Arsitektur
-
-- [ ] Time-series (HistoryLog, Performance) ke Firestore
-- [ ] AI/key card ke server function
-- [ ] RUM web-vitals → Analytics/Sentry
-- [ ] IndexedDB source-of-truth + sync bg
-- [ ] Perf budget CI
-
----
-
 ## Deploy Status
 
 | Item | Status |
@@ -56,10 +34,42 @@
 | S5 (63b6d86) | ✅ live |
 | S6 form+orange+HM+MTBF+PM+spare | ✅ live (73 files) |
 | S7 P1+P2 (split listener, bundle 252KB, cache fix) | ✅ live (74 files, c97a03b) |
+| S8 fix (PDF export, SW fallback, QR All) | ✅ live (74 files, 2654119) |
 
-## Known Issues
+## 📋 Progress Hari Ini (S8, 2026-08-08)
 
-- CRLF quirk tetap — edit tools gagal di CRLF files → node `.mjs` + regex `\r?\n`
-- 9 realtime listener full-data → sudah di-split ke `onChildAdded` limitToLast (Phase 2 ✅)
-- Data dev minim → beberapa page empty state
-- `.open/skills` = submodule dirty — skip saat commit
+- [x] Backup full + push (d5712ae) — Firebase 77 records
+- [x] Fix PDF export — `structuredClone` → JSON clone (Proxy error) — 5dda807
+- [x] Fix SW navigation fallback — page miss → index.html — 2654119
+- [x] Fitur QR All — PDF A4 landscape grid 3×5 semua equipment — 3cc6992
+- [x] Analisa performa mendalam (desktop + mobile) — PERFORMANCE_ANALYSIS_2.md
+- [x] Task list Quick Win P0/P1/P2 dibuat
+
+## 🎯 Quick Win Performa (Analisa S7 — desktop & mobile)
+
+> Baseline: initial 252KB gzip, chart/jspdf/qrcode lazy, listener split. Analisa penuh: `PERFORMANCE_ANALYSIS_2.md`.
+
+### P0 (30 min) — Mobile image + render-blocking
+- [ ] Lazy-load foto equipment: `loading="lazy"` + `decoding="async"` (Equipment.html, EquipmentDetail.html, AllLogs.html)
+- [ ] CropperJS CDN sinkron → dynamic `import()` on-demand (hapus script render-blocking di index.html)
+
+### P1 (2 jam) — Page cache + render scale
+- [ ] SW cache page fragments `pages/**` stale-while-revalidate (switch page tanpa network round-trip)
+- [ ] `filteredEquip` + search debounce 150ms (hindari full-filter per keystroke)
+
+### P2 (nanti) — Cost/robustness
+- [ ] Belah index.html shell u/ minify (42 template inline → chunk)
+- [ ] RUM web-vitals (ukur riil sebelum fase lanjut)
+- [ ] Opsional: hapus core-js 155K vendor bila target browser modern only
+
+## 📊 Isi Data Nyata
+
+- [ ] Assign teknisi ke WO (Workload page)
+- [ ] Input PM schedule (Monthly Plan) — 0 PM saat ini
+- [ ] Tambah HistoryLog riil (baru 2 log)
+
+## 🔧 Perbaikan Lainnya
+
+- [ ] Audit trail capture (AuditTrail masih kosong — helper `logAudit`, page, hook login/logout SUDAH ada; kurang call di aksi CRUD)
+- [ ] Cek deploy workflow .github (line-ending modified)
+- [ ] Backup otomatis harian 02:00 WIB — verifikasi GitHub Actions jalan

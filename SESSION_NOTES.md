@@ -176,21 +176,5 @@
 |--------|--------|---------|
 | mtc-asset.web.app (hosting) | ✅ Live (S5) | 72 files, release complete |
 
-## Commits
 
-| Hash | Deskripsi |
-|------|-----------|
-| 63b6d86 | feat(S5): 4 themes, themed form fonts, mobile bottom nav 5-slot + More modal, add missing pages/modules |
 
-## Known Issues / Catatan
-
-- `.open/skills` = submodule dirty (bukan project) — skip saat commit
-- CRLF quirk tetap: edit tools gagal di CRLF files → pakai node `.mjs` + regex `\r?\n`
-- Data Firebase dev minim (18 equip, 50 parts, 2 logs, 0 PM) — beberapa page empty state (bukan bug)
-
-## Next Session
-
-- [ ] Isi data nyata: assign teknisi ke WO (Workload page), input PM schedule (Monthly Plan)
-- [ ] Optional: audit trail capture (AuditTrail node Firebase masih kosong)
-- [ ] Cek deploy workflow .github (line-ending modified)
-- [ ] Opsional R8: ide dari feedback planner/analyst
