@@ -37,7 +37,7 @@
 - [x] Patch node per tulis — ✅ sudah (`set`/`update` per-id, bukan resubmit dataset)
 - [x] Cache-Control immutable — firebase.json: `/assets/**`+`/icons/**` cache 1 tahun, sw.js/index no-cache
 - [x] **Split HistoryLog/SpareParts/Performance → query Terbatas** — ✅ `onChildAdded` incremental + `limitToLast` (HistoryLog 500, SpareParts 500, Performance 200); delta sync, tak re-download penuh per tulis; WO detection tetap; saveCache debounce 250ms + JSON clone (fix Proxy clone flood)
-- [ ] Bundle < 300KB gzip — initial ~300KB (vendor 508K + firebase 286K + main 202K); lazy chunks jspdf/xlsx/sentry/chart sudah terpisah. Sisa optimasi vendor
+- [x] **Bundle < 300KB gzip** — ✅ initial 351KB → **252KB gzip** (qrcode lazy, jspdf/qrcode/html2canvas/xlsx/sentry tak di-preload, `target: esnext` + `modulePreload.resolveDependencies` filter)
 
 ## Phase 3 — Arsitektur
 

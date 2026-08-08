@@ -21,8 +21,20 @@
 - **Cache-Control immutable** — [firebase.json](file:///d:/Coding/MTC-Asset/firebase.json): `/assets/**`+`/icons/**` 1 tahun, sw.js/index no-cache
 - Bundle: lazy chunks jspdf/xlsx/sentry/chart terpisah; initial ~300KB gzip
 
-### 🔧 Fix
-- **backup.js** — `git diff --cached --quiet` exit code ditangkap (throw → deteksi perubahan); backup sukses commit `40d8749` + push
+### 🔧 Fix (lanjutan)
+- **backup.js** (sebelumnya) — fix git diff exit code
+
+### ⚡ Bundle < 300KB gzip ✅ (Phase 2 selesai)
+- Initial **351KB → 252KB gzip** (hemat 28%)
+- **qrcode → lazy** `await import('qrcode')` ([ui.js](file:///d:/Coding/MTC-Asset/src/js/modules/ui.js)) — tak lagi statis di initial
+- **modulePreload filter** ([vite.config.js](file:///d:/Coding/MTC-Asset/vite.config.js)): jspdf/qrcode/html2canvas/xlsx/sentry tak di-preload eager
+- **target: 'esnext'** — skip ES5 transpile, kurangi polyfill
+
+### 🔌 Split Listener (Phase 2) ✅
+- HistoryLog/SpareParts/Performance → `onChildAdded` incremental + `limitToLast` (500/500/200)
+- Delta sync — tak re-download penuh per tulis; WO detection tetap
+- saveCache debounce 250ms + JSON clone (fix `Proxy object could not be cloned` flood)
+## 🔧 Fix (bundling) (throw → deteksi perubahan); backup sukses commit `40d8749` + push
 
 ## Deploy Status
 

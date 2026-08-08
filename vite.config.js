@@ -5,6 +5,12 @@ export default defineConfig({
   root: './',
   build: {
     outDir: 'dist',
+    // Modern browsers only: skip ES5 transpile & heavy core-js polyfills (keeps vendor slim)
+    target: 'esnext',
+    modulePreload: {
+      // Don't eagerly preload lazy-only chunks (jspdf/qrcode load on demand)
+      resolveDependencies: (filename, deps) => deps.filter(d => !/jspdf|qrcode|html2canvas|xlsx|sentry/.test(d)),
+    },
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       input: { main: './index.html' },
