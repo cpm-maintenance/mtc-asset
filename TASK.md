@@ -27,11 +27,11 @@
 
 ## 🔧 Opsional / Perbaikan
 
-- [ ] Audit trail capture (AuditTrail node Firebase masih kosong)
+- [ ] Audit trail capture (AuditTrail masih kosong — helper `logAudit`, page, hook login/logout SUDAH ada; kurang call di aksi CRUD)
 - [ ] Cek deploy workflow .github (line-ending modified)
 - [ ] Backup otomatis harian 02:00 WIB — verifikasi GitHub Actions jalan
 
-## Phase 2 — Menenga ✅ (sebagian)
+## Phase 2 — Menengah ✅ (selesai)
 
 - [x] **Foto base64 → URL ImgBB** — `uploadToImgBB` di-fix (upload beneran ke api.imgbb.com), log photos di-upload (fix bug blob URL), `migrateLegacyImages()` pindahkan 12 base64 → URL (12/12 sukses)
 - [x] Patch node per tulis — ✅ sudah (`set`/`update` per-id, bukan resubmit dataset)
@@ -55,10 +55,11 @@
 |------|--------|
 | S5 (63b6d86) | ✅ live |
 | S6 form+orange+HM+MTBF+PM+spare | ✅ live (73 files) |
+| S7 P1+P2 (split listener, bundle 252KB, cache fix) | ✅ live (74 files, c97a03b) |
 
 ## Known Issues
 
 - CRLF quirk tetap — edit tools gagal di CRLF files → node `.mjs` + regex `\r?\n`
-- 9 realtime listener muat seluruh dataset → target utama Phase 2
+- 9 realtime listener full-data → sudah di-split ke `onChildAdded` limitToLast (Phase 2 ✅)
 - Data dev minim → beberapa page empty state
 - `.open/skills` = submodule dirty — skip saat commit

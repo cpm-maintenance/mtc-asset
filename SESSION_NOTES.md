@@ -34,14 +34,14 @@
 - HistoryLog/SpareParts/Performance → `onChildAdded` incremental + `limitToLast` (500/500/200)
 - Delta sync — tak re-download penuh per tulis; WO detection tetap
 - saveCache debounce 250ms + JSON clone (fix `Proxy object could not be cloned` flood)
-## 🔧 Fix (bundling) (throw → deteksi perubahan); backup sukses commit `40d8749` + push
+
 
 ## Deploy Status
 
 | Deploy | Status | Catatan |
 |--------|--------|---------|
 | S6 (form+orange+HM+MTBF+PM+spare) | ✅ Live | 73 files |
-| Perf P1+P2 partial | ⏳ Belum deploy | build siap, tunggu konfirmasi |
+| S7 P1+P2 (split listener, bundle 252KB, cache fix) | ✅ Live | 74 files, release complete |
 
 ## Commits
 
@@ -51,6 +51,8 @@
 | 2dc8398 | perf(P2): ImgBB real upload, Cache-Control immutable, migrate helper |
 | d41c22d | feat(P2): migrate extended ke Equipment/Logs base64 |
 | 40d8749 | 📦 Backup + push |
+| cbed5d9 | perf(P2): split listener onChildAdded + limitToLast + saveCache debounce |
+| c97a03b | perf(P2): bundle 351→252KB gzip (qrcode lazy, modulePreload filter, target esnext) |
 
 ## Known Issues / Catatan
 
