@@ -34,6 +34,8 @@ export const pmScheduleModule = {
   pmGanttScroll: 0,
   pmLoading: true,
   pmSelectedIds: [],
+  _pmHM: null, _pmHMRef: null, _pmHMEqRef: null,
+  _ganttEqMap: null, _ganttEqRef: null,
 
   // --- INIT ---
   /** Load PM_Schedule from Firebase */
@@ -367,15 +369,36 @@ export const pmScheduleModule = {
         return (a.date || '').localeCompare(b.date || '');
       });
   },
+  /** Cached per-equip HM: meter if set, else last log HM. Rebuilt when logs/equipment change. */
+  _pmHMMap() {
+    if (!this._pmHM || this._pmHMRef !== this.logs || this._pmHMEqRef !== this.equipment) {
+      const map = new Map();
+      const eqMap = new Map((this.equipment || []).map(e => [e && e.EquipmentID, Number(e && e.CurrentHM) || 0]));
+      const lastHM = new Map();
+      (this.logs || []).forEach(l => {
+        if (!l || !l.EquipmentID) return;
+        const hm = Number(l.HM);
+        if (hm <= 0) return;
+        const prev = lastHM.get(l.EquipmentID);
+        if (!prev || (l.Tanggal || '') > prev.date) lastHM.set(l.EquipmentID, { date: l.Tanggal || '', hm });
+      });
+      (this.equipment || []).forEach(e => {
+        if (!e) return;
+        const id = e.EquipmentID;
+        const eqHM = eqMap.get(id) || 0;
+        const last = lastHM.get(id);
+        map.set(id, eqHM > 0 ? eqHM : (last ? last.hm : 0));
+      });
+      this._pmHM = map;
+      this._pmHMRef = this.logs;
+      this._pmHMEqRef = this.equipment;
+    }
+    return this._pmHM;
+  },
   /** Current HM for an equipment (meter or last log), 0 if none */
   pmCurrentHM(equipId) {
     if (!equipId) return 0;
-    const equip = (this.equipment || []).find(e => e.EquipmentID === equipId);
-    const equipHM = Number(equip?.CurrentHM) || 0;
-    if (equipHM > 0) return equipHM;
-    const logs = (this.logs || []).filter(l => l && l.EquipmentID === equipId && Number(l.HM) > 0)
-      .sort((a, b) => (a.Tanggal || '').localeCompare(b.Tanggal || ''));
-    return logs.length ? Number(logs[logs.length - 1].HM) : 0;
+    return this._pmHMMap().get(equipId) || 0;
   },
 
   isPMOverdue(pm) {
@@ -605,10 +628,14 @@ export const pmScheduleModule = {
         : eq.events.some(e => e.isDueSoon) ? 'Due Soon'
         : 'Scheduled';
 
-      const equip = window.app?.equipment?.find(e => e.EquipmentID === eq.equipId);
+      const eqList = window.app?.equipment || [];
+      if (!this._ganttEqMap || this._ganttEqRef !== eqList) {
+        this._ganttEqMap = new Map(eqList.map(e => [e && e.EquipmentID, e && e.Nama]));
+        this._ganttEqRef = eqList;
+      }
       return {
         equipId: eq.equipId,
-        name: equip?.Nama || eq.equipId,
+        name: this._ganttEqMap.get(eq.equipId) || eq.equipId,
         status,
         events: eq.events,
       };

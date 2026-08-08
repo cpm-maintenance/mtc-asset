@@ -178,15 +178,24 @@ export function app() {
             return rows;
         },
 
+        _partMap() {
+            if (!this._partLookup || this._partLookupRef !== this.allParts) {
+                const byId = new Map();
+                (this.allParts || []).forEach(p => { if (p) byId.set(p.PartID, p); });
+                this._partLookup = byId;
+                this._partLookupRef = this.allParts;
+            }
+            return this._partLookup;
+        },
         historyGetPartName(partId) {
-            if (!partId || !this.allParts) return partId;
-            const p = this.allParts.find(a => a.PartID === partId);
+            if (!partId) return partId;
+            const p = this._partMap().get(partId);
             return p ? (p.NamaPart || partId) : partId;
         },
 
         historyGetPartNumber(partId) {
-            if (!partId || !this.allParts) return '';
-            const p = this.allParts.find(a => a.PartID === partId);
+            if (!partId) return '';
+            const p = this._partMap().get(partId);
             return p ? (p.PartNumber || '') : '';
         },
 
@@ -543,9 +552,15 @@ if (confirm('Are you sure you want to logout?')) {
             return map[(wo.woPriority || wo.priority || 'Normal')] ?? 1;
         },
         criticalityScore(equipId) {
-            const e = (this.equipment || []).find(x => x.EquipmentID === equipId);
+            // Map lookup instead of .find() per call (O(1) vs O(n))
+            if (!this._critMap || this._critMapRef !== this.equipment) {
+                const map = new Map();
+                (this.equipment || []).forEach(e => { if (e) map.set(e.EquipmentID, e.criticality); });
+                this._critMap = map;
+                this._critMapRef = this.equipment;
+            }
             const map = { 'High': 3, 'Medium': 2, 'Low': 1 };
-            return map[e?.criticality] ?? 1;
+            return map[this._critMap.get(equipId)] ?? 1;
         },
         healthRiskScore(equipId) {
             const h = this.calculateHealthScore ? this.calculateHealthScore(equipId) : null;
@@ -565,6 +580,7 @@ if (confirm('Are you sure you want to logout?')) {
         },
         // ── R7: MTTR per technician ──
         mttrByTech() {
+            if (this._mttrCache && this._mttrCacheRef === this.logs) return this._mttrCache.list;
             const map = {};
             (this.logs || []).forEach(l => {
                 if (!l || !l.assignedTo) return;
@@ -575,19 +591,24 @@ if (confirm('Are you sure you want to logout?')) {
                 map[l.assignedTo].totalDown += dt;
                 if (l.Jenis === 'Breakdown') map[l.assignedTo].breakdowns++;
             });
-            return Object.entries(map).map(([name, d]) => ({
+            const list = Object.entries(map).map(([name, d]) => ({
                 name,
                 mttr: d.repairs > 0 ? Math.round(d.totalDown / d.repairs * 10) / 10 : 0,
                 breakdowns: d.breakdowns,
             }));
+            this._mttrCache = { list, byName: new Map(list.map(t => [t.name, t])) };
+            this._mttrCacheRef = this.logs;
+            return list;
+        },
+        _tech(t) {
+            if (!this._mttrCache || this._mttrCacheRef !== this.logs) this.mttrByTech();
+            return this._mttrCache.byName.get(t);
         },
         techMttr(name) {
-            const t = this.mttrByTech().find(x => x.name === name);
-            return t ? t.mttr : 0;
+            return this._tech(name)?.mttr || 0;
         },
         techBreakdowns(name) {
-            const t = this.mttrByTech().find(x => x.name === name);
-            return t ? t.breakdowns : 0;
+            return this._tech(name)?.breakdowns || 0;
         },
 
         // ── R4: PM Effectiveness (RCM-lite) ──
@@ -919,9 +940,24 @@ if (confirm('Are you sure you want to logout?')) {
             return this.getFilteredPerfData ? this.getFilteredPerfData() : this.performanceData;
         },
 
+        detailLogLimit: 50,
+
         get filteredLogs() {
             if (!this.logs || !Array.isArray(this.logs)) return [];
             return this.logs.filter(l => l.EquipmentID === this.selectedEquip?.EquipmentID);
+        },
+
+        get visibleEquipLogs() {
+            const f = this.filteredLogs;
+            return f.slice(0, this.detailLogLimit || 50);
+        },
+
+        get detailLogsHasMore() {
+            return this.filteredLogs.length > (this.detailLogLimit || 50);
+        },
+
+        loadMoreDetailLogs() {
+            this.detailLogLimit = (this.detailLogLimit || 50) + 50;
         },
 
         // ponytail: pmMonthLabel, pmCalendarDays, pmStats, pmGanttMonths, pmGanttDays, pmGanttRows

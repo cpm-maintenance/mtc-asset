@@ -6,6 +6,7 @@ export const DEFAULT_STORE = {
     currentPage: 'dash', sidebarCollapsed: false, activeTab: 'hist', search: '', searchPart: '', partFilterEquip: '',
     searchWO: '', filterWOStatus: '', filterWOPriority: '',
     selectedWODetail: null,
+    _critMap: null, _critMapRef: null, _mttrCache: null, _mttrCacheRef: null,
     
     // --- MODALS ---
     showEquipModal: false, showPartModal: false, showLogModal: false,
@@ -51,4 +52,5 @@ export const DEFAULT_STORE = {
     // --- KPI ---
     showPerformanceModal: false, isEditingPerformance: false,
     kpiFilter: 'yearly', kpiFilterDate: new Date().getFullYear().toString(),
+    _kpiCache: null,
 };

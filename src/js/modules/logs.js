@@ -6,6 +6,8 @@ import { DEFAULT_LOG_FORM } from '../constants.js';
 import { safeProcessFirebaseData } from './data.js';
 
 export const logsModule = {
+    _lastHM: null,
+    _lastHMLogsRef: null,
     // State flags
     isEditingLog: false,
     isLogDetailView: false,
@@ -260,10 +262,18 @@ export const logsModule = {
 
     getLastHM(equipId) {
         if (!equipId) return '-';
+        // Cache last HM per equipment; rebuilt when this.logs changes.
+        if (this._lastHM !== null && this._lastHMLogsRef === this.logs) {
+            if (this._lastHM.has(equipId)) return this._lastHM.get(equipId);
+        }
         const logs = (this.logs || []).filter(l => l && l.EquipmentID === equipId && Number(l.HM) > 0);
         if (!logs.length) return '-';
         logs.sort((a, b) => (a.Tanggal || '').localeCompare(b.Tanggal || ''));
-        return Number(logs[logs.length - 1].HM).toLocaleString();
+        const val = Number(logs[logs.length - 1].HM).toLocaleString();
+        if (this._lastHM === null) this._lastHM = new Map();
+        this._lastHM.set(equipId, val);
+        this._lastHMLogsRef = this.logs;
+        return val;
     },
 
     async submitLog() {
