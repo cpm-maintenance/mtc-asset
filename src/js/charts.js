@@ -253,6 +253,19 @@ export const chartModule = {
                         });
                     }
                 }
+
+                // Cost Trend (P1) — reuse calcCostTrend
+                const ctxCost = await waitForCanvas('costTrendChart');
+                if (this.currentPage !== 'dash') return;
+                if (ctxCost) {
+                    const ct = this.calcCostTrend ? this.calcCostTrend() : [];
+                    if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} }
+                    window._appCharts.costTrend = await this.safeCreateChart(ctxCost, {
+                        type: 'line',
+                        data: { labels: ct.length ? ct.map(c => c.month.substring(5)) : ['-'], datasets: [{ label: 'Cost (Rp)', data: ct.length ? ct.map(c => c.cost) : [0], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 }] },
+                        options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false } } }
+                    });
+                }
             };
             this.$nextTick(() => requestAnimationFrame(() => renderCharts().catch(e => console.error(e))));
         } catch (err) { console.error('renderDashboardCharts Error:', err); }

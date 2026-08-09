@@ -716,6 +716,41 @@ if (confirm('Are you sure you want to logout?')) {
             this.applyDashboardFilter();
         },
 
+        // Dashboard alert zone (P1)
+        get dashAlerts() {
+            const today = new Date().toISOString().split('T')[0];
+            const overduePM = (this.pmList || []).filter(pm => pm.status === 'pending' && pm.date < today).length;
+            const agingWO = (this.logs || []).filter(l => {
+                if (!(l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved')) return false;
+                if (!l.Tanggal) return false;
+                const d = new Date(l.Tanggal);
+                return !isNaN(d) && (new Date(today) - d) / 86400000 > 3;
+            }).length;
+            const lowStock = (this.allParts || []).filter(p => Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0).length;
+            return { overduePM, agingWO, lowStock };
+        },
+
+        // Dashboard KPI row (P1)
+        get dashKPIs() {
+            const logs = this.logs || [];
+            const breakdowns = logs.filter(l => l && l.Jenis === 'Breakdown');
+            const totalBD = breakdowns.length;
+            const totalBDHrs = breakdowns.reduce((s, l) => s + (Number(l.Downtime) || 0), 0);
+            // MTBF akurat dari kpi-engine (delta HM antar breakdown, gabung logs+Performance)
+            const equipIds = [...new Set((this.equipment || []).map(e => e.EquipmentID))];
+            const mtbfs = equipIds.map(id => Number(this.calculateMTBF?.(id))).filter(v => v > 0);
+            const mtbf = mtbfs.length > 0 ? (mtbfs.reduce((a, b) => a + b, 0) / mtbfs.length).toFixed(1) : '—';
+            const mttr = totalBD > 0 ? (totalBDHrs / totalBD).toFixed(1) : '—';
+            const perf = this.performanceData || [];
+            const avgPA = perf.length > 0
+                ? (perf.reduce((s, p) => {
+                    const wh = Number(p.wh) || 24, bd = Number(p.bd) || 0, stb = Number(p.stb) || 0;
+                    return s + (wh > 0 ? ((wh - bd - stb) / wh) * 100 : 0);
+                }, 0) / perf.length).toFixed(1)
+                : '—';
+            return { mtbf, mttr, avgPA, breakdowns: totalBD };
+        },
+
         get calculatedStats() {
             // Date-range filter for stats
             const from = this.dashboardDateFrom || '';
