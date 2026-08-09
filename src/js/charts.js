@@ -62,7 +62,8 @@ export const chartModule = {
             const eqLogs = allLogs.filter(l => l && l.EquipmentID === equipId);
             if (!eqLogs.length) return;
             const allPerf = this._raw?.(this.performanceData) || [];
-            const eqPerf = allPerf.filter(p => p && p.EquipmentID === equipId);
+            // ⚠️ Performance pakai equipmentId (lowercase)
+            const eqPerf = allPerf.filter(p => p && (p.equipmentId || p.EquipmentID) === equipId);
 
             const monthSet = new Set();
             eqLogs.forEach(l => { const y = this._monthKey(l.Tanggal); if (y) monthSet.add(y); });
@@ -71,14 +72,17 @@ export const chartModule = {
             const labels = [], mtbfValues = [], mttrValues = [];
             [...monthSet].sort().forEach(y => {
                 const ms = eqLogs.filter(l => this._monthKey(l.Tanggal) === y);
-                const failures = ms.filter(l => l.Jenis === 'Breakdown').length;
+                const logFailures = ms.filter(l => l.Jenis === 'Breakdown').length;
                 const repairs = ms.filter(l => l.Jenis === 'Repair').length;
                 const perfMonth = eqPerf.filter(p => this._monthKey(p.date || p.Tanggal) === y);
                 const wh = perfMonth.reduce((s, p) => s + (Number(p.wh) || 0), 0);
                 const bd = perfMonth.reduce((s, p) => s + (Number(p.bd) || 0), 0);
+                const perfFreq = perfMonth.reduce((s, p) => s + (Number(p.freq) || 0), 0);
+                const perfEvents = perfMonth.reduce((s, p) => s + ((p.events && p.events.length) || 0), 0);
+                const failures = perfFreq || perfEvents || logFailures;
                 labels.push(y);
                 mtbfValues.push(failures > 0 && wh > 0 ? Number((wh / failures).toFixed(1)) : 0);
-                mttrValues.push(repairs > 0 && bd > 0 ? Number((bd / repairs).toFixed(1)) : 0);
+                mttrValues.push(repairs > 0 && bd > 0 ? Number((bd / failures).toFixed(1)) : 0);
             });
 
             const tc = this.darkMode ? '#8b9eb7' : '#64748b';
