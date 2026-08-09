@@ -239,9 +239,16 @@ export const performanceModule = {
         const perfData = this.performanceData;
         if (!perfData || !Array.isArray(perfData)) return [];
 
+        // Filter equipment + area (dari page Performance)
+        const eq = this.perfFilterEquip;
+        const area = this.perfFilterArea;
+        let data = perfData;
+        if (eq) data = data.filter(p => p && (p.equipmentId || p.EquipmentID) === eq);
+        if (area) data = data.filter(p => p && (p.area || '') === area);
+
         // If no filter date, return all data
         const ref = this.kpiFilterDate;
-        if (!ref) return perfData;
+        if (!ref) return data;
 
         // Validate date string
         const refDate = new Date(ref);
@@ -251,7 +258,7 @@ export const performanceModule = {
 
         // yearly - return all data from that year
         if (filter === 'yearly') {
-            return perfData.filter(p => {
+            return data.filter(p => {
                 if (!p || !p.date) return false;
                 const d = new Date(p.date);
                 if (isNaN(d.getTime())) return false;
@@ -259,7 +266,7 @@ export const performanceModule = {
             });
         }
 
-        return perfData.filter(p => {
+        return data.filter(p => {
             if (!p || !p.date) return false;
             const d = new Date(p.date);
             if (isNaN(d.getTime())) return false;
