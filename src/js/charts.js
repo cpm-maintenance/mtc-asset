@@ -258,6 +258,24 @@ export const chartModule = {
         } catch (err) { console.error('renderDashboardCharts Error:', err); }
     },
 
+    // Gradient fill modern (per theme accent)
+    _gradFill(ctx, color, from = 0.45, to = 0.02) {
+        const g = ctx.createLinearGradient(0, 0, 0, 300);
+        g.addColorStop(0, this._rgba(color, from));
+        g.addColorStop(1, this._rgba(color, to));
+        return g;
+    },
+    _rgba(hex, a) {
+        const h = hex.replace('#', '');
+        const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+        return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+    },
+    // Konversi EquipmentID → Nama (fallback: ID)
+    _equipLabel(id) {
+        const name = this.getEquipName?.(id);
+        return name && name !== id && name !== 'Unknown Asset' ? name : id;
+    },
+
     // --- KPI CHARTS ---
     async renderKPICharts() {
         if (this.currentPage !== 'kpi') return;
@@ -316,11 +334,11 @@ export const chartModule = {
                 return { equip: eid, mtbf: failures > 0 ? Math.round(totalHours / failures) : totalHours };
             }).filter(e => e.mtbf > 0).sort((a, b) => a.mtbf - b.mtbf);
             
-            const mtbfLabels = mtbfAverages.map(e => e.equip.length > 8 ? e.equip.substring(0, 8) + '..' : e.equip);
+            const mtbfLabels = mtbfAverages.map(e => this._equipLabel(e.equip));
             const mtbfValues = mtbfAverages.map(e => e.mtbf);
             await safeRender('mtbfChart', 'mtbfChart', 'bar', {
                 labels: mtbfLabels.length > 0 ? mtbfLabels : ['No Data'],
-                datasets: [{ label: 'MTBF (hours)', data: mtbfValues.length > 0 ? mtbfValues : [0], backgroundColor: mtbfValues.length > 0 ? this.themeAccent() : '#64748b', borderRadius: 4 }]
+                datasets: [{ label: 'MTBF (hours)', data: mtbfValues.length > 0 ? mtbfValues : [0], backgroundColor: mtbfValues.length > 0 ? this.themeAccent() : '#64748b', borderRadius: 10, borderSkipped: false, maxBarThickness: 34 }]
             }, { indexAxis: 'y', scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { display: false }, ticks: { color: tc } } }, plugins: { legend: { display: false } } });
 
             // MTTR Chart
@@ -331,11 +349,11 @@ export const chartModule = {
                 return { equip: eid, mttr: failures > 0 ? Math.round((totalDown / failures) * 10) / 10 : 0 };
             }).filter(e => e.mttr > 0).sort((a, b) => b.mttr - a.mttr);
             
-            const mttrLabels = mttrAverages.map(e => e.equip.length > 8 ? e.equip.substring(0, 8) + '..' : e.equip);
+            const mttrLabels = mttrAverages.map(e => this._equipLabel(e.equip));
             const mttrValues = mttrAverages.map(e => e.mttr);
             await safeRender('mttrChart', 'mttrChart', 'bar', {
                 labels: mttrLabels.length > 0 ? mttrLabels : ['No Data'],
-                datasets: [{ label: 'MTTR (hours)', data: mttrValues.length > 0 ? mttrValues : [0], backgroundColor: mttrValues.length > 0 ? '#f59e0b' : '#64748b', borderRadius: 4 }]
+                datasets: [{ label: 'MTTR (hours)', data: mttrValues.length > 0 ? mttrValues : [0], backgroundColor: mttrValues.length > 0 ? '#f59e0b' : '#64748b', borderRadius: 10, borderSkipped: false, maxBarThickness: 34 }]
             }, { indexAxis: 'y', scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { display: false }, ticks: { color: tc } } }, plugins: { legend: { display: false } } });
 
             // Availability Chart
@@ -356,7 +374,7 @@ export const chartModule = {
             });
             await safeRender('availabilityChart', 'availabilityChart', 'line', {
                 labels: availMonths.length > 0 ? availMonths.map(m => m.substring(5)) : ['-'],
-                datasets: [{ label: 'Availability %', data: availChart.length > 0 ? availChart : [0], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }]
+                datasets: [{ label: 'Availability %', data: availChart.length > 0 ? availChart : [0], borderColor: '#10b981', backgroundColor: (ctx) => this._gradFill(ctx.chart.ctx, '#10b981'), fill: true, tension: 0.45, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5 }]
             }, { scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc }, min: 0, max: 100 } }, plugins: { legend: { display: false } } });
 
             // Reliability Chart (R = e^(-t/MTBF))
@@ -374,7 +392,7 @@ export const chartModule = {
             });
             await safeRender('reliabilityChartKPI', 'reliabilityChartKPI', 'line', {
                 labels: availMonths.length > 0 ? availMonths.map(m => m.substring(5)) : ['-'],
-                datasets: [{ label: 'Reliability %', data: relTrend.length > 0 ? relTrend : [0], borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.3 }]
+                datasets: [{ label: 'Reliability %', data: relTrend.length > 0 ? relTrend : [0], borderColor: '#8b5cf6', backgroundColor: (ctx) => this._gradFill(ctx.chart.ctx, '#8b5cf6'), fill: true, tension: 0.45, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5 }]
             }, { scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc }, min: 0, max: 100 } }, plugins: { legend: { display: false } } });
 
             // Top 5 Components by Downtime (Pareto)
@@ -387,9 +405,10 @@ export const chartModule = {
                 });
             }
             const compLabels = Object.keys(compMap).sort((a, b) => compMap[b] - compMap[a]).slice(0, 5);
+            const compLabelNames = compLabels.map(c => this._equipLabel(c));
             await safeRender('kpiTop5Components', 'top5Components', 'bar', {
-                labels: compLabels.length > 0 ? compLabels : ['No Components'],
-                datasets: compLabels.length > 0 ? [{ label: 'Hours', data: compLabels.map(c => compMap[c]), backgroundColor: this.themeAccent() }] : [{ label: 'Value', data: [0], backgroundColor: '#64748b' }]
+                labels: compLabelNames.length > 0 ? compLabelNames : ['No Components'],
+                datasets: compLabels.length > 0 ? [{ label: 'Hours', data: compLabels.map(c => compMap[c]), backgroundColor: (ctx) => this._gradFill(ctx.chart.ctx, this.themeAccent()), borderRadius: 10, borderSkipped: false, maxBarThickness: 30 }] : [{ label: 'Value', data: [0], backgroundColor: '#64748b' }]
             }, { indexAxis: 'y' });
 
             const schedCounts = { Scheduled: 0, Unscheduled: 0 };
@@ -427,7 +446,7 @@ export const chartModule = {
             const costValues = costMonths.map(m => Math.round(costByMonth[m] / 1e6));
             await safeRender('kpiCostChart', 'costChart', 'line', {
                 labels: costMonths.length > 0 ? costMonths.map(m => m.substring(5)) : ['-'],
-                datasets: [{ label: 'Cost (Rp M)', data: costValues.length > 0 ? costValues : [0], borderColor: this.themeAccent(), backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }]
+                datasets: [{ label: 'Cost (Rp M)', data: costValues.length > 0 ? costValues : [0], borderColor: this.themeAccent(), backgroundColor: (ctx) => this._gradFill(ctx.chart.ctx, this.themeAccent()), fill: true, tension: 0.45, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5 }]
             }, { scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc }, beginAtZero: true } }, plugins: { legend: { display: false } } });
 
             // Reliability Pareto
@@ -437,10 +456,10 @@ export const chartModule = {
             let cumSum = 0;
             const paretoCum = paretoValues.map(v => { cumSum += v; return totalDown > 0 ? Math.round((cumSum / totalDown) * 100) : 0; });
             await safeRender('kpiParetoChart', 'paretoChart', 'bar', {
-                labels: paretoData.length > 0 ? paretoData : ['No data'],
+                labels: paretoData.length > 0 ? paretoData.map(k => this._equipLabel(k)) : ['No data'],
                 datasets: [
-                    { label: 'Downtime (hrs)', data: paretoValues.length > 0 ? paretoValues : [0], backgroundColor: this.themeAccent(), borderRadius: 4, yAxisID: 'y' },
-                    { label: 'Cumulative %', data: paretoCum.length > 0 ? paretoCum : [0], type: 'line', borderColor: this.themeAccent(), backgroundColor: 'transparent', tension: 0.3, pointRadius: 3, yAxisID: 'y1' }
+                    { label: 'Downtime (hrs)', data: paretoValues.length > 0 ? paretoValues : [0], backgroundColor: (ctx) => this._gradFill(ctx.chart.ctx, this.themeAccent()), borderRadius: 8, borderSkipped: false, yAxisID: 'y', maxBarThickness: 36 },
+                    { label: 'Cumulative %', data: paretoCum.length > 0 ? paretoCum : [0], type: 'line', borderColor: this.themeAccent(), backgroundColor: 'transparent', tension: 0.45, pointRadius: 3, yAxisID: 'y1', borderWidth: 2 }
                 ]
             }, { scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc }, beginAtZero: true }, y1: { position: 'right', grid: { display: false }, ticks: { color: tc }, min: 0, max: 100 } }, plugins: { legend: { position: 'top', labels: { color: tc, font: { size: 9 } } } } });
 
