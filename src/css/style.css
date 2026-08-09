@@ -477,6 +477,29 @@ select option {
 
 
 
+/* =========================================
+   DASHBOARD COMMAND CENTER (2026-08-09)
+   ========================================= */
+/* Entrance sequence — cards fade+rise staggered */
+@keyframes dashRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#page-dash .card-modern,
+#page-dash a.rounded-2xl {
+  animation: dashRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+#page-dash .card-modern:nth-child(1), #page-dash a.rounded-2xl:nth-child(1) { animation-delay: 0.03s; }
+#page-dash .card-modern:nth-child(2), #page-dash a.rounded-2xl:nth-child(2) { animation-delay: 0.06s; }
+#page-dash .card-modern:nth-child(3), #page-dash a.rounded-2xl:nth-child(3) { animation-delay: 0.09s; }
+#page-dash .card-modern:nth-child(4), #page-dash a.rounded-2xl:nth-child(4) { animation-delay: 0.12s; }
+#page-dash .card-modern:nth-child(5), #page-dash a.rounded-2xl:nth-child(5) { animation-delay: 0.15s; }
+
+/* Chart canvas subtle lift on hover */
+#page-dash .group:hover canvas {
+  filter: drop-shadow(0 0 12px var(--nexus-accent-glow));
+}
+
 #login-id, #login-key {
   color: #000 !important;
   background-color: #fff !important;
