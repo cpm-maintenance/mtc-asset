@@ -1,47 +1,18 @@
-<!-- 📊 PAGE: KPI ANALYTICS -->
-<div x-cloak class="space-y-6">
-  <!-- Header & Filter Bar -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass p-5 rounded-2xl border-nexus-accent/10">
-    <div>
-      <h2 class="text-xl font-black text-nexus-text flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
-          <i class="fas fa-brain text-white"></i>
-        </div>
-        KPI Deep Analytics
-      </h2>
-      <p class="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">Intelligent breakdown & availability insights</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="flex rounded-xl overflow-hidden border border-white/10">
-        <button @click="kpiFilter = 'daily'" :class="kpiFilter === 'daily' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all">Daily</button>
-        <button @click="kpiFilter = 'weekly'" :class="kpiFilter === 'weekly' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all">Weekly</button>
-        <button @click="kpiFilter = 'monthly'" :class="kpiFilter === 'monthly' ? 'bg-nexus-accent text-nexus-black' : 'text-slate-400 hover:text-white'" class="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all">Monthly</button>
-      </div>
-      <input type="date" x-model="kpiFilterDate" class="glass p-2 rounded-xl text-xs font-bold text-white border border-white/10 bg-transparent">
-    </div>
-  </div>
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-  <!-- Summary Stats Row -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="card-modern p-5 border-t-2 border-cyan-500">
-      <p class="text-[11px] text-amber-400/60 uppercase font-black tracking-widest mb-1">Total Records</p>
-      <p class="text-2xl font-black text-white" x-text="getFilteredPerfData().length"></p>
-    </div>
-    <div class="card-modern p-5 border-t-2 border-rose-500">
-      <p class="text-[11px] text-rose-400/60 uppercase font-black tracking-widest mb-1">Total Downtime (H)</p>
-      <p class="text-2xl font-black text-rose-400" x-text="getFilteredPerfData().reduce((a,p) => a + Number(p.bd || 0), 0).toFixed(2)"></p>
-    </div>
-    <div class="card-modern p-5 border-t-2 border-purple-500">
-      <p class="text-[11px] text-purple-400/60 uppercase font-black tracking-widest mb-1">Avg PA %</p>
-      <p class="text-2xl font-black text-purple-400" x-text="(() => { const d = getFilteredPerfData(); return d.length ? (d.reduce((a,p) => a + Number(calculateKPI(p).pa), 0) / d.length).toFixed(1) : '0.0'; })()"></p>
-    </div>
-    <div class="card-modern p-5 border-t-2 border-amber-500">
-      <p class="text-[11px] text-amber-400/60 uppercase font-black tracking-widest mb-1">Total Events</p>
-      <p class="text-2xl font-black text-amber-400" x-text="getFilteredPerfData().reduce((a,p) => a + (p.events ? p.events.length : 0), 0)"></p>
-    </div>
-  </div>
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fp = path.join(__dirname, '..', 'public', 'pages', 'KPI.html');
+let s = fs.readFileSync(fp, 'utf8');
+const eol = s.includes('\r\n') ? '\r\n' : '\n';
+s = s.replace(/\r\n/g, '\n');
 
-  <!-- Chart Grid 1: MTBF + MTTR -->
+// ── Ganti semua grid chart (dari line 44) dengan 9 card sesuai renderer charts.js ──
+const start = s.indexOf('  <!-- Chart Grid 1');
+const end = s.indexOf('</div>\n</div>', start) + '</div>'.length;
+
+const chartsHtml = `  <!-- Chart Grid 1: MTBF + MTTR -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
@@ -113,5 +84,9 @@
       </h3>
       <div class="flex-1 relative min-h-[350px]"><canvas id="paretoChart"></canvas></div>
     </div>
-  </div>
-</div>
+  </div>`;
+
+s = s.slice(0, start) + chartsHtml + s.slice(end);
+
+fs.writeFileSync(fp, s.split('\n').join(eol));
+console.log('KPI.html: chart grids disinkronkan 1:1 ke renderer charts.js (9 canvas)');
