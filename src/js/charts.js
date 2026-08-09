@@ -49,6 +49,64 @@ export const chartModule = {
         }
     },
 
+    _monthKey(d) { return d && !isNaN(new Date(d)) ? new Date(d).toISOString().slice(0, 7) : ''; },
+
+    // --- MTBF/MTTR TREND CHART (MTBFMTTR page) ---
+    async renderMTBFMTTRChart() {
+        const equipId = this.mtbfFilterEquip;
+        if (!equipId) return;
+        const canvas = document.getElementById('mtbfChart');
+        if (!canvas) return;
+        try {
+            const allLogs = this._raw?.(this.logs) || [];
+            const eqLogs = allLogs.filter(l => l && l.EquipmentID === equipId);
+            if (!eqLogs.length) return;
+            const allPerf = this._raw?.(this.performanceData) || [];
+            const eqPerf = allPerf.filter(p => p && p.EquipmentID === equipId);
+
+            const monthSet = new Set();
+            eqLogs.forEach(l => { const y = this._monthKey(l.Tanggal); if (y) monthSet.add(y); });
+            eqPerf.forEach(p => { const y = this._monthKey(p.date || p.Tanggal); if (y) monthSet.add(y); });
+
+            const labels = [], mtbfValues = [], mttrValues = [];
+            [...monthSet].sort().forEach(y => {
+                const ms = eqLogs.filter(l => this._monthKey(l.Tanggal) === y);
+                const failures = ms.filter(l => l.Jenis === 'Breakdown').length;
+                const repairs = ms.filter(l => l.Jenis === 'Repair').length;
+                const perfMonth = eqPerf.filter(p => this._monthKey(p.date || p.Tanggal) === y);
+                const wh = perfMonth.reduce((s, p) => s + (Number(p.wh) || 0), 0);
+                const bd = perfMonth.reduce((s, p) => s + (Number(p.bd) || 0), 0);
+                labels.push(y);
+                mtbfValues.push(failures > 0 && wh > 0 ? Number((wh / failures).toFixed(1)) : 0);
+                mttrValues.push(repairs > 0 && bd > 0 ? Number((bd / repairs).toFixed(1)) : 0);
+            });
+
+            const tc = this.darkMode ? '#8b9eb7' : '#64748b';
+            const config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'MTBF (hrs)', data: mtbfValues, borderColor: this.themeAccent(), tension: 0.35, yAxisID: 'y' },
+                        { label: 'MTTR (hrs)', data: mttrValues, borderColor: '#f59e0b', tension: 0.35, yAxisID: 'y' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+                    scales: { y: { beginAtZero: true, grid: { color: this.themeGrid() }, ticks: { color: tc } }, x: { ticks: { color: tc } } },
+                    plugins: { legend: { labels: { color: tc, font: { size: 10 } } } }
+                }
+            };
+            const Chart = await this.loadChartJS();
+            const existing = Chart.getChart(canvas);
+            if (existing) existing.destroy();
+            window._appCharts = window._appCharts || {};
+            window._appCharts.mtbfChart = await this.safeCreateChart(canvas, config);
+        } catch (e) {
+            console.error('MTBF/MTTR chart render failed:', e);
+        }
+    },
+
     // --- DASHBOARD CHARTS ---
     async renderDashboardCharts() {
         if (this.currentPage !== 'dash' || !this.isLoggedIn) return;
