@@ -43,51 +43,41 @@ export const performanceModule = {
 
     updatePerfHours(field) {
         // Guard against undefined form
-        if (!this.performanceForm || !this.performanceForm.events) return;
-        
+        if (!this.performanceForm) return;
+
+        const events = this.performanceForm.events || [];
         let mechanicalBD = 0;
         let operationalSTB = 0;
-        
-        this.performanceForm.events.forEach(ev => {
+
+        events.forEach(ev => {
             if (!ev) return;
             const dur = Number(ev.duration) || 0;
-            if (ev.category === 'Operational') {
-                operationalSTB += dur;
-            } else {
-                mechanicalBD += dur;
-            }
+            if (ev.category === 'Operational') operationalSTB += dur;
+            else mechanicalBD += dur;
         });
-        
+
+        // bd & freq: hanya event non-Operational (breakdown mekanik/elektrik)
         this.performanceForm.bd = mechanicalBD.toFixed(2);
-        this.performanceForm.freq = (this.performanceForm.events || []).filter(e => e && e.category !== 'Operational').length;
+        this.performanceForm.freq = events.filter(e => e && e.category !== 'Operational').length;
 
-        let wh = Number(this.performanceForm.wh) || 0;
-        let bd = mechanicalBD;
-        let stb = operationalSTB;
-
-        if (field === 'wh') {
-            let newStb = 24 - wh - bd;
-            if (newStb < 0) { 
-                newStb = 0; wh = 24 - bd; 
-                this.performanceForm.wh = Math.max(0, wh).toFixed(2); 
-            }
-            this.performanceForm.stb = Math.max(0, newStb).toFixed(2);
-        } else if (field === 'stb') {
-            let newWh = 24 - stb - bd;
-            if (newWh < 0) { 
-                newWh = 0; stb = 24 - bd; 
-                this.performanceForm.stb = Math.max(0, stb).toFixed(2); 
-            }
-            this.performanceForm.wh = Math.max(0, newWh).toFixed(2);
-        } else if (field === 'bd') {
-            let newWh = 24 - bd - stb;
-            if (newWh < 0) {
-                newWh = 0;
-                let newStb = 24 - bd;
-                this.performanceForm.stb = Math.max(0, newStb).toFixed(2);
-            }
-            this.performanceForm.wh = Math.max(0, newWh).toFixed(2);
+        let stb;
+        if (field === 'stb') {
+            // Manual input standby — dihormati apa adanya
+            stb = Number(this.performanceForm.stb) || 0;
+        } else {
+            // Event Operational = sumber stb otomatis (override manual saat event diubah)
+            stb = operationalSTB > 0 ? operationalSTB : (Number(this.performanceForm.stb) || 0);
         }
+
+        // wh selalu auto: 1 hari (24h) - breakdown - standby
+        let wh = 24 - mechanicalBD - stb;
+        if (wh < 0) {
+            wh = 0;
+            stb = Math.max(0, 24 - mechanicalBD);
+        }
+
+        this.performanceForm.wh = wh.toFixed(2);
+        this.performanceForm.stb = stb.toFixed(2);
     },
 
     async submitPerformance() {
@@ -113,12 +103,13 @@ export const performanceModule = {
             const perfId = this.isEditingPerformance ? (this.performanceForm.id || '') : ("PERF-" + Date.now());
             
             const events = this.performanceForm.events || [];
-            const totalBD = events.reduce((acc, curr) => acc + Number(curr?.duration || 0), 0);
+            // bd hanya breakdown non-Operational; Operational = standby (stb)
+            const mechBD = events.reduce((acc, curr) => acc + ((curr && curr.category !== 'Operational') ? (Number(curr?.duration) || 0) : 0), 0);
             const data = { 
                 ...this.performanceForm, 
                 id: perfId,
-                bd: totalBD,
-                freq: events.length,
+                bd: mechBD,
+                freq: events.filter(e => e && e.category !== 'Operational').length,
                 updatedBy: this.user?.uid || 'unknown',
                 updatedAt: new Date().toISOString()
             };
