@@ -54,8 +54,8 @@ function walk(node, prefix, found) {
 }
 
 function removeField(p) {
-  // p contoh: "Device/2220-CR-001/FotoURL"  →  hapus leaf field
-  execFirebase(['database:remove', `/${p}`]);
+  // p contoh: "Equipment/2220-CR-001/FotoURL"  →  hapus leaf field
+  execFirebase(['database:remove', `/${p}`, '--force']);
 }
 
 console.log('Scan invalid FotoURL/PhotoURLs...\n');
