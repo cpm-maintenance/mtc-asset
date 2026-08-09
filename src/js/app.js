@@ -435,6 +435,8 @@ if (confirm('Are you sure you want to logout?')) {
         isEditingPerformance: false,
         kpiFilter: 'yearly',
         kpiFilterDate: new Date().getFullYear().toString(),
+        perfFilterEquip: '',
+        perfFilterArea: '',
         enterpriseSummary: {},
         enterpriseKPIList: [],
         enterpriseCritical: [],
