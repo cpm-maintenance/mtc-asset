@@ -11,6 +11,9 @@
     
     <!-- Action Buttons -->
     <div class="flex flex-wrap gap-2.5 items-center">
+      <button @click="showEquipTree = !showEquipTree" class="btn-nexus-small" :class="showEquipTree ? '!border-amber-400/60 !text-amber-300' : ''">
+        <i class="fas" :class="showEquipTree ? 'fa-th-large' : 'fa-sitemap'"></i><span class="hidden lg:inline ml-1" x-text="showEquipTree ? 'Grid' : 'Tree'"></span>
+      </button>
       <button @click="downloadTemplate('equip')" class="btn-nexus-small">
         <i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span>
       </button>
@@ -30,8 +33,37 @@
     </div>
   </div>
 
+  <!-- Hierarchy Tree View (D4) -->
+  <div x-show="showEquipTree" x-cloak class="space-y-6">
+    <template x-for="(types, area) in equipmentTree" :key="area">
+      <div class="card-modern p-5 md:p-6">
+        <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
+          <i class="fas fa-industry text-amber-400"></i>
+          <h5 class="font-black text-amber-400 uppercase tracking-widest text-sm" x-text="area"></h5>
+          <span class="ml-auto text-[10px] text-slate-500 font-bold" x-text="Object.values(types).reduce((s, arr) => s + arr.length, 0) + ' assets'"></span>
+        </div>
+        <template x-for="(items, tipe) in types" :key="tipe">
+          <div class="mb-3">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-cogs text-xs text-nexus-accent/50"></i>
+              <span class="text-xs font-black text-nexus-accent/70 uppercase tracking-wider" x-text="tipe"></span>
+              <span class="text-[9px] text-slate-600 font-bold" x-text="items.length + ' unit'"></span>
+            </div>
+            <div class="flex flex-wrap gap-2 pl-5">
+              <template x-for="e in items" :key="e.EquipmentID">
+                <button @click="goToDetail(e.EquipmentID)"
+                  class="px-3 py-1.5 rounded-xl glass text-[11px] font-bold text-slate-300 hover:text-amber-300 hover:border-amber-400/40 border border-white/5 transition-all"
+                  x-text="e.Nama"></button>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+
   <!-- Equipment Cards Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+  <div x-show="!showEquipTree" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
     <template x-for="e in filteredEquip" :key="e.EquipmentID">
       <div @click="goToDetail(e.EquipmentID)" class="card-modern p-4 md:p-6 cursor-pointer relative group overflow-hidden">
         <!-- Decorative Background -->

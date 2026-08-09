@@ -566,6 +566,27 @@ export const dataModule = {
 
         for (const op of pending) {
             try {
+                // D3: Conflict resolution — last-write-wins
+                // Jika record server punya updatedAt lebih baru dari op, skip (jangan overwrite data baru)
+                const nodePath = {
+                    equipment: 'Equipment/' + (op.data.EquipmentID || op.data.id),
+                    parts: 'SpareParts/' + (op.data.PartID || op.data.id),
+                    logs: 'HistoryLog/' + (op.data.LogID || op.data.id),
+                    performance: 'Performance/' + (op.data.id || op.data.equipmentId),
+                }[op.type];
+                if (nodePath) {
+                    const curSnap = await window.get(window.ref(window.db, nodePath));
+                    if (curSnap.exists()) {
+                        const cur = curSnap.val();
+                        const curT = new Date(cur.updatedAt || cur.createdAt || 0).getTime();
+                        const opT = new Date(op.data.updatedAt || op.data.createdAt || 0).getTime();
+                        if (curT > opT) {
+                            console.log('[Sync] Skip conflict (server lebih baru):', nodePath);
+                            await idbManager.removePendingOp(op.id);
+                            continue;
+                        }
+                    }
+                }
                 switch (op.type) {
                     case 'equipment':
                         await window.set(window.ref(window.db, 'Equipment/' + op.data.EquipmentID), op.data);

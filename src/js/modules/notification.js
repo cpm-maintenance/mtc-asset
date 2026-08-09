@@ -248,6 +248,7 @@ function pushInAppNotif(type, message, icon, color = 'border-cyan-500 bg-cyan-50
 export function checkAllNotifications() {
   checkPendingWorkOrders();
   checkPMOverdue();
+  checkWarrantyExpiry();
 
   // C2: Auto-reorder spare low stock (fire-and-forget, admin/supervisor only)
   if (window.app?.autoReorderLowStock && window.app?.isAdminOrSupervisor) {
@@ -337,7 +338,6 @@ function checkPendingWorkOrders() {
 
 function checkPMOverdue() {
   if (!window.app?.pmList) return;
-
   const today = new Date().toISOString().split('T')[0];
   const threeDaysLater = new Date();
   threeDaysLater.setDate(threeDaysLater.getDate() + 3);
@@ -371,5 +371,29 @@ function checkPMOverdue() {
       { tag: 'pm-upcoming', data: { type: 'pm_overdue' } }
     );
     pushInAppNotif('PM Due Soon', `${upcoming.length} task jatuh tempo H-3: ${names}${upcoming.length > 3 ? ` +${upcoming.length-3}` : ''}`, 'fa-calendar-day', 'border-amber-500 bg-amber-500/20 text-amber-400');
+  }
+}
+
+// D2: Warranty & lifespan tracker — spare part melewati umur pakai
+function checkWarrantyExpiry() {
+  if (!window.app?.allParts) return;
+
+  const today = new Date();
+  const expired = (window.app.allParts || []).filter(p => {
+    if (!p.lastReplaceDate || !p.avgLifetimeDays) return false;
+    const install = new Date(p.lastReplaceDate);
+    if (isNaN(install)) return false;
+    const age = (today - install) / 86400000;
+    return age >= Number(p.avgLifetimeDays);
+  });
+
+  if (expired.length > 0 && shouldNotify('warranty_expired')) {
+    const names = expired.slice(0, 3).map(p => p.NamaPart || p.PartID).join(', ');
+    sendBrowserNotification(
+      '🕒 Part Melewati Umur Pakai!',
+      `${expired.length} part melewati lifetime: ${names}${expired.length > 3 ? ` +${expired.length-3} lainnya` : ''}`,
+      { tag: 'warranty-expired', data: { type: 'warranty_expired' } }
+    );
+    pushInAppNotif('Lifetime Check', `${expired.length} part lewat umur pakai: ${names}${expired.length > 3 ? ` +${expired.length-3}` : ''}`, 'fa-hourglass-end', 'border-purple-500 bg-purple-500/20 text-purple-400');
   }
 }

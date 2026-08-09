@@ -809,6 +809,23 @@ if (confirm('Are you sure you want to logout?')) {
             return false; // Disable pagination during search
         },
 
+        // D4: Equipment hierarchy — group by Lokasi (area) → Tipe
+        get equipmentTree() {
+            const eq = this.equipment || [];
+            const areas = {};
+            for (const e of eq) {
+                const area = e.Lokasi || 'Unassigned';
+                const tipe = e.Tipe || 'Other';
+                if (!areas[area]) areas[area] = {};
+                if (!areas[area][tipe]) areas[area][tipe] = [];
+                areas[area][tipe].push(e);
+            }
+            return areas;
+        },
+
+        // D4: toggle hierarchy view
+        showEquipTree: false,
+
         loadMoreEquipment() {
             if (this.canLoadMoreEquip) {
                 this.equipPage++;
