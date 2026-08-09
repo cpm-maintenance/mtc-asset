@@ -1,3 +1,52 @@
+## 📝 Session 11 (S11, 2026-08-09) — Roadmap 4 Phase Tuntas
+
+### Konteks
+- User minta analisis mendalam sebagai maintenance planner → 4 phase roadmap (A: data, B: analitik, C: operasional, D: skala)
+- Semua phase dieksekusi + deploy live hari ini
+
+### Phase A — Data & Cleanup (63fcddb)
+- Seed data riil: 15 logs (10 breakdown + 5 PM), 80 Performance, PM schedule 150+
+- Migrasi FotoURL base64 → ImgBB: 14 equip, 0 gagal (fix HTML entity &#x2F;)
+- Hapus PerformanceModal.html duplikat (modal asli di index.html)
+
+### Phase B — Analitik (88e2ea3)
+- Wire HM → MTBF: _breakdownEvents gabung logs+Performance, delta HM (fallback kalender)
+- generateNextPM otomatis saat load (PM completed ≤30 hari tanpa next)
+- Cost trend sudah ada — kini terisi data riil
+
+### Phase C — Operasional (5e805b9)
+- WO aging alert: notif pending > 3 hari (badge umur sudah ada)
+- Auto-reorder low stock: Stok<=MinStock → requisition otomatis (skip pending)
+- Audit trail aktif: logAudit di 6 module CRUD + rules AuditTrail baru
+- Normalisasi: helper equipIdOf() + fix rules PM .indexOn EquipmentID→equipmentId
+
+### Phase D — Skala (2ca2b79)
+- Export Excel multi-sheet: 7 sheet (Equip, Parts, Logs, Perf, PM, Req, Summary) + tombol header
+- Warranty/lifetime check: notif part melewati avgLifetimeDays
+- Offline conflict: last-write-wins (skip overwrite server lebih baru)
+- Equipment hierarchy: tree view Area → Tipe → Asset (toggle Equipment page)
+
+### Deploy & Status
+- Deploy: hosting + database rules live (https://mtc-asset.web.app)
+- Test: 103/103 pass, build clean
+- Push: origin/main up-to-date (22 commit dari sesi)
+- Backup otomatis 02:00 WIB — masih perlu verifikasi GitHub Actions
+
+### Known Issues / Backlog
+- [ ] Cek deploy workflow .github (line-ending modified)
+- [ ] Backup otomatis harian — verifikasi GitHub Actions jalan
+- [ ] Assign teknisi ke WO nyata (seed pakai uid admin/supervisor)
+- [ ] Data PM seed: frequency 'monthly' semua — next PM auto-gen menghasilkan banyak pending (evaluasi)
+
+### Teknis yang Dipelajari
+- Script seed butuh auth (rules write ketat) → SEED_ADMIN_PASS env, jangan hardcode
+- FotoURL di RTD pakai HTML-encoded base64 (&#x2F;) → decode sebelum upload ImgBB
+- Modal Performance asli di index.html, bukan components/modals/ (duplikat)
+- Template literal backtick + ${} di dalam .mjs patch script → SyntaxError; pakai concat
+- Firebase rules .validate multi-line → JSON.parse node gagal, tapi valid utk Firebase CLI
+
+---
+
 # Session Notes — 2026-08-09 (Session 10: Fix Batch + Data Linking + KPI Charts)
 
 ## Ringkasan
