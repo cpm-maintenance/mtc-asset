@@ -54,6 +54,34 @@ export const pmScheduleModule = {
       } else {
         this.pmList = [];
       }
+
+      // Auto-generate next PM untuk task completed yang belum punya next (Phase B2)
+      // Hanya jika user login (generateNextPM butuh this.user.uid)
+      if (this.user?.uid && this.pmList.length > 0) {
+        try {
+          const completed = this.pmList.filter(p => p.status === 'completed' && p.frequency && p.frequency !== 'none'
+            && (!p.completionDate || (new Date() - new Date(p.completionDate)) < 30 * 86400000));
+          const nextDates = new Set(
+            this.pmList.filter(p => p.status === 'pending').map(p => `${p.taskName}|${p.equipmentId}|${p.date}`)
+          );
+          for (const pm of completed) {
+            // Generate next jika belum ada pending dgn task+equip+date berikutnya
+            const freqMap = { weekly: 7, monthly: 30, quarterly: 90, yearly: 365 };
+            const days = freqMap[pm.frequency];
+            if (!days) continue;
+            const nextDate = new Date(pm.date || Date.now());
+            nextDate.setDate(nextDate.getDate() + days);
+            const nextDateStr = nextDate.toISOString().split('T')[0];
+            const key = `${pm.taskName}|${pm.equipmentId}|${nextDateStr}`;
+            if (!nextDates.has(key)) {
+              await this.generateNextPM(pm);
+              nextDates.add(key);
+            }
+          }
+        } catch (e) {
+          console.warn('[PM] Auto-generate error:', e.message);
+        }
+      }
     } catch (e) {
       console.warn('[PM] Load error:', e.message);
     } finally {

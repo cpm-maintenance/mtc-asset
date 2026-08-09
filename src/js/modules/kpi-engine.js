@@ -82,6 +82,35 @@ export const kpiEngineModule = {
         return 0;
     },
 
+    // Gabungkan breakdown dari HistoryLog + Performance (events/freq>0)
+    // Setiap event: { Tanggal, HM } — HM dari log.HM atau performance.hm
+    _breakdownEvents(equipId) {
+        const logs = this._raw(this.logs) || [];
+        const perf = this._raw(this.performanceData) || [];
+        const out = [];
+
+        for (const l of logs) {
+            if (l && l.EquipmentID === equipId && l.Jenis === 'Breakdown') {
+                out.push({ Tanggal: l.Tanggal, HM: Number(l.HM) || 0, src: 'log' });
+            }
+        }
+        for (const p of perf) {
+            if (!p || (p.equipmentId || p.EquipmentID) !== equipId) continue;
+            const freq = (p.events && p.events.length > 0) ? p.events.length : (Number(p.freq) || 0);
+            if (freq > 0) {
+                // 1 record Performance = 1+ breakdown; gunakan hm cumulative akhir periode
+                for (let i = 0; i < freq; i++) {
+                    out.push({ Tanggal: p.date, HM: Number(p.hm) || 0, src: 'perf' });
+                }
+            }
+        }
+
+        return out.sort((a, b) => {
+            if (!a.Tanggal || !b.Tanggal) return 0;
+            return new Date(a.Tanggal) - new Date(b.Tanggal);
+        });
+    },
+
     calculateMTBF(equipId) {
         // Guard
         if (!equipId) return 0;
@@ -97,21 +126,18 @@ export const kpiEngineModule = {
         const logs = this._raw(this.logs);
         if (!logs || !Array.isArray(logs)) return 0;
         
-        const breakdowns = logs
-            .filter(l => l && l.EquipmentID === equipId && l.Jenis === 'Breakdown')
-            .sort((a, b) => {
-                if (!a.Tanggal || !b.Tanggal) return 0;
-                return new Date(a.Tanggal) - new Date(b.Tanggal);
-            });
+        const breakdowns = this._breakdownEvents(equipId);
         
         if (breakdowns.length < 2) return 0;
 
         let totalInterval = 0;
+        let withHM = 0;
         for (let i = 1; i < breakdowns.length; i++) {
-            const dateA = new Date(breakdowns[i].Tanggal);
-            const dateB = new Date(breakdowns[i-1].Tanggal);
-            totalInterval += this._hmIntervalHours(breakdowns[i-1], breakdowns[i]);
+            const iv = this._hmIntervalHours(breakdowns[i-1], breakdowns[i]);
+            totalInterval += iv;
+            if (breakdowns[i-1].HM > 0 && breakdowns[i].HM > 0) withHM++;
         }
+        // Fallback kalender bila tak ada pasangan HM (data lama)
         const result = (totalInterval / (breakdowns.length - 1)).toFixed(1);
         this._kpiCache.m.set(equipId, result);
         return result;
