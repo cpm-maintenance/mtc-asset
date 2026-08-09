@@ -302,10 +302,10 @@ export const chartModule = {
             const mtbfData = {};
             if (perfData && perfData.length > 0) {
                 perfData.forEach(p => {
-                    if (!p.EquipmentID || !p.date) return;
-                    if (!mtbfData[p.EquipmentID]) mtbfData[p.EquipmentID] = { dates: [], bd: [] };
-                    mtbfData[p.EquipmentID].dates.push(p.date);
-                    mtbfData[p.EquipmentID].bd.push(Number(p.bd) || 0);
+                    if (!(p.equipmentId || p.EquipmentID) || !p.date) return;
+                    if (!mtbfData[(p.equipmentId || p.EquipmentID)]) mtbfData[(p.equipmentId || p.EquipmentID)] = { dates: [], bd: [] };
+                    mtbfData[(p.equipmentId || p.EquipmentID)].dates.push(p.date);
+                    mtbfData[(p.equipmentId || p.EquipmentID)].bd.push(Number(p.bd) || 0);
                 });
             }
             const mtbfAverages = Object.keys(mtbfData).slice(0, 10).map(eid => {
@@ -381,9 +381,9 @@ export const chartModule = {
             const compMap = {};
             if (perfData && perfData.length > 0) {
                 perfData.forEach(p => {
-                    if (!p.EquipmentID) return;
-                    if (!compMap[p.EquipmentID]) compMap[p.EquipmentID] = 0;
-                    compMap[p.EquipmentID] += (Number(p.bd) || 0) + (Number(p.stb) || 0);
+                    if (!(p.equipmentId || p.EquipmentID)) return;
+                    if (!compMap[(p.equipmentId || p.EquipmentID)]) compMap[(p.equipmentId || p.EquipmentID)] = 0;
+                    compMap[(p.equipmentId || p.EquipmentID)] += (Number(p.bd) || 0) + (Number(p.stb) || 0);
                 });
             }
             const compLabels = Object.keys(compMap).sort((a, b) => compMap[b] - compMap[a]).slice(0, 5);
@@ -401,8 +401,8 @@ export const chartModule = {
             const mechCounts = { Mechanical: 0, Electrical: 0, Operational: 0 };
             const equip = this.safeDeepClone(this.equipment) || [];
             perfData?.forEach(p => {
-                if (!p.EquipmentID) return;
-                const e = equip.find(eq => eq.EquipmentID === p.EquipmentID);
+                if (!(p.equipmentId || p.EquipmentID)) return;
+                const e = equip.find(eq => eq.EquipmentID === (p.equipmentId || p.EquipmentID));
                 if (e && e.Tipe) {
                     const t = e.Tipe;
                     if (t.toLowerCase().includes('mechanic') || t === 'Mechanical') mechCounts.Mechanical++;

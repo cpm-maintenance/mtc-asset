@@ -41,61 +41,77 @@
     </div>
   </div>
 
-  <!-- Chart Grid 1: PA Plan vs Actual -->
+  <!-- Chart Grid 1: MTBF + MTTR -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-crosshairs text-amber-400"></i> PA Plan vs Actual <span class="text-slate-500 ml-auto text-[11px] normal-case tracking-normal">by Equipment</span>
+        <i class="fas fa-crosshairs text-amber-400"></i> MTBF by Equipment
       </h3>
-      <div class="flex-1 relative min-h-[260px]"><canvas id="kpiPaVsActual"></canvas></div>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="mtbfChart"></canvas></div>
     </div>
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-map-marked-alt text-amber-400"></i> PA Plan vs Actual <span class="text-slate-500 ml-auto text-[11px] normal-case tracking-normal">by Area</span>
+        <i class="fas fa-wrench text-amber-400"></i> MTTR by Equipment
       </h3>
-      <div class="flex-1 relative min-h-[260px]"><canvas id="kpiAreaPa"></canvas></div>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="mttrChart"></canvas></div>
     </div>
   </div>
 
-  <!-- Chart Grid 2: Top 5 Events + Components -->
+  <!-- Chart Grid 2: Availability + Reliability -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-fire text-rose-500"></i> Top 5 Event Downtime
+        <i class="fas fa-heartbeat text-emerald-400"></i> Availability Trend
       </h3>
-      <div class="flex-1 relative min-h-[260px]"><canvas id="kpiTop5Events"></canvas></div>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="availabilityChart"></canvas></div>
     </div>
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-cogs text-amber-400"></i> Top 5 Downtime by Component
+        <i class="fas fa-shield-alt text-purple-400"></i> Reliability R(t)
       </h3>
-      <div class="flex-1 relative min-h-[260px]"><canvas id="kpiTop5Components"></canvas></div>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="reliabilityChartKPI"></canvas></div>
     </div>
   </div>
 
-  <!-- Chart Grid 3: Sched vs Unsched + Mech vs Elec -->
+  <!-- Chart Grid 3: Top Components + Sched vs Unsched -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-calendar-check text-amber-400"></i> Scheduled vs Unscheduled
+        <i class="fas fa-cogs text-amber-400"></i> Top 5 Downtime by Equipment
       </h3>
-      <div class="flex-1 relative min-h-[260px]"><canvas id="kpiSchedVsUnsched"></canvas></div>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="top5Components"></canvas></div>
     </div>
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
-        <i class="fas fa-wrench text-amber-400"></i> Mechanical vs Electrical
+        <i class="fas fa-calendar-check text-emerald-400"></i> Scheduled vs Unscheduled
       </h3>
-      <div class="flex-1 relative min-h-[260px]"><canvas id="kpiMechVsElec"></canvas></div>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="schedVsUnsched"></canvas></div>
     </div>
   </div>
 
-  <!-- Chart Grid 4: Pareto RCA -->
+  <!-- Chart Grid 4: Failure Type + Cost -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
+      <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
+        <i class="fas fa-fire text-rose-400"></i> Mechanical vs Electrical
+      </h3>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="failureTypeChart"></canvas></div>
+    </div>
+    <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
+      <h3 class="font-bold mb-4 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
+        <i class="fas fa-dollar-sign text-amber-400"></i> Maintenance Cost Trend (Rp M)
+      </h3>
+      <div class="flex-1 relative min-h-[260px]"><canvas id="costChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Chart Grid 5: Pareto RCA -->
   <div class="grid grid-cols-1 gap-6">
     <div class="card-modern p-6 border-nexus-accent/10 flex flex-col">
       <h3 class="font-bold mb-6 text-white flex items-center gap-3 text-xs uppercase tracking-widest">
         <i class="fas fa-chart-bar text-amber-400"></i> Pareto RCA Analysis <span class="text-slate-500 ml-auto text-[11px] normal-case tracking-normal">80/20 Rule - Major Failure Causes</span>
       </h3>
-      <div class="flex-1 relative min-h-[350px]"><canvas id="kpiParetoRCA"></canvas></div>
+      <div class="flex-1 relative min-h-[350px]"><canvas id="paretoChart"></canvas></div>
     </div>
   </div>
 </div>
