@@ -842,9 +842,11 @@ if (confirm('Are you sure you want to logout?')) {
                     const entities = { 'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' ' };
                     return entities[entity] || match;
                 });
-                return decodeURIComponent(decoded);
+                decoded = decodeURIComponent(decoded);
+                if (!/^(https?:\/\/|data:image\/|blob:)/.test(decoded) || /[\[\]{}<>]/.test(decoded)) return '';
+                return decoded;
             } catch (e) {
-                return url;
+                return '';
             }
         },
 
@@ -1469,12 +1471,29 @@ if (confirm('Are you sure you want to logout?')) {
         // --- MTBF/MTTR GETTERS ---
         get mtbfResult() {
             if (!this.mtbfFilterEquip) return null;
-            return this.calcMTBFMTTR?.(this.mtbfFilterEquip) || null;
+            return this.calcMTBFMTTR(this.mtbfFilterEquip) || null;
+        },
+        calcMTBFMTTR(equipId) {
+            if (!equipId) return null;
+            const logs = this._raw?.(this.logs) || [];
+            const eqLogs = logs.filter(l => l && l.EquipmentID === equipId);
+            if (!eqLogs.length) return null;
+            const perf = this._raw?.(this.performanceData) || [];
+            const eqPerf = perf.filter(p => p && p.EquipmentID === equipId);
+            const wh = eqPerf.reduce((s, p) => s + (Number(p.wh) || 0), 0);
+            const bd = eqPerf.reduce((s, p) => s + (Number(p.bd) || 0), 0);
+            const failures = eqLogs.filter(l => l.Jenis === 'Breakdown').length;
+            const repairs = eqLogs.filter(l => l.Jenis === 'Repair').length;
+            return {
+                mtbfDays: failures > 0 ? Number(((wh / failures) / 24).toFixed(1)) : 0,
+                mttrHours: repairs > 0 ? Number((bd / repairs).toFixed(1)) : 0,
+                totalEvents: eqLogs.length
+            };
         },
         mtbfRefresh() {
             this.mtbfFilterEquip = '';
             if (window._appCharts?.mtbfChart) { try { window._appCharts.mtbfChart.destroy(); } catch(e) {} }
-            this.$nextTick(() => this.renderMTBFMTTRChart?.());
+            this.$nextTick(() => this.renderMTBFMTTRChart());
         },
 
         // --- LIFETIME HELPERS ---
