@@ -62,6 +62,16 @@
 - [x] RUM web-vitals — PerformanceObserver → Sentry (LCP/FID/CLS/INP/TTFB, produksi only) — 3b786fa
 - [x] Pisah canvg+dompurify ke chunk `pdfdeps` lazy — vendor 151.5→104.7KB gzip, initial ~212KB — d89e4a4
 
+## ✅ Selesai Hari Ini (S10, 2026-08-09)
+
+- [x] Fix MTBF/MTTR page (chart missing, calc missing) — 06a2e54
+- [x] Cleanup FotoURL invalid (5 kosong, script reuse) — b6d2153
+- [x] Performance field linking equipmentId — 1fd984f, 3ed48de
+- [x] KPI canvas sync (kosong → render) — 2b54760
+- [x] KPI chart modern + label nama — 4a24f35
+- [x] firebase.json functions removal (Spark) — 4ee333f
+- [x] Perf form: standby manual + WH auto — f856589
+- [x] Deploy batch live ✅
 ## 📊 Isi Data Nyata
 
 - [ ] Assign teknisi ke WO (Workload page)
