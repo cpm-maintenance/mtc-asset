@@ -1475,18 +1475,35 @@ if (confirm('Are you sure you want to logout?')) {
         },
         calcMTBFMTTR(equipId) {
             if (!equipId) return null;
+            const perf = this._raw?.(this.performanceData) || [];
+            // ⚠️ Performance pakai field equipmentId (lowercase), bukan EquipmentID
+            const eqPerf = perf.filter(p => p && (p.equipmentId || p.EquipmentID) === equipId);
+            if (eqPerf.length) {
+                const wh = eqPerf.reduce((s, p) => s + (Number(p.wh) || 0), 0);
+                const bd = eqPerf.reduce((s, p) => s + (Number(p.bd) || 0), 0);
+                const freq = eqPerf.reduce((s, p) => s + (Number(p.freq) || 0), 0);
+                const events = eqPerf.reduce((s, p) => s + ((p.events && p.events.length) || 0), 0);
+                const failures = freq || events;
+                if (failures > 0) {
+                    return {
+                        mtbfDays: Number((wh / failures / 24).toFixed(1)),
+                        mttrHours: Number((bd / failures).toFixed(1)),
+                        totalEvents: eqPerf.length
+                    };
+                }
+            }
+            // Fallback: hitung dari HistoryLog
             const logs = this._raw?.(this.logs) || [];
             const eqLogs = logs.filter(l => l && l.EquipmentID === equipId);
             if (!eqLogs.length) return null;
-            const perf = this._raw?.(this.performanceData) || [];
-            const eqPerf = perf.filter(p => p && p.EquipmentID === equipId);
-            const wh = eqPerf.reduce((s, p) => s + (Number(p.wh) || 0), 0);
-            const bd = eqPerf.reduce((s, p) => s + (Number(p.bd) || 0), 0);
-            const failures = eqLogs.filter(l => l.Jenis === 'Breakdown').length;
-            const repairs = eqLogs.filter(l => l.Jenis === 'Repair').length;
+            const BreakdownLogs = eqLogs.filter(l => l.Jenis === 'Breakdown');
+            const Failures = BreakdownLogs.length;
+            const days = BreakdownLogs.length >= 2 ? Math.max(0, (new Date(BreakdownLogs[BreakdownLogs.length-1].Tanggal) - new Date(BreakdownLogs[0].Tanggal)) / 86400000) : 0;
+            const repairLogs = eqLogs.filter(l => l.Jenis === 'Repair');
+            const avgRepairHrs = repairLogs.length ? repairLogs.reduce((s, l) => s + (Number(l.actualHours) || Number(l.Downtime) || 0), 0) / repairLogs.length : 0;
             return {
-                mtbfDays: failures > 0 ? Number(((wh / failures) / 24).toFixed(1)) : 0,
-                mttrHours: repairs > 0 ? Number((bd / repairs).toFixed(1)) : 0,
+                mtbfDays: Failures >= 2 ? Number((days / (Failures - 1)).toFixed(1)) : 0,
+                mttrHours: Number(avgRepairHrs.toFixed(1)),
                 totalEvents: eqLogs.length
             };
         },
