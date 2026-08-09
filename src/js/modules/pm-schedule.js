@@ -160,6 +160,11 @@ export const pmScheduleModule = {
         await window.set(window.ref(window.db, `PM_Schedule/${pmId}`), dataToSave);
         this.pmList.unshift(dataToSave);
         this.showNotification('PM Task created!');
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.('Create PM Task', { id: pmId, task: this.pmForm.taskName, equip: this.pmForm.equipmentId });
+            } catch (e) { /* silent */ }
+
       } else {
         const pmId = this.pmForm.pmId;
         if (!pmId) throw new Error('Missing PM ID');
@@ -177,6 +182,11 @@ export const pmScheduleModule = {
         const idx = this.pmList.findIndex(p => p.pmId === pmId);
         if (idx >= 0) this.pmList[idx] = { ...this.pmList[idx], ...dataToSave };
         this.showNotification('PM Task updated!');
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.('Update PM Task', { id: pmId, task: this.pmForm.taskName });
+            } catch (e) { /* silent */ }
+
       }
 
       this.showPMModal = false;

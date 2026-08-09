@@ -1,6 +1,17 @@
 import { CONSTANTS } from './constants.js';
 
 // ========================================
+// CANONICAL FIELD ACCESS (C4)
+// ========================================
+// HistoryLog/SpareParts/Equipment pakai EquipmentID (capital)
+// Performance/PM_Schedule pakai equipmentId (lowercase)
+// Helper ini = satu titik akses — baca keduanya, prioritas lowercase.
+export function equipIdOf(item) {
+  if (!item) return '';
+  return item.equipmentId || item.EquipmentID || '';
+}
+
+// ========================================
 // INPUT VALIDATION & SANITIZATION
 // ========================================
 

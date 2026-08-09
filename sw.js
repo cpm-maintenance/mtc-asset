@@ -50,15 +50,15 @@ self.addEventListener('fetch', (event) => {
 
   // Page fragments (component-loader /pages/**) — stale-while-revalidate
   if (url.includes('/pages/') && url.endsWith('.html')) {
+    const OFFLINE = new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
     event.respondWith(
       caches.match(event.request).then((cached) => {
-        const fetchAndCache = fetch(event.request).then((response) => {
+        return fetch(event.request).then((response) => {
           if (response && response.ok) {
-            caches.open(CACHE_NAME).put(event.request, response.clone());
+            caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
           }
           return response;
-        }).catch(() => cached);
-        return cached || fetchAndCache;
+        }).catch(() => cached || OFFLINE);
       })
     );
     return;

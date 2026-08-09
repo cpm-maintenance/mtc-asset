@@ -173,6 +173,11 @@ export const performanceModule = {
                 }
             });
             this.showNotification("KPI metrics successfully synced!");
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.(this.isEditingPerformance ? 'Update Performance' : 'Create Performance', { id: perfId, equip: sanitizedData.equipmentId || sanitizedData.EquipmentID, date: sanitizedData.date });
+            } catch (e) { /* silent */ }
+
             
             // Add to local array immediately for instant UI update
             const perfData = this.performanceData || [];

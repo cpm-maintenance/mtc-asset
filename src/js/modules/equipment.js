@@ -123,6 +123,11 @@ if (!this.isEditingEquip) {
                 }
             });
             this.showNotification("Asset saved successfully!");
+
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.(this.isEditingEquip ? 'Update Equipment' : 'Create Equipment', { id: sanitizedData.EquipmentID, nama: sanitizedData.Nama });
+            } catch (e) { /* silent */ }
             
             // Add to local array immediately for instant UI update
             const existingIdx = this.equipment.findIndex(e => e.EquipmentID === sanitizedData.EquipmentID);
