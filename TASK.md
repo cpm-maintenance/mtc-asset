@@ -81,10 +81,10 @@
 - [x] **Migrasi FotoURL base64 → ImgBB** — 14 equip migrated, 0 gagal — 63fcddb
 - [x] Hapus PerformanceModal.html duplikat — 63fcddb
 
-### Phase B — Analitik (minggu ini)
-- [ ] **Wire HM → MTBF** — kpi-engine _hmIntervalHours pakai delta HM (bukan kalender)
-- [ ] Aktifkan **generateNextPM otomatis** saat data load → PM schedule tak kosong
-- [ ] Chart **maintenance cost trend** per equipment/bulan (data Cost di logs sudah ada)
+### Phase B — Analitik (minggu ini) ✅ SELESAI (88e2ea3)
+- [x] **Wire HM → MTBF** — _breakdownEvents gabung logs+Performance, delta HM — 88e2ea3
+- [x] **generateNextPM otomatis** saat load (PM completed 30 hari → next) — 88e2ea3
+- [x] Chart **cost trend** — sudah ada (calcCostTrend + costTrendChart), kini terisi data riil
 
 ### Phase C — Operasional (bulan ini)
 - [ ] **WO aging + SLA alert** — WO > X hari → FCM push + badge
