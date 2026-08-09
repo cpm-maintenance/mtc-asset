@@ -437,6 +437,8 @@ if (confirm('Are you sure you want to logout?')) {
         kpiFilterDate: new Date().getFullYear().toString(),
         perfFilterEquip: '',
         perfFilterArea: '',
+        // HM monotonik: cek saat submit di performance.js (via validate)
+        perfPrevHM: {},
         enterpriseSummary: {},
         enterpriseKPIList: [],
         enterpriseCritical: [],

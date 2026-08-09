@@ -27,7 +27,7 @@
         </div>
         <div class="md:col-span-1">
           <label class="text-[8px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Asset Index</label>
-          <select x-model="performanceForm.equipmentId" required id="perf-equip" name="perf-equip"
+          <select x-model="performanceForm.equipmentId" @change="onPerfEquipChange()" required id="perf-equip" name="perf-equip"
                   class="w-full p-3 glass text-xs font-bold text-white">
             <option value="" disabled>-- Select Asset Node --</option>
             <template x-for="e in equipment">
@@ -45,6 +45,11 @@
       <!-- Section: Operational Metrics -->
       <div class="p-6 glass rounded-3xl border border-white/5">
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div>
+            <label class="text-[8px] text-cyan-400/70 uppercase font-black mb-2 block text-center" title="Hour Meter — pembacaan kumulatif akhir periode">HM (Running Hrs)</label>
+            <input type="number" x-model="performanceForm.hm" step="0.1" min="0" placeholder="0.0"
+                   class="w-full p-3 glass font-black text-cyan-400 text-center text-sm">
+          </div>
           <div>
             <label class="text-[8px] text-nexus-accent/40 uppercase font-black mb-2 block text-center">Work (WH)</label>
             <input type="number" x-model="performanceForm.wh" step="0.01" @input="updatePerfHours('wh')"
