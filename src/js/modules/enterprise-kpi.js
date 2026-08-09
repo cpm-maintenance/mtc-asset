@@ -8,7 +8,7 @@ export const enterpriseKPI = {
     const logs = this._raw(this.logs) || [];
     const perf = this._raw(this.performanceData) || [];
     const elogs = logs.filter(l => l && l.EquipmentID === equipId);
-    const eperf = perf.filter(p => p && p.EquipmentID === equipId);
+    const eperf = perf.filter(p => p && (p.equipmentId || p.EquipmentID) === equipId);
     const totalHrs = eperf.reduce((s, p) => s + (Number(p.wh) || 24), 0);
     const downHrs = eperf.reduce((s, p) => s + (Number(p.bd) || 0) + (Number(p.stb) || 0), 0);
     if (!totalHrs) return { pct: 100, status: 'Optimal', color: 'green' };
@@ -26,7 +26,7 @@ export const enterpriseKPI = {
     const elogs = logs.filter(l => l && l.EquipmentID === equipId && (l.Jenis === 'Breakdown' || l.Jenis === 'Repair'));
     if (elogs.length < 2) return null;
     const perf = this._raw(this.performanceData) || [];
-    const eperf = perf.filter(p => p && p.EquipmentID === equipId);
+    const eperf = perf.filter(p => p && (p.equipmentId || p.EquipmentID) === equipId);
     const totalHrs = eperf.reduce((s, p) => s + (Number(p.wh) || 24), 0);
     const failureCount = elogs.length - 1;
     return failureCount > 0 ? Math.round(totalHrs / failureCount) : null;
@@ -38,7 +38,7 @@ export const enterpriseKPI = {
     const elogs = logs.filter(l => l && l.EquipmentID === equipId && (l.Jenis === 'Breakdown' || l.Jenis === 'Repair'));
     if (elogs.length < 1) return null;
     const perf = this._raw(this.performanceData) || [];
-    const eperf = perf.filter(p => p && p.EquipmentID === equipId);
+    const eperf = perf.filter(p => p && (p.equipmentId || p.EquipmentID) === equipId);
     const downHrs = eperf.reduce((s, p) => s + (Number(p.bd) || 0), 0);
     const failureCount = elogs.length;
     return failureCount > 0 ? Math.round((downHrs / failureCount) * 10) / 10 : null;
@@ -70,12 +70,12 @@ export const enterpriseKPI = {
     // Performance: actual run hrs / planned hrs from perf data
     let perfSum = 0, perfCount = 0;
     const perfMap = {};
-    perf.forEach(p => { if (p.EquipmentID) {
+    perf.forEach(p => { if ((p.equipmentId || p.EquipmentID)) {
       const wh = Number(p.wh) || 0;
       const bd = Number(p.bd) || 0;
       const stb = Number(p.stb) || 0;
       const planned = wh + bd + stb;
-      if (planned > 0) { perfMap[p.EquipmentID] = (perfMap[p.EquipmentID] || 0) + (wh / planned); perfCount++; }
+      if (planned > 0) { perfMap[(p.equipmentId || p.EquipmentID)] = (perfMap[(p.equipmentId || p.EquipmentID)] || 0) + (wh / planned); perfCount++; }
     }});
     const performance = perfCount > 0 ? (Object.values(perfMap).reduce((s, v) => s + v, 0) / perfCount) * 100 : 85;
 
@@ -127,7 +127,7 @@ export const enterpriseKPI = {
   // ─── Downtime (hours) ───
   calcDowntime(equipId, months = 12) {
     const perf = this._raw(this.performanceData) || [];
-    const data = perf.filter(p => equipId ? p.EquipmentID === equipId : true);
+    const data = perf.filter(p => equipId ? (p.equipmentId || p.EquipmentID) === equipId : true);
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - months);
     const filtered = data.filter(p => p.date && new Date(p.date) > cutoff);
@@ -215,7 +215,7 @@ export const enterpriseKPI = {
       const lastFail = logs.filter(l => l.EquipmentID === e.EquipmentID && l.Jenis === 'Breakdown')
         .sort((a, b) => (b.Tanggal || '').localeCompare(a.Tanggal || ''));
       const runningHrs = (this._raw(this.performanceData) || [])
-        .filter(p => p.EquipmentID === e.EquipmentID)
+        .filter(p => (p.equipmentId || p.EquipmentID) === e.EquipmentID)
         .reduce((s, p) => s + (Number(p.wh) || 0), 0);
       return {
         ...e,
