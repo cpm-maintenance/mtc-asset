@@ -170,6 +170,11 @@ export function validatePerformanceForm(form) {
   
   // Validate PA Plan
   if (form.paPlan && (form.paPlan < 0 || form.paPlan > 100)) errors.push('PA Plan must be between 0-100');
+
+  // Validate HM (hour meter — cumulative, boleh 0 tapi tak boleh negatif)
+  if (form.hm !== undefined && form.hm !== '' && !isValidPositiveNumber(form.hm, true)) {
+    errors.push('HM (Running Hours) must be a positive number');
+  }
   
   return errors;
 }

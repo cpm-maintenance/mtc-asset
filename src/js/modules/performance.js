@@ -14,12 +14,23 @@ export const performanceModule = {
         } else {
             this.performanceForm = {
                 id: '', equipmentId: '', date: new Date().toISOString().split('T')[0],
-                wh: "24.00", bd: "0.00", stb: "0.00", freq: 0, type: 'Unscheduled', 
+                wh: "24.00", bd: "0.00", stb: "0.00", hm: "", freq: 0, type: 'Unscheduled', 
                 area: '', paPlan: 90, remarks: '',
                 rca: 'None', category: 'Mechanical', events: []
             };
         }
         this.showPerformanceModal = true;
+    },
+
+    // Prefill HM dari Equipment.CurrentHM (dapat diedit — meter bisa beda)
+    onPerfEquipChange() {
+        const eq = this.equipment?.find(e => e && e.EquipmentID === this.performanceForm.equipmentId);
+        if (eq && (eq.CurrentHM || eq.HM)) {
+            const h = Number(eq.CurrentHM || eq.HM) || 0;
+            if (!this.performanceForm.hm || h > Number(this.performanceForm.hm) || this.performanceForm.hm === '') {
+                this.performanceForm.hm = h.toFixed(1);
+            }
+        }
     },
 
     addBDEvent() {

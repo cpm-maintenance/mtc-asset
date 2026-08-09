@@ -61,6 +61,7 @@
             <th class="p-5">Asset Node</th>
             <th class="p-5">Category</th>
             <th class="p-5">Area</th>
+            <th class="p-5 text-center">HM</th>
             <th class="p-5 text-center">WH</th>
             <th class="p-5 text-center">BD</th>
             <th class="p-5 text-center">Freq</th>
@@ -77,6 +78,7 @@
               <td class="p-5 text-amber-400 font-black" x-text="getEquipName(p.equipmentId)"></td>
               <td class="p-5"><span class="tag-nexus" x-text="p.category || 'Mechanical'"></span></td>
               <td class="p-5 text-slate-400" x-text="p.area"></td>
+              <td class="p-5 text-center font-bold text-cyan-400" x-text="p.hm != null && p.hm !== '' ? Number(p.hm).toLocaleString() : '-'"></td>
               <td class="p-5 text-center font-bold" x-text="p.wh"></td>
               <td class="p-5 text-center text-rose-400 font-bold">
                 <span x-text="p.bd"></span>
