@@ -76,10 +76,10 @@
 
 > Referensi lengkap: analysis_results.md (brain dir)
 
-### Phase A — Data & Cleanup (hari ini)
-- [ ] **Seed data riil** — script node: WO historis 6-12 bln, PM schedule, breakdown events → semua KPI hidup
-- [ ] **Migrasi FotoURL base64 → ImgBB** (12/18 equip) — hemat cost RTD + load
-- [ ] Hapus public/components/modals/PerformanceModal.html duplikat (modal asli di index.html)
+### Phase A — Data & Cleanup (hari ini) ✅ SELESAI (63fcddb)
+- [x] **Seed data riil** — 15 logs (WO breakdown+PM), 80 Performance, PM schedule — 63fcddb
+- [x] **Migrasi FotoURL base64 → ImgBB** — 14 equip migrated, 0 gagal — 63fcddb
+- [x] Hapus PerformanceModal.html duplikat — 63fcddb
 
 ### Phase B — Analitik (minggu ini)
 - [ ] **Wire HM → MTBF** — kpi-engine _hmIntervalHours pakai delta HM (bukan kalender)
