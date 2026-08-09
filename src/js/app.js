@@ -773,11 +773,11 @@ if (confirm('Are you sure you want to logout?')) {
             });
             const avgHealth = healthCount > 0 ? Math.round(healthSum / healthCount) : 0;
             return {
-                totalEquip: { label: 'Total Assets', value: equips.length || 0, color: 'border-blue-500' },
-                woCompletionRate: { label: 'WO Completion', value: woRate + '%', color: 'border-emerald-500' },
-                avgHealthScore: { label: 'Avg Health Score', value: avgHealth + '%', color: 'border-cyan-500' },
-                lowStock: { label: 'Low Stock Parts', value: this.dashboardStats.lowStock || 0, color: 'border-yellow-500' },
-                pmCompliance: { label: 'PM Compliance', value: this.calcPMCompliance?.().pct + '%' || '0%', color: 'border-purple-500' },
+                totalEquip: { label: 'Total Assets', value: equips.length || 0, color: 'border-blue-500', colorHex: '#3b82f6', icon: 'fa-industry', pct: 100 },
+                woCompletionRate: { label: 'WO Completion', value: woRate + '%', color: 'border-emerald-500', colorHex: '#10b981', icon: 'fa-check-circle', pct: woRate },
+                avgHealthScore: { label: 'Avg Health', value: avgHealth + '%', color: 'border-cyan-500', colorHex: '#06b6d4', icon: 'fa-heartbeat', pct: avgHealth },
+                lowStock: { label: 'Low Stock', value: this.dashboardStats.lowStock || 0, color: 'border-yellow-500', colorHex: '#eab308', icon: 'fa-boxes', pct: 70 },
+                pmCompliance: { label: 'PM Compliance', value: (this.calcPMCompliance?.().pct ?? 0) + '%', color: 'border-purple-500', colorHex: '#a855f7', icon: 'fa-clipboard-check', pct: this.calcPMCompliance?.().pct ?? 0 },
             };
         },
 
