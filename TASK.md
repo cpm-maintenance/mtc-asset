@@ -92,11 +92,11 @@
 - [x] **Audit trail aktif** — logAudit di Equipment, Logs/WO, Parts, PM, Performance, Requisition + rules AuditTrail — 5e805b9
 - [x] **Normalisasi field** — helper equipIdOf() + fix rules PM .indexOn (EquipmentID→equipmentId) — 5e805b9
 
-### Phase D — Skala (nanti)
-- [ ] Equipment hierarchy (plant → area → unit → komponen)
-- [ ] Offline sync conflict resolution (last-write-wins + audit)
-- [ ] Export Excel multi-sheet lengkap
-- [ ] Warranty & lifespan tracker (TglInstalasi + avgLifetime → overdue)
+### Phase D — Skala (nanti) ✅ SELESAI (2ca2b79)
+- [x] Equipment hierarchy — tree view Area → Tipe → Asset (toggle di Equipment page) — 2ca2b79
+- [x] Offline sync conflict — last-write-wins (skip overwrite server lebih baru) — 2ca2b79
+- [x] Export Excel multi-sheet — 6 sheet + Summary, tombol header — 2ca2b79
+- [x] Warranty & lifespan — notif part melewati avgLifetimeDays — 2ca2b79
 
 ## 📊 Isi Data Nyata
 
