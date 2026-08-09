@@ -193,6 +193,11 @@ export const requisitionModule = {
                 if (idx >= 0) Object.assign(this.requisitions[idx], updates);
                 if (this.selectedRequisition?.id === this.reqEditId) Object.assign(this.selectedRequisition, updates);
                 this.showNotification('✅ Permintaan diupdate');
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.('Update Requisition', { id: this.reqEditId });
+            } catch (e) { /* silent */ }
+
             } else {
                 // --- NEW: single record with items array ---
                 const id = `REQ_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -216,6 +221,11 @@ export const requisitionModule = {
                 await window.set(window.ref(window.db, `Requisitions/${id}`), record);
                 this.requisitions.unshift(record);
                 this.showNotification(`✅ ${validItems.length} item berhasil diajukan dalam 1 permintaan`);
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.('Create Requisition', { id, item: record.itemName, qty: record.quantity });
+            } catch (e) { /* silent */ }
+
 
                 // R3: backlink requisition ke WO (reqIds array uniq)
                 if (this.reqWoId) {
@@ -238,6 +248,59 @@ export const requisitionModule = {
         } finally {
             this.reqLoading = false;
         }
+    },
+
+    // C2: Auto-reorder spare yang Stok <= MinStock
+    // Buat requisition otomatis (qty = MinStock*2 - Stok), skip jika sudah ada pending utk part sama
+    async autoReorderLowStock() {
+        if (!window.db) return;
+        const parts = this.allParts || [];
+        const reqs = this.requisitions || [];
+
+        // Part yang sudah punya requisition pending (belum closed/arrived)
+        const pendingParts = new Set(
+            reqs
+                .filter(r => r.status === 'pending' || r.status === 'approved')
+                .flatMap(r => (r.items || []).map(i => i.partId || i.itemName))
+                .filter(Boolean)
+        );
+
+        const low = parts.filter(p => p && Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0);
+        let created = 0;
+
+        for (const p of low) {
+            const partId = p.PartID || p.partId || p.NamaPart;
+            if (pendingParts.has(partId)) continue; // sudah diajukan
+
+            const qty = Math.max(1, Number(p.MinStock) * 2 - Number(p.Stok));
+            const id = `REQ_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            const now = new Date().toISOString();
+            const record = {
+                id,
+                items: [{ itemName: p.NamaPart, quantity: qty, partId, itemType: 'part' }],
+                itemName: p.NamaPart,
+                itemType: 'part',
+                quantity: qty,
+                priority: 'high',
+                notes: `Auto-reorder: stok ${p.Stok} <= min ${p.MinStock}`,
+                woId: '', woNumber: '',
+                status: 'pending',
+                requesterName: 'System',
+                createdBy: 'system-auto',
+                requestDate: now.split('T')[0],
+                createdAt: now, updatedAt: now,
+                auto: true,
+            };
+            await window.set(window.ref(window.db, `Requisitions/${id}`), record);
+            this.requisitions.unshift(record);
+            pendingParts.add(partId);
+            created++;
+        }
+
+        if (created > 0) {
+            this.showNotification(`${created} spare low stock → requisition otomatis dibuat`);
+        }
+        return created;
     },
 
     async approveRequisition(reqId) {

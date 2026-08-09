@@ -76,7 +76,7 @@
 
     "PM_Schedule": {
       ".read": "auth !== null",
-      ".indexOn": ["EquipmentID", "status"],
+      ".indexOn": ["equipmentId", "status"],
       "$pmId": {
         ".write": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
         ".read": "auth !== null",
@@ -84,6 +84,13 @@
           newData.child('taskName').isString() && newData.child('taskName').val().length <= 200 &&
           newData.child('equipmentId').isString() &&
           newData.child('status').val().matches(/^(pending|completed|skipped)$/)"
+      }
+    },
+
+    "AuditTrail": {
+      ".read": "auth !== null && (root.child('Users').child(auth.uid).child('role').val() === 'admin' || root.child('Users').child(auth.uid).child('role').val() === 'supervisor')",
+      "$entryId": {
+        ".write": "auth !== null"
       }
     },
 

@@ -147,6 +147,11 @@ openPartModal(isEdit = false, data = null) {
                 }
             });
             this.showNotification("Spare part data synchronized!");
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.(this.isEditingPart ? 'Update Spare Part' : 'Create Spare Part', { id: sanitizedData.PartID, nama: sanitizedData.NamaPart });
+            } catch (e) { /* silent */ }
+
             
             // Add to local array immediately for instant UI update
             const existingIdx = this.allParts.findIndex(p => p.PartID === sanitizedData.PartID);

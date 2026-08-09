@@ -248,6 +248,11 @@ function pushInAppNotif(type, message, icon, color = 'border-cyan-500 bg-cyan-50
 export function checkAllNotifications() {
   checkPendingWorkOrders();
   checkPMOverdue();
+
+  // C2: Auto-reorder spare low stock (fire-and-forget, admin/supervisor only)
+  if (window.app?.autoReorderLowStock && window.app?.isAdminOrSupervisor) {
+    window.app.autoReorderLowStock().catch(e => console.warn('[Notif] Auto-reorder:', e.message));
+  }
 }
 
 function checkLowStockParts() {
@@ -287,6 +292,7 @@ function checkPendingWorkOrders() {
   if (!window.app?.logs) return;
 
   const logs = window.app.logs;
+  const today = new Date().toISOString().split('T')[0];
   const urgentWO = logs.filter(l =>
     (l.Status === 'Pending' || l.Status === 'Draft') &&
     (l.woPriority === 'Emergency' || l.woPriority === 'Urgent')
@@ -303,6 +309,29 @@ function checkPendingWorkOrders() {
       { tag: 'wo-urgent', data: { type: 'pending_wo' } }
     );
     pushInAppNotif('Work Order', `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length-3}` : ''}`, 'fa-clipboard-exclamation', 'border-orange-500 bg-orange-500/20 text-orange-400');
+  }
+
+  // C1: Aging WO — pending > 3 hari (SLA), berapa lama menunggu
+  const aging = logs.filter(l => {
+    if (!(l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved')) return false;
+    if (!l.Tanggal) return false;
+    const d = new Date(l.Tanggal);
+    if (isNaN(d)) return false;
+    const age = (new Date(today) - d) / 86400000;
+    return age > 3;
+  });
+
+  if (aging.length > 0 && shouldNotify('wo_aging')) {
+    const list = aging.slice(0, 3).map(l => {
+      const age = Math.floor((new Date(today) - new Date(l.Tanggal)) / 86400000);
+      return `#${l.woNumber || 'N/A'} (${age}d)`;
+    }).join(', ');
+    sendBrowserNotification(
+      '⏳ Work Order Aging!',
+      `${aging.length} WO menunggu > 3 hari: ${list}${aging.length > 3 ? ` +${aging.length-3} lainnya` : ''}`,
+      { tag: 'wo-aging', data: { type: 'wo_aging' } }
+    );
+    pushInAppNotif('WO Aging', `${aging.length} WO pending > 3 hari: ${list}${aging.length > 3 ? ` +${aging.length-3}` : ''}`, 'fa-hourglass-half', 'border-amber-500 bg-amber-500/20 text-amber-400');
   }
 }
 

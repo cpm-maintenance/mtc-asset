@@ -475,6 +475,11 @@ export const logsModule = {
             }
 
             this.showNotification("Log entry successfully saved!");
+
+            // C3: Audit trail
+            try {
+                window.auditModule?.logAudit?.(this.isEditingLog ? 'Update Log/WO' : 'Create Log/WO', { id: sanitizedLogData.LogID, equip: sanitizedLogData.EquipmentID, jenis: sanitizedLogData.Jenis });
+            } catch (e) { /* silent */ }
             
             // Add to local array immediately for instant UI update
             const existingIdx = this.logs.findIndex(l => l.LogID === sanitizedLogData.LogID);
