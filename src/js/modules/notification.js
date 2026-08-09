@@ -249,6 +249,7 @@ export function checkAllNotifications() {
   checkPendingWorkOrders();
   checkPMOverdue();
   checkWarrantyExpiry();
+  checkLowStockParts();
 
   // C2: Auto-reorder spare low stock (fire-and-forget, admin/supervisor only)
   if (window.app?.autoReorderLowStock && window.app?.isAdminOrSupervisor) {
@@ -275,7 +276,7 @@ function checkLowStockParts() {
   const lowStock = parts.filter(p => {
     const stok = Number(p.Stok) || 0;
     const min = Number(p.MinStock) || 0;
-    return min > 0 && stok <= min && stok > 0;
+    return min > 0 && stok <= min;
   });
 
   if (lowStock.length > 0 && shouldNotify('low_stock_warn')) {
