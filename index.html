@@ -679,7 +679,22 @@
       
       <!-- 🔍 PAGE: DETAIL EQUIPMENT (Dynamic Component) -->
       <template x-if="currentPage === 'detail'">
-        <div x-page="'EquipmentDetail'"></div>
+        <div>
+          <div x-show="isLoading" class="space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+              <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+              <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            </div>
+          </div>
+          <div x-show="!isLoading">
+            <div x-page="'EquipmentDetail'"></div>
+          </div>
+        </div>
       </template>
 
 
@@ -705,7 +720,22 @@
 
     <!-- 📜 PAGE: ALL LOGS / ACTIVITY STREAM (Dynamic Component) -->
     <template x-if="currentPage === 'hist'">
-      <div x-page="'AllLogs'"></div>
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'AllLogs'"></div>
+        </div>
+      </div>
     </template>
 
 
@@ -739,7 +769,22 @@
 
     <!-- 🗓️ PAGE: PERFORMANCE TRACKER (Dynamic Component) -->
     <template x-if="currentPage === 'perf'">
-      <div x-page="'Performance'"></div>
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'Performance'"></div>
+        </div>
+      </div>
     </template>
 
     <!-- 📅 PAGE: PM SCHEDULE (Dynamic Component) -->
@@ -749,18 +794,63 @@
 
     <!-- 🧠 PAGE: KPI ANALYTICS (Dynamic Component) -->
     <template x-if="currentPage === 'kpi'">
-      <div x-page="'KPI'"></div>
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'KPI'"></div>
+        </div>
+      </div>
     </template>
 
 
     <!-- 🤖 PAGE: AI ANALYSIS (Dynamic Component) -->
     <template x-if="currentPage === 'ai'">
-      <div x-page="'AI'"></div>
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'AI'"></div>
+        </div>
+      </div>
     </template>
 
     <!-- 🏭 PAGE: ENTERPRISE DASHBOARD -->
     <template x-if="currentPage === 'enterprise'">
-      <div x-page="'EnterpriseDashboard'"></div>
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'EnterpriseDashboard'"></div>
+        </div>
+      </div>
     </template>
 
     <!-- 📋 PAGE: HISTORY CARD -->
@@ -822,12 +912,42 @@
 
     <!-- 📋 PAGE: AUDIT TRAIL -->
     <template x-if="currentPage === 'audit'">
-      <div x-page="'AuditTrail'"></div>
+      <div>
+        <div x-show="auditLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!auditLoading">
+          <div x-page="'AuditTrail'"></div>
+        </div>
+      </div>
     </template>
 
     <!-- 📊 PAGE: MTBF/MTTR -->
     <template x-if="currentPage === 'mtbfmttr'">
-      <div x-page="'MTBFMTTR'"></div>
+      <div>
+        <div x-show="isLoading" class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>
+            <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+            <div class="skeleton skeleton-card"><div class="skeleton skeleton-line skeleton-md"></div><div class="skeleton skeleton-line skeleton-sm"></div></div>
+          </div>
+        </div>
+        <div x-show="!isLoading">
+          <div x-page="'MTBFMTTR'"></div>
+        </div>
+      </div>
     </template>
 
       <div x-show="showAPISettings" x-cloak class="fixed inset-0 z-[250] bg-nexus-black/90 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showAPISettings = false">
