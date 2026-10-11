@@ -17,7 +17,6 @@ export const DEFAULT_STORE = {
     darkMode: (() => { try { const v = localStorage.getItem('darkMode'); return v === null ? true : v === 'true'; } catch(e) { return true; } })(),
     isLoggedIn: false, user: null, userRole: 'user',
     loginForm: { email: '', password: '' },
-    loginform: { email: '', password: '' },
 
     // --- DELETE CONFIRM ---
     showDeleteConfirm: false, deleteConfirmCallback: null,

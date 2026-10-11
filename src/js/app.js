@@ -67,7 +67,6 @@ export function app() {
         })(),
         userRole: 'user', // 'admin' or 'user'
         loginForm: { email: '', password: '' },
-        loginform: { email: '', password: '' }, // Alias for cached versions
         
         // Delete confirmation modal
         showDeleteConfirm: false,
@@ -363,7 +362,7 @@ export function app() {
         },
 
         async login() {
-            const form = this.loginform.email ? this.loginform : this.loginForm;
+            const form = this.loginForm;
             if (!form.email || !form.password) {
                 this.showNotification("Please enter email and password", "error");
                 return;

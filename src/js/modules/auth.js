@@ -7,7 +7,6 @@
 
 export const authModule = {
     loginForm: { email: '', password: '' },
-    loginform: { email: '', password: '' },
 
     async ensureUserProfile(user) {
         if (!user?.uid) return;
@@ -51,7 +50,7 @@ export const authModule = {
     },
 
     async login() {
-        const form = this.loginform.email ? this.loginform : this.loginForm;
+        const form = this.loginForm;
         if (!form.email || !form.password) {
             this.showNotification("Please enter email and password", "error");
             return;
