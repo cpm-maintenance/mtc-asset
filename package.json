@@ -9,6 +9,12 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:rules": "firebase emulators:exec --only database --project demo-mtc-asset \"vitest run --config vitest.rules.config.js\"",
+    "test:all": "vitest run && npm run test:rules",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "backup": "node scripts/backup.js",
     "backup:firebase": "node scripts/backup-firebase.js",
     "backup:quick": "scripts/backup.bat",
@@ -16,6 +22,13 @@
     "deploy:all": "firebase deploy"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "firebase-tools": "^15.33.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
     "vite": "^8.0.8",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.5"
