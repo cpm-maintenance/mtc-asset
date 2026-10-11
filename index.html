@@ -107,7 +107,7 @@
   </div>
 
   <!-- 🍞 Toast Notification Stack -->
-  <div class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="perspective: 800px;">
+  <div class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="perspective: 800px;" role="status" aria-live="polite">
     <template x-for="note in notifications" :key="note.id">
       <div x-show="!note.exiting"
         x-transition:enter="transition ease-out duration-400"
@@ -136,6 +136,7 @@
             <p x-text="note.message" class="text-sm font-semibold leading-snug text-white/90"></p>
           </div>
           <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 400)" 
+            aria-label="Dismiss notification"
             class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all shrink-0">
             <i class="fas fa-xmark text-[10px] text-slate-500"></i>
           </button>
@@ -161,7 +162,7 @@
             <p class="text-[10px] text-slate-500 font-mono" x-text="notifications.length + ' pending'"></p>
           </div>
         </div>
-        <button @click="showNotifications = false" class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all">
+        <button @click="showNotifications = false" aria-label="Close notifications" class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all">
           <i class="fas fa-xmark"></i>
         </button>
       </div>
@@ -302,7 +303,7 @@
             <p class="text-[10px] text-slate-500 font-mono" x-text="allUsers.length + ' registered'"></p>
           </div>
         </div>
-        <button @click="showUserManagement = false" 
+        <button @click="showUserManagement = false" aria-label="Close user management"
           class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all">
           <i class="fas fa-xmark"></i>
         </button>
@@ -329,11 +330,11 @@
               </div>
             </div>
             <div class="flex gap-1.5">
-              <button @click="openEditUser(u)" x-show="u.uid !== this.user?.uid"
+              <button @click="openEditUser(u)" x-show="u.uid !== this.user?.uid" aria-label="Edit user"
                 class="w-8 h-8 rounded-xl bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 opacity-0 group-hover:opacity-100 transition-all">
                 <i class="fas fa-pen-to-square text-xs"></i>
               </button>
-              <button @click="deleteUser(u.uid)" x-show="u.uid !== this.user?.uid"
+              <button @click="deleteUser(u.uid)" x-show="u.uid !== this.user?.uid" aria-label="Delete user"
                 class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 opacity-0 group-hover:opacity-100 transition-all">
                 <i class="fas fa-trash-can text-xs"></i>
               </button>
@@ -465,7 +466,7 @@
     class="fixed left-0 top-0 h-full bg-nexus-black/40 backdrop-blur-2xl hidden lg:flex flex-col p-6 z-50 border-r border-white/5 shadow-2xl transition-all duration-300">
     
     <!-- Sidebar Toggle (Floating) -->
-    <button @click="sidebarCollapsed = !sidebarCollapsed" 
+    <button @click="sidebarCollapsed = !sidebarCollapsed" aria-label="Toggle sidebar"
       class="absolute -right-3 top-20 w-6 h-6 bg-nexus-accent rounded-full flex items-center justify-center text-nexus-black shadow-lg border border-white/10 hover:scale-110 transition-all z-[60]">
       <i class="fas" :class="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'" style="font-size: 10px"></i>
     </button>
@@ -493,6 +494,7 @@
         window.notificationAPI.resetNotifBlocker();
         window.notificationAPI.checkAllNotifications();
       }"
+      aria-label="Notifications"
       class="relative p-3 rounded-xl text-slate-400 hover:text-nexus-accent hover:bg-white/5 transition-all mb-4">
       <i class="fas fa-bell text-lg"></i>
       <span x-show="notifications.length > 0" x-text="notifications.length" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"></span>
@@ -571,7 +573,7 @@
           <span class="hidden sm:inline" x-text="isOnline ? 'LIVE' : 'OFF'"></span>
         </div>
         <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-        <button @click="open = !open" title="Theme" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/10 transition-colors">
+        <button @click="open = !open" title="Theme" aria-label="Change theme" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/10 transition-colors">
           <i :class="themeMode === 'light' ? 'fas fa-sun text-sm' : 'fas fa-moon text-sm'"></i>
         </button>
         <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
@@ -594,20 +596,20 @@
           </button>
         </div>
       </div>
-        <button @click="exportExcelFull()" title="Export Excel Lengkap" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-emerald-400 flex items-center justify-center hover:text-emerald-300 transition-colors">
+        <button @click="exportExcelFull()" title="Export Excel Lengkap" aria-label="Export Excel" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-emerald-400 flex items-center justify-center hover:text-emerald-300 transition-colors">
           <i class="fas fa-file-excel text-sm"></i>
         </button>
-        <button @click="refreshData()" title="Refresh Data" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:text-nexus-accent transition-colors">
+        <button @click="refreshData()" title="Refresh Data" aria-label="Refresh data" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:text-nexus-accent transition-colors">
           <i class="fas fa-sync-alt text-sm"></i>
         </button>
-        <button @click="systemReset()" title="Reset System" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent/40 flex items-center justify-center hover:text-nexus-accent transition-colors">
+        <button @click="systemReset()" title="Reset System" aria-label="Reset system" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent/40 flex items-center justify-center hover:text-nexus-accent transition-colors">
           <i class="fas fa-broom text-sm"></i>
         </button>
-        <button @click="openQR()"
+        <button @click="openQR()" aria-label="Open QR scanner"
           class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent hover:bg-nexus-accent hover:text-nexus-black transition-all flex items-center justify-center">
           <i class="fas fa-qrcode text-sm"></i>
         </button>
-        <button @click="logout()"
+        <button @click="logout()" aria-label="Logout"
           class="lg:hidden w-9 md:w-10 h-9 md:h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center hover:bg-rose-500/20 transition-all">
           <i class="fas fa-sign-out-alt text-xs md:text-sm"></i>
         </button>
@@ -832,7 +834,7 @@
           class="w-full max-w-md card-modern p-6 border-green-500/30 max-h-[80vh] overflow-y-auto" style="background: linear-gradient(135deg, #1a2e1a 0%, #0d1f0d 100%);">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-black text-white nexus-glow-text">Ajeng Settings</h3>
-            <button @click="showAPISettings = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
+            <button @click="showAPISettings = false" aria-label="Close settings" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -858,11 +860,11 @@
             <div>
               <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">API Keys (Max 5 - Auto Rotate)</label>
               <div class="space-y-2">
-                <input type="password" x-model="aiApiKeyInput1" placeholder="API Key 1 (utama)" class="w-full p-3 glass rounded-lg text-sm"></input>
-                <input type="password" x-model="aiApiKeyInput2" placeholder="API Key 2 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
-                <input type="password" x-model="aiApiKeyInput3" placeholder="API Key 3 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
-                <input type="password" x-model="aiApiKeyInput4" placeholder="API Key 4 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
-                <input type="password" x-model="aiApiKeyInput5" placeholder="API Key 5 (backup)" class="w-full p-3 glass rounded-lg text-sm"></input>
+                <input type="password" x-model="aiApiKeyInput1" placeholder="API Key 1 (utama)" class="w-full p-3 glass rounded-lg text-sm">
+                <input type="password" x-model="aiApiKeyInput2" placeholder="API Key 2 (backup)" class="w-full p-3 glass rounded-lg text-sm">
+                <input type="password" x-model="aiApiKeyInput3" placeholder="API Key 3 (backup)" class="w-full p-3 glass rounded-lg text-sm">
+                <input type="password" x-model="aiApiKeyInput4" placeholder="API Key 4 (backup)" class="w-full p-3 glass rounded-lg text-sm">
+                <input type="password" x-model="aiApiKeyInput5" placeholder="API Key 5 (backup)" class="w-full p-3 glass rounded-lg text-sm">
               </div>
               <p class="text-[9px] text-slate-500 mt-2">Isi beberapa API key untuk failover otomatis jika limit tercapai</p>
             </div>
@@ -909,7 +911,7 @@
       style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom))" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full">
       <div class="flex items-center justify-between mb-3 px-1">
         <h3 class="font-display font-bold text-sm text-nexus-accent">All Menu</h3>
-        <button @click="showMoreMenu = false" class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-nexus-accent flex items-center justify-center">
+        <button @click="showMoreMenu = false" aria-label="Close menu" class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-nexus-accent flex items-center justify-center">
           <i class="fas fa-times text-sm"></i>
         </button>
       </div>
@@ -938,7 +940,7 @@
           <i class="fas fa-microchip text-nexus-accent"></i>
           <span x-text="isEditingEquip ? 'Reconfigure Asset' : 'Initialize Asset'"></span>
         </h3>
-        <button @click="showEquipModal = false" class="btn-nexus-close"><i class="fas fa-times"></i></button>
+        <button @click="showEquipModal = false" aria-label="Close" class="btn-nexus-close"><i class="fas fa-times"></i></button>
       </div>
       <form @submit.prevent="submitEquipment()" class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
@@ -1037,7 +1039,7 @@
         <h3 class="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tighter"><i
             class="fas fa-box-open text-nexus-accent"></i> <span
             x-text="isEditingPart ? 'Sync Component' : 'Register Component'"></span></h3>
-        <button @click="showPartModal = false"
+        <button @click="showPartModal = false" aria-label="Close part form"
           class="text-slate-500 hover:text-nexus-accent w-12 h-12 rounded-2xl glass flex items-center justify-center transition-all"><i
             class="fas fa-times"></i></button>
       </div>
@@ -1164,7 +1166,7 @@
             <p class="text-[9px] text-nexus-accent/40 font-black uppercase tracking-widest">Neural Performance Protocol</p>
           </div>
         </div>
-        <button @click="showPerformanceModal = false"
+        <button @click="showPerformanceModal = false" aria-label="Close performance form"
           class="text-slate-500 hover:text-nexus-accent w-10 h-10 rounded-xl glass flex items-center justify-center transition-all"><i
             class="fas fa-times"></i></button>
       </div>
@@ -1246,7 +1248,7 @@
           <div class="grid grid-cols-1 gap-4">
             <template x-for="(event, idx) in performanceForm.events" :key="idx">
               <div class="p-6 glass border-white/5 rounded-2xl relative group bg-white/[0.02]">
-                <button type="button" @click="removeBDEvent(idx)" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all z-10"><i class="fas fa-times"></i></button>
+                <button type="button" @click="removeBDEvent(idx)" aria-label="Remove breakdown event" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all z-10"><i class="fas fa-times"></i></button>
                 
                 <div class="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4 border-b border-white/5 pb-4">
                    <select x-model="event.category" class="bg-white/5 p-3 rounded-xl text-xs font-black text-nexus-accent uppercase tracking-widest outline-none w-full md:w-auto">
@@ -1319,7 +1321,7 @@
             <p class="text-[9px] text-nexus-accent/40 font-black uppercase tracking-widest">Maintenance Activity Protocol</p>
           </div>
         </div>
-        <button @click="showLogModal = false"
+        <button @click="showLogModal = false" aria-label="Close log form"
           class="text-slate-500 hover:text-nexus-accent w-10 h-10 rounded-xl glass flex items-center justify-center transition-all"><i
             class="fas fa-times"></i></button>
       </div>
@@ -1484,7 +1486,7 @@
               <div
                 class="relative group aspect-square rounded-2xl overflow-hidden glass border-nexus-accent/20 shadow-xl">
                 <img :src="p.preview" loading="lazy" class="w-full h-full object-cover">
-                <button type="button" @click="removeLogPhoto(idx)"
+                <button type="button" @click="removeLogPhoto(idx)" aria-label="Remove photo"
                   class="absolute top-2 right-2 w-7 h-7 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"><i
                     class="fas fa-times text-[10px]"></i></button>
               </div>
@@ -1523,7 +1525,7 @@
               </select>
               <input type="number" x-model="part.qty" min="1" placeholder="Qty"
                 class="w-20 p-4 glass text-center font-black text-white">
-              <button type="button" @click="removePartFromLog(index)"
+              <button type="button" @click="removePartFromLog(index)" aria-label="Remove part"
                 class="text-rose-400 glass hover:bg-rose-500/20 w-12 h-12 rounded-xl border border-rose-500/20 transition-all flex items-center justify-center shadow-xl"><i
                   class="fas fa-trash-alt"></i></button>
             </div>
@@ -1545,7 +1547,7 @@
     class="fixed inset-0 z-[100] bg-nexus-black flex flex-col items-center justify-center p-6 backdrop-blur-2xl">
     <div class="w-full max-w-sm space-y-10 text-center relative">
       <div class="absolute -top-16 right-0">
-        <button @click="stopScanner()" class="text-white/30 hover:text-nexus-accent transition-colors">
+        <button @click="stopScanner()" aria-label="Close scanner" class="text-white/30 hover:text-nexus-accent transition-colors">
           <i class="fas fa-times text-3xl"></i>
         </button>
       </div>
@@ -1589,7 +1591,7 @@
       class="card-modern w-full max-w-sm rounded-[3rem] p-10 border-nexus-accent/20 text-center">
       <div class="flex justify-between items-center mb-8">
         <h3 class="text-xl font-black text-white uppercase tracking-tighter">Asset Signature</h3>
-        <button @click="showQRPreviewModal = false" class="text-slate-500 hover:text-nexus-accent transition-colors">
+        <button @click="showQRPreviewModal = false" aria-label="Close QR preview" class="text-slate-500 hover:text-nexus-accent transition-colors">
           <i class="fas fa-times text-2xl"></i>
         </button>
       </div>
@@ -1660,7 +1662,7 @@
           <h3 class="text-lg font-black text-white nexus-glow-text flex items-center gap-3">
             <i class="fas fa-crop text-amber-400"></i> Crop Image
           </h3>
-          <button @click="showCropModalOpen = false" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
+          <button @click="showCropModalOpen = false" aria-label="Close crop editor" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 hover:text-white flex items-center justify-center">
             <i class="fas fa-times"></i>
           </button>
         </div>

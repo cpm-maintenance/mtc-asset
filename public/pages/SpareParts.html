@@ -5,7 +5,7 @@
     <div class="flex flex-col md:flex-row gap-3 flex-1">
       <div class="relative flex-1">
         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-amber-400/40"></i>
-        <input type="text" undefined placeholder="Search by name or ID..."
+        <input type="text" x-model.debounce.150ms="searchPart" placeholder="Search by name or ID..."
           class="w-full pl-12 p-3 glass border-nexus-accent/10 focus:border-nexus-accent/40">
       </div>
       <div class="relative w-full md:w-64">
@@ -66,7 +66,7 @@
             class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
             <i class="fas fa-edit text-xs md:text-xs"></i>
           </button>
-          <button @click="deleteItem('SpareParts', p.PartID)"
+          <button x-show="isAdminOrSupervisor" @click="deleteItem('SpareParts', p.PartID)"
             class="w-6 md:w-8 h-6 md:h-8 rounded-lg md:rounded-xl glass border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
             <i class="fas fa-trash text-xs md:text-xs"></i>
           </button>

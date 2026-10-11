@@ -18,7 +18,7 @@
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" :style="'background: ' + stat.colorHex + '22; color: ' + stat.colorHex">
               <i :class="stat.icon"></i>
             </div>
-            <p class="text-amber-400/50 text-[10px] uppercase font-black tracking-[0.2em] truncate" x-text="stat.label"></p>
+            <p class="text-amber-400/50 text-[11px] uppercase font-black tracking-[0.2em] truncate" x-text="stat.label"></p>
           </div>
           <p class="text-2xl md:text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="stat.value"></p>
           <div class="mt-3 h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
@@ -35,43 +35,43 @@
        :class="dashAlerts.overduePM > 0 ? 'border-rose-500/40 bg-rose-500/10 shadow-[0_0_30px_-10px_rgba(239,68,68,0.4)]' : 'border-white/5 bg-white/[0.02] opacity-50'">
       <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 relative"
-           :class="dashAlerts.overduePM > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-white/5 text-slate-600'">
+           :class="dashAlerts.overduePM > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-white/5 text-slate-500'">
         <i class="fas fa-calendar-times"></i>
         <span x-show="dashAlerts.overduePM > 0" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
       </div>
       <div class="relative flex-1">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">PM Overdue</p>
-        <p class="text-2xl font-black" :class="dashAlerts.overduePM > 0 ? 'text-rose-400' : 'text-slate-600'" x-text="dashAlerts.overduePM"></p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">PM Overdue</p>
+        <p class="text-2xl font-black" :class="dashAlerts.overduePM > 0 ? 'text-rose-400' : 'text-slate-400'" x-text="dashAlerts.overduePM"></p>
       </div>
-      <i class="fas fa-chevron-right text-slate-600 group-hover:text-rose-400 group-hover:translate-x-1 transition-all text-xs"></i>
+      <i class="fas fa-chevron-right text-slate-500 group-hover:text-rose-400 group-hover:translate-x-1 transition-all text-xs"></i>
     </a>
     <a href="#" @click.prevent="currentPage='workorders'" class="group relative overflow-hidden rounded-2xl p-4 flex items-center gap-4 border transition-all duration-300"
        :class="dashAlerts.agingWO > 0 ? 'border-amber-500/40 bg-amber-500/10 shadow-[0_0_30px_-10px_rgba(245,158,11,0.4)]' : 'border-white/5 bg-white/[0.02] opacity-50'">
       <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 relative"
-           :class="dashAlerts.agingWO > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-white/5 text-slate-600'">
+           :class="dashAlerts.agingWO > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-white/5 text-slate-500'">
         <i class="fas fa-hourglass-half"></i>
         <span x-show="dashAlerts.agingWO > 0" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
       </div>
       <div class="relative flex-1">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">WO Aging > 3d</p>
-        <p class="text-2xl font-black" :class="dashAlerts.agingWO > 0 ? 'text-amber-400' : 'text-slate-600'" x-text="dashAlerts.agingWO"></p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">WO Aging > 3d</p>
+        <p class="text-2xl font-black" :class="dashAlerts.agingWO > 0 ? 'text-amber-400' : 'text-slate-400'" x-text="dashAlerts.agingWO"></p>
       </div>
-      <i class="fas fa-chevron-right text-slate-600 group-hover:text-amber-400 group-hover:translate-x-1 transition-all text-xs"></i>
+      <i class="fas fa-chevron-right text-slate-500 group-hover:text-amber-400 group-hover:translate-x-1 transition-all text-xs"></i>
     </a>
     <a href="#" @click.prevent="currentPage='spareparts'" class="group relative overflow-hidden rounded-2xl p-4 flex items-center gap-4 border transition-all duration-300"
        :class="dashAlerts.lowStock > 0 ? 'border-orange-500/40 bg-orange-500/10 shadow-[0_0_30px_-10px_rgba(249,115,22,0.4)]' : 'border-white/5 bg-white/[0.02] opacity-50'">
       <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 relative"
-           :class="dashAlerts.lowStock > 0 ? 'bg-orange-500/20 text-orange-400' : 'bg-white/5 text-slate-600'">
+           :class="dashAlerts.lowStock > 0 ? 'bg-orange-500/20 text-orange-400' : 'bg-white/5 text-slate-500'">
         <i class="fas fa-boxes"></i>
         <span x-show="dashAlerts.lowStock > 0" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
       </div>
       <div class="relative flex-1">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">Spare Low Stock</p>
-        <p class="text-2xl font-black" :class="dashAlerts.lowStock > 0 ? 'text-orange-400' : 'text-slate-600'" x-text="dashAlerts.lowStock"></p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">Spare Low Stock</p>
+        <p class="text-2xl font-black" :class="dashAlerts.lowStock > 0 ? 'text-orange-400' : 'text-slate-400'" x-text="dashAlerts.lowStock"></p>
       </div>
-      <i class="fas fa-chevron-right text-slate-600 group-hover:text-orange-400 group-hover:translate-x-1 transition-all text-xs"></i>
+      <i class="fas fa-chevron-right text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all text-xs"></i>
     </a>
   </div>
 
@@ -81,23 +81,23 @@
       <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_-5px_rgba(6,182,212,0.4)]"><i class="fas fa-clock"></i></div>
       <div class="relative">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-500">MTBF</p>
-        <p class="text-xl md:text-2xl font-black text-cyan-400" x-text="dashKPIs.mtbf"><span class="text-[10px] text-slate-500 font-bold"> jam</span></p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">MTBF</p>
+        <p class="text-xl md:text-2xl font-black text-cyan-400" x-text="dashKPIs.mtbf"><span class="text-[11px] text-slate-400 font-bold"> jam</span></p>
       </div>
     </div>
     <div class="card-modern p-4 md:p-5 flex items-center gap-4 relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_-5px_rgba(244,63,94,0.4)]"><i class="fas fa-tools"></i></div>
       <div class="relative">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-500">MTTR</p>
-        <p class="text-xl md:text-2xl font-black text-rose-400" x-text="dashKPIs.mttr"><span class="text-[10px] text-slate-500 font-bold"> jam</span></p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">MTTR</p>
+        <p class="text-xl md:text-2xl font-black text-rose-400" x-text="dashKPIs.mttr"><span class="text-[11px] text-slate-400 font-bold"> jam</span></p>
       </div>
     </div>
     <div class="card-modern p-4 md:p-5 flex items-center gap-4 relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_-5px_rgba(16,185,129,0.4)]"><i class="fas fa-chart-pie"></i></div>
       <div class="relative">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-500">Availability</p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">Availability</p>
         <p class="text-xl md:text-2xl font-black text-emerald-400" x-text="dashKPIs.avgPA + '%'"></p>
       </div>
     </div>
@@ -105,7 +105,7 @@
       <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="w-11 h-11 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_-5px_rgba(168,85,247,0.4)]"><i class="fas fa-exclamation-triangle"></i></div>
       <div class="relative">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-500">Breakdown</p>
+        <p class="text-[11px] uppercase font-black tracking-widest text-slate-400">Breakdown</p>
         <p class="text-xl md:text-2xl font-black text-purple-400" x-text="dashKPIs.breakdowns"></p>
       </div>
     </div>
@@ -117,7 +117,7 @@
     <div class="card-modern p-4 md:p-5 flex flex-col lg:col-span-2 group">
       <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
         <i class="fas fa-atom text-amber-400"></i> Asset Distribution
-        <span class="ml-auto text-[9px] text-slate-600 font-bold uppercase" x-text="equipment.length + ' assets'"></span>
+        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase" x-text="equipment.length + ' assets'"></span>
       </h3>
       <div class="flex-1 relative min-h-[220px]">
         <canvas id="statusChart"></canvas>
@@ -138,7 +138,7 @@
     <div class="card-modern p-4 md:p-5 flex flex-col lg:col-span-2 group">
       <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
         <i class="fas fa-calendar-check text-emerald-400"></i> PM Schedule Status
-        <span class="ml-auto text-[9px] text-slate-600 font-bold uppercase" x-text="pmList.length + ' tasks'"></span>
+        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase" x-text="pmList.length + ' tasks'"></span>
       </h3>
       <div class="flex-1 relative min-h-[220px]">
         <canvas id="pmStatusChart"></canvas>
@@ -151,7 +151,7 @@
     <div class="card-modern p-4 md:p-5 lg:col-span-3 group">
       <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
         <i class="fas fa-chart-line text-amber-400"></i> Reliability Trend (PA Average)
-        <span class="ml-auto text-[9px] text-slate-600 font-bold uppercase">Last 7 days</span>
+        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase">Last 7 days</span>
       </h3>
       <div class="relative min-h-[260px] md:min-h-[300px]">
         <canvas id="reliabilityChart"></canvas>
@@ -160,7 +160,7 @@
     <div class="card-modern p-4 md:p-5 lg:col-span-2 group">
       <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
         <i class="fas fa-coins text-emerald-400"></i> Maintenance Cost
-        <span class="ml-auto text-[9px] text-slate-600 font-bold uppercase">Monthly</span>
+        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase">Monthly</span>
       </h3>
       <div class="relative min-h-[260px] md:min-h-[300px]">
         <canvas id="costTrendChart"></canvas>
@@ -176,15 +176,15 @@
         PM Schedule
         <span x-show="pmUpcomingList.length > 0" class="text-[11px] bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded-full font-bold tracking-normal" x-text="`${pmUpcomingList.length} upcoming`"></span>
       </h3>
-      <a href="#" @click.prevent="currentPage='pms'" class="text-[10px] text-slate-500 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors">
+      <a href="#" @click.prevent="currentPage='pms'" class="text-[11px] text-slate-400 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors">
         View All <i class="fas fa-arrow-right ml-1 text-[10px]"></i>
       </a>
     </div>
 
-    <div x-show="!pmList || pmList.length === 0" class="text-center py-10 text-slate-600">
-      <i class="fas fa-calendar text-4xl text-slate-700 mb-3 block"></i>
-      <p class="text-sm font-bold text-slate-500">No PM tasks yet</p>
-      <p class="text-xs text-slate-600 mt-1">Create a task in PM Schedule to get started</p>
+    <div x-show="!pmList || pmList.length === 0" class="text-center py-10 text-slate-400">
+      <i class="fas fa-calendar text-4xl text-slate-600 mb-3 block"></i>
+      <p class="text-sm font-bold text-slate-400">No PM tasks yet</p>
+      <p class="text-xs text-slate-400 mt-1">Create a task in PM Schedule to get started</p>
     </div>
 
     <div x-show="pmList && pmList.length > 0" class="space-y-1.5">
@@ -204,20 +204,20 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors" x-text="pm.taskName"></p>
-            <p class="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5 items-center">
+            <p class="text-[11px] text-slate-400 mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5 items-center">
               <span class="text-cyan-300/80 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
               <span x-show="allParts.some(p => ((p.EquipmentIDs && p.EquipmentIDs.includes(pm.equipmentId)) || p.EquipmentID === pm.equipmentId) && isLowStock(p.Stok, p.MinStock))"
-                class="text-[10px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded"
+                class="text-[11px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded"
                 title="Linked parts low in stock!">
                 ⚠️ LOW STOCK
               </span>
-              <span class="text-slate-600">·</span>
+              <span class="text-slate-500">·</span>
               <span :class="isPMOverdue(pm) ? 'text-red-400' : 'text-slate-400'" x-text="pm.date"></span>
-              <span x-show="pm.frequency !== 'none'" class="text-slate-600">·</span>
+              <span x-show="pm.frequency !== 'none'" class="text-slate-500">·</span>
               <span x-show="pm.frequency !== 'none'" class="text-purple-400/80 font-bold uppercase" x-text="pm.frequency"></span>
             </p>
           </div>
-          <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase shrink-0" :class="{
+          <span class="text-[11px] px-2 py-0.5 rounded font-bold uppercase shrink-0" :class="{
             'bg-red-500/10 text-red-400': pm.priority === 'High',
             'bg-amber-500/10 text-amber-400': pm.priority === 'Medium',
             'bg-slate-500/10 text-slate-400': !pm.priority || pm.priority === 'Low',
@@ -226,7 +226,7 @@
       </template>
 
       <div x-show="pmUpcomingList.length > 5" class="text-center pt-2">
-        <a href="#" @click.prevent="currentPage='pms'" class="text-[10px] text-slate-600 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors">
+        <a href="#" @click.prevent="currentPage='pms'" class="text-[11px] text-slate-400 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors">
           +<span x-text="pmUpcomingList.length - 5"></span> more tasks
         </a>
       </div>
