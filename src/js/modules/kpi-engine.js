@@ -1,8 +1,21 @@
 /**
- * KPI Engine Module for Neural Prediction and Analytics
+ * @file KPI Engine — Neural Prediction & Analytics.
+ *
+ * Kumpulan metode murni untuk menghitung health score, MTBF, dan prediksi
+ * kegagalan berikutnya dari data HistoryLog + Performance. Modul ini di-mix
+ * ke dalam komponen Alpine sehingga metode dapat mengakses `this.logs`,
+ * `this.equipment`, dan `this.performanceData`.
+ *
+ * Semua hasil kalkulasi di-cache pada `this._kpiCache` dan invalidasi
+ * otomatis saat referensi data berubah (lihat {@link kpiEngineModule._kpiKey}).
  */
 export const kpiEngineModule = {
-    // Helper: unwrap Alpine proxy safely
+    /**
+     * Unwrap Alpine reactive proxy agar data bisa dibaca/diserialisasi aman.
+     *
+     * @param {*} data - Nilai (biasanya array/objek) dari state Alpine.
+     * @returns {*} Nilai mentah (raw) tanpa proxy; salinan array bila unwrap gagal.
+     */
     _raw(data) {
         try {
             if (window.Alpine?.raw) return window.Alpine.raw(data);
@@ -14,10 +27,23 @@ export const kpiEngineModule = {
     },
 
     // --- NEURAL PREDICTION ENGINE ---
-    // Cache results; invalidated when this.logs/this.equipment reference changes.
+    /**
+     * Bangun cache key dari panjang `this.logs`/`this.equipment` + suffix `extra`.
+     * Cache hasil KPI di-invalidasi otomatis saat key berubah.
+     *
+     * @param {string} extra - Suffix pembeda (mis. `'h' + equipId`).
+     * @returns {string} Cache key.
+     */
     _kpiKey(extra) {
         return (this.logs || []).length + '|' + (this.equipment || []).length + '|' + (extra || '');
     },
+    /**
+     * Hitung health score (0-100) sebuah equipment dari breakdown 90 hari,
+     * kepatuhan PM, dan faktor reliabilitas (MTBF). Hasil di-cache.
+     *
+     * @param {string} equipId - Equipment id.
+     * @returns {{score: number, color: string, status: ('Optimal'|'Warning'|'Critical'), breakdowns: number}} Hasil skor kesehatan (default 100/Optimal bila data tidak cukup).
+     */
     calculateHealthScore(equipId) {
         // Guard - safe defaults
         if (!equipId) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
@@ -73,7 +99,14 @@ export const kpiEngineModule = {
     },
 
 
-    // HM-aware interval: prefer meter delta if both logs have HM, else calendar hours
+    /**
+     * Hitung interval antar dua event (HM-aware): pakai delta meter bila kedua
+     * event punya HM > 0, jika tidak fallback ke selisih jam kalender.
+     *
+     * @param {{HM?: number|string, Tanggal?: string}} a - Event sebelumnya.
+     * @param {{HM?: number|string, Tanggal?: string}} b - Event sesudahnya.
+     * @returns {number} Interval dalam jam (>= 0), atau 0 bila data tak valid.
+     */
     _hmIntervalHours(a, b) {
         const hmA = Number(a?.HM); const hmB = Number(b?.HM);
         if (hmA > 0 && hmB > 0) return Math.max(0, hmB - hmA);
@@ -82,8 +115,13 @@ export const kpiEngineModule = {
         return 0;
     },
 
-    // Gabungkan breakdown dari HistoryLog + Performance (events/freq>0)
-    // Setiap event: { Tanggal, HM } — HM dari log.HM atau performance.hm
+    /**
+     * Gabungkan event breakdown dari HistoryLog + Performance (events/freq > 0),
+     * lalu urutkan berdasarkan tanggal. Setiap event: `{ Tanggal, HM, src }`.
+     *
+     * @param {string} equipId - Equipment id.
+     * @returns {Array<{Tanggal: string, HM: number, src: ('log'|'perf')}>} Event breakdown terurut.
+     */
     _breakdownEvents(equipId) {
         const logs = this._raw(this.logs) || [];
         const perf = this._raw(this.performanceData) || [];
@@ -111,6 +149,13 @@ export const kpiEngineModule = {
         });
     },
 
+    /**
+     * Hitung Mean Time Between Failures (MTBF, dalam jam) dari event breakdown.
+     * Hasil di-cache; mengembalikan 0 bila data kurang dari 2 event.
+     *
+     * @param {string} equipId - Equipment id.
+     * @returns {string} MTBF dalam jam sebagai string 1 desimal, atau `'0'` bila data tidak cukup.
+     */
     calculateMTBF(equipId) {
         // Guard
         if (!equipId) return 0;
@@ -143,6 +188,12 @@ export const kpiEngineModule = {
         return result;
     },
 
+    /**
+     * Prediksi tanggal kegagalan berikutnya = breakdown terakhir + MTBF.
+     *
+     * @param {string} equipId - Equipment id.
+     * @returns {string} Tanggal lokal prediksi, atau salah satu dari `'N/A'`, `'Insufficient Data'`, `'No failures recorded'`, `'Invalid date data'`.
+     */
     predictNextFailure(equipId) {
         // Guard
         if (!equipId) return 'N/A';
@@ -169,6 +220,12 @@ export const kpiEngineModule = {
         return nextDate.toLocaleDateString();
     },
 
+    /**
+     * Cari nama equipment berdasarkan id (exact match, lalu case-insensitive).
+     *
+     * @param {string} id - Equipment id.
+     * @returns {string} Nama equipment, `id` bila daftar belum siap, atau `"Unknown Asset"` bila tidak ditemukan.
+     */
     getEquipName(id) {
         if (!id) return "Unknown Asset";
         console.log('[getEquipName] looking for id:', id);

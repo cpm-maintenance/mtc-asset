@@ -1,11 +1,31 @@
 import { CONSTANTS } from './constants.js';
 
+/**
+ * @file Utility helpers MTC-Asset (pure functions, no side-effects).
+ *
+ * Modul ini adalah kumpulan fungsi murni (pure) yang dipakai lintas modul
+ * (validasi form, sanitasi input, format tanggal/uang, retry, dan kalkulasi
+ * lifetime spare part). Tidak ada state global maupun akses DOM/Firebase,
+ * sehingga aman untuk di-unit-test.
+ *
+ * Konvensi field: HistoryLog/SpareParts/Equipment memakai `EquipmentID`
+ * (capital), sedangkan Performance/PM_Schedule memakai `equipmentId`
+ * (lowercase). Gunakan {@link equipIdOf} sebagai satu titik akses.
+ */
+
 // ========================================
 // CANONICAL FIELD ACCESS (C4)
 // ========================================
 // HistoryLog/SpareParts/Equipment pakai EquipmentID (capital)
 // Performance/PM_Schedule pakai equipmentId (lowercase)
 // Helper ini = satu titik akses — baca keduanya, prioritas lowercase.
+
+/**
+ * Ambil equipment id dari sebuah record, mendukung kedua konvensi field.
+ *
+ * @param {object|null|undefined} item - Record apa pun yang mungkin punya `equipmentId` atau `EquipmentID`.
+ * @returns {string} Equipment id (lowercase diprioritaskan), atau `''` bila tidak ada.
+ */
 export function equipIdOf(item) {
   if (!item) return '';
   return item.equipmentId || item.EquipmentID || '';
@@ -15,7 +35,12 @@ export function equipIdOf(item) {
 // INPUT VALIDATION & SANITIZATION
 // ========================================
 
-// XSS Prevention - Remove dangerous HTML/script tags
+/**
+ * Sanitasi input pengguna untuk mencegah XSS (escape HTML + hapus `script`/handler `on*`).
+ *
+ * @param {string} str - String mentah dari input pengguna.
+ * @returns {string} String yang sudah di-escape dan dibersihkan, atau `''` bila bukan string.
+ */
 export function sanitizeInput(str) {
   if (!str || typeof str !== 'string') return '';
   return str
@@ -29,7 +54,12 @@ export function sanitizeInput(str) {
     .trim();
 }
 
-// Sanitize for display (allow some HTML tags)
+/**
+ * Sanitasi string untuk ditampilkan (escape karakter HTML dasar, tanpa hapus tag).
+ *
+ * @param {string} str - String mentah.
+ * @returns {string} String ter-escape untuk render teks, atau `''` bila bukan string.
+ */
 export function sanitizeForDisplay(str) {
   if (!str || typeof str !== 'string') return '';
   return str
@@ -40,7 +70,13 @@ export function sanitizeForDisplay(str) {
     .trim();
 }
 
-// Validate numeric input - must be positive number
+/**
+ * Validasi angka positif.
+ *
+ * @param {string|number} value - Nilai yang akan diparse.
+ * @param {boolean} [allowZero=false] - Bila `true`, nol dianggap valid.
+ * @returns {boolean} `true` bila nilai numerik dan memenuhi aturan.
+ */
 export function isValidPositiveNumber(value, allowZero = false) {
   const num = parseFloat(value);
   if (isNaN(num)) return false;
@@ -48,7 +84,14 @@ export function isValidPositiveNumber(value, allowZero = false) {
   return num > 0;
 }
 
-// Validate integer input
+/**
+ * Validasi bilangan bulat dalam rentang opsional.
+ *
+ * @param {string|number} value - Nilai yang akan diparse sebagai integer basis 10.
+ * @param {number} [min=0] - Batas bawah inklusif.
+ * @param {number|null} [max=null] - Batas atas inklusif, `null` = tanpa batas atas.
+ * @returns {boolean} `true` bila integer dan berada dalam rentang.
+ */
 export function isValidInteger(value, min = 0, max = null) {
   const num = parseInt(value, 10);
   if (isNaN(num)) return false;
@@ -57,7 +100,12 @@ export function isValidInteger(value, min = 0, max = null) {
   return true;
 }
 
-// Validate date format (YYYY-MM-DD)
+/**
+ * Validasi format tanggal (`YYYY-MM-DD`) dan rentang wajar (2020 s/d hari ini).
+ *
+ * @param {string} dateStr - String tanggal.
+ * @returns {boolean} `true` bila tanggal valid dan tidak di luar rentang wajar.
+ */
 export function isValidDate(dateStr) {
   if (!dateStr || typeof dateStr !== 'string') return false;
   const date = new Date(dateStr);
@@ -68,25 +116,46 @@ export function isValidDate(dateStr) {
   return date >= minDate && date <= now;
 }
 
-// Validate date range
+/**
+ * Validasi rentang tanggal (start <= end), keduanya harus valid lewat {@link isValidDate}.
+ *
+ * @param {string} startDate - Tanggal awal.
+ * @param {string} endDate - Tanggal akhir.
+ * @returns {boolean} `true` bila kedua tanggal valid dan start <= end.
+ */
 export function isValidDateRange(startDate, endDate) {
   if (!isValidDate(startDate) || !isValidDate(endDate)) return false;
   return new Date(startDate) <= new Date(endDate);
 }
 
-// Validate ID format (no special characters)
+/**
+ * Validasi format id (hanya huruf, angka, `_`, dan `-`).
+ *
+ * @param {string} id - Id yang divalidasi.
+ * @returns {boolean} `true` bila format id valid.
+ */
 export function isValidID(id) {
   if (!id || typeof id !== 'string') return false;
   return /^[a-zA-Z0-9_-]+$/.test(id);
 }
 
-// Validate phone number
+/**
+ * Validasi nomor telepon (8-20 karakter digit, spasi, `()`, `-`, opsional awalan `+`).
+ *
+ * @param {string} phone - Nomor telepon.
+ * @returns {boolean} `true` bila format nomor valid.
+ */
 export function isValidPhone(phone) {
   if (!phone) return false;
   return /^[+]?[\d\s()-]{8,20}$/.test(phone);
 }
 
-// Validate URL
+/**
+ * Validasi URL. URL bersifat opsional, jadi nilai kosong dianggap valid.
+ *
+ * @param {string} url - URL yang divalidasi.
+ * @returns {boolean} `true` bila kosong atau URL dapat diparse.
+ */
 export function isValidURL(url) {
   if (!url) return true; // URL is optional
   try {
@@ -97,7 +166,14 @@ export function isValidURL(url) {
   }
 }
 
-// Length validation
+/**
+ * Validasi panjang string dalam rentang [min, max].
+ *
+ * @param {string} str - String yang diperiksa.
+ * @param {number} min - Panjang minimum inklusif.
+ * @param {number} max - Panjang maksimum inklusif.
+ * @returns {boolean} `true` bila panjang memenuhi rentang.
+ */
 export function isValidLength(str, min, max) {
   if (!str) return false;
   const len = str.toString().length;
@@ -108,12 +184,25 @@ export function isValidLength(str, min, max) {
 // EXISTING VALIDATION FUNCTIONS
 // ========================================
 
+/**
+ * Validasi format email sederhana (pola `x@y.z`).
+ *
+ * @param {string} email - Alamat email.
+ * @returns {boolean} `true` bila format email valid.
+ */
 export function validateEmail(email) {
   if (!email) return false;
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(email);
 }
 
+/**
+ * Validasi generik berbasis objek aturan per-field (`required`, `min`, `max`).
+ *
+ * @param {object} form - Objek data form (key = nama field).
+ * @param {Object<string, {required?: boolean, min?: number, max?: number}>} rules - Aturan per field.
+ * @returns {{valid: boolean, errors: string[]}} Hasil validasi dan daftar pesan error.
+ */
 export function validateForm(form, rules) {
   const errors = [];
   for (const [field, rule] of Object.entries(rules)) {
@@ -125,6 +214,12 @@ export function validateForm(form, rules) {
   return { valid: errors.length === 0, errors };
 }
 
+/**
+ * Validasi form Equipment (Asset ID, Nama, serial number, panjang maksimum).
+ *
+ * @param {object} form - Data form equipment.
+ * @returns {string[]} Daftar pesan error (kosong bila valid).
+ */
 export function validateEquipmentForm(form) {
   const errors = [];
   if (!form.id?.trim()) errors.push('Asset ID is required');
@@ -136,6 +231,12 @@ export function validateEquipmentForm(form) {
   return errors;
 }
 
+/**
+ * Validasi form Spare Part (id, nama, stok, minStock, harga).
+ *
+ * @param {object} form - Data form part.
+ * @returns {string[]} Daftar pesan error (kosong bila valid).
+ */
 export function validatePartForm(form) {
   const errors = [];
   if (!form.id?.trim()) errors.push('Part ID is required');
@@ -148,6 +249,12 @@ export function validatePartForm(form) {
   return errors;
 }
 
+/**
+ * Validasi form History Log / Work Order (equipment, tanggal, deskripsi, downtime, cost, HM, foto).
+ *
+ * @param {object} form - Data form log.
+ * @returns {string[]} Daftar pesan error (kosong bila valid).
+ */
 export function validateLogForm(form) {
   const errors = [];
   if (!form.equipmentId?.trim()) errors.push('Equipment selection is required');
@@ -162,6 +269,12 @@ export function validateLogForm(form) {
   return errors;
 }
 
+/**
+ * Validasi form Performance (WH/BD/STB harus berjumlah 24 jam, PA plan 0-100, HM non-negatif).
+ *
+ * @param {object} form - Data form performance.
+ * @returns {string[]} Daftar pesan error (kosong bila valid).
+ */
 export function validatePerformanceForm(form) {
   const errors = [];
   if (!form.equipmentId?.trim()) errors.push('Equipment selection is required');
@@ -190,7 +303,12 @@ export function validatePerformanceForm(form) {
   return errors;
 }
 
-// Sanitize data object before saving to Firebase
+/**
+ * Sanitasi seluruh nilai string (dan string di dalam array) pada objek sebelum disimpan ke Firebase.
+ *
+ * @param {object} data - Objek data mentah.
+ * @returns {object} Salinan objek dengan string yang sudah lewat {@link sanitizeInput}.
+ */
 export function sanitizeDataForFirebase(data) {
   const sanitized = {};
   for (const [key, value] of Object.entries(data)) {
@@ -207,6 +325,12 @@ export function sanitizeDataForFirebase(data) {
   return sanitized;
 }
 
+/**
+ * Normalisasi tanggal ke format `YYYY-MM-DD`.
+ *
+ * @param {string} dateStr - Tanggal dalam format `DD/MM/YYYY` atau format lain yang dapat diparse `Date`.
+ * @returns {string} Tanggal `YYYY-MM-DD`, atau `''` bila tidak dapat diparse.
+ */
 export function formatDate(dateStr) {
   if (!dateStr) return '';
   try {
@@ -220,15 +344,34 @@ export function formatDate(dateStr) {
   return '';
 }
 
+/**
+ * Alias {@link formatDate} untuk nilai yang dipakai pada `<input type="date">`.
+ *
+ * @param {string} dateStr - Tanggal sumber.
+ * @returns {string} Tanggal `YYYY-MM-DD`.
+ */
 export function formatDateForInput(dateStr) {
   return formatDate(dateStr);
 }
 
+/**
+ * Format angka menjadi mata uang Rupiah (IDR).
+ *
+ * @param {number|null|undefined} num - Nilai numerik.
+ * @returns {string} String mata uang, atau `'-'` bila nilai null/undefined.
+ */
 export function formatCurrency(num) {
   if (num === null || num === undefined) return '-';
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(num);
 }
 
+/**
+ * Debounce: tunda eksekusi `func` sampai `wait` ms berlalu tanpa pemanggilan baru.
+ *
+ * @param {Function} func - Fungsi yang akan di-debounce.
+ * @param {number} wait - Jeda dalam milidetik.
+ * @returns {Function} Fungsi terbungkus yang menerima argumen sama dengan `func`.
+ */
 export function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -241,10 +384,23 @@ export function debounce(func, wait) {
   };
 }
 
+/**
+ * Buat id unik berbasis timestamp + random.
+ *
+ * @param {string} [prefix='ID'] - Awalan id.
+ * @returns {string} Id unik, contoh `EQ-1712345678901-a1b2c3d4e`.
+ */
 export function generateId(prefix = 'ID') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
+/**
+ * Parse JSON dengan aman; hasil non-array atau error dikembalikan sebagai fallback.
+ *
+ * @param {string} str - String JSON.
+ * @param {Array} [fallback=[]] - Nilai yang dikembalikan bila parse gagal.
+ * @returns {Array} Array hasil parse, atau `fallback`.
+ */
 export function parseJsonSafe(str, fallback = []) {
   try {
     if (!str || typeof str !== 'string') return fallback;
@@ -256,6 +412,12 @@ export function parseJsonSafe(str, fallback = []) {
   }
 }
 
+/**
+ * Cek apakah sebuah tanggal sudah lewat (sebelum hari ini, dibandingkan pada awal hari).
+ *
+ * @param {string} dateStr - Tanggal yang diperiksa.
+ * @returns {boolean} `true` bila tanggal sebelum hari ini.
+ */
 export function isOverdue(dateStr) {
   if (!dateStr) return false;
   const d = new Date(formatDate(dateStr));
@@ -264,10 +426,25 @@ export function isOverdue(dateStr) {
   return d < today;
 }
 
+/**
+ * Cek apakah stok <= stok minimum.
+ *
+ * @param {number|string} current - Stok saat ini.
+ * @param {number|string} minimum - Stok minimum.
+ * @returns {boolean} `true` bila stok di bawah atau sama dengan minimum.
+ */
 export function isLowStock(current, minimum) {
   return Number(current) <= Number(minimum);
 }
 
+/**
+ * Hitung statistik dashboard: jumlah PM overdue, jumlah part low-stock, dan total downtime.
+ *
+ * @param {Array<object>} equipment - Daftar equipment (memakai `NextPMDate`).
+ * @param {Array<object>} parts - Daftar spare part (memakai `Stok`, `MinStock`).
+ * @param {Array<object>} logs - Daftar history log (memakai `Downtime`).
+ * @returns {{overdueCount: number, lowStockCount: number, totalDown: number}} Statistik ringkas.
+ */
 export function calculateStats(equipment, parts, logs) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -280,6 +457,18 @@ export function calculateStats(equipment, parts, logs) {
   return { overdueCount, lowStockCount, totalDown };
 }
 
+/**
+ * Jalankan `fn` dengan mekanisme retry + exponential backoff.
+ *
+ * @param {Function} fn - Fungsi async yang akan dijalankan.
+ * @param {object} [options={}] - Opsi retry.
+ * @param {number} [options.maxRetries=3] - Jumlah maksimum percobaan.
+ * @param {number} [options.delay=1000] - Delay awal (ms) sebelum percobaan ulang.
+ * @param {number} [options.backoff=2] - Pengali delay tiap percobaan.
+ * @param {Function|null} [options.onRetry=null] - Callback `(attempt, error, delay)` saat akan retry.
+ * @returns {Promise<*>} Hasil `fn()` bila berhasil.
+ * @throws {Error} Error terakhir bila semua percobaan gagal.
+ */
 export async function withRetry(fn, options = {}) {
   const { 
     maxRetries = 3, 
@@ -310,6 +499,12 @@ export async function withRetry(fn, options = {}) {
   throw lastError;
 }
 
+/**
+ * Deteksi error yang berkaitan dengan masalah jaringan.
+ *
+ * @param {Error|object} error - Objek error.
+ * @returns {boolean} `true` bila pesan/kode error mengindikasikan masalah jaringan.
+ */
 export function isNetworkError(error) {
   if (!error) return false;
   const message = error.message?.toLowerCase() || '';
@@ -323,6 +518,12 @@ export function isNetworkError(error) {
   );
 }
 
+/**
+ * Deteksi error yang berkaitan dengan kuota / rate limit.
+ *
+ * @param {Error|object} error - Objek error.
+ * @returns {boolean} `true` bila pesan/kode error mengindikasikan kuota terlampaui.
+ */
 export function isQuotaError(error) {
   if (!error) return false;
   const message = error.message?.toLowerCase() || '';
@@ -338,6 +539,13 @@ export function isQuotaError(error) {
 // PART LIFETIME CALCULATIONS
 // ========================================
 
+/**
+ * Hitung lifetime spare part berdasarkan tanggal pemasangan terakhir dan rata-rata umur pakai.
+ *
+ * @param {string} lastReplaceDate - Tanggal penggantian terakhir (dapat diparse `Date`).
+ * @param {number} avgLifetimeDays - Rata-rata umur pakai (hari).
+ * @returns {{daysUsed: number, daysRemaining: number, percentUsed: number, isOverdue: boolean, isWarning: boolean, status: ('overdue'|'warning'|'ok')}|null} Hasil kalkulasi, atau `null` bila argumen tidak lengkap.
+ */
 export function calculatePartLifetime(lastReplaceDate, avgLifetimeDays) {
   if (!lastReplaceDate || !avgLifetimeDays) return null;
   
@@ -357,6 +565,12 @@ export function calculatePartLifetime(lastReplaceDate, avgLifetimeDays) {
   };
 }
 
+/**
+ * Kelas Tailwind warna teks berdasarkan status lifetime.
+ *
+ * @param {'overdue'|'warning'|'ok'|null} status - Status lifetime.
+ * @returns {string} Kelas Tailwind warna teks.
+ */
 export function getLifetimeColor(status) {
   if (!status) return 'text-emerald-500';
   switch (status) {
@@ -366,6 +580,12 @@ export function getLifetimeColor(status) {
   }
 }
 
+/**
+ * Kelas Tailwind warna background + border berdasarkan status lifetime.
+ *
+ * @param {'overdue'|'warning'|'ok'|null} status - Status lifetime.
+ * @returns {string} Kelas Tailwind warna background + border.
+ */
 export function getLifetimeBgColor(status) {
   if (!status) return 'bg-emerald-500/20 border-emerald-500';
   switch (status) {
@@ -376,7 +596,12 @@ export function getLifetimeBgColor(status) {
 }
 
 /**
- * R3 — Part availability check & stock deduction (pure, testable)
+ * R3 — Part availability check (pure, testable).
+ * Bandingkan quantity yang dibutuhkan dengan stok tersedia untuk tiap item.
+ *
+ * @param {Array<{partId?: string, quantity?: number}>} items - Item yang memakai part.
+ * @param {Array<object>} allParts - Daftar spare part (memakai `PartID`, `Stok`).
+ * @returns {Array<object>} Item dengan tambahan `available`, `ok`, dan `shortage`.
  */
 
 export function checkPartAvailability(items, allParts) {
@@ -389,14 +614,26 @@ export function checkPartAvailability(items, allParts) {
   });
 }
 
+/**
+ * R3 — Kurangi stok part (pure). Stok tidak akan turun di bawah 0.
+ *
+ * @param {object} part - Objek spare part.
+ * @param {number} qty - Jumlah yang dikurangi.
+ * @returns {object} Salinan part dengan `Stok` baru.
+ */
 export function applyStockDeduction(part, qty) {
   const cur = Number(part?.Stok) || 0;
   return { ...part, Stok: Math.max(0, cur - (Number(qty) || 0)) };
 }
 
 /**
- * R6 — Single source truth: compute breakdown duration (bd) from WO logs
- * Sum Downtime of Breakdown logs for given equipment + date.
+ * R6 — Single source of truth: hitung breakdown duration (bd) dari WO logs.
+ * Menjumlahkan `Downtime` dari log berjenis `Breakdown` untuk equipment + tanggal tertentu.
+ *
+ * @param {Array<object>} logs - Daftar history log (memakai `EquipmentID`, `Jenis`, `Tanggal`, `Downtime`).
+ * @param {string} equipId - Equipment id yang difilter.
+ * @param {string} [date] - Bila diisi, hanya log pada tanggal tersebut yang dihitung.
+ * @returns {number} Total downtime (jam).
  */
 export function computeBDFromLogs(logs, equipId, date) {
   return (logs || []).reduce((sum, l) => {

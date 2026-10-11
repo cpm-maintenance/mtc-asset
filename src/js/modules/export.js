@@ -1,8 +1,28 @@
 /**
+ * @file Export & Import module.
+ *
+ * Menangani ekspor Excel/CSV/PDF (Excel full multi-sheet, template, KPI,
+ * Work Order, PM schedule, laporan per-asset) serta impor CSV/Excel.
+ * Modul ini di-mix ke dalam komponen Alpine sehingga metode dapat membaca
+ * state (`this.logs`, `this.equipment`, `this.allParts`, `this.pmList`,
+ * `this.performanceData`, `this.requisitions`) dan memanggil
+ * `this.showNotification`.
+ *
+ * Catatan: PDF memakai jsPDF yang di-import secara lazy; aset gambar
+ * (logo) tidak di-embed agar bundle tetap ringan.
+ */
+/**
  * Export & Import module
  */
 import { generateProfessionalWOPDF } from './wo-pdf-template.js';
 
+/**
+ * Parse JSON dengan aman; bila gagal mengembalikan `fallback`.
+ *
+ * @param {string} str - String JSON.
+ * @param {Array} [fallback=[]] - Nilai pengganti saat parse gagal.
+ * @returns {Array} Array hasil parse, atau `fallback`.
+ */
 function tryParseJSON(str, fallback = []) {
     if (!str || typeof str !== 'string') return fallback;
     try {
@@ -14,12 +34,23 @@ function tryParseJSON(str, fallback = []) {
     }
 }
 
+/**
+ * Import dinamis library `xlsx` (lazy).
+ *
+ * @returns {Promise<*>} Modul XLSX.
+ */
 async function loadXLSX() {
     return await import('xlsx');
 }
 
+/** @type {object|null} Cache instance jsPDF agar tidak di-import berulang. */
 let jsPDFInstance = null;
 
+/**
+ * Ambil (dan cache) constructor jsPDF via dynamic import.
+ *
+ * @returns {Promise<object>} Constructor jsPDF.
+ */
 async function loadJsPDF() {
     if (jsPDFInstance) return jsPDFInstance;
     const { jsPDF } = await import('jspdf');
@@ -27,6 +58,13 @@ async function loadJsPDF() {
     return jsPDF;
 }
 
+/**
+ * Ekspor isi tabel HTML (berdasarkan `elementId`) menjadi PDF landscape sederhana.
+ *
+ * @param {string} elementId - Id elemen tabel sumber.
+ * @param {string} title - Judul yang dicetak di atas tabel.
+ * @returns {Promise<void>}
+ */
 async function exportTableToPDF(elementId, title) {
     try {
         const { jsPDF } = await import('jspdf');
@@ -90,6 +128,11 @@ async function exportTableToPDF(elementId, title) {
     }
 }
 
+/**
+ * Import dinamis plugin `jspdf-autotable` (lazy).
+ *
+ * @returns {Promise<*>} Modul autotable.
+ */
 async function loadJsPDFAutotable() {
     // Now handled in loadJsPDF() - just return true for compatibility
     return true;
@@ -99,6 +142,14 @@ async function loadJsPDFAutotable() {
 // WORK ORDER PDF EXPORT
 // ========================================
 
+/**
+ * Bangun dokumen PDF Work Order profesional (header, status, parts, catatan).
+ *
+ * @param {object} log - Data work order/history log.
+ * @param {Array<object>} equipment - Daftar equipment untuk lookup nama.
+ * @param {Array<object>} parts - Daftar spare part untuk lookup detail.
+ * @returns {Promise<object>} Instance jsPDF dokumen yang sudah jadi.
+ */
 async function generateWOPDF(log, equipment, parts) {
     const jsPDF = await loadJsPDF();
 
@@ -520,9 +571,19 @@ async function generateWOPDF(log, equipment, parts) {
     window.open(pdfUrl, '_blank');
 }
 
+/**
+ * @file Export/Import module (mixin Alpine).
+ * Semua metode memakai `this.*` dari komponen induk dan memicu unduhan file di browser.
+ */
 export const exportModule = {
 
     // D1: Export Excel lengkap — multi-sheet (Equipment, SpareParts, Logs, Performance, PM, Requisitions)
+/**
+ * Ekspor Excel lengkap multi-sheet (Equipment, SpareParts, HistoryLog,
+ * Performance, PM_Schedule, Requisitions) + sheet Summary.
+ *
+ * @returns {Promise<void>} Memicu unduhan `.xlsx` dan notifikasi.
+ */
     async exportExcelFull() {
         const XLSX = await loadXLSX();
         const raw = (arr) => window.Alpine?.raw ? window.Alpine.raw(arr || []) : (arr || []);
@@ -571,6 +632,12 @@ export const exportModule = {
         this.showNotification?.('Excel lengkap diekspor');
     },
 
+/**
+ * Unduh file template CSV untuk tipe data tertentu.
+ *
+ * @param {('equip'|'parts'|'logs'|'perf')} type - Jenis template.
+ * @returns {Promise<void>} Memicu unduhan `.csv`.
+ */
     async downloadTemplate(type) {
         const XLSX = await loadXLSX();
         let data = [], file = "";
@@ -610,6 +677,13 @@ export const exportModule = {
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${file}.csv`; a.click();
     },
 
+/**
+ * Ekspor data satu tipe ke format Excel atau CSV.
+ *
+ * @param {('perf'|'equip'|'parts'|'logs')} type - Jenis data.
+ * @param {('excel'|'csv')} format - Format keluaran.
+ * @returns {Promise<void>} Memicu unduhan file.
+ */
     async exportData(type, format) {
         const XLSX = await loadXLSX();
         let data = [], file = "";
@@ -649,6 +723,11 @@ export const exportModule = {
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${file}_${Date.now()}.csv`; a.click();
     },
 
+/**
+ * Ekspor tabel KPI performance ke PDF (memerlukan `#perfTable`).
+ *
+ * @returns {Promise<void>} Memicu unduhan PDF dan notifikasi.
+ */
     async exportKPIToPDF() {
         if (!this.performanceData || this.performanceData.length === 0) {
             this.showNotification("No performance data to export", "error");
@@ -665,6 +744,12 @@ export const exportModule = {
         }
     },
 
+/**
+ * Ekspor satu Work Order (berdasarkan `logId`) menjadi PDF profesional.
+ *
+ * @param {string} logId - Id work order (`LogID`).
+ * @returns {Promise<void>} Memicu unduhan PDF dan notifikasi.
+ */
     async exportWOToPDF(logId) {
         if (!logId) {
             this.showNotification("No work order selected", "error");
@@ -694,6 +779,11 @@ export const exportModule = {
         }
     },
 
+/**
+ * Ekspor jadwal PM ke PDF (landscape, dikelompokkan per status/tanggal).
+ *
+ * @returns {Promise<void>} Memicu unduhan PDF; men-set `this.isLoading`.
+ */
     async exportPMSchedulePDF() {
         this.isLoading = true;
         try {
@@ -824,6 +914,12 @@ export const exportModule = {
         }
     },
 
+/**
+ * Ekspor laporan lengkap satu asset (info, health/MTBF, log, PM, parts) ke PDF.
+ *
+ * @param {object} equip - Data equipment (harus punya `EquipmentID`).
+ * @returns {Promise<void>} Memicu unduhan PDF; men-set `this.isLoading`.
+ */
     async exportToPDF(equip) {
         if (!equip || !equip.EquipmentID) {
             this.showNotification("No equipment selected", "error");
@@ -973,6 +1069,13 @@ export const exportModule = {
         }
     },
 
+/**
+ * Impor data dari file CSV/Excel yang dipilih user, lalu tulis ke RTDB per node.
+ *
+ * @param {Event} event - Event `change` dari `<input type="file">`.
+ * @param {('perf'|'equip'|'parts'|'logs')} type - Jenis data yang diimpor.
+ * @returns {Promise<void>} Memperbarui `this.importProgress` dan notifikasi.
+ */
     async importCSV(event, type) {
         const XLSX = await loadXLSX();
         const file = event.target.files[0];
