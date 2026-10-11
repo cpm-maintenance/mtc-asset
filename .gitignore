@@ -82,3 +82,8 @@ dist/
 
 # Scratch/dev scripts (one-off patches)
 scratch/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/

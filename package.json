@@ -19,15 +19,22 @@
     "backup:firebase": "node scripts/backup-firebase.js",
     "backup:quick": "scripts/backup.bat",
     "deploy": "firebase deploy --only hosting",
-    "deploy:all": "firebase deploy"
+    "deploy:all": "firebase deploy",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@firebase/rules-unit-testing": "^6.0.0",
+    "@playwright/test": "^1.64.0",
+    "@testing-library/dom": "^10.4.2",
+    "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "firebase-tools": "^15.33.0",
     "globals": "^17.13.0",
+    "jsdom": "^30.1.2",
     "prettier": "^3.9.10",
     "vite": "^8.0.8",
     "vite-plugin-pwa": "^1.2.0",

@@ -94,7 +94,7 @@ export default [
 
   // ── Tests ──────────────────────────────────────────────────────────────
   {
-    files: ['tests/**/*.js', '**/*.test.js', '**/*.config.js'],
+    files: ['tests/**/*.js', 'e2e/**/*.js', '**/*.test.js', '**/*.config.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
