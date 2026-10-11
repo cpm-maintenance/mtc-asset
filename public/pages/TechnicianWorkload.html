@@ -16,8 +16,8 @@
 
   <!-- Stats Cards -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-cyan-500">
-      <div class="text-xl md:text-2xl font-black text-cyan-500" x-text="twTechList.length"></div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-amber-500">
+      <div class="text-xl md:text-2xl font-black text-amber-500" x-text="twTechList.length"></div>
       <div class="text-[10px] text-slate-500 uppercase tracking-widest">Technicians</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-blue-500">
@@ -43,7 +43,7 @@
       <i class="fas fa-times"></i> Clear
     </button>
     <label class="flex items-center gap-2 text-xs text-slate-500 font-bold">
-      <input type="checkbox" x-model="twHideZero" class="accent-cyan-500"> Hide idle
+      <input type="checkbox" x-model="twHideZero" class="accent-amber-500"> Hide idle
     </label>
   </div>
 
@@ -75,7 +75,7 @@
               <div class="flex items-center gap-2 mt-0.5">
                 <span class="text-xs text-slate-500 font-bold"><span x-text="tech.wos.length"></span> WOs</span>
                 <span class="text-slate-600">·</span>
-                <span class="text-xs font-bold text-cyan-400" title="Mean Time To Repair">
+                <span class="text-xs font-bold text-amber-400" title="Mean Time To Repair">
                   MTTR <span x-text="techMttr(tech.name)"></span>h
                 </span>
                 <span x-show="techBreakdowns(tech.name) > 0" class="text-slate-600">·</span>

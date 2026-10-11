@@ -3,7 +3,7 @@
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
     <div>
-      <h3 class="font-black text-xl lg:text-2xl text-cyan-400 nexus-glow-text uppercase tracking-tight">MTBF / MTTR</h3>
+      <h3 class="font-black text-xl lg:text-2xl text-amber-400 nexus-glow-text uppercase tracking-tight">MTBF / MTTR</h3>
       <p class="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Reliability &amp; Maintainability Trends</p>
     </div>
     <div class="flex items-center gap-2">
@@ -28,7 +28,7 @@
       <div x-show="mtbfFilterEquip" class="flex gap-2">
         <div class="glass p-3 rounded-xl">
           <span class="text-[9px] text-slate-500 block uppercase font-black tracking-widest">MTBF</span>
-          <span class="text-lg font-black text-cyan-400" x-text="(mtbfResult?.mtbfDays || 0) + ' days'"></span>
+          <span class="text-lg font-black text-amber-400" x-text="(mtbfResult?.mtbfDays || 0) + ' days'"></span>
         </div>
         <div class="glass p-3 rounded-xl">
           <span class="text-[9px] text-slate-500 block uppercase font-black tracking-widest">MTTR</span>

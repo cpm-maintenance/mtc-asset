@@ -57,8 +57,8 @@
       <div class="text-xl md:text-2xl font-black text-amber-500" x-text="mpPMTasks.length"></div>
       <div class="text-[10px] text-slate-500 uppercase tracking-widest">PM Tasks</div>
     </div>
-    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-cyan-500">
-      <div class="text-xl md:text-2xl font-black text-cyan-500" x-text="mpOpenWOs.length"></div>
+    <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-amber-500">
+      <div class="text-xl md:text-2xl font-black text-amber-500" x-text="mpOpenWOs.length"></div>
       <div class="text-[10px] text-slate-500 uppercase tracking-widest">Open WOs</div>
     </div>
     <div class="glass border-nexus-accent/10 p-4 text-center border-l-2 border-emerald-500">
@@ -99,7 +99,7 @@
   <!-- Open WOs Section -->
   <div x-show="!mpLoading" class="glass border-nexus-accent/10 rounded-2xl overflow-hidden">
     <div class="p-4 border-b border-white/5 flex items-center gap-2">
-      <i class="fas fa-clipboard-list text-cyan-400"></i>
+      <i class="fas fa-clipboard-list text-amber-400"></i>
       <span class="text-sm font-black text-white uppercase tracking-widest">Open Work Orders <span class="text-slate-500 font-mono" x-text="mpOpenWOs.length"></span></span>
     </div>
     <div x-show="mpOpenWOs.length === 0" class="p-6 text-center text-slate-600"><i class="fas fa-check-circle text-2xl mb-2 block"></i><p class="text-xs font-bold">No open WOs this month</p></div>

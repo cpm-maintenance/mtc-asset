@@ -26,7 +26,7 @@ export const uiModule = {
             success: { icon: 'fa-check-circle', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400', glow: 'shadow-emerald-500/20', bar: 'bg-emerald-400' },
             error: { icon: 'fa-times-circle', color: 'border-rose-500/40 bg-rose-500/10 text-rose-400', glow: 'shadow-rose-500/20', bar: 'bg-rose-400' },
             warning: { icon: 'fa-exclamation-triangle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
-            info: { icon: 'fa-info-circle', color: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400', glow: 'shadow-cyan-500/20', bar: 'bg-cyan-400' },
+            info: { icon: 'fa-info-circle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
         };
         const c = config[type] || config.info;
         this.notifications.push({
@@ -216,7 +216,7 @@ export const uiModule = {
             'In Progress': 'border-blue-500/20 text-blue-400 bg-blue-500/5',
             'Pending': 'border-amber-500/20 text-amber-400 bg-amber-500/5',
             'Cancelled': 'border-slate-500/20 text-slate-400 bg-slate-500/5',
-            'Approved': 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5',
+            'Approved': 'border-teal-500/20 text-teal-400 bg-teal-500/5',
             'Draft': 'border-purple-500/20 text-purple-400 bg-purple-500/5'
         };
         return colors[status] || 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5';

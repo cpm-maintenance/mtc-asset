@@ -222,7 +222,7 @@ export function setupForegroundListener() {
  * Push a notification into the in-app notification panel (lonceng).
  * This makes alerts visible in the bell badge + notification modal.
  */
-function pushInAppNotif(type, message, icon, color = 'border-cyan-500 bg-cyan-500/20 text-cyan-400') {
+function pushInAppNotif(type, message, icon, color = 'border-amber-500 bg-amber-500/20 text-amber-400') {
   const app = window.app;
   if (!app || !Array.isArray(app.notifications)) return;
   const id = Date.now() + Math.random();

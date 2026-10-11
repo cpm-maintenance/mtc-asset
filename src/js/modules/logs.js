@@ -701,7 +701,7 @@ async approveWO(logId) {
                 type: 'Work Order',
                 message: notifyMsg,
                 icon: 'fa-play',
-                color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+                color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                 exiting: false
             });
             
@@ -713,7 +713,7 @@ async approveWO(logId) {
                     type: 'Work Order',
                     message: notifyMsg,
                     icon: 'fa-play',
-                    color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+                    color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                     exiting: false
                 });
             }
