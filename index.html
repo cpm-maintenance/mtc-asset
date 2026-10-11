@@ -615,6 +615,9 @@
       </div>
     </header>
 
+    <!-- P2-4: konten halaman hanya dirender setelah login — cegah chart/DOM berat
+         di-render di belakang layar login (boros render + flash di koneksi lambat) -->
+    <template x-if="isLoggedIn">
     <div class="p-4 md:p-6 lg:p-8 w-full max-w-[1920px] mx-auto"
       :class="!isOnline ? 'mt-8' : 'mt-0'">
 
@@ -880,6 +883,7 @@
       </div>
 
     </div>
+    </template>
   </main>
 
   <!-- Mobile Bottom Navigation (5 slots + More) -->
