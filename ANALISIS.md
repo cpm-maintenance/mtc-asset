@@ -2,7 +2,7 @@
 
 **Versi**: 1.0.0 | **Stack**: Alpine.js + Firebase RTDB + Vite + Tailwind | **Type**: PWA Maintenance Management
 
-> Update 29 Juni 2026 — setelah refactor besar (app.js 1,670→455 lines) + 95 unit tests
+> Update 11 Oktober 2026 — `app.js` 1.635 baris, 152 unit/integration/component test + 28 rules test + E2E Playwright, lint 0 error
 
 ---
 
@@ -10,33 +10,41 @@
 
 | Metrik | Nilai |
 |---|---|
-| **Total JS files** | 20 files (+2: charts.js, error-handler.js, bootstrap.js) |
-| **Total JS lines** | ~7,800 lines |
-| **Total HTML pages** | 10 pages (~1,478 lines) |
-| **`app.js`** | **455 lines** (⬇️ dari 1,559) |
-| **Dependencies** | 13 produksi + 3 dev |
+| **Total JS files** | 30 files di `src/js/` (+ `store.js`, `db.js`, `icons.js`, `lucide-icons.js`, `enterprise-kpi.js`, `audit.js`, `onesignal.js`) |
+| **Total JS lines** | ~11.700 lines |
+| **Total HTML pages** | 18 pages (`public/pages/`) |
+| **`app.js`** | **1.635 lines** (orchestrator + state + getters) |
+| **Dependencies** | 14 produksi + 14 dev |
 
 ### Breakdown Modul
 
 | Modul | Lines | Fungsi |
 |---|---|---|
-| `export.js` | 873 | PDF, XLSX, CSV export/import |
-| `ai.js` | 834 | AI integration + multi-key + chat (merged from app.js) |
-| `pm-schedule.js` | 584 | PM Schedule CRUD + calendar + gantt |
-| `logs.js` | 574 | Work Order CRUD + status flow |
-| `data.js` | 680 | Firebase data loading + sync |
-| `wo-pdf-template.js` | 355 | Premium WO PDF template |
-| `utils.js` | 360 | Utility helpers |
-| `notification.js` | 303 | FCM + Browser notifications |
-| `ui.js` | 295 | Toast, modal, QR scanner |
-| `indexeddb.js` | 252 | Offline cache |
-| `performance.js` | 245 | Performance data CRUD |
-| `auth.js` | 197 | Login, role management |
-| `charts.js` | 230 | Chart rendering (extracted) |
-| `equipment.js` | 151 | Equipment CRUD |
-| `parts.js` | 151 | Spare parts CRUD |
-| `kpi-engine.js` | 129 | KPI calculation engine |
-| **`app.js`** | **455** | 🎯 Sekarang cuma orchestrator |
+| `export.js` | 1.073 | PDF, XLSX, CSV export/import |
+| `ai.js` | 834 | AI integration + multi-key + chat |
+| `logs.js` | 792 | Work Order CRUD + status flow |
+| `data.js` | 762 | Firebase data loading + sync |
+| `lucide-icons.js` | 705 | Icon set (inline SVG) |
+| `pm-schedule.js` | 682 | PM Schedule CRUD + calendar + gantt |
+| `charts.js` | 517 | Chart rendering |
+| `requisition.js` | 452 | Request Part CRUD + approval chain |
+| `utils.js` | 407 | Utility helpers |
+| `notification.js` | 400 | FCM + Browser notifications |
+| `ui.js` | 400 | Toast, modal, QR scanner |
+| `enterprise-kpi.js` | 399 | Enterprise KPI / analytics |
+| `wo-pdf-template.js` | 395 | Premium WO PDF template |
+| `performance.js` | 303 | Performance data CRUD |
+| `indexeddb.js` | 273 | Offline cache |
+| `auth.js` | 268 | Login, role management |
+| `kpi-engine.js` | 199 | KPI calculation engine |
+| `bootstrap.js` | 175 | Init, watchers, lifecycle |
+| `parts.js` | 172 | Spare parts CRUD |
+| `equipment.js` | 164 | Equipment CRUD |
+| `onesignal.js` | 96 | OneSignal push client |
+| `audit.js` | 88 | Audit trail (append-only) |
+| `store.js` | 54 | State defaults (DEFAULT_STORE) |
+| `db.js` | 50 | Firebase DB helpers |
+| **`app.js`** | **1.635** | 🎯 Orchestrator + state + getter + thin helpers (spread 16 modul) |
 
 ---
 
@@ -44,7 +52,7 @@
 
 ### ✅ Kelebihan
 - **Modular pattern** — 16 modul terpisah, each focused
-- **`app.js` 455 lines** — turun 73%, cuma state + getter + thin helpers
+- **`app.js` 1.635 lines** — state + getter + thin helpers, 16 modul di-spread
 - **ComponentLoader** — Halaman on-demand `x-page` directive
 - **Firebase Realtime** — real-time sync via `onValue`
 - **Chunk splitting** — ✅ Vite manualChunks
@@ -113,15 +121,17 @@ Chunk splitting ✅, Firebase streaming ✅, Canvas retry ✅.
 
 ## 🧪 7. Testing: **6/10** ↑
 
-**95 tests passing** ⬆️ (dari 0). Coverage: ~85% pure functions utils.
-- Masih kurang: integration test (Firebase mock), component test (Alpine), E2E (Playwright)
+**152 unit/integration/component test** (`tests/`) + **28 Firebase rules test** (`database.rules.test.js`) + **E2E Playwright** (`e2e/`: smoke + WO/PDF).
+- Coverage via `vitest --coverage` (threshold ratchet, coverage-v8).
+- Sudah ada: integration test (Firebase mock), component test (Alpine + `@testing-library/dom`), E2E.
+- Masih kurang: E2E flow butuh kredensial real (self-skip tanpa `E2E_EMAIL`/`E2E_PASSWORD`).
 
 ---
 
 ## 🔧 8. Maintainability: **7/10** ↑
 
 - Folder jelas, naming consistent, Git rapi, GitHub Actions
-- `app.js` sekarang **455 lines** (⬇️ dari 1,559)
+- `app.js` sekarang **1.635 lines** — state + getter + thin helpers
 - Modules terfokus, zero duplication
 - Minus: No TypeScript, no JSDoc, `window.app` global
 
@@ -130,7 +140,8 @@ Chunk splitting ✅, Firebase streaming ✅, Canvas retry ✅.
 ## 📚 9. Dokumentasi: **7/10**
 
 AGENTS.md, ANALISIS.md, commit messages deskriptif ✅.
-- Minus: README masih default package.json
+- README lengkap (fitur, stack, struktur, scripts) ✅
+- Minus: dokumen historis (`SESSION_NOTES.md`, `DEVELOPMENT_LOG.md`) belum diarsipkan
 
 ---
 
@@ -139,16 +150,16 @@ AGENTS.md, ANALISIS.md, commit messages deskriptif ✅.
 | Kategori | Bobot | Skor | Weighted |
 |---|---|---|---|
 | Arsitektur | 20% | **7.5** | 1.50 |
-| Kualitas Kode | 15% | **7.5** | 1.13 |
-| Fitur | 20% | **8.5** | 1.70 |
-| UI/UX | 15% | **8.0** | 1.20 |
-| Keamanan | 10% | **6.0** | 0.60 |
-| Performa | 5% | **7.5** | 0.38 |
-| Testing | 5% | **6.0** | 0.30 |
-| Maintainability | 5% | **7.0** | 0.35 |
-| Dokumentasi | 5% | **7.0** | 0.35 |
+| Kualitas Kode | 15% | **8.0** | 1.20 |
+| Fitur | 20% | **9.0** | 1.80 |
+| UI/UX | 15% | **8.5** | 1.28 |
+| Keamanan | 10% | **7.5** | 0.75 |
+| Performa | 5% | **8.0** | 0.40 |
+| Testing | 5% | **8.5** | 0.43 |
+| Maintainability | 5% | **7.5** | 0.38 |
+| Dokumentasi | 5% | **7.5** | 0.38 |
 
-**TOTAL**: **7.51 / 10** (⬆️ dari 6.91)
+**TOTAL**: **8.10 / 10** (⬆️ dari 7.51)
 
 ---
 
@@ -158,41 +169,41 @@ AGENTS.md, ANALISIS.md, commit messages deskriptif ✅.
 
 | # | Item | Effort | Dampak | Detail |
 |---|---|---|---|---|
-| 1 | **Role-based access** | 4 jam | 🔥 | `data.js` udah punya `userRole`. Tinggal tambah guard di page load + hide UI |
-| 2 | **`structuredClone` ganti `JSON.parse(JSON.stringify())`** | 15 menit | 🟢 | Native browser API, lebih cepat & handle Date/Map. Cari `.JSON.parse(JSON.stringify` di codebase |
-| 3 | **Backup email otomatis** | 3 jam | 🟡 | Firebase Function + nodemailer — kirim laporan PM overdue mingguan |
-| 4 | **Update README** | 30 menit | 🟡 | Fitur, stack, cara run, screenshots |
+| 1 | **Role-based access** | 4 jam | 🔥 | ✅ **Selesai** — `role` bersumber tunggal dari RTDB `Users/{uid}/role`; guard admin/supervisor + rules |
+| 2 | **`structuredClone` ganti `JSON.parse(JSON.stringify())`** | 15 menit | 🟢 | Native browser API, lebih cepat & handle Date/Map |
+| 3 | **Backup email otomatis** | 3 jam | 🟡 | Firebase Function + nodemailer — laporan PM overdue mingguan |
+| 4 | **Update README** | 30 menit | 🟡 | ✅ **Selesai** — fitur, stack, struktur, scripts lengkap |
 
 ### 🟡 MEDIUM IMPACT — Bulan ini
 
 | # | Item | Effort | Dampak |
 |---|---|---|---|
-| 5 | **Virtual scroll** | 6 jam | 🟡 | Equipment/logs >100 entries jadi lambat. Pake `alpine-virtual-scroll` atau IntersectionObserver |
+| 5 | **Virtual scroll** | 6 jam | 🟡 | Equipment/logs >100 entries jadi lambat |
 | 6 | **JSDoc di modul public API** | 3 jam | 🟡 | Export functions biar ada intellisense |
-| 7 | **Skeleton loading** | 2 jam | 🟢 | Daripada spinner, kasih skeleton card biar feel premium |
-| 8 | **Firebase security rules hardening** | 1 jam | 🔥 | Validate input di rules, bukan cuma di frontend |
+| 7 | **Skeleton loading** | 2 jam | 🟢 | ✅ **Selesai** — skeleton card di Dashboard & halaman utama |
+| 8 | **Firebase security rules hardening** | 1 jam | 🔥 | ✅ **Selesai** — validate input di rules, append-only AuditTrail |
 
 ### 🟢 NICE TO HAVE
 
 | # | Item | Effort |
 |---|---|---|
-| 9 | **Dark/Light mode toggle** | 1 jam |
+| 9 | **Dark/Light mode toggle** | 1 jam | ✅ **Selesai** — 4 tema (Gold/Navy/Purple/Light) |
 | 10 | **Bulk equipment QR print** | 4 jam |
-| 11 | **E2E test (Playwright)** | 8 jam |
+| 11 | **E2E test (Playwright)** | 8 jam | ✅ **Selesai** — smoke + WO/PDF |
 | 12 | **Migrasi TypeScript** | 16-24 jam |
-| 13 | **Activity log / Audit trail** | 6 jam |
+| 13 | **Activity log / Audit trail** | 6 jam | ✅ **Selesai** — `modules/audit.js` (append-only) |
 
 ---
 
 ## 🧠 Insight Arsitektur
 
 ```
-app.js (orchestrator, 455 lines)
+app.js (orchestrator + state + getters, 1.635 lines)
  ├── State (equipment, logs, parts, filters, forms)
  ├── Getters (filteredWorkOrders, filteredEquip, ...)
  ├── Thin helpers (confirmDelete, cleanUrl, forceRefreshLogs, ...)
  ├── Spread:
- │   ├── authModule (login, logout)
+ │   ├── authModule (login, logout, user management)
  │   ├── uiModule (toast, modal, QR)
  │   ├── dataModule (Firebase listeners)
  │   ├── equipmentModule (CRUD)
@@ -204,6 +215,9 @@ app.js (orchestrator, 455 lines)
  │   ├── aiModule (AI chat + analyze + settings)
  │   ├── pmScheduleModule (PM calendar + gantt)
  │   ├── chartModule (chart rendering)
+ │   ├── requisitionModule (Request Part + approval)
+ │   ├── enterpriseKpiModule (analytics)
+ │   ├── auditModule (append-only audit trail)
  │   ├── errorHandlerModule (Sentry + notifications)
  │   └── bootstrapModule (init, watchers, role check)
  └── Ponytail comments (code ceiling documentation)
@@ -218,8 +232,8 @@ app.js (orchestrator, 455 lines)
 
 ## 💡 Kesimpulan
 
-**Skor: 7.51/10** — Naik 0.6 poin dari refactor + testing.
+**Skor: 8.10/10** — naik dari 7.51 setelah hardening rules, role-based access, test suite lengkap, dan perbaikan render guard.
 
-- **Kekuatan**: Fitur lengkap + modular + CI/CD + PWA
-- **Kelemahan**: Security masih frontend-heavy, no TypeScript, Alpine.js implicit coupling
-- **Prioritas #1**: Role-based access — paling gampang, impact paling gede
+- **Kekuatan**: Fitur lengkap + modular + CI/CD + PWA + rules ketat + test coverage
+- **Kelemahan**: `app.js` masih besar (1.635 baris), no TypeScript, Alpine.js implicit coupling
+- **Prioritas #1**: Migrasi bertahap ke store pattern / TypeScript

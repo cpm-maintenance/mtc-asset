@@ -1,7 +1,7 @@
 # 🛠️ Rekomendasi Tools Tambahan — MTC-Asset
 
-> **Dibuat:** 22 Juni 2026
-> **Berdasarkan analisis:** `app.js` (1340 baris), 12 modules, Firebase RTDB + Auth + Storage
+> **Dibuat:** 22 Juni 2026 | **Diperbarui:** 11 Oktober 2026
+> **Status:** sebagian besar rekomendasi prioritas tinggi sudah diimplementasi (lihat ✅)
 
 ---
 
@@ -15,7 +15,7 @@
 | **Solusi** | Integrasi **Sentry** untuk capture error otomatis (JS exceptions, promise rejections, Firebase errors) + performance tracing. |
 | **Cara** | `npm install @sentry/browser` → init di `src/main.js` |
 | **Effort** | 2-4 jam |
-| **Prioritas** | 🔴 **Wajib** |
+| **Prioritas** | 🔴 **Wajib** — ✅ **Sudah diimplementasi** (`@sentry/browser` di `src/main.js`, lazy-load hanya saat `VITE_SENTRY_DSN` terisi + RUM web-vitals) |
 
 ```js
 // Contoh integrasi di main.js
@@ -36,7 +36,7 @@ Sentry.init({
 | **Masalah** | Build & deploy masih manual (`npm run build` + `firebase deploy`). Risiko human error, lupa deploy. |
 | **Solusi** | Auto build + deploy ke Firebase Hosting tiap push ke `main`, plus cron backup Firebase tiap malam. |
 | **Effort** | 4-6 jam |
-| **Prioritas** | 🔴 **Wajib** |
+| **Prioritas** | 🔴 **Wajib** — ✅ **Sudah diimplementasi** (`.github/workflows/deploy.yml`, `backup.yml`, `test.yml`) |
 
 **Workflow yang direkomendasikan:**
 1. **Push ke `main`** → Build + Deploy ke Firebase Hosting
@@ -72,7 +72,7 @@ jobs:
 | **Masalah** | `app.js` sudah **1340 baris** — semua state jadi satu object Alpine raksasa. Sulit di-maintain, debug, dan test. |
 | **Solusi** | Pisahkan state ke store terpisah. Opsi: **Zustand** (ringan, tanpa boilerplate) atau tetap Alpine tapi modular dengan store functions. |
 | **Effort** | 8-16 jam (gradual, per modul) |
-| **Prioritas** | 🟡 **Sangat disarankan** |
+| **Prioritas** | 🟡 **Sangat disarankan** — ⏳ **Sebagian** (`src/js/store.js` `DEFAULT_STORE` sudah ada, belum migrasi penuh dari `app.js`) |
 
 ```js
 // Contoh dengan Zustand
@@ -103,29 +103,29 @@ export const usePartStore = create((set) => ({
 | **Solusi** | **Firebase Cloud Messaging** (built-in, gratis) atau **OneSignal** (lebih canggih). Notifikasi browser via PWA. |
 | **Skenario** | • WO baru dengan priority Emergency/Urgent<br>• Stok part di bawah safety level<br>• Jadwal PM sudah dekat (H-3) |
 | **Effort** | 8-12 jam |
-| **Prioritas** | 🟡 **High** |
+| **Prioritas** | 🟡 **High** — ✅ **Sudah diimplementasi** (FCM + OneSignal: `modules/notification.js`, `modules/onesignal.js`, `api/push.js`) |
 
 ---
 
 ### 5. Tabel Perbandingan Semua Tools
 
-| # | Tool | Fungsi | Effort | Prioritas | Dependency Baru |
-|---|------|--------|--------|-----------|-----------------|
-| 1 | **Sentry** | Error tracking production | 2-4 jam | 🔴 Wajib | `@sentry/browser` |
-| 2 | **GitHub Actions** | Auto deploy + backup | 4-6 jam | 🔴 Wajib | - (workflow YAML) |
-| 3 | **Zustand** | State management | 8-16 jam | 🟡 Sangat Disarankan | `zustand` |
-| 4 | **Push Notification** | WO/stock alert | 8-12 jam | 🟡 High | `firebase/messaging` |
-| 5 | **Lighthouse CI** | Performance audit | 2-4 jam | 🟡 Medium | `@lhci/cli` |
-| 6 | **TypeScript** (gradual) | Type safety | 16-24 jam | 🟡 Medium | `typescript` |
-| 7 | **i18next** | Multi-bahasa | 8-12 jam | 🟡 Medium | `i18next` |
-| 8 | **ESLint + Prettier** | Code quality | 2-4 jam | 🟡 Medium | `eslint prettier` |
-| 9 | **FullCalendar** | Kalender PM jadwal | 8-12 jam | 🟢 Low | `@fullcalendar/core` |
-| 10 | **chartjs-plugin-annotation** | Target line di grafik | 1-2 jam | 🟢 Low | `chartjs-plugin-annotation` |
-| 11 | **chartjs-plugin-datalabels** | Label angka di chart | 1-2 jam | 🟢 Low | `chartjs-plugin-datalabels` |
-| 12 | **Leaflet.js** | Peta lokasi equipment | 8-12 jam | 🟢 Low | `leaflet` |
-| 13 | **ExcelJS** | Export Excel advanced | 4-8 jam | 🟢 Low | `exceljs` |
-| 14 | **pdf-lib** | PDF template kompleks | 4-8 jam | 🟢 Low | `pdf-lib` |
-| 15 | **Alpine DevTools** | Debug reactivity | 0 jam (extension) | 🟡 Medium | - |
+| # | Tool | Fungsi | Effort | Prioritas | Status |
+|---|------|--------|--------|-----------|--------|
+| 1 | **Sentry** | Error tracking production | 2-4 jam | 🔴 Wajib | ✅ Terpasang |
+| 2 | **GitHub Actions** | Auto deploy + backup | 4-6 jam | 🔴 Wajib | ✅ Terpasang |
+| 3 | **Zustand** | State management | 8-16 jam | 🟡 Sangat Disarankan | ⏳ Sebagian (`store.js`) |
+| 4 | **Push Notification** | WO/stock alert | 8-12 jam | 🟡 High | ✅ FCM + OneSignal |
+| 5 | **Lighthouse CI** | Performance audit | 2-4 jam | 🟡 Medium | ⬜ Belum |
+| 6 | **TypeScript** (gradual) | Type safety | 16-24 jam | 🟡 Medium | ⬜ Belum |
+| 7 | **i18next** | Multi-bahasa | 8-12 jam | 🟡 Medium | ⬜ Belum |
+| 8 | **ESLint + Prettier** | Code quality | 2-4 jam | 🟡 Medium | ✅ Terpasang (0 error) |
+| 9 | **FullCalendar** | Kalender PM jadwal | 8-12 jam | 🟢 Low | ⬜ Belum (pakai kalender custom) |
+| 10 | **chartjs-plugin-annotation** | Target line di grafik | 1-2 jam | 🟢 Low | ⬜ Belum |
+| 11 | **chartjs-plugin-datalabels** | Label angka di chart | 1-2 jam | 🟢 Low | ⬜ Belum |
+| 12 | **Leaflet.js** | Peta lokasi equipment | 8-12 jam | 🟢 Low | ⬜ Belum |
+| 13 | **ExcelJS** | Export Excel advanced | 4-8 jam | 🟢 Low | ⬜ Belum (pakai SheetJS) |
+| 14 | **pdf-lib** | PDF template kompleks | 4-8 jam | 🟢 Low | ⬜ Belum (pakai jsPDF) |
+| 15 | **Alpine DevTools** | Debug reactivity | 0 jam (extension) | 🟡 Medium | ⬜ Opsional |
 
 ---
 
@@ -218,15 +218,15 @@ npx eslint --init
 
 ## 📊 Roadmap Implementasi
 
-### Fase 1 — Foundation (Minggu ini)
-- [ ] **Sentry** — error tracking production
-- [ ] **GitHub Actions** — auto deploy + backup
+### Fase 1 — Foundation (Minggu ini) ✅
+- [x] **Sentry** — error tracking production
+- [x] **GitHub Actions** — auto deploy + backup
 - [ ] **chartjs-plugin-datalabels** — quick visual win
-- [ ] **ESLint + Prettier** — code quality
+- [x] **ESLint + Prettier** — code quality
 
 ### Fase 2 — Enhancement (2-3 minggu)
-- [ ] **State management** — refactor `app.js` ke store terpisah
-- [ ] **Push notifications** — alert WO urgent & low stock
+- [ ] **State management** — refactor `app.js` ke store terpisah (⏳ sebagian)
+- [x] **Push notifications** — alert WO urgent & low stock (FCM + OneSignal)
 - [ ] **Lighthouse CI** — performance gates
 
 ### Fase 3 — Power Features (Bulan depan)

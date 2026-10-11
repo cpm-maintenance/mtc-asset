@@ -43,7 +43,7 @@
 | **QR** | html5-qrcode, qrcode |
 | **AI** | OpenAI / Claude / OpenRouter API |
 | **Error Tracking** | Sentry |
-| **Testing** | Vitest (95+ unit tests) |
+| **Testing** | Vitest (152 unit/integration/component) + Firebase rules test + Playwright E2E |
 
 ---
 
@@ -87,10 +87,30 @@ npm run deploy
 | `npm run preview` | Preview production build |
 | `npm run test` | Run vitest (watch) |
 | `npm run test:run` | Run vitest once |
+| `npm run test:rules` | Firebase rules test (emulator) |
+| `npm run test:coverage` | Vitest + coverage |
+| `npm run test:e2e` | Playwright E2E |
+| `npm run lint` / `lint:fix` | ESLint |
+| `npm run format` / `format:check` | Prettier |
 | `npm run backup` | Firebase data + git commit |
 | `npm run backup:firebase` | Firebase data only |
 | `npm run deploy` | Deploy hosting to Firebase |
 | `npm run deploy:all` | Deploy hosting + database rules |
+
+---
+
+## 🔌 Backend Tambahan
+
+Selain Firebase, ada beberapa backend tambahan untuk push notification:
+
+| Komponen | Platform | Fungsi |
+|----------|----------|--------|
+| `api/push.js` | Vercel serverless | Proxy OneSignal push — baca `ONESIGNAL_API_KEY` dari env Vercel |
+| `api/fcm-push.js` | Vercel serverless | Proxy FCM push |
+| `onesignal-server/` | Render (standalone) | Backend OneSignal mandiri (`index.js` + `package.json`) |
+
+> API key push **tidak** dibundel ke frontend — selalu lewat proxy server (env), sesuai pola `.env`.
+
 
 ---
 
@@ -99,52 +119,77 @@ npm run deploy
 ```
 mtc-asset/
 ├── index.html              # Main SPA shell (sidebar, nav, routing)
+├── api/                    # Vercel serverless functions
+│   ├── push.js             # OneSignal push proxy (env: ONESIGNAL_API_KEY)
+│   └── fcm-push.js         # FCM push proxy
+├── onesignal-server/       # Standalone OneSignal backend (Render)
+│   ├── index.js
+│   └── package.json
 ├── public/
-│   └── pages/              # Route components (loaded on-demand)
-│       ├── Dashboard.html
-│       ├── Equipment.html
-│       ├── EquipmentDetail.html
-│       ├── SpareParts.html
-│       ├── WorkOrders.html
-│       ├── AllLogs.html
-│       ├── PMSchedule.html
-│       ├── Performance.html
-│       ├── KPI.html
-│       ├── RequestPart.html
-│       └── AI.html
+│   ├── pages/              # Route components (loaded on-demand, 18 pages)
+│   │   ├── Dashboard.html
+│   │   ├── Equipment.html
+│   │   ├── EquipmentDetail.html
+│   │   ├── SpareParts.html
+│   │   ├── WorkOrders.html
+│   │   ├── AllLogs.html
+│   │   ├── PMSchedule.html
+│   │   ├── Performance.html
+│   │   ├── KPI.html
+│   │   ├── MTBFMTTR.html
+│   │   ├── EnterpriseDashboard.html
+│   │   ├── PlanningBoard.html
+│   │   ├── MonthlyPlan.html
+│   │   ├── TechnicianWorkload.html
+│   │   ├── AuditTrail.html
+│   │   ├── HistoryCard.html
+│   │   ├── RequestPart.html
+│   │   └── AI.html
+│   └── components/         # Modals (Equipment, Parts, Log, QR, APISettings)
 ├── src/
 │   ├── main.js             # Entry point (Alpine init, Sentry, FCM)
 │   ├── css/style.css       # Tailwind + custom CSS
-│   ├── js/
-│   │   ├── app.js          # Alpine app state & orchestrator
-│   │   ├── bootstrap.js    # Init, watchers, lifecycle
-│   │   ├── charts.js       # Chart.js rendering
-│   │   ├── constants.js    # Form defaults & constants
-│   │   ├── error-handler.js
-│   │   ├── utils.js        # Pure utility functions
-│   │   └── modules/
-│   │       ├── auth.js         # Login, user management
-│   │       ├── ui.js           # Toast, modal, dark mode
-│   │       ├── data.js         # Firebase data loading
-│   │       ├── equipment.js    # Equipment CRUD
-│   │       ├── parts.js        # Spare parts CRUD
-│   │       ├── logs.js         # Work Order CRUD
-│   │       ├── performance.js  # Performance CRUD
-│   │       ├── export.js       # PDF/XLSX/CSV export
-│   │       ├── kpi-engine.js   # KPI calculations
-│   │       ├── pm-schedule.js  # PM Schedule CRUD
-│   │       ├── requisition.js  # Request Part CRUD
-│   │       ├── ai.js           # AI integration
-│   │       ├── notification.js # FCM + browser notifs
-│   │       └── indexeddb.js    # Offline cache
+│   └── js/
+│       ├── app.js          # Alpine app state & orchestrator
+│       ├── store.js        # DEFAULT_STORE (state defaults)
+│       ├── bootstrap.js    # Init, watchers, lifecycle
+│       ├── charts.js       # Chart.js rendering
+│       ├── constants.js    # Form defaults & constants
+│       ├── db.js           # Firebase DB helpers
+│       ├── error-handler.js
+│       ├── firebase-config.js
+│       ├── icons.js / lucide-icons.js
+│       ├── utils.js        # Pure utility functions
+│       ├── utils/component-loader.js
+│       └── modules/
+│           ├── auth.js            # Login, user management
+│           ├── ui.js              # Toast, modal, dark mode
+│           ├── data.js            # Firebase data loading
+│           ├── equipment.js       # Equipment CRUD
+│           ├── parts.js           # Spare parts CRUD
+│           ├── logs.js            # Work Order CRUD
+│           ├── performance.js     # Performance CRUD
+│           ├── export.js          # PDF/XLSX/CSV export
+│           ├── kpi-engine.js      # KPI calculations
+│           ├── enterprise-kpi.js  # Enterprise analytics
+│           ├── pm-schedule.js     # PM Schedule CRUD
+│           ├── requisition.js     # Request Part CRUD
+│           ├── audit.js           # Audit trail (append-only)
+│           ├── ai.js              # AI integration
+│           ├── notification.js    # FCM + browser notifs
+│           ├── onesignal.js       # OneSignal push client
+│           ├── wo-pdf-template.js # WO PDF template
+│           └── indexeddb.js       # Offline cache
+├── tests/                  # Vitest (unit/integration/component + rules)
+├── e2e/                    # Playwright (smoke, WO/PDF)
+├── scripts/                # backup.js, backup-firebase.js
 ├── dist/                   # Build output
 ├── database.rules.json     # Firebase security rules
 ├── vite.config.js
+├── vitest.config.js
+├── playwright.config.js
 ├── tailwind.config.js
-├── firebase.json
-└── scripts/
-    ├── backup.js
-    └── backup.bat
+└── firebase.json
 ```
 
 ---
@@ -163,10 +208,13 @@ Live: [https://mtc-asset.web.app](https://mtc-asset.web.app)
 ## 🧪 Testing
 
 ```bash
-npm run test:run
+npm run test:run        # unit/integration/component (Vitest)
+npm run test:rules      # Firebase security rules (emulator)
+npm run test:e2e        # Playwright E2E (chromium)
+npm run test:coverage   # Vitest + coverage
 ```
 
-95+ unit tests covering utility functions, data processing, and module logic.
+152 unit/integration/component tests + 28 rules tests + E2E smoke & WO/PDF flows. E2E flow yang butuh login self-skip tanpa `E2E_EMAIL`/`E2E_PASSWORD`.
 
 ---
 
