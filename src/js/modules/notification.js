@@ -22,7 +22,9 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 // ============================================================
 // CONFIG
 // ============================================================
-const VAPID_KEY = 'BKEQWc2qqz_wtMqZ2tYcPmlwoW1jNPO7jKmsiCX-UD-iyqJqBRFtsDF0VywoWzocniVDhTYxHRMjvWo1dDW5FYE';
+// VAPID public key untuk Web Push (isi di .env / Vercel env: VITE_FIREBASE_VAPID_KEY)
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
+if (!VAPID_KEY) console.warn('[FCM] VITE_FIREBASE_VAPID_KEY belum diset — push notification dinonaktifkan');
 
 // Anti-spam: already notified this session (key = notif type)
 const _notifiedKeys = new Set();

@@ -4,7 +4,8 @@
  * Uses OneSignalDeferred pattern (v16+) for clean init.
  * Push config BEFORE script loads, SDK auto-initializes.
  */
-const ONE_SIGNAL_APP_ID = '08770479-20e7-4414-8f10-abe1c1240bf7';
+// OneSignal App ID (isi di .env / Vercel env: VITE_ONESIGNAL_APP_ID)
+const ONE_SIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || '';
 
 // Webhook proxy — Vercel Serverless FCM Push (see /api/fcm-push.js)
 const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset.vercel.app/api/fcm-push';

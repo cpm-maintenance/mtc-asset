@@ -79,6 +79,7 @@ dist/
 
 .vercel
 .env*
+!.env.example
 
 # Scratch/dev scripts (one-off patches)
 scratch/
