@@ -20,6 +20,7 @@ export default [
       '.open/**',
       '.firebase/**',
       'coverage/**',
+      'scratch/**',
       'public/**',
       '*.min.js',
     ],
