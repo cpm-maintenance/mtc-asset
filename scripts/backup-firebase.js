@@ -72,29 +72,25 @@ function execFirebase(args) {
     return stdout;
   } catch (err) {
     const msg = err.stderr ? err.stderr.toString() : err.message;
-    throw new Error(msg);
+    throw new Error(msg, { cause: err });
   }
 }
 
 function fetchNodeData(nodeName) {
-  try {
-    const raw = execFirebase(['database:get', `/${nodeName}`, '--pretty']);
-    if (!raw || raw.trim() === 'null' || raw.trim() === '') {
-      return { data: {}, count: 0 };
-    }
-    const data = JSON.parse(raw);
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      const keys = Object.keys(data);
-      // Filter out keys starting with _ (internal)
-      const validKeys = keys.filter(k => !k.startsWith('_'));
-      const filtered = {};
-      for (const k of validKeys) filtered[k] = data[k];
-      return { data: filtered, count: validKeys.length };
-    }
-    return { data: data || {}, count: 1 };
-  } catch (err) {
-    throw err;
+  const raw = execFirebase(['database:get', `/${nodeName}`, '--pretty']);
+  if (!raw || raw.trim() === 'null' || raw.trim() === '') {
+    return { data: {}, count: 0 };
   }
+  const data = JSON.parse(raw);
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const keys = Object.keys(data);
+    // Filter out keys starting with _ (internal)
+    const validKeys = keys.filter(k => !k.startsWith('_'));
+    const filtered = {};
+    for (const k of validKeys) filtered[k] = data[k];
+    return { data: filtered, count: validKeys.length };
+  }
+  return { data: data || {}, count: 1 };
 }
 
 // ========================================

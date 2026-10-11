@@ -6,7 +6,7 @@ function formatCurrency(num) {
     return 'Rp ' + String(num || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-export async function generateProfessionalWOPDF(log, equipment, parts) {
+export async function generateProfessionalWOPDF(log, equipment, _parts) {
     const { jsPDF } = await import('jspdf');
     
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -31,10 +31,10 @@ export async function generateProfessionalWOPDF(log, equipment, parts) {
     const status = log.Status || 'Pending';
     const isExternal = log.equipmentId === 'EXTERNAL';
     
-    let parseParts = [];
+    let parseParts;
     try {
         parseParts = typeof log.PartsUsed === 'string' ? JSON.parse(log.PartsUsed || '[]') : (log.PartsUsed || []);
-    } catch(e) { parseParts = []; }
+    } catch { parseParts = []; }
 
     // Header
     doc.setFillColor(30, 41, 59);

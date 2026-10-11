@@ -270,15 +270,6 @@ export const enterpriseKPI = {
     }));
   },
 
-  calcPMCompliance() {
-    const pm = this._raw(this.pmList) || [];
-    const total = pm.filter(p => p.status === 'completed' || (p.status === 'pending' && p.date)).length;
-    if (total === 0) return { pct: 0, completed: 0, total: 0 };
-    const completed = pm.filter(p => p.status === 'completed').length;
-    const pct = Math.round((completed / total) * 100);
-    return { pct, completed, total };
-  },
-
   // ─── WO Status Counts ───
   calcWOStatus() {
     const logs = this._raw(this.logs) || [];

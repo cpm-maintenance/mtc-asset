@@ -41,7 +41,6 @@ export const DEFAULT_STORE = {
     chartLoaded: false, modalsLoaded: false,
     importProgress: 0,
     dashboardStats: { totalEquip: 0, overduePM: 0, lowStock: 0, totalDowntime: 0 },
-    equipPage: 1, equipLimit: 30,
 
     // --- FORMS ---
     equipForm: null, partForm: null, logForm: null, performanceForm: null, pmForm: null,

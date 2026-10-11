@@ -453,7 +453,7 @@ Please provide:
         }
     },
 
-    async callOpenRouter(prompt) {
+    async callOpenAI(prompt) {
         const model = this.apiModel || 'gpt-4o-mini';
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -523,11 +523,11 @@ Please provide:
         const text = await response.text();
         
         if (!response.ok) {
-            let errMsg = 'API request failed';
+            let errMsg;
             try {
                 const err = JSON.parse(text);
                 errMsg = err.error?.message || err.error || text;
-            } catch (e) {
+            } catch {
                 errMsg = text;
             }
             throw new Error(errMsg);
@@ -536,7 +536,7 @@ Please provide:
         try {
             const result = JSON.parse(text);
             return result.choices[0].message.content;
-        } catch (e) {
+        } catch {
             throw new Error('Invalid response: ' + text.substring(0, 100));
         }
     },

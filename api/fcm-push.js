@@ -12,7 +12,7 @@ import { getMessaging } from 'firebase-admin/messaging';
 const DATABASE_URL = 'https://mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 function initAdmin() {
-  try { return getApp(); } catch {}
+  try { return getApp(); } catch { /* app belum diinisialisasi */ }
   const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
   return initializeApp({
     credential: cert(sa),

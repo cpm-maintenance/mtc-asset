@@ -416,10 +416,6 @@ if (confirm('Are you sure you want to logout?')) {
         importProgress: 0,
         dashboardStats: { totalEquip: 0, overduePM: 0, lowStock: 0, totalDowntime: 0 },
         
-        // Pagination State
-        equipPage: 1,
-        equipLimit: 30,
-
         // --- FORMS ---
         equipForm: DEFAULT_EQUIP_FORM(),
         partForm: DEFAULT_PART_FORM(),
@@ -899,7 +895,7 @@ if (confirm('Are you sure you want to logout?')) {
                     return entities[entity] || match;
                 });
                 decoded = decodeURIComponent(decoded);
-                if (!/^(https?:\/\/|data:image\/|blob:)/.test(decoded) || /[\[\]{}<>]/.test(decoded)) return '';
+                if (!/^(https?:\/\/|data:image\/|blob:)/.test(decoded) || /[[\]{}<>]/.test(decoded)) return '';
                 return decoded;
             } catch (e) {
                 return '';

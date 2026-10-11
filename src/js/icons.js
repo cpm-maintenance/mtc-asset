@@ -53,7 +53,6 @@ const FA_TO_LUCIBE = {
   'fa-file-alt': 'file-text',
   'fa-user-hard-hat': 'hard-hat',
   'fa-bars': 'panel-left',
-  'fa-shopping-cart': 'shopping-cart',
 };
 
 function initLucide() {

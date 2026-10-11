@@ -84,7 +84,7 @@ export async function sendBrowserNotification(title, body, options = {}) {
     // Check if SW is available
     if (!navigator.serviceWorker?.ready) {
       // Fallback: regular notification
-      // eslint-disable-next-line no-new
+       
       new Notification(title, {
         body,
         icon: '/logo.png',

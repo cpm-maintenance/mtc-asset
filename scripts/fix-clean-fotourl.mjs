@@ -36,7 +36,7 @@ function decodeEntity(s) {
 function isValidUrl(u) {
   if (!u || typeof u !== 'string') return false;
   const s = decodeEntity(u.trim());
-  return /^(https?:\/\/|data:image\/|blob:)/.test(s) && !/[\[\]{}<>]/.test(s);
+  return /^(https?:\/\/|data:image\/|blob:)/.test(s) && !/[[\]{}<>]/.test(s);
 }
 
 function walk(node, prefix, found) {
