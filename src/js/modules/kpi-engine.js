@@ -47,7 +47,7 @@ export const kpiEngineModule = {
     calculateHealthScore(equipId) {
         // Guard - safe defaults
         if (!equipId) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
-        
+
         const key = this._kpiKey('h' + equipId);
         if (this._kpiCache && this._kpiCache.key === key && this._kpiCache.h.has(equipId)) {
             return this._kpiCache.h.get(equipId);
@@ -58,10 +58,10 @@ export const kpiEngineModule = {
 
         const logs = this._raw(this.logs) || [];
         const equipment = this._raw(this.equipment) || [];
-        
+
         // Guard - validate equipment array
         if (!Array.isArray(equipment)) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
-        
+
         const assetLogs = logs.filter(l => l && l.EquipmentID === equipId);
         const asset = equipment.find(e => e && e.EquipmentID === equipId);
         if (!asset) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
@@ -92,7 +92,7 @@ export const kpiEngineModule = {
         score = Math.max(0, Math.min(100, score));
         const color = score > 80 ? 'text-emerald-500' : score > 50 ? 'text-amber-500' : 'text-rose-500';
         const status = score > 80 ? 'Optimal' : score > 50 ? 'Warning' : 'Critical';
-        
+
         const result = { score, color, status, breakdowns: breakdowns.length };
         this._kpiCache.h.set(equipId, result);
         return result;
@@ -159,7 +159,7 @@ export const kpiEngineModule = {
     calculateMTBF(equipId) {
         // Guard
         if (!equipId) return 0;
-        
+
         const key = this._kpiKey('m' + equipId);
         if (this._kpiCache && this._kpiCache.key === key && this._kpiCache.m.has(equipId)) {
             return this._kpiCache.m.get(equipId);
@@ -170,17 +170,17 @@ export const kpiEngineModule = {
 
         const logs = this._raw(this.logs);
         if (!logs || !Array.isArray(logs)) return 0;
-        
+
         const breakdowns = this._breakdownEvents(equipId);
-        
+
         if (breakdowns.length < 2) return 0;
 
         let totalInterval = 0;
         let withHM = 0;
         for (let i = 1; i < breakdowns.length; i++) {
-            const iv = this._hmIntervalHours(breakdowns[i-1], breakdowns[i]);
+            const iv = this._hmIntervalHours(breakdowns[i - 1], breakdowns[i]);
             totalInterval += iv;
-            if (breakdowns[i-1].HM > 0 && breakdowns[i].HM > 0) withHM++;
+            if (breakdowns[i - 1].HM > 0 && breakdowns[i].HM > 0) withHM++;
         }
         // Fallback kalender bila tak ada pasangan HM (data lama)
         const result = (totalInterval / (breakdowns.length - 1)).toFixed(1);
@@ -197,20 +197,20 @@ export const kpiEngineModule = {
     predictNextFailure(equipId) {
         // Guard
         if (!equipId) return 'N/A';
-        
+
         const mtbf = parseFloat(this.calculateMTBF(equipId));
         if (mtbf <= 0) return 'Insufficient Data';
 
         const logs = this._raw(this.logs);
         if (!logs || !Array.isArray(logs)) return 'Insufficient Data';
-        
+
         const lastBreakdown = logs
             .filter(l => l && l.EquipmentID === equipId && l.Jenis === 'Breakdown')
             .sort((a, b) => {
                 if (!a.Tanggal || !b.Tanggal) return 0;
                 return new Date(b.Tanggal) - new Date(a.Tanggal);
             })[0];
-        
+
         if (!lastBreakdown || !lastBreakdown.Tanggal) return 'No failures recorded';
 
         const lastDate = new Date(lastBreakdown.Tanggal);
@@ -229,27 +229,27 @@ export const kpiEngineModule = {
     getEquipName(id) {
         if (!id) return "Unknown Asset";
         console.log('[getEquipName] looking for id:', id);
-        
+
         const equipment = this._raw(this.equipment);
         if (!equipment || !Array.isArray(equipment)) {
             console.log('[getEquipName] equipment not array or empty');
             return id;
         }
-        
+
         // Try exact match first
         let e = equipment.find(x => x && x.EquipmentID === id);
         if (e) {
             console.log('[getEquipName] found:', e.Nama);
             return e.Nama;
         }
-        
+
         // Try case-insensitive
         e = equipment.find(x => x && x.EquipmentID && x.EquipmentID.toLowerCase() === id.toLowerCase());
         if (e) {
             console.log('[getEquipName] found (case-ins):', e.Nama);
             return e.Nama;
         }
-        
+
         console.log('[getEquipName] NOT FOUND');
         return "Unknown Asset";
     }
