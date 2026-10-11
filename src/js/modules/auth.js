@@ -2,8 +2,8 @@
  * Auth module for MTC.NEXUS
  */
 
-const ADMIN_EMAILS = ['admin@planner.com'];
-const SUPERVISOR_EMAILS = ['supervisor@planner.com'];
+// Role user bersumber tunggal dari RTDB `Users/{uid}/role` (dikelola admin).
+// Tidak ada lagi pemetaan role hardcoded by email — lihat ensureUserProfile (P0-2).
 
 export const authModule = {
     loginForm: { email: '', password: '' },
@@ -11,32 +11,38 @@ export const authModule = {
 
     async ensureUserProfile(user) {
         if (!user?.uid) return;
-        
+
         try {
             const userRef = window.ref(window.db, `Users/${user.uid}`);
             const snapshot = await window.get(userRef);
-            
-            const isAdmin = user.email && ADMIN_EMAILS.some(admin => 
-                user.email.toLowerCase() === admin.toLowerCase()
-            );
-            const isSupervisor = !isAdmin && user.email && SUPERVISOR_EMAILS.some(sup => 
-                user.email.toLowerCase() === sup.toLowerCase()
-            );
-            
             const existingData = snapshot.exists() ? snapshot.val() : null;
-            const existingCreatedAt = existingData?.createdAt;
-            
+
+            // P0-2: `role` HANYA boleh ditulis admin (lihat database.rules.json).
+            // Jangan pernah self-write `role` di sini — kalau ditulis, rules menolak
+            // dan seluruh sinkronisasi profil gagal (login user biasa ikut rusak).
+            if (existingData) {
+                // Profil sudah ada → sinkronkan field non-privileged saja.
+                const updates = {
+                    email: user.email || existingData.email,
+                    lastLogin: new Date().toISOString(),
+                };
+                await window.update(userRef, updates);
+                const merged = { ...existingData, ...updates };
+                console.log('User profile synced:', merged.role || 'user');
+                return merged;
+            }
+
+            // Profil belum ada → buat TANPA `role`. Admin akan menetapkan role
+            // lewat User Management (satu-satunya penulis `role` yang sah).
             const userData = {
                 uid: user.uid,
                 email: user.email,
-                role: isAdmin ? 'admin' : (isSupervisor ? 'supervisor' : 'user'),
                 lastLogin: new Date().toISOString(),
-                createdAt: existingCreatedAt || new Date().toISOString()
+                createdAt: new Date().toISOString(),
             };
-            
             await window.set(userRef, userData);
-            console.log('User profile synced:', userData.role);
-            
+            console.log('User profile created (role menunggu penetapan admin)');
+
             return userData;
         } catch (error) {
             console.error('Failed to sync user profile:', error);
