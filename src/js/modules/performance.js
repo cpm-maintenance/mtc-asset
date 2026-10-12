@@ -1,9 +1,11 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * Performance & KPI module
  */
 import { validatePerformanceForm, withRetry, isNetworkError, sanitizeDataForFirebase, computeBDFromLogs } from '../utils.js';
 
-export const performanceModule = {
+export const performanceModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     openPerformanceModal(edit = false, data = null) {
         this.isEditingPerformance = edit;
         if (edit && data) {
@@ -56,7 +58,7 @@ export const performanceModule = {
         // Guard against undefined form
         if (!this.performanceForm) return;
 
-        const events = this.performanceForm.events || [];
+        const events = /** @type {any[]} */ (this.performanceForm.events || []);
         let mechanicalBD = 0;
         let operationalSTB = 0;
 
@@ -113,7 +115,7 @@ export const performanceModule = {
         try {
             const perfId = this.isEditingPerformance ? (this.performanceForm.id || '') : ("PERF-" + Date.now());
             
-            const events = this.performanceForm.events || [];
+            const events = /** @type {any[]} */ (this.performanceForm.events || []);
             // bd hanya breakdown non-Operational; Operational = standby (stb)
             const mechBD = events.reduce((acc, curr) => acc + ((curr && curr.category !== 'Operational') ? (Number(curr?.duration) || 0) : 0), 0);
             const data = { 
@@ -191,7 +193,7 @@ export const performanceModule = {
             this.showPerformanceModal = false;
         } catch (e) {
             console.error('Submit Performance Error:', e);
-            this.showNotification("Error: " + (e?.message || "Unknown error"), "error");
+            this.showNotification("Error: " + (/** @type {any} */ (e)?.message || "Unknown error"), "error");
         } finally {
             this.isLoading = false;
         }
@@ -216,7 +218,7 @@ export const performanceModule = {
                 await window.update(window.ref(window.db, 'Performance/' + (p.id || p.Id)), updates);
                 Object.assign(p, updates);
                 updated++;
-            } catch (e) { console.warn('[R6] recomputeBD fail:', p.id, e.message); }
+            } catch (e) { console.warn('[R6] recomputeBD fail:', p.id, /** @type {any} */ (e).message); }
         }
         this.showNotification('BD disinkronkan dari WO: ' + updated + ' record', 'success');
     },
@@ -300,4 +302,4 @@ export const performanceModule = {
             return d.getFullYear() === refDate.getFullYear() && d.getMonth() === refDate.getMonth();
         });
     }
-};
+});

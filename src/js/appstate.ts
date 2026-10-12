@@ -143,14 +143,14 @@ export interface AppState {
   mpLoading?: boolean;
   mpMonth?: any;
   mpYear?: any;
-  mtbfFilterEquip: string[];
+  mtbfFilterEquip?: string;
   newUserForm?: Record<string, any>;
   notifications: any[];
   oldLogParts?: any[];
   partFilterEquip?: string;
   partForm: Record<string, any>;
-  perfFilterArea: string[];
-  perfFilterEquip: string[];
+  perfFilterArea?: string;
+  perfFilterEquip?: string;
   perfPrevHM: Record<string, any>;
   performanceData: Performance[];
   performanceForm?: any;

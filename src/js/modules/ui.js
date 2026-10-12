@@ -1,10 +1,12 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * UI & Utility module for MTC.NEXUS
  */
 // Lazy-load qrcode (only used for QR modal — keeps it out of initial bundle)
 import { CONSTANTS } from '../constants';
 
-export const uiModule = {
+export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     setTheme(t) {
         if (!['night', 'navy', 'purple', 'light'].includes(t)) t = 'night';
         this.themeMode = t;
@@ -22,12 +24,12 @@ export const uiModule = {
 
     showNotification(message, type = 'success', duration = 4500) {
         const id = Date.now() + Math.random();
-        const config = {
+        const config = /** @type {Record<string, any>} */ ({
             success: { icon: 'fa-check-circle', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400', glow: 'shadow-emerald-500/20', bar: 'bg-emerald-400' },
             error: { icon: 'fa-times-circle', color: 'border-rose-500/40 bg-rose-500/10 text-rose-400', glow: 'shadow-rose-500/20', bar: 'bg-rose-400' },
             warning: { icon: 'fa-exclamation-triangle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
             info: { icon: 'fa-info-circle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
-        };
+        });
         const c = config[type] || config.info;
         this.notifications.push({
             id,
@@ -76,7 +78,7 @@ export const uiModule = {
                 await this.html5QrCode.start(
                     { facingMode: "environment" },
                     config,
-                    (decodedText) => {
+                    (/** @type {string} */ decodedText) => {
                         this.stopScanner();
                         const cleanId = decodedText.trim().toUpperCase();
                         const e = this.equipment.find(x => String(x.EquipmentID).toUpperCase() === cleanId);
@@ -87,7 +89,7 @@ export const uiModule = {
                             this.showNotification("QR Scanned: " + cleanId + " (Not found in database)", "error");
                         }
                     },
-                    (errorMessage) => { }
+                    (/** @type {string} */ errorMessage) => { }
                 );
             } catch (err) {
                 console.error('QR Scanner Error:', err);
@@ -180,7 +182,7 @@ export const uiModule = {
             this.showNotification(`Exported ${list.length} QR codes`);
         } catch (err) {
             console.error('Bulk QR Export Error:', err);
-            this.showNotification('Failed to export QR PDF: ' + (err.message || 'Unknown error'), 'error');
+            this.showNotification('Failed to export QR PDF: ' + (/** @type {any} */ (err).message || 'Unknown error'), 'error');
         } finally {
             this.isLoading = false;
         }
@@ -188,11 +190,11 @@ export const uiModule = {
 
     // Helpers
     statusColor(s) {
-        const colors = {
+        const colors = /** @type {Record<string, string>} */ ({
             'Active': 'text-emerald-400 border border-emerald-500/30 bg-emerald-500/10',
             'In Maintenance': 'text-amber-400 border border-amber-500/30 bg-amber-500/10',
             'Decommissioned': 'text-slate-400 border border-slate-500/30 bg-slate-500/10'
-        };
+        });
         return colors[s] || 'text-rose-400 border border-rose-500/30 bg-rose-500/10';
     },
 
@@ -201,44 +203,44 @@ export const uiModule = {
     },
 
     logColor(type) {
-        const colors = {
+        const colors = /** @type {Record<string, string>} */ ({
             'PM': 'border-green-500',
             'Repair': 'border-blue-500',
             'Inspection': 'border-yellow-500',
             'Breakdown': 'border-red-500'
-        };
+        });
         return colors[type] || 'border-blue-500';
     },
 
     logStatusColor(status) {
-        const colors = {
+        const colors = /** @type {Record<string, string>} */ ({
             'Completed': 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5',
             'In Progress': 'border-blue-500/20 text-blue-400 bg-blue-500/5',
             'Pending': 'border-amber-500/20 text-amber-400 bg-amber-500/5',
             'Cancelled': 'border-slate-500/20 text-slate-400 bg-slate-500/5',
             'Approved': 'border-teal-500/20 text-teal-400 bg-teal-500/5',
             'Draft': 'border-purple-500/20 text-purple-400 bg-purple-500/5'
-        };
+        });
         return colors[status] || 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5';
     },
 
     woPriorityColor(priority) {
-        const colors = {
+        const colors = /** @type {Record<string, string>} */ ({
             'Emergency': 'border-rose-500/20 text-rose-400 bg-rose-500/10',
             'Urgent': 'border-orange-500/20 text-orange-400 bg-orange-500/10',
             'Normal': 'border-amber-500/20 text-amber-400 bg-amber-500/10',
             'Planned': 'border-emerald-500/20 text-emerald-400 bg-emerald-500/10'
-        };
+        });
         return colors[priority] || 'border-slate-500/20 text-slate-400';
     },
 
     getStatColor(c) {
-        const mapping = {
+        const mapping = /** @type {Record<string, string>} */ ({
             'border-blue-500': '#3B82F6',
             'border-red-500': '#EF4444',
             'border-yellow-500': '#F59E0B',
             'border-green-500': '#10B981'
-        };
+        });
         return mapping[c] || '#D4AF37';
     },
 
@@ -250,7 +252,7 @@ export const uiModule = {
             reader.readAsDataURL(file);
             reader.onload = (event) => {
                 const img = new Image();
-                img.src = event.target.result;
+                img.src = /** @type {string} */ (/** @type {any} */ (event.target).result);
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
@@ -261,7 +263,7 @@ export const uiModule = {
                         if (h > max) { w *= max / h; h = max; }
                     }
                     canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')).drawImage(img, 0, 0, w, h);
                     canvas.toBlob((blob) => resolve(blob), 'image/jpeg', CONSTANTS.IMAGE_QUALITY || 0.7);
                 };
                 img.onerror = () => resolve(null);
@@ -304,7 +306,7 @@ export const uiModule = {
                     }
                     console.warn('[ImgBB] Upload failed, falling back to DB:', json.error?.message || 'unknown');
                 } catch (e) {
-                    console.warn('[ImgBB] Network error, falling back to DB:', e.message);
+                    console.warn('[ImgBB] Network error, falling back to DB:', /** @type {any} */ (e).message);
                 }
             }
             
@@ -391,10 +393,10 @@ export const uiModule = {
             }
 
             this.showNotification("System purged. Reloading...", "info");
-            setTimeout(() => window.location.reload(true), 1500);
+            setTimeout(() => /** @type {any} */ (window.location).reload(true), 1500);
         } catch (e) {
             console.error('System Reset Error:', e);
-            window.location.reload(true);
+            /** @type {any} */ (window.location).reload(true);
         }
     }
-};
+});

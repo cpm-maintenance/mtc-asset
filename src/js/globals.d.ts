@@ -12,6 +12,12 @@ declare global {
   interface Window {
     /** Alpine global (CDN bundle, dipakai window.Alpine.raw). */
     Alpine?: any;
+    /** Chart.js constructor hasil lazy-import (di-set charts.js). */
+    _chartJS?: any;
+    /** Registry instance chart dashboard (di-set charts.js/bootstrap.js). */
+    _appCharts: any;
+    /** Registry instance chart KPI (di-set charts.js/bootstrap.js). */
+    _appKpiCharts: any;
     /** Alpine root component (di-set di bootstrap). */
     app?: any;
     /** Alias state global (fallback lama). */
