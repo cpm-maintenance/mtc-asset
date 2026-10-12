@@ -112,3 +112,52 @@ jobs:
             git push
             echo "✅ Backup pushed to GitHub"
           fi
+
+      # P3-6: Kirim ringkasan backup via email (Gmail SMTP).
+      # Secrets yang dibutuhkan (Settings → Secrets and variables → Actions):
+      #   MAIL_USERNAME : alamat Gmail pengirim, mis. bot@gmail.com
+      #   MAIL_PASSWORD : App Password Gmail (16 karakter, bukan password login)
+      #   MAIL_TO       : alamat tujuan (boleh dipisah koma)
+      # Kalau secrets belum di-set, step ini dilewati (tidak menggagalkan job).
+      - name: 📧 Email backup summary
+        if: always()
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: |
+          if [ -z "$MAIL_USERNAME" ] || [ -z "$MAIL_PASSWORD" ] || [ -z "$MAIL_TO" ]; then
+            echo "⚠️  Mail secrets belum di-set — skip email."
+            exit 0
+          fi
+
+          STATUS="${{ job.status }}"
+          SIZE="${{ steps.backup.outputs.SIZE }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          {
+            echo "From: $MAIL_USERNAME"
+            echo "To: $MAIL_TO"
+            echo "Subject: [MTC-Asset] Backup $STATUS - $(date +'%Y-%m-%d %H:%M')"
+            echo ""
+            echo "Status : $STATUS"
+            echo "Trigger: ${{ github.event_name }}"
+            echo "Nodes  : Equipment, SpareParts, HistoryLog, AI_Settings, ImageUploads"
+            echo "Size   : ${SIZE:-n/a}"
+            echo "Run ID : ${{ github.run_id }}"
+            echo "Detail : $RUN_URL"
+          } > /tmp/email.txt
+
+          # Bangun daftar penerima (dukung pemisah koma).
+          RCPT_ARGS=""
+          for r in $(echo "$MAIL_TO" | tr ',' ' '); do
+            RCPT_ARGS="$RCPT_ARGS --mail-rcpt $r"
+          done
+
+          curl --silent --show-error --url "smtps://smtp.gmail.com:465" --ssl-reqd \
+            --mail-from "$MAIL_USERNAME" \
+            $RCPT_ARGS \
+            --user "$MAIL_USERNAME:$MAIL_PASSWORD" \
+            --upload-file /tmp/email.txt
+
+          echo "✅ Email ringkasan terkirim ke: $MAIL_TO"

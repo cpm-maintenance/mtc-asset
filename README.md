@@ -111,6 +111,21 @@ Selain Firebase, ada beberapa backend tambahan untuk push notification:
 
 > API key push **tidak** dibundel ke frontend — selalu lewat proxy server (env), sesuai pola `.env`.
 
+### 📧 Email Ringkasan Backup (P3-6)
+
+Workflow `.github/workflows/backup.yml` (backup harian 02:00 WIB) mengirim **ringkasan status** backup ke email via **Gmail SMTP** setelah proses selesai. Step ini **dilewati otomatis** kalau secrets belum di-set, jadi tidak menggagalkan job.
+
+Set secrets berikut di **GitHub → Settings → Secrets and variables → Actions**:
+
+| Secret | Isi |
+|--------|-----|
+| `MAIL_USERNAME` | Alamat Gmail pengirim, mis. `bot@gmail.com` |
+| `MAIL_PASSWORD` | **App Password** Gmail (16 karakter) — bukan password login. Buat di https://myaccount.google.com/apppasswords (wajib 2FA aktif) |
+| `MAIL_TO` | Alamat tujuan, boleh dipisah koma |
+
+Isi email: status (success/failure), trigger, daftar node, ukuran file, Run ID, dan link detail run.
+
+
 
 ---
 
