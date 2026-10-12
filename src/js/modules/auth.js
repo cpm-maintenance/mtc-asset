@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * Auth module for MTC.NEXUS
  */
@@ -5,7 +7,7 @@
 // Role user bersumber tunggal dari RTDB `Users/{uid}/role` (dikelola admin).
 // Tidak ada lagi pemetaan role hardcoded by email — lihat ensureUserProfile (P0-2).
 
-export const authModule = {
+export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     loginForm: { email: '', password: '' },
 
     async ensureUserProfile(user) {
@@ -43,7 +45,7 @@ export const authModule = {
             console.log('User profile created (role menunggu penetapan admin)');
 
             return userData;
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error('Failed to sync user profile:', error);
             return null;
         }
@@ -64,7 +66,7 @@ export const authModule = {
             this.userRole = userData?.role || 'user';
             
             this.showNotification("Welcome back!");
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error(error);
             this.showNotification("Login failed: " + error.message, "error");
         } finally {
@@ -81,7 +83,7 @@ export const authModule = {
                 this.user = null;
                 this.userRole = 'user';
                 this.showNotification("Logged out successfully", "info");
-            } catch (error) {
+            } catch (/** @type {any} */ error) {
                 this.showNotification("Error logging out: " + error.message, "error");
             } finally {
                 this.isLoading = false;
@@ -136,7 +138,7 @@ export const authModule = {
             console.log('[Auth] User created:', email, role);
             
             return { success: true, user: cred.user };
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error('[Auth] Create user error:', error);
             this.showNotification("Failed to create user: " + error.message, "error");
             return { success: false, message: error.message };
@@ -207,7 +209,7 @@ export const authModule = {
             }
             this.showNotification('User updated successfully');
             this.closeEditUserModal();
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error('[Auth] Edit user error:', error);
             this.showNotification('Failed to update user', 'error');
         } finally {
@@ -222,7 +224,7 @@ export const authModule = {
         try {
             await window.sendPasswordResetEmail(window.auth, user.email);
             this.showNotification(`Reset email sent to ${user.email}`);
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error('[Auth] Password reset error:', error);
             this.showNotification('Failed to send reset email', 'error');
         }
@@ -241,7 +243,7 @@ export const authModule = {
                     ...data
                 })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
             }
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error('[Auth] Load users error:', error);
         } finally {
             this.isLoading = false;
@@ -258,11 +260,11 @@ export const authModule = {
             this.showNotification('User deleted successfully');
             this.allUsers = this.allUsers.filter(u => u.uid !== uid);
             console.log('[Auth] User deleted:', uid);
-        } catch (error) {
+        } catch (/** @type {any} */ error) {
             console.error('[Auth] Delete user error:', error);
             this.showNotification('Failed to delete user', 'error');
         } finally {
             this.isLoading = false;
         }
     }
-};
+});

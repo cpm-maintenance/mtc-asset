@@ -65,5 +65,9 @@ declare global {
     setPersistence?: any;
     browserSessionPersistence?: any;
     createUserWithEmailAndPassword?: any;
+    /** Resolver promise `_firebaseReady` (di-set main.js). */
+    _firebaseReadyResolve?: (() => void) | null;
+    /** Firebase Auth helper (CDN, di-set firebase-config.js). */
+    sendPasswordResetEmail?: any;
   }
 }

@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * Data module for MTC.NEXUS - Firebase Listeners and Sync
  */
@@ -7,24 +9,24 @@ import { sendBrowserNotification } from './notification.js';
 import { sendPushViaProxy } from './onesignal.js';
 
 // Clean URL from encoding issues (e.g., &#x2F; -> /, %2F -> /)
-function cleanFirebaseUrl(url) {
+function cleanFirebaseUrl(/** @type {any} */ url) {
     if (!url || typeof url !== 'string') return '';
     try {
         // First decode HTML entities (&#x2F; -> /, &amp; -> &)
         let decoded = url.replace(/&#[xX](\w+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
                          .replace(/&(\w+);/g, (match, entity) => {
-            const entities = { 'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' ' };
+            const entities = /** @type {Record<string, string>} */ ({ 'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' ' });
             return entities[entity] || match;
         });
         // Then decode URL encoding (%2F -> /)
         return decodeURIComponent(decoded);
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
         return url;
     }
 }
 
 // Safe parse JSON string field from Firebase data
-function safeParseJSONField(data, fieldName, fallback = []) {
+function safeParseJSONField(/** @type {any} */ data, /** @type {any} */ fieldName, /** @type {any[]} */ fallback = []) {
     try {
         if (data && typeof data[fieldName] === 'string') {
             let str = data[fieldName].trim();
@@ -47,13 +49,13 @@ function safeParseJSONField(data, fieldName, fallback = []) {
             return data[fieldName];
         }
         return data[fieldName] || fallback;
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
         return fallback;
     }
 }
 
 // Safely process Firebase data object to array
-export function safeProcessFirebaseData(data) {
+export function safeProcessFirebaseData(/** @type {any} */ data) {
     if (!data) return [];
     try {
         const values = Object.values(data);
@@ -70,20 +72,20 @@ export function safeProcessFirebaseData(data) {
             if (processed.PhotoURL && !processed.PhotoURLs) {
                 processed.PhotoURLs = [cleanFirebaseUrl(processed.PhotoURL)];
             } else if (processed.PhotoURLs && typeof processed.PhotoURLs[0] === 'string') {
-                processed.PhotoURLs = processed.PhotoURLs.map(url => cleanFirebaseUrl(url));
+                processed.PhotoURLs = processed.PhotoURLs.map((/** @type {any} */ url) => cleanFirebaseUrl(url));
             }
             if (typeof processed.events === 'string') {
                 processed.events = safeParseJSONField(item, 'events', []);
             }
             return processed;
         });
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
         console.warn('Failed to process Firebase data:', e);
         return [];
     }
 }
 
-export const dataModule = {
+export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // Pagination state
     logsPage: 1,
     logsLimit: 200,
@@ -101,7 +103,7 @@ export const dataModule = {
     // Firebase listener tracking — cleanup to prevent listener leaks
     _listeners: [],
     _cleanupFirebaseListeners() {
-        this._listeners.forEach(unsub => { try { unsub(); } catch(e) {} });
+        this._listeners.forEach(unsub => { try { unsub(); } catch(/** @type {any} */ e) {} });
         this._listeners = [];
     },
 
@@ -143,7 +145,7 @@ export const dataModule = {
                     }
                 }
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Check pending WO error:', e);
         }
     },
@@ -180,10 +182,10 @@ export const dataModule = {
         }, 10000);
 
         // Debounced cache writer: batch multiple onChildAdded events into one write
-        const _cacheBuffer = {};
-        const _cacheTimers = {};
-        const saveCache = (key, data) => {
-            const storeName = { 'equipment': 'equipment', 'allParts': 'parts', 'logs': 'logs', 'performanceData': 'performance' }[key] || key;
+        const _cacheBuffer = /** @type {Record<string, any>} */ ({});
+        const _cacheTimers = /** @type {Record<string, any>} */ ({});
+        const saveCache = (/** @type {any} */ key, /** @type {any} */ data) => {
+            const storeName = /** @type {Record<string, string>} */ ({ 'equipment': 'equipment', 'allParts': 'parts', 'logs': 'logs', 'performanceData': 'performance' })[key] || key;
             // Buffer latest snapshot, write once after quiet 800ms (batch initial child flood)
             _cacheBuffer[storeName] = data;
             if (_cacheTimers[storeName]) clearTimeout(_cacheTimers[storeName]);
@@ -200,7 +202,7 @@ export const dataModule = {
                     } catch (idbErr) {
                         localStorage.setItem(`cache_${key}`, JSON.stringify(plainData));
                     }
-                } catch (e) { console.warn('Cache Save Failed:', e); }
+                } catch (/** @type {any} */ e) { console.warn('Cache Save Failed:', e); }
             }, 250);
         };
 
@@ -212,20 +214,20 @@ export const dataModule = {
 
         // User Role
         const userRef = window.ref(window.db, `Users/${this.user.uid}`);
-        this._listeners.push(window.onValue(userRef, (snap) => {
+        this._listeners.push(window.onValue(userRef, (/** @type {any} */ snap) => {
             const data = snap.val();
             this.userRole = data ? (data.role || 'user') : 'user';
-        }, (error) => console.error('User Role Listener:', error)));
+        }, (/** @type {any} */ error) => console.error('User Role Listener:', error)));
 
         // Connection State
         const connectedRef = window.ref(window.db, ".info/connected");
-        this._listeners.push(window.onValue(connectedRef, (snap) => {
+        this._listeners.push(window.onValue(connectedRef, (/** @type {any} */ snap) => {
             this.isOnline = snap.val() === true;
         }));
 
         // Equipment (Full data for reference, pagination for display handled in filteredEquip)
         const eqRef = window.ref(window.db, 'Equipment');
-        this._listeners.push(window.onValue(eqRef, (snapshot) => {
+        this._listeners.push(window.onValue(eqRef, (/** @type {any} */ snapshot) => {
             const data = snapshot.val();
             let equipList = [];
             if (data && typeof data === 'object') {
@@ -251,11 +253,11 @@ export const dataModule = {
                 window._firebaseReadyResolve();
                 window._firebaseReadyResolve = null; // Ensure it runs only once
             }
-        }, (error) => console.error('Equipment Listener:', error)));
+        }, (/** @type {any} */ error) => console.error('Equipment Listener:', error)));
 
         // SpareParts: incremental onChildAdded + limitToLast (delta sync)
         const spRef = window.query(window.ref(window.db, 'SpareParts'), window.limitToLast(500));
-        this._listeners.push(window.onChildAdded(spRef, (snapshot) => {
+        this._listeners.push(window.onChildAdded(spRef, (/** @type {any} */ snapshot) => {
             try {
                 const item = snapshot.val();
                 if (!item || typeof item !== 'object') return;
@@ -266,10 +268,10 @@ export const dataModule = {
                 const next = idx >= 0 ? [...prev.slice(0, idx), processed, ...prev.slice(idx + 1)] : [processed, ...prev];
                 this.allParts = next;
                 saveCache('allParts', next);
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.error('Spare Parts Listener Error:', e);
             }
-        }, (error) => {
+        }, (/** @type {any} */ error) => {
             console.error('Spare Parts Listener Error:', error);
         }));
 
@@ -277,7 +279,7 @@ export const dataModule = {
         // ponytail: cap 500 — naikkan bila dataset riil > 500 logs
         const histRef = window.query(window.ref(window.db, 'HistoryLog'), window.limitToLast(500));
         let _firebaseLogsLoaded = false;
-        this._listeners.push(window.onChildAdded(histRef, (snapshot) => {
+        this._listeners.push(window.onChildAdded(histRef, (/** @type {any} */ snapshot) => {
             try {
                 const item = snapshot.val();
                 if (!item || typeof item !== 'object' || !item.LogID) return;
@@ -310,10 +312,10 @@ export const dataModule = {
                     _firebaseLogsLoaded = true;
                     this.isLoading = false;
                 }
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.error('HistoryLog Listener Error:', e);
             }
-        }, (error) => {
+        }, (/** @type {any} */ error) => {
             console.error('HistoryLog Listener Error:', error);
             this.logs = [];
             this.activeWorkOrders = [];
@@ -321,7 +323,7 @@ export const dataModule = {
 
         // Performance: incremental onChildAdded + limitToLast(200)
         const perfRef = window.query(window.ref(window.db, 'Performance'), window.limitToLast(200));
-        this._listeners.push(window.onChildAdded(perfRef, (snapshot) => {
+        this._listeners.push(window.onChildAdded(perfRef, (/** @type {any} */ snapshot) => {
             try {
                 const item = snapshot.val();
                 if (!item || typeof item !== 'object') return;
@@ -334,13 +336,13 @@ export const dataModule = {
                     .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
                     .slice(0, 200);
                 saveCache('performanceData', this.performanceData);
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.error('Performance Listener Error:', e);
             }
-        }, (error) => console.error('Performance Listener:', error)));
+        }, (/** @type {any} */ error) => console.error('Performance Listener:', error)));
 
         // 1. Listen to static Stats node
-        this._listeners.push(window.onValue(window.ref(window.db, 'Stats'), (snap) => {
+        this._listeners.push(window.onValue(window.ref(window.db, 'Stats'), (/** @type {any} */ snap) => {
             const val = snap.val() || {};
             if (this.dashboardStats) {
                 this.dashboardStats.totalEquip = val.totalEquip || 0;
@@ -351,9 +353,9 @@ export const dataModule = {
         // 2. Query Overdue PM (only fetch overdue items, highly efficient)
         const todayStr = new Date().toISOString().split('T')[0];
         const overdueQuery = window.query(window.ref(window.db, 'Equipment'), window.orderByChild('NextPMDate'), window.endAt(todayStr));
-        this._listeners.push(window.onValue(overdueQuery, (snap) => {
+        this._listeners.push(window.onValue(overdueQuery, (/** @type {any} */ snap) => {
             let count = 0;
-            snap.forEach((child) => {
+            snap.forEach((/** @type {any} */ child) => {
                 if (child.val().NextPMDate && child.val().NextPMDate !== '') count++;
             });
             if (this.dashboardStats) this.dashboardStats.overduePM = count;
@@ -361,10 +363,10 @@ export const dataModule = {
 
         // 3. Query Low Stock Parts
         const lowStockQuery = window.query(window.ref(window.db, 'SpareParts'), window.orderByChild('isLowStock'), window.equalTo(true));
-        this._listeners.push(window.onValue(lowStockQuery, (snap) => {
+        this._listeners.push(window.onValue(lowStockQuery, (/** @type {any} */ snap) => {
             if (this.dashboardStats) this.dashboardStats.lowStock = snap.exists() ? snap.size : 0;
         }));
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Firebase listeners setup error:', e);
             this.showNotification('Error loading data, please refresh', 'error');
         }
@@ -414,7 +416,7 @@ export const dataModule = {
             }
             
             this.isLoading = false;
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Load More Logs Error:', e);
             this.showNotification("Failed to load more logs", "error");
         } finally {
@@ -438,7 +440,7 @@ export const dataModule = {
                 this.equipLastKey = nextPage[nextPage.length - 1]?.EquipmentID;
                 this.equipHasMore = this.equipment.length > ((this.filteredEquip || []).length + this.equipLimit);
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Load More Equipment Error:', e);
         } finally {
             this.equipLoadingMore = false;
@@ -498,8 +500,8 @@ export const dataModule = {
 
             if (equip.length > 0) this.equipment = equip;
             if (parts.length > 0) this.allParts = parts;
-            if (logs.length > 0) this.logs = logs.sort((a, b) => String(b.LogID).localeCompare(String(a.LogID)));
-            if (perf.length > 0) this.performanceData = perf.sort((a, b) => b.date.localeCompare(a.date));
+            if (logs.length > 0) this.logs = logs.sort((/** @type {any} */ a, /** @type {any} */ b) => String(b.LogID).localeCompare(String(a.LogID)));
+            if (perf.length > 0) this.performanceData = perf.sort((/** @type {any} */ a, /** @type {any} */ b) => b.date.localeCompare(a.date));
 
             if (equip.length > 0 || parts.length > 0) {
                 // Charts disabled - Alpine Proxy causes errors
@@ -510,7 +512,7 @@ export const dataModule = {
             if (pendingCount > 0) {
                 this.showNotification(`${pendingCount} pending operations to sync`, "info");
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('IndexedDB Load Error:', e);
         }
     },
@@ -528,7 +530,7 @@ export const dataModule = {
                 idbManager.putBulk('logs', lg),
                 idbManager.putBulk('performance', pf)
             ]);
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('IndexedDB Save Error:', e);
         }
     },
@@ -540,7 +542,7 @@ export const dataModule = {
             await idbManager.addPendingOp({ type, data, status: 'pending' });
             this.showNotification("Operation queued for sync when online", "info");
             return true;
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Queue Error:', e);
             return false;
         }
@@ -568,12 +570,12 @@ export const dataModule = {
             try {
                 // D3: Conflict resolution — last-write-wins
                 // Jika record server punya updatedAt lebih baru dari op, skip (jangan overwrite data baru)
-                const nodePath = {
+                const nodePath = /** @type {Record<string, string>} */ ({
                     equipment: 'Equipment/' + (op.data.EquipmentID || op.data.id),
                     parts: 'SpareParts/' + (op.data.PartID || op.data.id),
                     logs: 'HistoryLog/' + (op.data.LogID || op.data.id),
                     performance: 'Performance/' + (op.data.id || op.data.equipmentId),
-                }[op.type];
+                })[op.type];
                 if (nodePath) {
                     const curSnap = await window.get(window.ref(window.db, nodePath));
                     if (curSnap.exists()) {
@@ -605,7 +607,7 @@ export const dataModule = {
                         break;
                 }
                 await idbManager.removePendingOp(op.id);
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.error('Sync Error:', e);
             }
         }
@@ -649,7 +651,7 @@ export const dataModule = {
                         logToDelete = JSON.parse(JSON.stringify(rawData));
                         console.log('[DeleteLog] Raw from Firebase - PartsUsed:', logToDelete.PartsUsed);
                     }
-                } catch(e) {
+                } catch(/** @type {any} */ e) {
                     console.log('[DeleteLog] Error fetching:', e);
                 }
             }
@@ -694,7 +696,7 @@ export const dataModule = {
                             } else if (Array.isArray(raw)) {
                                 usedParts = raw;
                             }
-                        } catch(parseErr) {
+                        } catch(/** @type {any} */ parseErr) {
                             console.log('[DeleteLog] Parse error:', parseErr.message);
                             usedParts = [];
                         }
@@ -705,32 +707,32 @@ export const dataModule = {
                                 if (p.id && p.qty) {
                                     await window.runTransaction(
                                         window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), 
-                                        (curr) => (curr || 0) + Number(p.qty)
+                                        (/** @type {any} */ curr) => (curr || 0) + Number(p.qty)
                                     );
                                     console.log('[DeleteLog] Restored stock:', p.id, '+' + p.qty);
                                 }
                             }
                         }
-                    } catch(e) {
+                    } catch(/** @type {any} */ e) {
                         console.warn('Restore parts stock error:', e);
                     }
                 }
                 
                 // Update aggregate stats transactionally on delete
                 if (node === 'Equipment') {
-                    await window.runTransaction(window.ref(window.db, 'Stats/totalEquip'), (curr) => Math.max(0, (curr || 0) - 1));
+                    await window.runTransaction(window.ref(window.db, 'Stats/totalEquip'), (/** @type {any} */ curr) => Math.max(0, (curr || 0) - 1));
                 } else if (node === 'HistoryLog') {
                     const log = this.logs.find(l => l.LogID === id);
                     if (log && log.Downtime) {
-                        await window.runTransaction(window.ref(window.db, 'Stats/totalDowntime'), (curr) => Math.max(0, (curr || 0) - Number(log.Downtime)));
+                        await window.runTransaction(window.ref(window.db, 'Stats/totalDowntime'), (/** @type {any} */ curr) => Math.max(0, (curr || 0) - Number(log.Downtime)));
                     }
                 }
             }, {
                 maxRetries: 3,
                 delay: 1000,
                 backoff: 2,
-                onRetry: (attempt, error, delay) => {
-                    console.log(`Delete retry ${attempt} after ${delay}ms:`, error.message);
+                onRetry: (/** @type {any} */ attempt, /** @type {any} */ error, /** @type {any} */ delay) => {
+                    console.log(`Delete retry ${attempt} after ${delay}ms:`, (/** @type {any} */ error).message);
                     if (isNetworkError(error)) {
                         this.showNotification("Network error, retrying...", "info");
                     }
@@ -752,11 +754,11 @@ export const dataModule = {
             if (node === 'Equipment' && this.currentPage === 'detail') {
                 this.currentPage = 'equip';
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Delete Item Error:', e);
-            this.showNotification("Failed to delete: " + e.message, "error");
+            this.showNotification("Failed to delete: " + (/** @type {any} */ e).message, "error");
         } finally {
             this.isLoading = false;
         }
     }
-};
+});
