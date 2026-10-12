@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Component Loader Utility
  * Handles dynamic loading of HTML templates for MTC-Asset
@@ -8,6 +9,11 @@
  */
 
 export class ComponentLoader {
+  /** @type {Map<string, string>} */
+  cache;
+  /** @type {string} */
+  basePath;
+
   constructor() {
     this.cache = new Map();
     this.basePath = '/pages';
@@ -16,8 +22,8 @@ export class ComponentLoader {
   /**
    * Load a page template and inject into target element
    * @param {string} pageName - Name of the page (e.g., 'Dashboard')
-   * @param {HTMLElement} targetElement - Element to inject HTML into
-   * @returns {Promise<void>}
+   * @param {HTMLElement|null} [targetElement] - Element to inject HTML into
+   * @returns {Promise<string>}
    */
   async loadPage(pageName, targetElement = null) {
     try {
@@ -42,7 +48,7 @@ export class ComponentLoader {
   async fetchTemplate(pageName) {
     // Check cache first
     if (this.cache.has(pageName)) {
-      return this.cache.get(pageName);
+      return /** @type {string} */ (this.cache.get(pageName));
     }
 
     // Fetch from server

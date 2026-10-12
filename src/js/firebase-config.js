@@ -1,3 +1,4 @@
+// @ts-check
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, onChildAdded, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore } from "firebase/database";
 import { getStorage, ref as refStorage, uploadBytes, getDownloadURL } from "firebase/storage";

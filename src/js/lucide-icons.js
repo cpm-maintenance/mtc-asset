@@ -1,3 +1,4 @@
+// @ts-check
 // Lucide icon SVG data
 // Generated from lucide v1.25
 // Each: [width, height, attr, svgPaths]

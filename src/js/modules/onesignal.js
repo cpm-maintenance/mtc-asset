@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * OneSignal — Web Push Notification Module
  * 
@@ -12,8 +13,10 @@ const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset
 
 let _initCalled = false;
 let _initComplete = false;
-let _initResolve = null;
+/** @type {(v: boolean) => void} */
+let _initResolve = () => {};
 
+/** @type {Promise<boolean>} */
 const _readyPromise = new Promise((resolve) => { _initResolve = resolve; });
 
 /**
@@ -28,7 +31,7 @@ export async function initOneSignal() {
   try {
     // Push config before script loads (OneSignalDeferred pattern)
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    window.OneSignalDeferred.push(async (OneSignal) => {
+    window.OneSignalDeferred.push(async (/** @type {any} */ OneSignal) => {
       try {
         await OneSignal.init({
           appId: ONE_SIGNAL_APP_ID,
@@ -40,7 +43,7 @@ export async function initOneSignal() {
         console.log('[OneSignal] Initialized');
         _initResolve(true);
       } catch (e) {
-        console.warn('[OneSignal] Init error:', e.message);
+        console.warn('[OneSignal] Init error:', /** @type {any} */ (e).message);
         _initResolve(false);
       }
     });
@@ -53,7 +56,7 @@ export async function initOneSignal() {
       document.head.appendChild(script);
     }
   } catch (e) {
-    console.warn('[OneSignal] Setup error:', e.message);
+    console.warn('[OneSignal] Setup error:', /** @type {any} */ (e).message);
     _initResolve(false);
   }
 
@@ -77,7 +80,7 @@ export async function subscribeOneSignal() {
 /**
  * Send push notification via Vercel proxy
  */
-export async function sendPushViaProxy(title, body, data = {}) {
+export async function sendPushViaProxy(/** @type {string} */ title, /** @type {string} */ body, data = {}) {
   try {
     await fetch(PUSH_PROXY_URL, {
       method: 'POST',
@@ -92,6 +95,6 @@ export async function sendPushViaProxy(title, body, data = {}) {
       }),
     });
   } catch (e) {
-    console.warn('[PushProxy] Error:', e.message);
+    console.warn('[PushProxy] Error:', /** @type {any} */ (e).message);
   }
 }
