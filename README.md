@@ -166,7 +166,6 @@ mtc-asset/
 │   ├── css/style.css       # Tailwind + custom CSS
 │   └── js/
 │       ├── app.js          # Alpine app state & orchestrator
-│       ├── store.js        # DEFAULT_STORE (state defaults)
 │       ├── bootstrap.js    # Init, watchers, lifecycle
 │       ├── charts.js       # Chart.js rendering
 │       ├── constants.ts    # Form defaults & constants
