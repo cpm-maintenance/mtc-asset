@@ -1,3 +1,15 @@
+// @ts-check
+/**
+ * @typedef {import('./types').Equipment} Equipment
+ * @typedef {import('./types').SparePart} SparePart
+ * @typedef {import('./types').HistoryLog} HistoryLog
+ * @typedef {import('./types').Performance} Performance
+ * @typedef {import('./types').PMTask} PMTask
+ * @typedef {import('./types').LifetimeStatus} LifetimeStatus
+ * @typedef {import('./types').RetryOptions} RetryOptions
+ * @typedef {import('./types').PartUsageItem} PartUsageItem
+ * @typedef {Record<string, any>} AnyRecord
+ */
 import { CONSTANTS } from './constants';
 
 /**
@@ -23,7 +35,7 @@ import { CONSTANTS } from './constants';
 /**
  * Ambil equipment id dari sebuah record, mendukung kedua konvensi field.
  *
- * @param {object|null|undefined} item - Record apa pun yang mungkin punya `equipmentId` atau `EquipmentID`.
+ * @param {AnyRecord|null|undefined} item - Record apa pun yang mungkin punya `equipmentId` atau `EquipmentID`.
  * @returns {string} Equipment id (lowercase diprioritaskan), atau `''` bila tidak ada.
  */
 export function equipIdOf(item) {
@@ -199,7 +211,7 @@ export function validateEmail(email) {
 /**
  * Validasi generik berbasis objek aturan per-field (`required`, `min`, `max`).
  *
- * @param {object} form - Objek data form (key = nama field).
+ * @param {AnyRecord} form - Objek data form (key = nama field).
  * @param {Object<string, {required?: boolean, min?: number, max?: number}>} rules - Aturan per field.
  * @returns {{valid: boolean, errors: string[]}} Hasil validasi dan daftar pesan error.
  */
@@ -217,7 +229,7 @@ export function validateForm(form, rules) {
 /**
  * Validasi form Equipment (Asset ID, Nama, serial number, panjang maksimum).
  *
- * @param {object} form - Data form equipment.
+ * @param {Equipment} form - Data form equipment.
  * @returns {string[]} Daftar pesan error (kosong bila valid).
  */
 export function validateEquipmentForm(form) {
@@ -234,7 +246,7 @@ export function validateEquipmentForm(form) {
 /**
  * Validasi form Spare Part (id, nama, stok, minStock, harga).
  *
- * @param {object} form - Data form part.
+ * @param {SparePart} form - Data form part.
  * @returns {string[]} Daftar pesan error (kosong bila valid).
  */
 export function validatePartForm(form) {
@@ -252,7 +264,7 @@ export function validatePartForm(form) {
 /**
  * Validasi form History Log / Work Order (equipment, tanggal, deskripsi, downtime, cost, HM, foto).
  *
- * @param {object} form - Data form log.
+ * @param {HistoryLog} form - Data form log.
  * @returns {string[]} Daftar pesan error (kosong bila valid).
  */
 export function validateLogForm(form) {
@@ -272,7 +284,7 @@ export function validateLogForm(form) {
 /**
  * Validasi form Performance (WH/BD/STB harus berjumlah 24 jam, PA plan 0-100, HM non-negatif).
  *
- * @param {object} form - Data form performance.
+ * @param {Performance} form - Data form performance.
  * @returns {string[]} Daftar pesan error (kosong bila valid).
  */
 export function validatePerformanceForm(form) {
@@ -306,8 +318,8 @@ export function validatePerformanceForm(form) {
 /**
  * Sanitasi seluruh nilai string (dan string di dalam array) pada objek sebelum disimpan ke Firebase.
  *
- * @param {object} data - Objek data mentah.
- * @returns {object} Salinan objek dengan string yang sudah lewat {@link sanitizeInput}.
+ * @param {AnyRecord} data - Objek data mentah.
+ * @returns {AnyRecord} Salinan objek dengan string yang sudah lewat {@link sanitizeInput}.
  */
 export function sanitizeDataForFirebase(data) {
   const sanitized = {};
@@ -368,11 +380,12 @@ export function formatCurrency(num) {
 /**
  * Debounce: tunda eksekusi `func` sampai `wait` ms berlalu tanpa pemanggilan baru.
  *
- * @param {Function} func - Fungsi yang akan di-debounce.
+ * @param {(...args: any[]) => any} func - Fungsi yang akan di-debounce.
  * @param {number} wait - Jeda dalam milidetik.
- * @returns {Function} Fungsi terbungkus yang menerima argumen sama dengan `func`.
+ * @returns {(...args: any[]) => void} Fungsi terbungkus yang menerima argumen sama dengan `func`.
  */
 export function debounce(func, wait) {
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
   let timeout;
   return function executedFunction(...args) {
     const later = () => {
@@ -398,8 +411,8 @@ export function generateId(prefix = 'ID') {
  * Parse JSON dengan aman; hasil non-array atau error dikembalikan sebagai fallback.
  *
  * @param {string} str - String JSON.
- * @param {Array} [fallback=[]] - Nilai yang dikembalikan bila parse gagal.
- * @returns {Array} Array hasil parse, atau `fallback`.
+ * @param {any[]} [fallback=[]] - Nilai yang dikembalikan bila parse gagal.
+ * @returns {any[]} Array hasil parse, atau `fallback`.
  */
 export function parseJsonSafe(str, fallback = []) {
   try {
@@ -440,9 +453,9 @@ export function isLowStock(current, minimum) {
 /**
  * Hitung statistik dashboard: jumlah PM overdue, jumlah part low-stock, dan total downtime.
  *
- * @param {Array<object>} equipment - Daftar equipment (memakai `NextPMDate`).
- * @param {Array<object>} parts - Daftar spare part (memakai `Stok`, `MinStock`).
- * @param {Array<object>} logs - Daftar history log (memakai `Downtime`).
+ * @param {Equipment[]} equipment - Daftar equipment (memakai `NextPMDate`).
+ * @param {SparePart[]} parts - Daftar spare part (memakai `Stok`, `MinStock`).
+ * @param {HistoryLog[]} logs - Daftar history log (memakai `Downtime`).
  * @returns {{overdueCount: number, lowStockCount: number, totalDown: number}} Statistik ringkas.
  */
 export function calculateStats(equipment, parts, logs) {
@@ -460,12 +473,8 @@ export function calculateStats(equipment, parts, logs) {
 /**
  * Jalankan `fn` dengan mekanisme retry + exponential backoff.
  *
- * @param {Function} fn - Fungsi async yang akan dijalankan.
- * @param {object} [options={}] - Opsi retry.
- * @param {number} [options.maxRetries=3] - Jumlah maksimum percobaan.
- * @param {number} [options.delay=1000] - Delay awal (ms) sebelum percobaan ulang.
- * @param {number} [options.backoff=2] - Pengali delay tiap percobaan.
- * @param {Function|null} [options.onRetry=null] - Callback `(attempt, error, delay)` saat akan retry.
+ * @param {() => any} fn - Fungsi async yang akan dijalankan.
+ * @param {RetryOptions} [options={}] - Opsi retry (maxRetries, delay, backoff, onRetry).
  * @returns {Promise<*>} Hasil `fn()` bila berhasil.
  * @throws {Error} Error terakhir bila semua percobaan gagal.
  */
@@ -485,7 +494,7 @@ export async function withRetry(fn, options = {}) {
       return await fn();
     } catch (error) {
       lastError = error;
-      console.warn(`Attempt ${attempt}/${maxRetries} failed:`, error.message);
+      console.warn(`Attempt ${attempt}/${maxRetries} failed:`, /** @type {any} */ (error).message);
       
       if (onRetry) onRetry(attempt, error, currentDelay);
       
@@ -502,12 +511,12 @@ export async function withRetry(fn, options = {}) {
 /**
  * Deteksi error yang berkaitan dengan masalah jaringan.
  *
- * @param {Error|object} error - Objek error.
+ * @param {unknown} error - Objek error.
  * @returns {boolean} `true` bila pesan/kode error mengindikasikan masalah jaringan.
  */
 export function isNetworkError(error) {
   if (!error) return false;
-  const message = error.message?.toLowerCase() || '';
+  const message = /** @type {any} */ (error).message?.toLowerCase() || '';
   return (
     message.includes('network') ||
     message.includes('fetch') ||
@@ -521,12 +530,12 @@ export function isNetworkError(error) {
 /**
  * Deteksi error yang berkaitan dengan kuota / rate limit.
  *
- * @param {Error|object} error - Objek error.
+ * @param {unknown} error - Objek error.
  * @returns {boolean} `true` bila pesan/kode error mengindikasikan kuota terlampaui.
  */
 export function isQuotaError(error) {
   if (!error) return false;
-  const message = error.message?.toLowerCase() || '';
+  const message = /** @type {any} */ (error).message?.toLowerCase() || '';
   return (
     message.includes('quota') ||
     message.includes('rate limit') ||
@@ -551,7 +560,7 @@ export function calculatePartLifetime(lastReplaceDate, avgLifetimeDays) {
   
   const replaceDate = new Date(lastReplaceDate);
   const now = new Date();
-  const daysUsed = Math.floor((now - replaceDate) / (1000 * 60 * 60 * 24));
+  const daysUsed = Math.floor((now.getTime() - replaceDate.getTime()) / (1000 * 60 * 60 * 24));
   const daysRemaining = avgLifetimeDays - daysUsed;
   const percentUsed = avgLifetimeDays > 0 ? (daysUsed / avgLifetimeDays) * 100 : 0;
   
@@ -568,7 +577,7 @@ export function calculatePartLifetime(lastReplaceDate, avgLifetimeDays) {
 /**
  * Kelas Tailwind warna teks berdasarkan status lifetime.
  *
- * @param {'overdue'|'warning'|'ok'|null} status - Status lifetime.
+ * @param {LifetimeStatus|null} [status] - Status lifetime.
  * @returns {string} Kelas Tailwind warna teks.
  */
 export function getLifetimeColor(status) {
@@ -583,7 +592,7 @@ export function getLifetimeColor(status) {
 /**
  * Kelas Tailwind warna background + border berdasarkan status lifetime.
  *
- * @param {'overdue'|'warning'|'ok'|null} status - Status lifetime.
+ * @param {LifetimeStatus|null} [status] - Status lifetime.
  * @returns {string} Kelas Tailwind warna background + border.
  */
 export function getLifetimeBgColor(status) {
@@ -599,9 +608,9 @@ export function getLifetimeBgColor(status) {
  * R3 — Part availability check (pure, testable).
  * Bandingkan quantity yang dibutuhkan dengan stok tersedia untuk tiap item.
  *
- * @param {Array<{partId?: string, quantity?: number}>} items - Item yang memakai part.
- * @param {Array<object>} allParts - Daftar spare part (memakai `PartID`, `Stok`).
- * @returns {Array<object>} Item dengan tambahan `available`, `ok`, dan `shortage`.
+ * @param {PartUsageItem[]} [items] - Item yang memakai part.
+ * @param {SparePart[]} allParts - Daftar spare part (memakai `PartID`, `Stok`).
+ * @returns {any[]} Item dengan tambahan `available`, `ok`, dan `shortage`.
  */
 
 export function checkPartAvailability(items, allParts) {
@@ -617,9 +626,9 @@ export function checkPartAvailability(items, allParts) {
 /**
  * R3 — Kurangi stok part (pure). Stok tidak akan turun di bawah 0.
  *
- * @param {object} part - Objek spare part.
+ * @param {SparePart} part - Objek spare part.
  * @param {number} qty - Jumlah yang dikurangi.
- * @returns {object} Salinan part dengan `Stok` baru.
+ * @returns {SparePart} Salinan part dengan `Stok` baru.
  */
 export function applyStockDeduction(part, qty) {
   const cur = Number(part?.Stok) || 0;
@@ -630,7 +639,7 @@ export function applyStockDeduction(part, qty) {
  * R6 — Single source of truth: hitung breakdown duration (bd) dari WO logs.
  * Menjumlahkan `Downtime` dari log berjenis `Breakdown` untuk equipment + tanggal tertentu.
  *
- * @param {Array<object>} logs - Daftar history log (memakai `EquipmentID`, `Jenis`, `Tanggal`, `Downtime`).
+ * @param {HistoryLog[]} logs - Daftar history log (memakai `EquipmentID`, `Jenis`, `Tanggal`, `Downtime`).
  * @param {string} equipId - Equipment id yang difilter.
  * @param {string} [date] - Bila diisi, hanya log pada tanggal tersebut yang dihitung.
  * @returns {number} Total downtime (jam).

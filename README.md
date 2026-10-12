@@ -169,6 +169,7 @@ mtc-asset/
 │       ├── bootstrap.js    # Init, watchers, lifecycle
 │       ├── charts.js       # Chart.js rendering
 │       ├── constants.ts    # Form defaults & constants
+│       ├── types.ts        # Shared domain types (TS)
 │       ├── db.js           # Firebase DB helpers
 │       ├── error-handler.js
 │       ├── firebase-config.js
