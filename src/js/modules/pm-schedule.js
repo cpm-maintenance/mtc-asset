@@ -18,7 +18,7 @@
  *   - createdBy, createdAt, updatedAt
  */
 
-import { DEFAULT_PM_FORM } from '../constants.js';
+import { DEFAULT_PM_FORM } from '../constants';
 
 export const pmScheduleModule = {
   // --- STATE ---

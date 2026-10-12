@@ -169,7 +169,7 @@ mtc-asset/
 │       ├── store.js        # DEFAULT_STORE (state defaults)
 │       ├── bootstrap.js    # Init, watchers, lifecycle
 │       ├── charts.js       # Chart.js rendering
-│       ├── constants.js    # Form defaults & constants
+│       ├── constants.ts    # Form defaults & constants
 │       ├── db.js           # Firebase DB helpers
 │       ├── error-handler.js
 │       ├── firebase-config.js

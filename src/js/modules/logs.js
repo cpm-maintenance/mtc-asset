@@ -2,7 +2,7 @@
  * History log management module
  */
 import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs } from '../utils.js';
-import { DEFAULT_LOG_FORM } from '../constants.js';
+import { DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 
 export const logsModule = {

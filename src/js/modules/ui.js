@@ -2,7 +2,7 @@
  * UI & Utility module for MTC.NEXUS
  */
 // Lazy-load qrcode (only used for QR modal — keeps it out of initial bundle)
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../constants';
 
 export const uiModule = {
     setTheme(t) {

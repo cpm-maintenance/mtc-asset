@@ -14,7 +14,7 @@ import { chartModule } from './charts.js';
 import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
-import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants.js';
+import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
 export function app() {

@@ -1,7 +1,7 @@
 /**
  * Equipment management module
  */
-import { DEFAULT_EQUIP_FORM } from '../constants.js';
+import { DEFAULT_EQUIP_FORM } from '../constants';
 import { validateEquipmentForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase } from '../utils.js';
 
 export const equipmentModule = {

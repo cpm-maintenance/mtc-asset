@@ -6,14 +6,16 @@ export const CONSTANTS = {
   IMAGE_QUALITY: 0.5,
   LOG_LIMIT: 200,
   NOTIFICATION_DURATION: 4000,
-};
+} as const;
 
 export const STATUS_COLORS = {
   'border-blue-500': '#3B82F6',
   'border-red-500': '#EF4444',
   'border-yellow-500': '#F59E0B',
   'border-green-500': '#10B981',
-};
+} as const;
+
+export type StatusColorKey = keyof typeof STATUS_COLORS;
 
 export const EQUIPMENT_TYPES = ['Crusher', 'Ball Mill', 'Thickener', 'Furnace', 'Pump', 'Conveyor', 'Generator', 'Other'];
 export const EQUIPMENT_STATUS = ['Active', 'In Maintenance', 'Idle', 'Decommissioned'];
