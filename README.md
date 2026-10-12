@@ -170,6 +170,7 @@ mtc-asset/
 │       ├── charts.js       # Chart.js rendering
 │       ├── constants.ts    # Form defaults & constants
 │       ├── types.ts        # Shared domain types (TS)
+│       ├── globals.d.ts    # Ambient types (window globals)
 │       ├── db.js           # Firebase DB helpers
 │       ├── error-handler.js
 │       ├── firebase-config.js

@@ -20,20 +20,9 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src/js/**/*.ts"],
+  "include": ["src/js/**/*.js", "src/js/**/*.ts"],
   "exclude": [
-    "node_modules",
-    "dist",
-    "coverage",
-    "tests",
-    "e2e",
-    "public",
-    "scripts",
-    "api",
-    "onesignal-server",
-    ".open",
-    "scratch",
-    "backups",
-    "backup"
+    "node_modules", "dist", "coverage", "tests", "e2e", "public",
+    "scripts", "api", "onesignal-server", ".open", "scratch", "backups", "backup"
   ]
 }

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * FA → Lucide Icon Mapper
  * Scan DOM for <i class="fas fa-xxx">, map ke Lucide SVG, replace.
@@ -5,6 +6,7 @@
  */
 import { ICON_DATA } from './lucide-icons.js';
 
+/** @type {Record<string, string>} */
 const FA_TO_LUCIBE = {
   'fa-arrow-left': 'arrow-left', 'fa-arrow-right': 'arrow-right',
   'fa-chevron-down': 'chevron-down', 'fa-chevron-left': 'chevron-left', 'fa-chevron-right': 'chevron-right',
@@ -62,7 +64,7 @@ function initLucide() {
     if (!match) return;
     const lucideName = FA_TO_LUCIBE['fa-' + match[1]];
     if (!lucideName) return;
-    const data = ICON_DATA[lucideName];
+    const data = /** @type {Record<string, any>} */ (ICON_DATA)[lucideName];
     if (!data) return;
 
     let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';

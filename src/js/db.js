@@ -1,3 +1,5 @@
+// @ts-check
+/// <reference types="vite/client" />
 /**
  * db.js — Centralized Firebase singleton
  * Single source of truth for all Firebase instances & functions.

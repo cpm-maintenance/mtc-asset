@@ -1,11 +1,13 @@
+// @ts-check
 /**
  * Error Handler Module
  * Centralizes error handling, Sentry reporting, and user-friendly error messages
  * Extracted from app.js
  */
 
+/** @type {Record<string, any>} */
 export const errorHandlerModule = {
-    handleError(error, context = '') {
+    handleError(/** @type {any} */ error, context = '') {
         console.error(`Error in ${context}:`, error);
         this.hasError = true;
         this.errorMessage = this.getUserFriendlyError(error);
@@ -25,7 +27,7 @@ export const errorHandlerModule = {
         }
     },
 
-    getUserFriendlyError(error) {
+    getUserFriendlyError(/** @type {any} */ error) {
         if (!error) return 'An unexpected error occurred';
         
         const message = String(error.message || error).toLowerCase();

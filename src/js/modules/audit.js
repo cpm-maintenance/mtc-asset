@@ -1,3 +1,4 @@
+// @ts-check
 import { db, ref, set } from '../db.js';
 
 let _enabled = true;
@@ -35,7 +36,7 @@ export async function logAudit(action, details = {}) {
     // Use timestamp as key — no push() needed
     const key = `${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     await set(ref(db, `AuditTrail/${key}`), entry);
-  } catch (e) {
+  } catch (/** @type {any} */ e) {
     // Silent fail — audit should never break the app
     if (e.code !== 'PERMISSION_DENIED') {
       console.warn('[Audit] Write failed:', e.message);
@@ -53,7 +54,7 @@ export function setupAuditHooks() {
   // Patch login
   const origLogin = app.login;
   if (origLogin && !app.__auditPatched) {
-    app.login = async function(...args) {
+    app.login = async function(/** @type {any[]} */ ...args) {
       const result = await origLogin.apply(this, args);
       if (app.isLoggedIn) logAudit('Login');
       return result;
@@ -64,7 +65,7 @@ export function setupAuditHooks() {
   // Patch logout
   const origLogout = app.logout || app.signOut;
   if (origLogout && !app.__auditLogoutPatched) {
-    app.logout = async function(...args) {
+    app.logout = async function(/** @type {any[]} */ ...args) {
       logAudit('Logout', { email: app.user?.email });
       return origLogout.apply(this, args);
     };

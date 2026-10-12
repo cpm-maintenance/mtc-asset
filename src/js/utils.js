@@ -85,12 +85,12 @@ export function sanitizeForDisplay(str) {
 /**
  * Validasi angka positif.
  *
- * @param {string|number} value - Nilai yang akan diparse.
+ * @param {string|number|null|undefined} value - Nilai yang akan diparse.
  * @param {boolean} [allowZero=false] - Bila `true`, nol dianggap valid.
  * @returns {boolean} `true` bila nilai numerik dan memenuhi aturan.
  */
 export function isValidPositiveNumber(value, allowZero = false) {
-  const num = parseFloat(value);
+  const num = parseFloat(String(value));
   if (isNaN(num)) return false;
   if (allowZero) return num >= 0;
   return num > 0;
@@ -99,13 +99,13 @@ export function isValidPositiveNumber(value, allowZero = false) {
 /**
  * Validasi bilangan bulat dalam rentang opsional.
  *
- * @param {string|number} value - Nilai yang akan diparse sebagai integer basis 10.
+ * @param {string|number|null|undefined} value - Nilai yang akan diparse sebagai integer basis 10.
  * @param {number} [min=0] - Batas bawah inklusif.
  * @param {number|null} [max=null] - Batas atas inklusif, `null` = tanpa batas atas.
  * @returns {boolean} `true` bila integer dan berada dalam rentang.
  */
 export function isValidInteger(value, min = 0, max = null) {
-  const num = parseInt(value, 10);
+  const num = parseInt(String(value), 10);
   if (isNaN(num)) return false;
   if (num < min) return false;
   if (max !== null && num > max) return false;
@@ -277,7 +277,7 @@ export function validateLogForm(form) {
   if (form.downtime !== undefined && !isValidPositiveNumber(form.downtime, true)) errors.push('Downtime must be a positive number');
   if (form.cost !== undefined && !isValidPositiveNumber(form.cost, true)) errors.push('Cost must be a positive number');
   if (form.hm && !isValidPositiveNumber(form.hm, true)) errors.push('HM must be a positive number');
-  if (form.photos?.length > CONSTANTS.MAX_PHOTOS) errors.push(`Maximum ${CONSTANTS.MAX_PHOTOS} photos allowed`);
+  if ((form.photos?.length ?? 0) > CONSTANTS.MAX_PHOTOS) errors.push(`Maximum ${CONSTANTS.MAX_PHOTOS} photos allowed`);
   return errors;
 }
 
@@ -294,9 +294,9 @@ export function validatePerformanceForm(form) {
   if (form.date && !isValidDate(form.date)) errors.push('Invalid date format');
   
   // Validate hours (WH, BD, STB)
-  const wh = parseFloat(form.wh) || 0;
-  const bd = parseFloat(form.bd) || 0;
-  const stb = parseFloat(form.stb) || 0;
+  const wh = parseFloat(String(form.wh)) || 0;
+  const bd = parseFloat(String(form.bd)) || 0;
+  const stb = parseFloat(String(form.stb)) || 0;
   if (!isValidPositiveNumber(form.wh, true)) errors.push('Working Hours must be a positive number');
   if (!isValidPositiveNumber(form.bd, true)) errors.push('Breakdown Hours must be a positive number');
   if (!isValidPositiveNumber(form.stb, true)) errors.push('Standby Hours must be a positive number');
@@ -305,7 +305,7 @@ export function validatePerformanceForm(form) {
   if (Math.abs(total - CONSTANTS.HOURS_IN_DAY) > 0.01) errors.push(`Total hours must equal ${CONSTANTS.HOURS_IN_DAY} (current: ${total.toFixed(2)})`);
   
   // Validate PA Plan
-  if (form.paPlan && (form.paPlan < 0 || form.paPlan > 100)) errors.push('PA Plan must be between 0-100');
+  if (form.paPlan && (Number(form.paPlan) < 0 || Number(form.paPlan) > 100)) errors.push('PA Plan must be between 0-100');
 
   // Validate HM (hour meter — cumulative, boleh 0 tapi tak boleh negatif)
   if (form.hm !== undefined && form.hm !== '' && !isValidPositiveNumber(form.hm, true)) {
@@ -322,6 +322,7 @@ export function validatePerformanceForm(form) {
  * @returns {AnyRecord} Salinan objek dengan string yang sudah lewat {@link sanitizeInput}.
  */
 export function sanitizeDataForFirebase(data) {
+  /** @type {Record<string, any>} */
   const sanitized = {};
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === 'string') {
@@ -442,8 +443,8 @@ export function isOverdue(dateStr) {
 /**
  * Cek apakah stok <= stok minimum.
  *
- * @param {number|string} current - Stok saat ini.
- * @param {number|string} minimum - Stok minimum.
+ * @param {number|string|null|undefined} current - Stok saat ini.
+ * @param {number|string|null|undefined} minimum - Stok minimum.
  * @returns {boolean} `true` bila stok di bawah atau sama dengan minimum.
  */
 export function isLowStock(current, minimum) {
@@ -522,8 +523,8 @@ export function isNetworkError(error) {
     message.includes('fetch') ||
     message.includes('connection') ||
     message.includes('timeout') ||
-    error.code === 'NETWORK_ERROR' ||
-    error.code === 'ECONNABORTED'
+    /** @type {any} */ (error).code === 'NETWORK_ERROR' ||
+    /** @type {any} */ (error).code === 'ECONNABORTED'
   );
 }
 
@@ -539,8 +540,8 @@ export function isQuotaError(error) {
   return (
     message.includes('quota') ||
     message.includes('rate limit') ||
-    error.code === 'QUOTA_EXCEEDED' ||
-    error.code === 'TOO_MANY_REQUESTS'
+    /** @type {any} */ (error).code === 'QUOTA_EXCEEDED' ||
+    /** @type {any} */ (error).code === 'TOO_MANY_REQUESTS'
   );
 }
 
@@ -608,7 +609,7 @@ export function getLifetimeBgColor(status) {
  * R3 — Part availability check (pure, testable).
  * Bandingkan quantity yang dibutuhkan dengan stok tersedia untuk tiap item.
  *
- * @param {PartUsageItem[]} [items] - Item yang memakai part.
+ * @param {PartUsageItem[]|undefined} items - Item yang memakai part.
  * @param {SparePart[]} allParts - Daftar spare part (memakai `PartID`, `Stok`).
  * @returns {any[]} Item dengan tambahan `available`, `ok`, dan `shortage`.
  */
