@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * pm-schedule.js — PM Schedule Module (Standalone Data Structure)
  * 
@@ -20,7 +22,7 @@
 
 import { DEFAULT_PM_FORM } from '../constants';
 
-export const pmScheduleModule = {
+export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
   // --- STATE ---
   pmList: [],
   pmForm: DEFAULT_PM_FORM(),
@@ -60,14 +62,14 @@ export const pmScheduleModule = {
       if (this.user?.uid && this.pmList.length > 0) {
         try {
           const completed = this.pmList.filter(p => p.status === 'completed' && p.frequency && p.frequency !== 'none'
-            && (!p.completionDate || (new Date() - new Date(p.completionDate)) < 30 * 86400000));
+            && (!p.completionDate || (Date.now() - new Date(p.completionDate).getTime()) < 30 * 86400000));
           const nextDates = new Set(
             this.pmList.filter(p => p.status === 'pending').map(p => `${p.taskName}|${p.equipmentId}|${p.date}`)
           );
           for (const pm of completed) {
             // Generate next jika belum ada pending dgn task+equip+date berikutnya
-            const freqMap = { weekly: 7, monthly: 30, quarterly: 90, yearly: 365 };
-            const days = freqMap[pm.frequency];
+            const freqMap = /** @type {Record<string, number>} */ ({ weekly: 7, monthly: 30, quarterly: 90, yearly: 365 });
+            const days = freqMap[pm.frequency || ''];
             if (!days) continue;
             const nextDate = new Date(pm.date || Date.now());
             nextDate.setDate(nextDate.getDate() + days);
@@ -78,11 +80,11 @@ export const pmScheduleModule = {
               nextDates.add(key);
             }
           }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
           console.warn('[PM] Auto-generate error:', e.message);
         }
       }
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       console.warn('[PM] Load error:', e.message);
     } finally {
       this.pmLoading = false;
@@ -133,7 +135,7 @@ export const pmScheduleModule = {
 
     this.pmLoading = true;
     try {
-      const dataToSave = {
+      const dataToSave = /** @type {any} */ ({
         taskName: this.pmForm.taskName,
         equipmentId: this.pmForm.equipmentId,
         description: this.pmForm.description || '',
@@ -147,7 +149,7 @@ export const pmScheduleModule = {
         completionDate: this.pmForm.completionDate || '',
         completionNote: this.pmForm.completionNote || '',
         updatedAt: new Date().toISOString(),
-      };
+      });
 
       if (!this.isEditingPM) {
         dataToSave.createdBy = this.user?.uid || 'unknown';
@@ -163,7 +165,7 @@ export const pmScheduleModule = {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Create PM Task', { id: pmId, task: this.pmForm.taskName, equip: this.pmForm.equipmentId });
-            } catch (e) { /* silent */ }
+            } catch (/** @type {any} */ e) { /* silent */ }
 
       } else {
         const pmId = this.pmForm.pmId;
@@ -185,12 +187,12 @@ export const pmScheduleModule = {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Update PM Task', { id: pmId, task: this.pmForm.taskName });
-            } catch (e) { /* silent */ }
+            } catch (/** @type {any} */ e) { /* silent */ }
 
       }
 
       this.showPMModal = false;
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       console.error('[PM] Submit error:', e);
       this.showNotification('Error: ' + e.message, 'error');
     } finally {
@@ -225,19 +227,19 @@ export const pmScheduleModule = {
       }
 
       this.pmShowDetail = false;
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       console.error('[PM] Complete error:', e);
       this.showNotification('Error: ' + e.message, 'error');
     }
   },
 
   async generateNextPM(pm) {
-    const freqMap = {
+    const freqMap = /** @type {Record<string, number>} */ ({
       weekly: 7,
       monthly: 30,
       quarterly: 90,
       yearly: 365,
-    };
+    });
     const days = freqMap[pm.frequency];
     if (!days) return;
 
@@ -295,7 +297,7 @@ export const pmScheduleModule = {
       await window.remove(window.ref(window.db, `PM_Schedule/${pmId}`));
       this.pmList = this.pmList.filter(p => p.pmId !== pmId);
       this.showNotification('PM task deleted');
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       console.error('[PM] Delete error:', e);
       this.showNotification('Error: ' + e.message, 'error');
     }
@@ -309,12 +311,12 @@ export const pmScheduleModule = {
   },
 
   pmToggleSelectAll() {
-    const filtered = this.pmGetFilteredList().filter(p => p.status === 'pending');
-    const allSelected = filtered.every(p => this.pmSelectedIds.includes(p.pmId));
+    const filtered = this.pmGetFilteredList().filter((/** @type {any} */ p) => p.status === 'pending');
+    const allSelected = filtered.every((/** @type {any} */ p) => this.pmSelectedIds.includes(p.pmId));
     if (allSelected) {
-      this.pmSelectedIds = this.pmSelectedIds.filter(id => !filtered.some(p => p.pmId === id));
+      this.pmSelectedIds = this.pmSelectedIds.filter((/** @type {any} */ id) => !filtered.some((/** @type {any} */ p) => p.pmId === id));
     } else {
-      filtered.forEach(p => {
+      filtered.forEach((/** @type {any} */ p) => {
         if (!this.pmSelectedIds.includes(p.pmId)) this.pmSelectedIds.push(p.pmId);
       });
     }
@@ -353,7 +355,7 @@ export const pmScheduleModule = {
       this.pmList = [...this.pmList];
       this.pmSelectedIds = [];
       this.showNotification(`✅ ${ids.length} PM tasks completed`);
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       console.error('[PM] Bulk complete error:', e);
       this.showNotification('Error: ' + e.message, 'error');
     } finally {
@@ -386,7 +388,7 @@ export const pmScheduleModule = {
 
     // Sort: overdue first, then by date
     const today = new Date().toISOString().split('T')[0];
-    return [...list].sort((a, b) => {
+    return [...list].sort((/** @type {any} */ a, /** @type {any} */ b) => {
       const aOverdue = a.status === 'pending' && a.date < today ? 1 : 0;
       const bOverdue = b.status === 'pending' && b.date < today ? 1 : 0;
       if (aOverdue !== bOverdue) return bOverdue - aOverdue;
@@ -399,8 +401,8 @@ export const pmScheduleModule = {
   get pmUpcomingList() {
     const today = new Date().toISOString().split('T')[0];
     return (this.pmList || [])
-      .filter(p => p.status === 'pending')
-      .sort((a, b) => {
+      .filter((/** @type {any} */ p) => p.status === 'pending')
+      .sort((/** @type {any} */ a, /** @type {any} */ b) => {
         const aOverdue = a.date < today ? 1 : 0;
         const bOverdue = b.date < today ? 1 : 0;
         if (aOverdue !== bOverdue) return bOverdue - aOverdue;
@@ -470,13 +472,13 @@ export const pmScheduleModule = {
     nextWeek.setDate(today.getDate() + 7);
     const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-    const eventsByDate = {};
+    const eventsByDate = /** @type {Record<string, any[]>} */ ({});
     const list = this.pmFilterEquip
-      ? (this.pmList || []).filter(p => p.equipmentId === this.pmFilterEquip)
+      ? (this.pmList || []).filter((/** @type {any} */ p) => p.equipmentId === this.pmFilterEquip)
       : (this.pmList || []);
 
     // Build events lookup
-    list.forEach(pm => {
+    list.forEach((/** @type {any} */ pm) => {
       if (!pm.date) return;
       const isOverdue = pm.date < todayStr && pm.status === 'pending';
       const isDueSoon = !isOverdue && pm.date <= nextWeekStr && pm.status === 'pending';
@@ -618,16 +620,16 @@ export const pmScheduleModule = {
     nextWeek.setDate(nextWeek.getDate() + 7);
     const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-    const daysSinceEpoch = (dateStr) => Math.floor(new Date(dateStr).getTime() / 86400000);
+    const daysSinceEpoch = (/** @type {string} */ dateStr) => Math.floor(new Date(dateStr).getTime() / 86400000);
     const day0 = daysSinceEpoch(firstDateStr);
 
     // Group by equipment
-    const equipMap = {};
+    const equipMap = /** @type {Record<string, any>} */ ({});
     const list = this.pmFilterEquip
-      ? (this.pmList || []).filter(p => p.equipmentId === this.pmFilterEquip)
+      ? (this.pmList || []).filter((/** @type {any} */ p) => p.equipmentId === this.pmFilterEquip)
       : (this.pmList || []);
 
-    list.forEach(pm => {
+    list.forEach((/** @type {any} */ pm) => {
       if (!pm.date) return;
       const pmDate = pm.date;
       if (pmDate < firstDateStr || pmDate > lastDateStr) return;
@@ -655,20 +657,21 @@ export const pmScheduleModule = {
         priority: pm.priority || 'Medium',
       };
 
-      if (!equipMap[pm.equipmentId]) {
-        equipMap[pm.equipmentId] = { equipId: pm.equipmentId, events: [] };
+      const eqKey = /** @type {string} */ (pm.equipmentId);
+      if (!equipMap[eqKey]) {
+        equipMap[eqKey] = { equipId: eqKey, events: [] };
       }
-      equipMap[pm.equipmentId].events.push(evt);
+      equipMap[eqKey].events.push(evt);
     });
 
     return Object.values(equipMap).map(eq => {
-      const status = eq.events.some(e => e.isOverdue) ? 'Overdue'
-        : eq.events.some(e => e.isDueSoon) ? 'Due Soon'
+      const status = eq.events.some((/** @type {any} */ e) => e.isOverdue) ? 'Overdue'
+        : eq.events.some((/** @type {any} */ e) => e.isDueSoon) ? 'Due Soon'
         : 'Scheduled';
 
       const eqList = window.app?.equipment || [];
       if (!this._ganttEqMap || this._ganttEqRef !== eqList) {
-        this._ganttEqMap = new Map(eqList.map(e => [e && e.EquipmentID, e && e.Nama]));
+        this._ganttEqMap = new Map(eqList.map((/** @type {any} */ e) => [e && e.EquipmentID, e && e.Nama]));
         this._ganttEqRef = eqList;
       }
       return {
@@ -679,4 +682,4 @@ export const pmScheduleModule = {
       };
     });
   },
-};
+});

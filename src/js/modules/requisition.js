@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * requisition.js — Modul Request Part / Material General
  * 
@@ -35,7 +37,7 @@ const NEW_LINE_ITEM = () => ({
     noResv: '',
 });
 
-export const requisitionModule = {
+export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // --- STATE ---
     requisitions: [],
     reqLineItems: [],
@@ -65,7 +67,7 @@ export const requisitionModule = {
         }
         this.reqLoading = true;
         const ref = window.ref(window.db, 'Requisitions');
-        this._reqUnsubscribe = window.onValue(ref, (snapshot) => {
+        this._reqUnsubscribe = window.onValue(ref, (/** @type {any} */ snapshot) => {
             try {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
@@ -112,12 +114,12 @@ export const requisitionModule = {
                 } else {
                     this.requisitions = [];
                 }
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.warn('[Requisition] Listener error:', e.message);
             } finally {
                 this.reqLoading = false;
             }
-        }, (error) => {
+        }, (/** @type {any} */ error) => {
             console.error('[Requisition] Listener error:', error);
             this.reqLoading = false;
         });
@@ -137,7 +139,7 @@ export const requisitionModule = {
             this.reqEditId = req.id;
             this.reqWoId = req.woId || '';
             this.reqWoNumber = req.woNumber || '';
-            this.reqLineItems = req.items && req.items.length ? req.items.map(i => ({...i})) : [{
+            this.reqLineItems = req.items && req.items.length ? req.items.map((/** @type {any} */ i) => ({...i})) : [{
                 itemType: req.itemType || 'part',
                 itemName: req.itemName || '',
                 partId: req.partId || '',
@@ -196,7 +198,7 @@ export const requisitionModule = {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Update Requisition', { id: this.reqEditId });
-            } catch (e) { /* silent */ }
+            } catch (/** @type {any} */ e) { /* silent */ }
 
             } else {
                 // --- NEW: single record with items array ---
@@ -224,7 +226,7 @@ export const requisitionModule = {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Create Requisition', { id, item: record.itemName, qty: record.quantity });
-            } catch (e) { /* silent */ }
+            } catch (/** @type {any} */ e) { /* silent */ }
 
 
                 // R3: backlink requisition ke WO (reqIds array uniq)
@@ -235,14 +237,14 @@ export const requisitionModule = {
                         const next = cur.includes(id) ? cur : [...cur, id];
                         await window.update(window.ref(window.db, `HistoryLog/${this.reqWoId}`), { reqIds: next });
                         if (wo) wo.reqIds = next;
-                    } catch (e) {
+                    } catch (/** @type {any} */ e) {
                         console.warn('[Requisition] WO backlink failed:', e.message);
                     }
                 }
             }
 
             this.showReqModal = false;
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('[Requisition] Submit error:', e);
             this.showNotification('Error: ' + e.message, 'error');
         } finally {
@@ -261,7 +263,7 @@ export const requisitionModule = {
         const pendingParts = new Set(
             reqs
                 .filter(r => r.status === 'pending' || r.status === 'approved')
-                .flatMap(r => (r.items || []).map(i => i.partId || i.itemName))
+                .flatMap((/** @type {any} */ r) => (r.items || []).map((/** @type {any} */ i) => i.partId || i.itemName))
                 .filter(Boolean)
         );
 
@@ -320,7 +322,7 @@ export const requisitionModule = {
             if (this.selectedRequisition?.id === reqId) Object.assign(this.selectedRequisition, updates);
 
             this.showNotification('✅ Permintaan disetujui & diproses');
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             this.showNotification('Error: ' + e.message, 'error');
         }
     },
@@ -355,7 +357,7 @@ export const requisitionModule = {
             }
 
             this.showNotification('✅ Barang ditandai sudah tiba');
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             this.showNotification('Error: ' + e.message, 'error');
         }
     },
@@ -377,7 +379,7 @@ export const requisitionModule = {
 
             this.reqShowDetail = false;
             this.showNotification('✅ Permintaan ditutup');
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             this.showNotification('Error: ' + e.message, 'error');
         }
     },
@@ -406,7 +408,7 @@ export const requisitionModule = {
                 await window.update(window.ref(window.db, `Requisitions/${id}`), updates);
                 Object.assign(req, updates);
                 success++;
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.error(`[Requisition] bulk approve fail for ${id}:`, e);
                 errors++;
             }
@@ -423,7 +425,7 @@ export const requisitionModule = {
             this.requisitions = this.requisitions.filter(r => r.id !== reqId);
             this.reqShowDetail = false;
             this.showNotification('Permintaan dihapus');
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             this.showNotification('Error: ' + e.message, 'error');
         }
     },
@@ -449,4 +451,4 @@ export const requisitionModule = {
         if (this.reqFilterType) list = list.filter(r => r.itemType === this.reqFilterType);
         return [...list].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     },
-};
+});

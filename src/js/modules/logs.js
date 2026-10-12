@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * History log management module
  */
@@ -5,7 +7,7 @@ import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitiz
 import { DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 
-export const logsModule = {
+export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     _lastHM: null,
     _lastHMLogsRef: null,
     // State flags
@@ -51,13 +53,13 @@ export const logsModule = {
                 // Step 1: unwrap entire data object from Alpine Proxy
                 let rawData = data;
                 if (window.Alpine?.raw) {
-                    try { rawData = window.Alpine.raw(data); } catch(e) {}
+                    try { rawData = window.Alpine.raw(data); } catch(/** @type {any} */ e) {}
                 }
                 // Step 2: get PartsUsed value
                 let rawParts = rawData?.PartsUsed ?? data?.PartsUsed;
                 // Step 3: unwrap if still proxy
                 if (rawParts && window.Alpine?.raw) {
-                    try { rawParts = window.Alpine.raw(rawParts); } catch(e) {}
+                    try { rawParts = window.Alpine.raw(rawParts); } catch(/** @type {any} */ e) {}
                 }
                 // Step 4: parse based on type
                 if (typeof rawParts === 'string' && rawParts.trim()) {
@@ -74,10 +76,10 @@ export const logsModule = {
                 if (!Array.isArray(parsedParts)) parsedParts = [];
                 // Step 5: deep-clean each part object to remove any Proxy
                 parsedParts = parsedParts.map(p => {
-                    const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch(e) { return p; }})() : p;
+                    const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch(/** @type {any} */ e) { return p; }})() : p;
                     return { id: clean.id || clean.PartID || '', qty: Number(clean.qty) || 1 };
                 });
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.warn('[openLogModal] PartsUsed parse error:', e);
             }
 
@@ -89,11 +91,11 @@ export const logsModule = {
                 try {
                     const parsed = JSON.parse(data.PhotoURLs);
                     existingPhotos = (Array.isArray(parsed) ? parsed : []).map(url => ({ file: null, preview: url, base64: url }));
-                } catch (e) {
+                } catch (/** @type {any} */ e) {
                     existingPhotos = [{ file: null, preview: data.PhotoURLs, base64: data.PhotoURLs }];
                 }
             } else if (Array.isArray(data.PhotoURLs)) {
-                existingPhotos = data.PhotoURLs.map(url => ({ file: null, preview: url, base64: url }));
+                existingPhotos = data.PhotoURLs.map((/** @type {any} */ url) => ({ file: null, preview: url, base64: url }));
             } else if (data.PhotoURL) {
                 existingPhotos = [{ file: null, preview: data.PhotoURL, base64: data.PhotoURL }];
             }
@@ -205,7 +207,7 @@ export const logsModule = {
             const preview = URL.createObjectURL(file);
             // Only open crop for first new file
             if (i === 0) {
-                this.showCropModal(preview, (croppedBlob) => {
+                this.showCropModal(preview, (/** @type {any} */ croppedBlob) => {
                     if (!this.logForm.photos) this.logForm.photos = [];
                     if (this.logForm.photos.length >= 4) return;
                     this.logForm.photos.push({ file: croppedBlob, preview: URL.createObjectURL(croppedBlob), base64: null });
@@ -255,7 +257,7 @@ export const logsModule = {
             const updates = { bd: Number(bd.toFixed(2)), freq, bdSource: 'wo', updatedAt: new Date().toISOString() };
             await window.update(window.ref(window.db, 'Performance/' + id), updates);
             Object.assign(perf, updates);
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.warn('[R6] syncPerformanceBD failed:', e.message);
         }
     },
@@ -291,22 +293,22 @@ export const logsModule = {
         this.isLoading = true;
         try {
             // First, ensure logForm.parts is a plain array - handle Alpine Proxy
-            let plainParts = [];
+            let plainParts = /** @type {any[]} */ ([]);
             try {
                 let rawParts = this.logForm?.parts;
                 if (rawParts && window.Alpine?.raw) {
-                    try { rawParts = window.Alpine.raw(rawParts); } catch(e) {}
+                    try { rawParts = window.Alpine.raw(rawParts); } catch(/** @type {any} */ e) {}
                 }
                 if (Array.isArray(rawParts)) {
                     plainParts = rawParts.map(p => {
                         let clean = p;
                         if (clean && window.Alpine?.raw) {
-                            try { clean = window.Alpine.raw(p); } catch(e) {}
+                            try { clean = window.Alpine.raw(p); } catch(/** @type {any} */ e) {}
                         }
                         return { id: clean?.id || '', qty: Number(clean?.qty) || 1 };
                     });
                 }
-            } catch(e) {
+            } catch(/** @type {any} */ e) {
                 console.warn('[SubmitLog] Parts extraction error:', e);
             }
             console.log('[SubmitLog] Parts to save:', plainParts);
@@ -323,7 +325,7 @@ export const logsModule = {
                 try {
                     const unwrapped = window.Alpine?.raw?.(rawPhotos);
                     if (Array.isArray(unwrapped)) photoList = unwrapped;
-                } catch(e) {}
+                } catch(/** @type {any} */ e) {}
             }
             if (photoList.length) {
                 this.showNotification('Uploading photos...', 'info');
@@ -341,14 +343,14 @@ export const logsModule = {
                         try {
                             const url = await this.uploadToImgBB(file);
                             if (url) { photoUrls.push(url); continue; }
-                        } catch(e) { console.warn('[SubmitLog] photo upload failed:', e.message); }
+                        } catch(/** @type {any} */ e) { console.warn('[SubmitLog] photo upload failed:', e.message); }
                     }
                     // Fallback: keep base64 data URL if available
                     if (src && src.startsWith('data:')) photoUrls.push(src);
                 }
             }
             
-            const logDataToSave = {
+            const logDataToSave = /** @type {any} */ ({
                 LogID: logId, 
                 EquipmentID: this.logForm.equipmentId, 
                 Tanggal: this.logForm.date,
@@ -382,7 +384,7 @@ export const logsModule = {
                 rejectionReason: this.logForm.rejectionReason || '',
                 // External fields
                 externalEquipName: this.logForm.externalEquipName || ''
-            };
+            });
             
             if (!this.isEditingLog) {
                 logDataToSave.createdBy = this.user?.uid || 'unknown';
@@ -432,7 +434,7 @@ export const logsModule = {
             await withRetry(async () => {
                 await window.set(window.ref(window.db, 'HistoryLog/' + logId), sanitizedLogData);
                 if (downtimeDiff !== 0) {
-                    await window.runTransaction(window.ref(window.db, 'Stats/totalDowntime'), (curr) => Math.max(0, (curr || 0) + downtimeDiff));
+                    await window.runTransaction(window.ref(window.db, 'Stats/totalDowntime'), (/** @type {any} */ curr) => Math.max(0, (curr || 0) + downtimeDiff));
                 }
             }, {
                 maxRetries: 3,
@@ -448,9 +450,9 @@ export const logsModule = {
             // Update Equipment Status & HM (skip for EXTERNAL)
             if (sanitizedLogData.EquipmentID && sanitizedLogData.EquipmentID !== 'EXTERNAL') {
                 const eqRef = window.ref(window.db, 'Equipment/' + sanitizedLogData.EquipmentID);
-                const updates = {
+                const updates = /** @type {any} */ ({
                     Status: logDataToSave.Status === 'Completed' ? 'Active' : 'In Maintenance'
-                };
+                });
                 if (logDataToSave.HM) updates.LastHM = logDataToSave.HM;
                 await window.update(eqRef, updates);
             }
@@ -460,10 +462,10 @@ export const logsModule = {
                 for (const p of this.logForm.parts) {
                     if (!p.id) continue;
                     try {
-                        await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (curr) => {
+                        await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
                             return (curr || 0) - Number(p.qty);
                         });
-                    } catch(e) {
+                    } catch(/** @type {any} */ e) {
                         console.error('[DeductStock] Error:', e);
                     }
                 }
@@ -479,7 +481,7 @@ export const logsModule = {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.(this.isEditingLog ? 'Update Log/WO' : 'Create Log/WO', { id: sanitizedLogData.LogID, equip: sanitizedLogData.EquipmentID, jenis: sanitizedLogData.Jenis });
-            } catch (e) { /* silent */ }
+            } catch (/** @type {any} */ e) { /* silent */ }
             
             // Add to local array immediately for instant UI update
             const existingIdx = this.logs.findIndex(l => l.LogID === sanitizedLogData.LogID);
@@ -497,11 +499,11 @@ export const logsModule = {
                         const fromFirebase = safeProcessFirebaseData(snapshot.val());
                         this.logs = fromFirebase.sort((a, b) => String(b.LogID).localeCompare(String(a.LogID)));
                     }
-                } catch(e) { console.log('Refresh logs error:', e); }
+                } catch(/** @type {any} */ e) { console.log('Refresh logs error:', e); }
             }, 500);
             
             this.showLogModal = false;
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Submit Log Error:', e);
             this.showNotification("Error: " + e.message, "error");
         } finally {
@@ -519,17 +521,17 @@ export const logsModule = {
 
     // R3: availability check utk WO (pakai pure helper, allParts dari store)
     woAvailability(wo) {
-        const parts = this.parsePartsUsed(wo?.PartsUsed).map(p => ({ partId: p.id, quantity: p.qty }));
+        const parts = this.parsePartsUsed(wo?.PartsUsed).map((/** @type {any} */ p) => ({ partId: p.id, quantity: p.qty }));
         return checkPartAvailability(parts, this.allParts || []);
     },
 
     // R3: summary utk badge — jumlah item kurang + total shortage
     woShortageSummary(wo) {
         const res = this.woAvailability(wo);
-        const missing = res.filter(r => !r.ok);
+        const missing = res.filter((/** @type {any} */ r) => !r.ok);
         return {
             ok: missing.length === 0,
-            total: missing.reduce((s, r) => s + (r.shortage || 0), 0),
+            total: missing.reduce((/** @type {any} */ s, /** @type {any} */ r) => s + (r.shortage || 0), 0),
             count: missing.length,
         };
     },
@@ -558,9 +560,9 @@ async approveWO(logId) {
             // Part Reservation & Kitting: Deduct stock on approve
             const parts = this.parsePartsUsed(log.PartsUsed);
             // R3: availability guard — warn bila stok kurang (OK=tetap approve / Batal)
-            const missing = this.woAvailability(log).filter(a => !a.ok);
+            const missing = this.woAvailability(log).filter((/** @type {any} */ a) => !a.ok);
             if (missing.length > 0) {
-                const names = missing.map(m => (m.partId || '?') + ' (-' + (m.shortage || 0) + ')').join(', ');
+                const names = missing.map((/** @type {any} */ m) => (m.partId || '?') + ' (-' + (m.shortage || 0) + ')').join(', ');
                 if (!confirm('Stok tidak cukup untuk ' + names + '. Tetap approve (part dipesan via requisition) / batalkan?\n\nOK = tetap approve\nBatal = batalkan approve')) {
                     this.showNotification('Approve dibatalkan — stok kurang', 'info');
                     return;
@@ -569,7 +571,7 @@ async approveWO(logId) {
             if (Array.isArray(parts) && parts.length > 0) {
                 for (const p of parts) {
                     if (!p.id) continue;
-                    await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (curr) => {
+                    await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
                         return (curr || 0) - Number(p.qty);
                     });
                 }
@@ -616,7 +618,7 @@ async approveWO(logId) {
                     globalApp.logs = [...globalApp.logs];
                 }
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Approve WO Error:', e);
             this.showNotification("Error: " + e.message, "error");
         }
@@ -671,7 +673,7 @@ async approveWO(logId) {
                     globalApp.logs = [...globalApp.logs];
                 }
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Reject WO Error:', e);
             this.showNotification("Error: " + e.message, "error");
         }
@@ -733,7 +735,7 @@ async approveWO(logId) {
                     globalApp.logs = [...globalApp.logs];
                 }
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Start WO Error:', e);
             this.showNotification("Error: " + e.message, "error");
         }
@@ -784,9 +786,9 @@ async approveWO(logId) {
                     globalApp.logs = [...globalApp.logs];
                 }
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Complete WO Error:', e);
             this.showNotification("Error: " + e.message, "error");
         }
     }
-};
+});

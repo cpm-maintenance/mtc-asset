@@ -1,8 +1,10 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * AI Module for KPI Analysis and PPT Generation
  */
 
-export const aiModule = {
+export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // Single key (legacy)
     apiKey: '',
     apiProvider: 'openai',
@@ -85,10 +87,10 @@ export const aiModule = {
 
 getKPIContext() {
         // Get comprehensive KPI data for analysis
-        const equipment = this.equipment || [];
-        const logs = this.logs || [];
-        const parts = this.allParts || [];
-        const performanceData = this.performanceData || [];
+        const equipment = /** @type {any[]} */ (this.equipment || []);
+        const logs = /** @type {any[]} */ (this.logs || []);
+        const parts = /** @type {any[]} */ (this.allParts || []);
+        const performanceData = /** @type {any[]} */ (this.performanceData || []);
 
         // Basic stats
         const totalEquipment = equipment.length;
@@ -105,14 +107,14 @@ getKPIContext() {
         const rejectedWO = workOrders.filter(l => l.Status === 'Rejected').length;
 
         // WO by type
-        const woByType = {};
+        const woByType = /** @type {Record<string, number>} */ ({});
         workOrders.forEach(wo => {
             const type = wo.Jenis || 'Unknown';
             woByType[type] = (woByType[type] || 0) + 1;
         });
 
         // WO by priority
-        const woByPriority = {};
+        const woByPriority = /** @type {Record<string, number>} */ ({});
         workOrders.forEach(wo => {
             const priority = wo.woPriority || 'Normal';
             woByPriority[priority] = (woByPriority[priority] || 0) + 1;
@@ -124,7 +126,7 @@ getKPIContext() {
         const avgDowntime = downtimeLogs.length > 0 ? (totalDowntime / downtimeLogs.length).toFixed(1) : 0;
 
         // RCA Analysis
-        const rcaStats = {};
+        const rcaStats = /** @type {Record<string, number>} */ ({});
         logs.forEach(l => {
             if (l.rca) {
                 const rca = l.rca.toString().toLowerCase();
@@ -149,7 +151,7 @@ getKPIContext() {
             (completedWithDates.reduce((sum, l) => {
                 const created = new Date(l.createdAt || l.Tanggal);
                 const completed = new Date(l.approvalDate);
-                const days = Math.ceil((completed - created) / (1000 * 60 * 60 * 24));
+                const days = Math.ceil((/** @type {any} */ (completed).getTime() - /** @type {any} */ (created).getTime()) / 86400000);
                 return sum + days;
             }, 0) / completedWithDates.length).toFixed(1) : 0;
 
@@ -234,7 +236,7 @@ getKPIContext() {
                         localStorage.setItem('ai_active_key_index', String(attempt));
                     }
                     break;
-                } catch (e) {
+                } catch (/** @type {any} */ e) {
                     lastError = e;
                     const errMsg = e.message.toLowerCase();
                     if (errMsg.includes('rate limit') || errMsg.includes('quota') || errMsg.includes('insufficient') || errMsg.includes('invalid')) {
@@ -256,7 +258,7 @@ getKPIContext() {
                 this.showNotification("All API keys failed", "error");
                 return null;
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('AI Analysis Error:', e);
             this.showNotification("Error: " + e.message, "error");
             return null;
@@ -265,6 +267,7 @@ getKPIContext() {
         }
     },
 
+    /** @param {any} data */
     formatKPIForPrompt(data) {
         return `📈 *Equipment:*
 - Total: ${data.totalEquipment} | Active: ${data.activeEquipment} | Maintenance: ${data.maintenanceEquipment}
@@ -280,9 +283,10 @@ getKPIContext() {
 🔧 *Parts:*
 - Low Stock: ${data.lowStockParts} | Critical: ${data.criticalParts}
 
-🔍 *Top RCA:* ${data.topRCA.map(r => r.rca + '(' + r.count + ')').join(', ') || 'N/A'}`;
+🔍 *Top RCA:* ${data.topRCA.map((/** @type {any} */ r) => r.rca + '(' + r.count + ')').join(', ') || 'N/A'}`;
     },
 
+    /** @param {any} data */
     buildSmartPrompt(data) {
         return `You are a senior maintenance analyst. Analyze this data and provide actionable insights.
 
@@ -307,10 +311,10 @@ getKPIContext() {
 *Parts Inventory:*
 - Low Stock Items: ${data.lowStockParts}
 - Critical (Very Low): ${data.criticalParts}
-${data.topLowStock.length > 0 ? '- Top Low Stock: ' + data.topLowStock.map(p => p.name + '(' + p.stock + '/' + p.minStock + ')').join(', ') : ''}
+${data.topLowStock.length > 0 ? '- Top Low Stock: ' + data.topLowStock.map((/** @type {any} */ p) => p.name + '(' + p.stock + '/' + p.minStock + ')').join(', ') : ''}
 
 *Root Cause Analysis:*
-${data.topRCA.length > 0 ? data.topRCA.map(r => '- ' + r.rca + ': ' + r.count + ' cases').join('\n') : '- No RCA data'}
+${data.topRCA.length > 0 ? data.topRCA.map((/** @type {any} */ r) => '- ' + r.rca + ': ' + r.count + ' cases').join('\n') : '- No RCA data'}
 
 Please provide:
 1. 📊 *Performance Summary* - Overall health score (0-100)
@@ -337,7 +341,7 @@ Be specific with numbers and percentages. Format with emojis for each section.`;
 - Completion Rate: ${kpiData.completionRate}%
 - Downtime: ${kpiData.totalDowntime} hrs (avg: ${kpiData.avgDowntime} hrs)
 - Low Stock Parts: ${kpiData.lowStockParts}
-- Top RCA: ${kpiData.topRCA.slice(0, 3).map(r => r.rca).join(', ')}
+- Top RCA: ${kpiData.topRCA.slice(0, 3).map((/** @type {any} */ r) => r.rca).join(', ')}
 
 Generate EXACTLY 5 work orders in this JSON format (valid JSON only, no other text):
 [
@@ -368,7 +372,7 @@ Output ONLY valid JSON array.`;
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         return parsed;
                     }
-                } catch (e) {
+                } catch (/** @type {any} */ e) {
                     const errMsg = e.message.toLowerCase();
                     if (errMsg.includes('rate limit') || errMsg.includes('quota')) {
                         if (app.rotateApiKey) {
@@ -379,12 +383,13 @@ Output ONLY valid JSON array.`;
                 }
             }
             return [];
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('Recommendations Error:', e);
             return [];
         }
     },
 
+    /** @param {any} data */
     buildAnalysisPrompt(data) {
         return `Analyze this maintenance KPI data and provide insights:
 
@@ -395,7 +400,7 @@ Output ONLY valid JSON array.`;
 - Low Stock Parts: ${data.lowStockParts} items
 
 **Low Stock Items:**
-${data.topLowStock.map(p => `- ${p.name}: ${p.stock}/${p.minStock}`).join('\n')}
+${data.topLowStock.map((/** @type {any} */ p) => `- ${p.name}: ${p.stock}/${p.minStock}`).join('\n')}
 
 Please provide:
 1. Summary of maintenance performance
@@ -429,7 +434,7 @@ Please provide:
                     const key = localStorage.getItem('ai_api_key_' + i);
                     if (key) { this.apiKey = key; break; }
                 }
-                if (!this.apiKey) this.apiKey = localStorage.getItem('ai_api_key');
+                if (!this.apiKey) this.apiKey = localStorage.getItem('ai_api_key') || '';
             }
             
             // Also sync provider
@@ -484,7 +489,7 @@ Please provide:
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': this.apiKey,
+                'x-api-key': this.apiKey || '',
                 'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
@@ -559,7 +564,7 @@ Please provide:
                 // Fallback: generate simple text report
                 await this.generateSimpleReport();
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error('PPT Generation Error:', e);
             this.showNotification("Failed to generate PPT", "error");
         } finally {
@@ -625,7 +630,7 @@ Please provide:
 </html>`;
 
         // Open in new window for printing
-        const printWindow = window.open('', '_blank');
+        const printWindow = /** @type {any} */ (window.open('', '_blank'));
         printWindow.document.write(reportHtml);
         printWindow.document.close();
         
@@ -655,7 +660,7 @@ Please provide:
             if (this.aiApiKeys.length <= 1) return null;
         }
         for (let i = 1; i < this.aiApiKeys.length; i++) {
-            const idx = (this.activeKeyIndex + i) % this.aiApiKeys.length;
+            const idx = (/** @type {number} */ (this.activeKeyIndex) + i) % this.aiApiKeys.length;
             if (this.aiApiKeys[idx] && this.aiApiKeys[idx].trim()) {
                 this.activeKeyIndex = idx;
                 localStorage.setItem('ai_active_key_index', String(idx));
@@ -677,7 +682,7 @@ Please provide:
         try {
             const result = await this.callAI(`Anda adalah asisten maintenance yang helpful. Jawab singkat dalam bahasa Indonesia.\n\nPertanyaan: ${question}`, apiKey);
             this.aiChatHistory.push({ role: 'ai', text: result || 'Tidak ada response dari AI' });
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             this.showNotification("Error: " + e.message, "error");
             this.aiChatHistory.push({ role: 'ai', text: 'Error: ' + e.message });
         } finally {
@@ -714,7 +719,7 @@ Please provide:
     },
 
     loadAISettings() {
-        this.loadAIFromFirebase().then(firebaseLoaded => {
+        this.loadAIFromFirebase().then((/** @type {any} */ firebaseLoaded) => {
             if (firebaseLoaded) return;
             const storedCount = parseInt(localStorage.getItem('ai_api_keys_count') || '0');
             if (storedCount > 0) {
@@ -762,7 +767,7 @@ Please provide:
                     return true;
                 }
             }
-        } catch(e) { console.log('[AI] Firebase load error:', e.message); }
+        } catch(/** @type {any} */ e) { console.log('[AI] Firebase load error:', e.message); }
         return false;
     },
 
@@ -770,7 +775,7 @@ Please provide:
         const keys = [];
         const keyInputs = [this.aiApiKeyInput1, this.aiApiKeyInput2, this.aiApiKeyInput3, this.aiApiKeyInput4, this.aiApiKeyInput5];
         for (let i = 0; i < keyInputs.length; i++) {
-            if (keyInputs[i]?.trim()) keys.push(keyInputs[i].trim());
+            if (keyInputs[i]?.trim()) keys.push(/** @type {string} */ (keyInputs[i]).trim());
         }
         this.aiApiKeys = keys;
         this.activeKeyIndex = 0;
@@ -781,8 +786,8 @@ Please provide:
         let modelToSave = this.aiModel;
         if (this.aiModel === '__custom__' && this.customModelInput?.trim()) modelToSave = this.customModelInput.trim();
         this.aiModel = modelToSave;
-        localStorage.setItem('ai_provider', this.aiProvider);
-        localStorage.setItem('ai_model', modelToSave);
+        localStorage.setItem('ai_provider', this.aiProvider || '');
+        localStorage.setItem('ai_model', modelToSave || '');
         localStorage.setItem('ai_custom_prompt', this.customPrompt || '');
         this.saveAIToFirebase(keys[0], modelToSave);
         this.showAPISettings = false;
@@ -796,11 +801,11 @@ Please provide:
                 model: model || '', customPrompt: this.customPrompt || '',
                 updatedAt: new Date().toISOString(), updatedBy: this.user?.email || 'admin'
             });
-        } catch(e) { console.log('[AI] Firebase save error:', e.message); }
+        } catch(/** @type {any} */ e) { console.log('[AI] Firebase save error:', e.message); }
     },
 
     get activeApiKey() {
-        if (this.aiApiKeys?.length > 0 && this.aiApiKeys[this.activeKeyIndex]) return this.aiApiKeys[this.activeKeyIndex];
+        if (this.aiApiKeys?.length > 0 && this.aiApiKeys[/** @type {number} */ (this.activeKeyIndex)]) return this.aiApiKeys[/** @type {number} */ (this.activeKeyIndex)];
         for (let i = 0; i < 10; i++) { const key = localStorage.getItem('ai_api_key_' + i); if (key?.trim()) return key; }
         return localStorage.getItem('ai_api_key') || '';
     },
@@ -829,6 +834,6 @@ Please provide:
             } else {
                 this.showNotification("Tidak ada rekomendasi", "warning");
             }
-        } catch (e) { this.showNotification("Error: " + e.message, "error"); }
+        } catch (/** @type {any} */ e) { this.showNotification("Error: " + e.message, "error"); }
     },
-};
+});

@@ -6,6 +6,8 @@
  * error TS2339 saat mengakses `window.app`, `window.appState`, dll.
  */
 
+import type { AppState } from './appstate';
+
 export {};
 
 declare global {
@@ -21,9 +23,9 @@ declare global {
     /** Registry instance chart KPI (di-set charts.js/bootstrap.js). */
     _appKpiCharts: any;
     /** Alpine root component (di-set di bootstrap). */
-    app?: any;
+    app?: AppState;
     /** Alias state global (fallback lama). */
-    appState?: any;
+    appState?: AppState;
     /** Modul audit (di-set oleh audit.js). */
     auditModule?: any;
     /** Hook re-init Lucide icons. */
