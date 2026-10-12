@@ -1,3 +1,4 @@
+// @ts-check
 import { authModule } from './modules/auth.js';
 import { uiModule } from './modules/ui.js';
 import { dataModule } from './modules/data.js';
@@ -17,6 +18,11 @@ import { bootstrapModule } from './bootstrap.js';
 import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
+/** @typedef {import("./appstate").AppState} AppState */
+/**
+ * Root Alpine app factory.
+ * @returns {AppState} The composed app state (APP_STATE members + mixins).
+ */
 export function app() {
     return {
         // --- APP STATE ---
