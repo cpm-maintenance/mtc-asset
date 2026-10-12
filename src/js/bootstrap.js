@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('./appstate').AppState} AppState */
 /**
  * Router / Bootstrap Module
  * App initialization, watchers, and lifecycle management
@@ -6,7 +8,7 @@
 
  
 
-export const bootstrapModule = {
+export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     init() {
         try {
             // Global error handler for uncaught errors
@@ -27,7 +29,7 @@ export const bootstrapModule = {
             });
             
             // Monitor Auth State
-            window.onAuthStateChanged(window.auth, (user) => {
+            window.onAuthStateChanged(window.auth, (/** @type {any} */ user) => {
                 if (!user) {
                     this.isLoggedIn = false;
                     this.user = null;
@@ -101,7 +103,7 @@ export const bootstrapModule = {
             this.$watch('logs', () => { 
                 if (this.currentPage === 'dash' && this.logs && this.logs.length > 0) debouncedDash(); 
             });
-            this.$watch('currentPage', (val, oldVal) => {
+            this.$watch('currentPage', (/** @type {any} */ val, /** @type {any} */ oldVal) => {
                 // Guard: block restricted pages for unauthorized users
                 const page = this.menuItems.find(m => m.id === val);
                 if (page && !this.canAccess(page)) {
@@ -144,10 +146,10 @@ export const bootstrapModule = {
             this.$watch('performanceData', () => { if (this.currentPage === 'kpi') debouncedKPI(); });
 
             // Lazy load modals when needed
-            this.$watch('showEquipModal', (val) => { if (val) this.loadModalsCSS(); });
-            this.$watch('showPartModal', (val) => { if (val) this.loadModalsCSS(); });
-            this.$watch('showLogModal', (val) => { if (val) this.loadModalsCSS(); });
-            this.$watch('showPerformanceModal', (val) => { if (val) this.loadModalsCSS(); });
+            this.$watch('showEquipModal', (/** @type {any} */ val) => { if (val) this.loadModalsCSS(); });
+            this.$watch('showPartModal', (/** @type {any} */ val) => { if (val) this.loadModalsCSS(); });
+            this.$watch('showLogModal', (/** @type {any} */ val) => { if (val) this.loadModalsCSS(); });
+            this.$watch('showPerformanceModal', (/** @type {any} */ val) => { if (val) this.loadModalsCSS(); });
 
             // Initial Render - DISABLED to prevent undefined errors, charts only render on page navigation
         } catch (e) {
@@ -164,7 +166,7 @@ export const bootstrapModule = {
 
     checkUserRole(uid) {
         window.get(window.ref(window.db, `Users/${uid}/role`))
-            .then(snap => {
+            .then((/** @type {any} */ snap) => {
                 if (snap.exists()) {
                     this.userRole = snap.val();
                     console.log('User role from Firebase:', this.userRole);
@@ -172,4 +174,4 @@ export const bootstrapModule = {
             })
             .catch(() => {});
     },
-};
+});

@@ -1,8 +1,10 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * Enterprise KPI Engine — Decision Support Analytics
  * Industry standards: ISO 14224, SAE JA1011, SMRP
  */
-export const enterpriseKPI = {
+export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
   // ─── Availability ───
   calcAvailability(equipId) {
     const logs = this._raw(this.logs) || [];
@@ -69,7 +71,7 @@ export const enterpriseKPI = {
 
     // Performance: actual run hrs / planned hrs from perf data
     let perfSum = 0, perfCount = 0;
-    const perfMap = {};
+    const perfMap = /** @type {Record<string, number>} */ ({});
     perf.forEach(p => { if ((p.equipmentId || p.EquipmentID)) {
       const wh = Number(p.wh) || 0;
       const bd = Number(p.bd) || 0;
@@ -106,13 +108,13 @@ export const enterpriseKPI = {
     const asset = equipment.find(e => e && e.EquipmentID === equipId);
     if (!asset) return { score: 100, status: 'Optimal', color: 'green' };
     const now = new Date();
-    const d90 = new Date(now - 90 * 86400000);
+    const d90 = new Date(now.getTime() - 90 * 86400000);
     const breakdowns = elogs.filter(l => l.Jenis === 'Breakdown' && l.Tanggal && new Date(l.Tanggal) > d90);
     score -= breakdowns.length * 15;
     if (asset.NextPMDate) {
       const pmd = new Date(asset.NextPMDate);
-      if (!isNaN(pmd) && pmd < now) {
-        const days = Math.floor((now - pmd) / 86400000);
+      if (!isNaN(pmd.getTime()) && pmd < now) {
+        const days = Math.floor((now.getTime() - pmd.getTime()) / 86400000);
         score -= Math.min(days * 2, 30);
       }
     }
@@ -231,7 +233,7 @@ export const enterpriseKPI = {
   // ─── Downtime Trend ───
   calcDowntimeTrend() {
     const perf = this._raw(this.performanceData) || [];
-    const months = {};
+    const months = /** @type {Record<string, number>} */ ({});
     perf.forEach(p => {
       if (!p.date) return;
       const m = p.date.substring(0, 7);
@@ -244,7 +246,7 @@ export const enterpriseKPI = {
   // ─── Cost Trend ───
   calcCostTrend() {
     const logs = this._raw(this.logs) || [];
-    const months = {};
+    const months = /** @type {Record<string, number>} */ ({});
     logs.forEach(l => {
       if (!l.Tanggal || !l.cost) return;
       const m = l.Tanggal.substring(0, 7);
@@ -257,7 +259,7 @@ export const enterpriseKPI = {
   // ─── PM Compliance Trend ───
   calcPMTrend() {
     const pm = this._raw(this.pmList) || [];
-    const months = {};
+    const months = /** @type {Record<string, { total: number, done: number }>} */ ({});
     pm.forEach(p => {
       if (!p.date) return;
       const m = p.date.substring(0, 7);
@@ -313,7 +315,7 @@ export const enterpriseKPI = {
     if (summary.lowStock > 0) {
       ins.push({ type: 'warning', icon: 'fa-boxes', msg: `${summary.lowStock} spare parts below minimum stock. Risk of stockout.` });
     }
-    const critical = this.calcCriticalEquip(5);
+    const critical = /** @type {any[]} */ (this.calcCriticalEquip(5));
     critical.forEach(e => {
       if (e.score < 40) {
         const logs = this._raw(this.logs) || [];
@@ -387,7 +389,7 @@ export const enterpriseKPI = {
 
   // ─── KPI click ───
   kpiClick(key) {
-    const map = { totalAssets: 'equip', running: 'equip', breakdown: 'equip', pmc: 'pms', openWO: 'wo', completedWO: 'wo', avgAvail: 'kpi', avgHealth: 'equip' };
+    const map = /** @type {Record<string, string>} */ ({ totalAssets: 'equip', running: 'equip', breakdown: 'equip', pmc: 'pms', openWO: 'wo', completedWO: 'wo', avgAvail: 'kpi', avgHealth: 'equip' });
     if (map[key]) this.currentPage = map[key];
   },
 
@@ -396,4 +398,4 @@ export const enterpriseKPI = {
     if (this.expandedEquip === eqId) { this.expandedEquip = null; return; }
     this.expandedEquip = eqId;
   },
-};
+});

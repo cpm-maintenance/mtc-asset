@@ -267,7 +267,7 @@ export interface AppState {
   _monthKey: (...args: any[]) => any;
   _partMap: (...args: any[]) => any;
   _pmHMMap: (...args: any[]) => any;
-  _raw: (...args: any[]) => any;
+  _raw: (data?: any) => any[];
   _rgba: (...args: any[]) => any;
   _tech: (...args: any[]) => any;
   activeApiKey: (...args: any[]) => any;

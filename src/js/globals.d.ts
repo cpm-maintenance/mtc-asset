@@ -10,6 +10,8 @@ export {};
 
 declare global {
   interface Window {
+    /** API notifikasi (di-set notification module). */
+    notificationAPI?: any;
     /** Alpine global (CDN bundle, dipakai window.Alpine.raw). */
     Alpine?: any;
     /** Chart.js constructor hasil lazy-import (di-set charts.js). */

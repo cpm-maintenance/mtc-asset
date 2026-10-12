@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * @file Export & Import module.
  *
@@ -20,8 +22,8 @@ import { generateProfessionalWOPDF } from './wo-pdf-template.js';
  * Parse JSON dengan aman; bila gagal mengembalikan `fallback`.
  *
  * @param {string} str - String JSON.
- * @param {Array} [fallback=[]] - Nilai pengganti saat parse gagal.
- * @returns {Array} Array hasil parse, atau `fallback`.
+ * @param {Array<any>} [fallback=[]] - Nilai pengganti saat parse gagal.
+ * @returns {Array<any>} Array hasil parse, atau `fallback`.
  */
 function tryParseJSON(str, fallback = []) {
     if (!str || typeof str !== 'string') return fallback;
@@ -49,7 +51,7 @@ let jsPDFInstance = null;
 /**
  * Ambil (dan cache) constructor jsPDF via dynamic import.
  *
- * @returns {Promise<object>} Constructor jsPDF.
+ * @returns {Promise<any>} Constructor jsPDF.
  */
 async function loadJsPDF() {
     if (jsPDFInstance) return jsPDFInstance;
@@ -63,7 +65,7 @@ async function loadJsPDF() {
  *
  * @param {string} elementId - Id elemen tabel sumber.
  * @param {string} title - Judul yang dicetak di atas tabel.
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} `true` bila PDF tersimpan.
  */
 async function exportTableToPDF(elementId, title) {
     try {
@@ -72,17 +74,17 @@ async function exportTableToPDF(elementId, title) {
         if (!element) throw new Error('Table element not found');
 
         // Get table data manually
-        const rows = [];
-        const headers = [];
+        const rows = /** @type {any[][]} */ ([]);
+        const headers = /** @type {string[]} */ ([]);
         const thead = element.querySelector('thead');
         if (thead) {
-            thead.querySelectorAll('th').forEach(th => headers.push(th.textContent.trim()));
+            thead.querySelectorAll('th').forEach(th => headers.push((th.textContent || '').trim()));
         }
         const tbody = element.querySelector('tbody');
         if (tbody) {
             tbody.querySelectorAll('tr').forEach(tr => {
-                const row = [];
-                tr.querySelectorAll('td').forEach(td => row.push(td.textContent.trim()));
+                const row = /** @type {string[]} */ ([]);
+                tr.querySelectorAll('td').forEach(td => row.push((td.textContent || '').trim()));
                 if (row.length > 0) rows.push(row);
             });
         }
@@ -103,17 +105,17 @@ async function exportTableToPDF(elementId, title) {
         pdf.setFillColor(5, 11, 24);
         pdf.rect(14, yPos, 270, cellHeight, 'F');
         pdf.setTextColor(255, 255, 255);
-        headers.forEach((h, i) => pdf.text(h.substring(0, 12), 15 + i * cellWidth, yPos + 6));
+        headers.forEach((/** @type {string} */ h, /** @type {number} */ i) => pdf.text(h.substring(0, 12), 15 + i * cellWidth, yPos + 6));
 
         // Draw rows
         yPos += cellHeight;
         pdf.setTextColor(0, 0, 0);
-        rows.slice(0, 15).forEach((row, rowIndex) => {
+        rows.slice(0, 15).forEach((/** @type {string[]} */ row, /** @type {number} */ rowIndex) => {
             if (rowIndex % 2 === 0) {
                 pdf.setFillColor(240, 240, 240);
                 pdf.rect(14, yPos, 270, cellHeight, 'F');
             }
-            row.forEach((cell, i) => {
+            row.forEach((/** @type {string} */ cell, /** @type {number} */ i) => {
                 pdf.text(cell.substring(0, 15), 15 + i * cellWidth, yPos + 6);
             });
             yPos += cellHeight;
@@ -129,453 +131,10 @@ async function exportTableToPDF(elementId, title) {
 }
 
 /**
- * Import dinamis plugin `jspdf-autotable` (lazy).
- *
- * @returns {Promise<*>} Modul autotable.
- */
-async function loadJsPDFAutotable() {
-    // Now handled in loadJsPDF() - just return true for compatibility
-    return true;
-}
-
-// ========================================
-// WORK ORDER PDF EXPORT
-// ========================================
-
-/**
- * Bangun dokumen PDF Work Order profesional (header, status, parts, catatan).
- *
- * @param {object} log - Data work order/history log.
- * @param {Array<object>} equipment - Daftar equipment untuk lookup nama.
- * @param {Array<object>} parts - Daftar spare part untuk lookup detail.
- * @returns {Promise<object>} Instance jsPDF dokumen yang sudah jadi.
- */
-async function generateWOPDF(log, equipment, parts) {
-    const jsPDF = await loadJsPDF();
-
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    const primaryColor = [15, 23, 42];
-    const secondaryColor = [71, 85, 105];
-    const accentColor = [234, 88, 12];
-    const darkColor = [15, 23, 42];
-    const grayColor = [100, 116, 139];
-    const lightGray = [241, 245, 249];
-    const white = [255, 255, 255];
-    const greenColor = [22, 163, 74];
-    const redColor = [220, 38, 38];
-    const blueColor = [37, 99, 235];
-    
-    const priorityColors = {
-        'Emergency': [220, 38, 38],
-        'Urgent': [234, 88, 12],
-        'Normal': [202, 138, 4],
-        'Planned': [22, 163, 74]
-    };
-    const priority = log.woPriority || 'Normal';
-    const priorityColor = priorityColors[priority] || [202, 138, 4];
-    const isExternal = log.equipmentId === 'EXTERNAL';
-    
-    let yPos = 20;
-    const margin = 20;
-    const contentWidth = pageWidth - (margin * 2);
-    
-    // Header Background
-    doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, pageWidth, 45, 'F');
-    
-    // Logo/Brand
-    doc.setTextColor(...white);
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('WORK ORDER', margin, yPos + 5);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('MTC Maintenance Technical Center', margin, yPos + 12);
-    
-    // WO Number - Right side
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.woNumber || '-', pageWidth - margin, yPos + 5, { align: 'right' });
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Nomor WO', pageWidth - margin, yPos + 11, { align: 'right' });
-    
-    // Company info
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('PT. Citra Palu Minerals', pageWidth - margin, yPos + 17, { align: 'right' });
-    
-    yPos = 52;
-    
-    // Priority & Status badges - lebih lebar spacing
-    doc.setFillColor(...priorityColor);
-    doc.roundedRect(margin, yPos, 30, 10, 1.5, 1.5, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text(priority.toUpperCase(), margin + 15, yPos + 6.5, { align: 'center' });
-    
-    const statusColors = {
-        'Pending': [234, 179, 8],
-        'In Progress': [37, 99, 235],
-        'Completed': [22, 163, 74],
-        'Cancelled': [107, 114, 128],
-        'Approved': [6, 182, 212],
-        'Draft': [126, 34, 196]
-    };
-    const status = log.Status || 'Pending';
-    const statusColor = statusColors[status] || [107, 114, 128];
-    doc.setFillColor(...statusColor);
-    doc.roundedRect(margin + 35, yPos, 35, 10, 1.5, 1.5, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.text(status.toUpperCase(), margin + 52.5, yPos + 6.5, { align: 'center' });
-    
-    if (isExternal) {
-        doc.setFillColor(...accentColor);
-        doc.roundedRect(margin + 75, yPos, 32, 10, 1.5, 1.5, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.text('EXTERNAL', margin + 91, yPos + 6.5, { align: 'center' });
-    }
-    
-    yPos = 70;
-    
-    // Section 1: Asset Information
-    doc.setFillColor(...primaryColor);
-    doc.rect(margin, yPos, contentWidth, 10, 'F');
-    doc.setTextColor(...white);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ASSET INFORMATION', margin + 3, yPos + 7);
-    
-    yPos += 15;
-    doc.setTextColor(...grayColor);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    
-    if (isExternal) {
-        doc.text('Asset Name', margin, yPos);
-        doc.setTextColor(...darkColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text(log.externalEquipName || 'External Asset', margin + 35, yPos);
-        
-        doc.setTextColor(...grayColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Request Source', margin + 100, yPos);
-        doc.setTextColor(...accentColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EXTERNAL', pageWidth - margin, yPos, { align: 'right' });
-    } else {
-        doc.text('Equipment', margin, yPos);
-        doc.setTextColor(...darkColor);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.text((equipment?.Nama || '-') + ' (' + (equipment?.EquipmentID || '-') + ')', margin + 35, yPos);
-        doc.setFontSize(9);
-        
-        yPos += 8;
-        doc.setTextColor(...grayColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Location', margin, yPos);
-        doc.setTextColor(...darkColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text(equipment?.Lokasi || '-', margin + 35, yPos);
-        
-        doc.setTextColor(...grayColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Status', margin + 100, yPos);
-        doc.setTextColor(...greenColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text(equipment?.Status || '-', pageWidth - margin, yPos, { align: 'right' });
-    }
-    
-    yPos += 15;
-    
-    // Section 2: Work Details
-    doc.setFillColor(...primaryColor);
-    doc.rect(margin, yPos, contentWidth, 10, 'F');
-    doc.setTextColor(...white);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('WORK DETAILS', margin + 3, yPos + 7);
-    
-    yPos += 15;
-    doc.setTextColor(...grayColor);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    
-    doc.text('Work Type', margin, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.Jenis || 'PM', margin + 35, yPos);
-    
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Date', margin + 100, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.Tanggal || '-', pageWidth - margin, yPos, { align: 'right' });
-    
-    yPos += 8;
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Technician', margin, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.Technician || '-', margin + 35, yPos);
-    
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Assigned To', margin + 100, yPos);
-    doc.setTextColor(...blueColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.assignedTo || '-', pageWidth - margin, yPos, { align: 'right' });
-    
-    yPos += 8;
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Category', margin, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.rca || 'PM', margin + 35, yPos);
-    
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('HM', margin + 100, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.HM || '-', pageWidth - margin, yPos, { align: 'right' });
-    
-    yPos += 8;
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Est. Hours', margin, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(String(log.estimatedHours || 0), margin + 35, yPos);
-    
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Actual Hours', margin + 100, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(String(log.actualHours || 0), pageWidth - margin, yPos, { align: 'right' });
-    
-    if (log.dueDate) {
-        yPos += 8;
-        doc.setTextColor(...grayColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Due Date', margin, yPos);
-        doc.setTextColor(...accentColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text(log.dueDate, margin + 35, yPos);
-    }
-    
-    yPos += 15;
-    
-    // Section 3: Request Information
-    doc.setFillColor(...primaryColor);
-    doc.rect(margin, yPos, contentWidth, 10, 'F');
-    doc.setTextColor(...white);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('REQUEST INFORMATION', margin + 3, yPos + 7);
-    
-    yPos += 15;
-    doc.setTextColor(...grayColor);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    
-    doc.text('Department', margin, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.requestSource || '-', margin + 35, yPos);
-    
-    yPos += 8;
-    doc.setTextColor(...grayColor);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Requested By', margin, yPos);
-    doc.setTextColor(...darkColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text(log.requestedBy || '-', margin + 35, yPos);
-    
-    if (log.requestDate) {
-        doc.setTextColor(...grayColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Request Date', margin + 100, yPos);
-        doc.setTextColor(...darkColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text(log.requestDate, pageWidth - margin, yPos, { align: 'right' });
-    }
-    
-    if (log.approvedBy) {
-        yPos += 8;
-        doc.setTextColor(...grayColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Approved By', margin, yPos);
-        doc.setTextColor(...greenColor);
-        doc.setFont('helvetica', 'bold');
-        doc.text(log.approvedBy, margin + 35, yPos);
-        
-        if (log.approvalDate) {
-            doc.setTextColor(...grayColor);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Approval Date', margin + 100, yPos);
-            doc.setTextColor(...darkColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text(log.approvalDate, pageWidth - margin, yPos, { align: 'right' });
-        }
-    }
-    
-    yPos += 15;
-    
-    // Section 4: Work Description
-    doc.setFillColor(...primaryColor);
-    doc.rect(margin, yPos, contentWidth, 10, 'F');
-    doc.setTextColor(...white);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('WORK DESCRIPTION', margin + 3, yPos + 7);
-    
-    yPos += 15;
-    doc.setTextColor(...darkColor);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const descLines = doc.splitTextToSize(log.Deskripsi || '-', contentWidth);
-    doc.text(descLines, margin, yPos);
-    yPos += descLines.length * 6 + 5;
-    
-    if (log.Catatan) {
-        doc.setFillColor(...lightGray);
-        doc.rect(margin, yPos, contentWidth, 10, 'F');
-        doc.setTextColor(...darkColor);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('NOTES', margin + 3, yPos + 7);
-        
-        yPos += 15;
-        doc.setTextColor(...grayColor);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'italic');
-        const notesLines = doc.splitTextToSize(log.Catatan, contentWidth);
-        doc.text(notesLines, margin, yPos);
-        yPos += notesLines.length * 6 + 5;
-    }
-    
-    const partsList = tryParseJSON(log.PartsUsed, []);
-    if (partsList && partsList.length > 0) {
-        if (yPos > pageHeight - 80) {
-            doc.addPage();
-            yPos = 20;
-        }
-        
-        doc.setFillColor(...primaryColor);
-        doc.rect(margin, yPos, contentWidth, 10, 'F');
-        doc.setTextColor(...white);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('MATERIALS / PARTS USED', margin + 3, yPos + 7);
-        
-        yPos += 15;
-        
-        const tableData = partsList.map((p, i) => {
-            const part = parts?.find(x => x.PartID === p.id);
-            return [
-                i + 1,
-                part?.PartID || p.id || '-',
-                part?.NamaPart || part?.NamaSingkat || '-',
-                p.qty || 0,
-                'Rp ' + String((part?.Harga || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
-                'Rp ' + String((p.qty || 0) * (part?.Harga || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-            ];
-        });
-        
-        doc.autoTable({
-            startY: yPos,
-            head: [['No', 'Part Number', 'Description', 'Qty', 'Unit Price', 'Total']],
-            body: tableData,
-            theme: 'striped',
-            headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
-            styles: { fontSize: 8, cellPadding: 3 },
-            columnStyles: {
-                0: { cellWidth: 12, halign: 'center' },
-                3: { cellWidth: 15, halign: 'center' },
-                4: { cellWidth: 30, halign: 'right' },
-                5: { cellWidth: 35, halign: 'right' }
-            },
-            margin: { left: margin, right: margin }
-        });
-        
-        yPos = doc.lastAutoTable.finalY + 10;
-    }
-    
-    if (log.Downtime || log.Cost) {
-        if (yPos > pageHeight - 60) {
-            doc.addPage();
-            yPos = 20;
-        }
-        
-        doc.setFillColor(...lightGray);
-        doc.rect(margin, yPos, contentWidth, 10, 'F');
-        doc.setTextColor(...darkColor);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('COST SUMMARY', margin + 3, yPos + 7);
-        
-        yPos += 15;
-        doc.setTextColor(...grayColor);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        
-        if (log.Downtime) {
-            doc.text('Downtime (Hours)', margin, yPos);
-            doc.setTextColor(...redColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text(String(log.Downtime), margin + 35, yPos);
-        }
-        
-        if (log.Cost) {
-            doc.setTextColor(...grayColor);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Total Cost', margin + 100, yPos);
-            doc.setTextColor(...darkColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Rp ' + String(log.Cost).replace(/\B(?=(\d{3})+(?!\d))/g, ','), pageWidth - margin, yPos, { align: 'right' });
-        }
-    }
-    
-    // Footer
-    yPos = pageHeight - 20;
-    
-    doc.setDrawColor(...lightGray);
-    doc.setLineWidth(0.5);
-    doc.line(margin, yPos, pageWidth - margin, yPos);
-    
-    yPos += 8;
-    doc.setTextColor(...grayColor);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Generated: ' + new Date().toLocaleDateString('id-ID', { 
-        year: 'numeric', month: 'long', day: 'numeric', 
-        hour: '2-digit', minute: '2-digit' 
-    }), margin, yPos);
-    
-    doc.text('MTC Maintenance System', pageWidth - margin, yPos, { align: 'right' });
-    
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    window.open(pdfUrl, '_blank');
-}
-
-/**
  * @file Export/Import module (mixin Alpine).
  * Semua metode memakai `this.*` dari komponen induk dan memicu unduhan file di browser.
  */
-export const exportModule = {
+export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
 
     // D1: Export Excel lengkap — multi-sheet (Equipment, SpareParts, Logs, Performance, PM, Requisitions)
 /**
@@ -586,17 +145,17 @@ export const exportModule = {
  */
     async exportExcelFull() {
         const XLSX = await loadXLSX();
-        const raw = (arr) => window.Alpine?.raw ? window.Alpine.raw(arr || []) : (arr || []);
+        const raw = (/** @type {any[]} */ arr) => /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(arr || []) : (arr || []));
         const wb = XLSX.utils.book_new();
 
-        const sheets = [
+        const sheets = /** @type {any[][]} */ ([
             ['Equipment', raw(this.equipment)],
             ['SpareParts', raw(this.allParts).map(p => ({ ...p, EquipmentIDs: Array.isArray(p.EquipmentIDs) ? p.EquipmentIDs.join(', ') : p.EquipmentIDs }))],
             ['HistoryLog', raw(this.logs).map(l => ({ ...l, PartsUsed: typeof l.PartsUsed === 'string' ? l.PartsUsed : JSON.stringify(l.PartsUsed || []) }))],
             ['Performance', raw(this.performanceData).map(p => ({ ...p, events: typeof p.events === 'string' ? p.events : JSON.stringify(p.events || []) }))],
             ['PM_Schedule', raw(this.pmList)],
             ['Requisitions', raw(this.requisitions)],
-        ];
+        ]);
 
         for (const [name, data] of sheets) {
             const ws = XLSX.utils.json_to_sheet(data.length ? data : [{}]);
@@ -604,7 +163,7 @@ export const exportModule = {
         }
 
         // Summary sheet
-        const logs = raw(this.logs);
+        const logs = /** @type {any[]} */ (raw(this.logs));
         const totalCost = logs.reduce((s, l) => s + (Number(l.Cost) || 0), 0);
         const totalDowntime = logs.reduce((s, l) => s + (Number(l.Downtime) || 0), 0);
         const summary = [
@@ -640,7 +199,7 @@ export const exportModule = {
  */
     async downloadTemplate(type) {
         const XLSX = await loadXLSX();
-        let data = [], file = "";
+        let data = /** @type {any[]} */ ([]), file = "";
         if (type === 'equip') { 
             data = [{ 
                 EquipmentID: "EQ-001", Nama: "Crusher 01", Tipe: "Crusher", Status: "Active", 
@@ -686,13 +245,13 @@ export const exportModule = {
  */
     async exportData(type, format) {
         const XLSX = await loadXLSX();
-        let data = [], file = "";
+        let data = /** @type {any[]} */ ([]), file = "";
         
         // Deep clone to avoid Alpine proxy issues with XLSX
-        const logsRaw = window.Alpine?.raw ? window.Alpine.raw(this.logs || []) : this.logs || [];
-        const equipRaw = window.Alpine?.raw ? window.Alpine.raw(this.equipment || []) : this.equipment || [];
-        const partsRaw = window.Alpine?.raw ? window.Alpine.raw(this.allParts || []) : this.allParts || [];
-        const perfRaw = window.Alpine?.raw ? window.Alpine.raw(this.performanceData || []) : this.performanceData || [];
+        const logsRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.logs || []) : this.logs || []);
+        const equipRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.equipment || []) : this.equipment || []);
+        const partsRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.allParts || []) : this.allParts || []);
+        const perfRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.performanceData || []) : this.performanceData || []);
         
         if (type === 'perf') {
             data = perfRaw.map(p => ({
@@ -740,7 +299,7 @@ export const exportModule = {
             this.showNotification('PDF exported successfully');
         } catch (e) {
             console.error('PDF Export Error:', e);
-            this.showNotification("Failed to export PDF: " + (e.message || 'Unknown error'), "error");
+            this.showNotification("Failed to export PDF: " + (/** @type {any} */ (e).message || 'Unknown error'), "error");
         }
     },
 
@@ -758,24 +317,24 @@ export const exportModule = {
 
         try {
             // Deep clone data to avoid Alpine proxy issues with jsPDF
-            const logsRaw = window.Alpine?.raw ? window.Alpine.raw(this.logs || []) : this.logs || [];
-            const equipRaw = window.Alpine?.raw ? window.Alpine.raw(this.equipment || []) : this.equipment || [];
-            const partsRaw = window.Alpine?.raw ? window.Alpine.raw(this.allParts || []) : this.allParts || [];
+            const logsRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.logs || []) : this.logs || []);
+            const equipRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.equipment || []) : this.equipment || []);
+            const partsRaw = /** @type {any[]} */ (window.Alpine?.raw ? window.Alpine.raw(this.allParts || []) : this.allParts || []);
             
-            const log = logsRaw?.find(l => l.LogID === logId);
+            const log = logsRaw?.find((/** @type {any} */ l) => l.LogID === logId);
             if (!log) {
                 this.showNotification("Work order not found", "error");
                 return;
             }
 
-            const equipment = equipRaw?.find(e => e.EquipmentID === log.EquipmentID);
+            const equipment = equipRaw?.find((/** @type {any} */ e) => e.EquipmentID === log.EquipmentID);
             const parts = partsRaw;
 
             await generateProfessionalWOPDF(log, equipment, parts);
             this.showNotification('Work Order PDF exported');
         } catch (e) {
             console.error('WO PDF Export Error:', e);
-            this.showNotification("Failed to export WO PDF: " + (e.message || 'Unknown error'), "error");
+            this.showNotification("Failed to export WO PDF: " + (/** @type {any} */ (e).message || 'Unknown error'), "error");
         }
     },
 
@@ -788,7 +347,7 @@ export const exportModule = {
         this.isLoading = true;
         try {
             const jsPDF = await loadJsPDF();
-            const list = JSON.parse(JSON.stringify(this.pmList || []));
+            const list = /** @type {any[]} */ (JSON.parse(JSON.stringify(this.pmList || [])));
             if (!list.length) {
                 this.showNotification('No PM tasks to export', 'warning');
                 return;
@@ -796,7 +355,7 @@ export const exportModule = {
 
             // Sort: overdue first, then by date
             const today = new Date().toISOString().split('T')[0];
-            list.sort((a, b) => {
+            list.sort((/** @type {any} */ a, /** @type {any} */ b) => {
                 const aO = a.status === 'pending' && a.date < today ? 1 : 0;
                 const bO = b.status === 'pending' && b.date < today ? 1 : 0;
                 if (aO !== bO) return bO - aO;
@@ -849,7 +408,7 @@ export const exportModule = {
             y += 6;
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(6);
-            list.forEach((pm, i) => {
+            list.forEach((/** @type {any} */ pm, /** @type {number} */ i) => {
                 // Page break
                 if (y > 185) {
                     doc.addPage();
@@ -908,7 +467,7 @@ export const exportModule = {
             this.showNotification('PM Schedule PDF exported');
         } catch (e) {
             console.error('PM Schedule PDF Export Error:', e);
-            this.showNotification('Failed to export PDF: ' + (e.message || 'Unknown error'), 'error');
+            this.showNotification('Failed to export PDF: ' + (/** @type {any} */ (e).message || 'Unknown error'), 'error');
         } finally {
             this.isLoading = false;
         }
@@ -917,7 +476,7 @@ export const exportModule = {
 /**
  * Ekspor laporan lengkap satu asset (info, health/MTBF, log, PM, parts) ke PDF.
  *
- * @param {object} equip - Data equipment (harus punya `EquipmentID`).
+ * @param {any} equip - Data equipment (harus punya `EquipmentID`).
  * @returns {Promise<void>} Memicu unduhan PDF; men-set `this.isLoading`.
  */
     async exportToPDF(equip) {
@@ -930,17 +489,17 @@ export const exportModule = {
             const jsPDF = await loadJsPDF();
             await import('jspdf-autotable');
             
-            const equipData = JSON.parse(JSON.stringify(equip));
-            const logsData = JSON.parse(JSON.stringify(this.logs || []));
-            const pmData = JSON.parse(JSON.stringify(this.pmList || []));
-            const partsData = JSON.parse(JSON.stringify(this.allParts || []));
+            const equipData = /** @type {any} */ (JSON.parse(JSON.stringify(equip)));
+            const logsData = /** @type {any[]} */ (JSON.parse(JSON.stringify(this.logs || [])));
+            const pmData = /** @type {any[]} */ (JSON.parse(JSON.stringify(this.pmList || [])));
+            const partsData = /** @type {any[]} */ (JSON.parse(JSON.stringify(this.allParts || [])));
             
             const doc = new jsPDF('p', 'mm', 'a4');
             const pageW = doc.internal.pageSize.getWidth();
             
             // Helper
-            const line = (y) => { doc.setDrawColor(0, 242, 255); doc.setLineWidth(0.3); doc.line(20, y, pageW - 20, y); };
-            const section = (title, y) => { doc.setFontSize(13); doc.setTextColor(0, 242, 255); doc.text(title, 20, y); return y + 7; };
+            const line = (/** @type {number} */ y) => { doc.setDrawColor(0, 242, 255); doc.setLineWidth(0.3); doc.line(20, y, pageW - 20, y); };
+            const section = (/** @type {string} */ title, /** @type {number} */ y) => { doc.setFontSize(13); doc.setTextColor(0, 242, 255); doc.text(title, 20, y); return y + 7; };
             
             // --- HEADER ---
             doc.setFontSize(22); doc.setTextColor(255, 255, 255);
@@ -951,13 +510,13 @@ export const exportModule = {
             
             // --- EQUIPMENT INFO ---
             let y = section('EQUIPMENT INFO', 38);
-            const fields = [
+            const fields = /** @type {any[][]} */ ([
                 ['Name', equipData.Nama || '-'], ['ID', equipData.EquipmentID],
                 ['Location', equipData.Lokasi || '-'], ['Status', equipData.Status || '-'],
                 ['Type', equipData.Tipe || '-'], ['Serial', equipData.SerialNumber || '-'],
                 ['Vendor', equipData.Vendor || '-'], ['Criticality', equipData.Criticality || '-'],
                 ['Next PM', equipData.NextPMDate || '-'], ['Install Date', equipData.InstallDate || '-'],
-            ];
+            ]);
             doc.setFontSize(9); doc.setTextColor(200, 210, 220);
             let col = 0, xStart = 20;
             fields.forEach(([k, v], i) => {
@@ -1030,7 +589,7 @@ export const exportModule = {
             line(y); y += 5;
             
             // --- PARTS ---
-            const equipParts = partsData.filter(p => 
+            const equipParts = partsData.filter((/** @type {any} */ p) => 
                 (p.EquipmentIDs && p.EquipmentIDs.includes(equipData.EquipmentID)) || 
                 p.EquipmentID === equipData.EquipmentID
             );
@@ -1063,7 +622,7 @@ export const exportModule = {
             this.showNotification('✅ Asset report exported');
         } catch (e) { 
             console.error('Asset PDF Export Error:', e);
-            this.showNotification("Failed to export PDF: " + (e.message || 'Unknown error'), "error");
+            this.showNotification("Failed to export PDF: " + (/** @type {any} */ (e).message || 'Unknown error'), "error");
         } finally { 
             this.isLoading = false; 
         }
@@ -1078,16 +637,16 @@ export const exportModule = {
  */
     async importCSV(event, type) {
         const XLSX = await loadXLSX();
-        const file = event.target.files[0];
+        const file = /** @type {any} */ (event.target).files[0];
         if (!file) return;
         this.isLoading = true;
         const reader = new FileReader();
-        reader.onload = async (e) => {
+        reader.onload = async (/** @type {any} */ e) => {
             try {
-                const bstr = e.target.result;
+                const bstr = /** @type {any} */ (e.target).result;
                 const wb = XLSX.read(bstr, { type: 'binary' });
                 const ws = wb.Sheets[wb.SheetNames[0]];
-                const data = XLSX.utils.sheet_to_json(ws);
+                const data = /** @type {any[]} */ (XLSX.utils.sheet_to_json(ws));
 
                 this.importProgress = 0;
                 let count = 0;
@@ -1097,7 +656,7 @@ export const exportModule = {
                     const row = data[i];
                     const id = row.EquipmentID || row.PartID || row.LogID || row.id || row.ID || (type.toUpperCase() + "-" + Date.now());
                     
-                    let dataToSave = {};
+                    let dataToSave = /** @type {Record<string, any>} */ ({});
                     if (type === 'perf') {
                         dataToSave = {
                             id: String(id),
@@ -1124,9 +683,9 @@ export const exportModule = {
                         };
                     } else if (type === 'parts') {
                         // Multi-link support in CSV: EquipmentIDs can be comma separated string
-                        let equipIds = [];
+                        let equipIds = /** @type {string[]} */ ([]);
                         if (row.EquipmentIDs) {
-                            equipIds = typeof row.EquipmentIDs === 'string' ? row.EquipmentIDs.split(',').map(s => s.trim()) : [row.EquipmentIDs];
+                            equipIds = typeof row.EquipmentIDs === 'string' ? row.EquipmentIDs.split(',').map((/** @type {string} */ s) => s.trim()) : [row.EquipmentIDs];
                         } else if (row.EquipmentID) {
                             equipIds = [row.EquipmentID];
                         }
@@ -1159,12 +718,12 @@ export const exportModule = {
                 setTimeout(() => { this.importProgress = 0; }, 2000);
             } catch (err) {
                 console.error('Import Error:', err);
-                this.showNotification("Import failed: " + err.message, "error");
+                this.showNotification("Import failed: " + /** @type {any} */ (err).message, "error");
             } finally {
                 this.isLoading = false;
-                event.target.value = "";
+                /** @type {any} */ (event.target).value = "";
                 // Reset progress after a short delay if it's stuck
-                if (this.importProgress >= 100) {
+                if ((this.importProgress || 0) >= 100) {
                     setTimeout(() => { this.importProgress = 0; }, 2000);
                 } else {
                     this.importProgress = 0;
@@ -1173,4 +732,4 @@ export const exportModule = {
         };
         reader.readAsBinaryString(file);
     }
-};
+});
