@@ -1,0 +1,127 @@
+// @vitest-environment jsdom
+/**
+ * Tests untuk fitur QR (P3-5):
+ *  - generateQR  → data URL + modal preview
+ *  - downloadQR  → unduh PNG
+ *  - downloadAllQRs → PDF QR sheet A4 landscape grid 3×5 untuk semua equipment
+ *
+ * `qrcode` & `jspdf` di-mock karena keduanya di-import dinamis (lazy) dan
+ * menghasilkan output biner yang tidak perlu diuji di sini.
+ */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// --- Mock dynamic imports ---
+vi.mock('qrcode', () => ({
+  default: {
+    toDataURL: vi.fn(async (text) => `data:image/png;base64,MOCK:${text}`),
+  },
+}));
+
+const pdfCalls = { addImage: [], addPage: 0, save: [], text: [] };
+vi.mock('jspdf', () => ({
+  jsPDF: class {
+    addImage(...args) { pdfCalls.addImage.push(args); }
+    addPage() { pdfCalls.addPage++; }
+    save(name) { pdfCalls.save.push(name); }
+    setFontSize() {}
+    setTextColor() {}
+    text(...args) { pdfCalls.text.push(args); }
+  },
+}));
+
+import { uiModule } from '../src/js/modules/ui.js';
+
+function makeCtx(overrides = {}) {
+  return Object.assign(
+    {
+      equipment: [],
+      selectedEquip: null,
+      isLoading: false,
+      qrCodeDataUrl: '',
+      showQRPreviewModal: false,
+      showNotification: vi.fn(),
+    },
+    overrides
+  );
+}
+
+beforeEach(() => {
+  pdfCalls.addImage.length = 0;
+  pdfCalls.text.length = 0;
+  pdfCalls.save.length = 0;
+  pdfCalls.addPage = 0;
+});
+
+describe('QR — generateQR / downloadQR', () => {
+  it('generateQR menghasilkan data URL dan membuka modal preview', async () => {
+    const ctx = makeCtx();
+    await uiModule.generateQR.call(ctx, 'EQ-123');
+    expect(ctx.qrCodeDataUrl).toContain('MOCK:EQ-123');
+    expect(ctx.showQRPreviewModal).toBe(true);
+    expect(ctx.isLoading).toBe(false);
+  });
+
+  it('downloadQR tidak error jika belum ada QR', () => {
+    const ctx = makeCtx({ qrCodeDataUrl: '' });
+    expect(() => uiModule.downloadQR.call(ctx)).not.toThrow();
+  });
+
+  it('downloadQR memicu klik anchor unduhan', () => {
+    const ctx = makeCtx({ qrCodeDataUrl: 'data:image/png;base64,X', selectedEquip: { EquipmentID: 'EQ-1' } });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    uiModule.downloadQR.call(ctx);
+    expect(clickSpy).toHaveBeenCalled();
+    clickSpy.mockRestore();
+  });
+});
+
+describe('QR — downloadAllQRs (bulk PDF)', () => {
+  it('menolak saat tidak ada equipment', async () => {
+    const ctx = makeCtx({ equipment: [] });
+    await uiModule.downloadAllQRs.call(ctx);
+    expect(ctx.showNotification).toHaveBeenCalledWith('No equipment to export', 'error');
+    expect(pdfCalls.save).toHaveLength(0);
+  });
+
+  it('membuat PDF dengan 1 gambar QR per equipment', async () => {
+    const ctx = makeCtx({
+      equipment: [
+        { EquipmentID: 'EQ-1', Nama: 'Crusher' },
+        { EquipmentID: 'EQ-2', Nama: 'Conveyor' },
+        { EquipmentID: 'EQ-3', Nama: 'Pump' },
+      ],
+    });
+    await uiModule.downloadAllQRs.call(ctx);
+    expect(pdfCalls.addImage).toHaveLength(3);
+    expect(pdfCalls.save).toHaveLength(1);
+    expect(pdfCalls.save[0]).toMatch(/^QR_All_Equipment_/);
+    expect(ctx.showNotification).toHaveBeenCalledWith('Exported 3 QR codes');
+  });
+
+  it('menambah halaman baru setiap kelipatan 15 label (grid 3×5)', async () => {
+    const equipment = Array.from({ length: 16 }, (_, i) => ({ EquipmentID: `EQ-${i}`, Nama: `N${i}` }));
+    const ctx = makeCtx({ equipment });
+    await uiModule.downloadAllQRs.call(ctx);
+    // 16 item → 1 kali addPage (setelah item ke-15)
+    expect(pdfCalls.addPage).toBe(1);
+    expect(pdfCalls.addImage).toHaveLength(16);
+  });
+
+  it('tidak menambah halaman saat tepat 15 item', async () => {
+    const equipment = Array.from({ length: 15 }, (_, i) => ({ EquipmentID: `EQ-${i}` }));
+    const ctx = makeCtx({ equipment });
+    await uiModule.downloadAllQRs.call(ctx);
+    expect(pdfCalls.addPage).toBe(0);
+    expect(pdfCalls.addImage).toHaveLength(15);
+  });
+
+  it('menangani error QR dengan notifikasi error', async () => {
+    const QRCode = (await import('qrcode')).default;
+    const spy = vi.spyOn(QRCode, 'toDataURL').mockRejectedValueOnce(new Error('boom'));
+    const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ-1' }] });
+    await uiModule.downloadAllQRs.call(ctx);
+    expect(ctx.showNotification).toHaveBeenCalledWith(expect.stringContaining('Failed to export QR PDF'), 'error');
+    expect(ctx.isLoading).toBe(false);
+    spy.mockRestore();
+  });
+});
