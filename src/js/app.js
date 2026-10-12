@@ -275,6 +275,7 @@ export function app() {
         performanceData: [],
         equipPage: 1,
         equipLimit: 30,
+        allLogsLimit: 30,
 
         // --- PM SCHEDULE STATE ---
         pmView: 'calendar',
@@ -1189,15 +1190,16 @@ if (confirm('Are you sure you want to logout?')) {
             return result;
         },
 
-        get filteredAllLogs() {
+        // P3-3: daftar All Logs penuh (belum dipotong) — sumber untuk hitung total.
+        get filteredAllLogsAll() {
             if (!this.logs || !Array.isArray(this.logs)) return [];
-            
+
             // All Logs: only real equipment logs (non-EXTERNAL)
             let result = this.logs.filter(l => 
                 l.EquipmentID && 
                 l.EquipmentID !== 'EXTERNAL'
             );
-            
+
             // Date range filter
             if (this.filterDateFrom) {
                 const from = this.filterDateFrom;
@@ -1207,8 +1209,23 @@ if (confirm('Are you sure you want to logout?')) {
                 const to = this.filterDateTo;
                 result = result.filter(l => l.Tanggal && l.Tanggal <= to);
             }
-            
+
             return result;
+        },
+
+        // P3-3: slice bertahap untuk render — hindari render ratusan kartu sekaligus.
+        get filteredAllLogs() {
+            return this.filteredAllLogsAll.slice(0, this.allLogsLimit || 30);
+        },
+
+        get canLoadMoreAllLogs() {
+            return this.filteredAllLogsAll.length > (this.allLogsLimit || 30);
+        },
+
+        loadMoreAllLogs() {
+            if (this.canLoadMoreAllLogs) {
+                this.allLogsLimit = (this.allLogsLimit || 30) + 30;
+            }
         },
 
         get filteredParts() {
