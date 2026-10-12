@@ -1,3 +1,5 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * @file KPI Engine — Neural Prediction & Analytics.
  *
@@ -9,7 +11,7 @@
  * Semua hasil kalkulasi di-cache pada `this._kpiCache` dan invalidasi
  * otomatis saat referensi data berubah (lihat {@link kpiEngineModule._kpiKey}).
  */
-export const kpiEngineModule = {
+export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     /**
      * Unwrap Alpine reactive proxy agar data bisa dibaca/diserialisasi aman.
      *
@@ -56,8 +58,8 @@ export const kpiEngineModule = {
             this._kpiCache = { key, h: new Map(), m: new Map() };
         }
 
-        const logs = this._raw(this.logs) || [];
-        const equipment = this._raw(this.equipment) || [];
+        const logs = /** @type {any[]} */ (this._raw(this.logs) || []);
+        const equipment = /** @type {any[]} */ (this._raw(this.equipment) || []);
 
         // Guard - validate equipment array
         if (!Array.isArray(equipment)) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
@@ -79,7 +81,7 @@ export const kpiEngineModule = {
             const pmDate = new Date(asset.NextPMDate);
             if (!isNaN(pmDate.getTime())) {
                 if (pmDate < now) {
-                    const daysOverdue = Math.floor((now - pmDate) / (1000 * 60 * 60 * 24));
+                    const daysOverdue = Math.floor((now.getTime() - pmDate.getTime()) / (1000 * 60 * 60 * 24));
                     score -= Math.min(daysOverdue * 2, 30); // Max 30 point penalty
                 }
             }
@@ -91,7 +93,7 @@ export const kpiEngineModule = {
 
         score = Math.max(0, Math.min(100, score));
         const color = score > 80 ? 'text-emerald-500' : score > 50 ? 'text-amber-500' : 'text-rose-500';
-        const status = score > 80 ? 'Optimal' : score > 50 ? 'Warning' : 'Critical';
+        const status = /** @type {'Optimal'|'Warning'|'Critical'} */ (score > 80 ? 'Optimal' : score > 50 ? 'Warning' : 'Critical');
 
         const result = { score, color, status, breakdowns: breakdowns.length };
         this._kpiCache.h.set(equipId, result);
@@ -110,8 +112,8 @@ export const kpiEngineModule = {
     _hmIntervalHours(a, b) {
         const hmA = Number(a?.HM); const hmB = Number(b?.HM);
         if (hmA > 0 && hmB > 0) return Math.max(0, hmB - hmA);
-        const dA = new Date(a?.Tanggal), dB = new Date(b?.Tanggal);
-        if (!isNaN(dA) && !isNaN(dB)) return Math.max(0, (dB - dA) / (1000 * 60 * 60));
+        const dA = new Date(a?.Tanggal ?? ''), dB = new Date(b?.Tanggal ?? '');
+        if (!isNaN(dA.getTime()) && !isNaN(dB.getTime())) return Math.max(0, (dB.getTime() - dA.getTime()) / (1000 * 60 * 60));
         return 0;
     },
 
@@ -124,8 +126,8 @@ export const kpiEngineModule = {
      */
     _breakdownEvents(equipId) {
         const logs = this._raw(this.logs) || [];
-        const perf = this._raw(this.performanceData) || [];
-        const out = [];
+        const perf = /** @type {any[]} */ (this._raw(this.performanceData) || []);
+        const out = /** @type {any[]} */ ([]);
 
         for (const l of logs) {
             if (l && l.EquipmentID === equipId && l.Jenis === 'Breakdown') {
@@ -145,7 +147,7 @@ export const kpiEngineModule = {
 
         return out.sort((a, b) => {
             if (!a.Tanggal || !b.Tanggal) return 0;
-            return new Date(a.Tanggal) - new Date(b.Tanggal);
+            return new Date(a.Tanggal).getTime() - new Date(b.Tanggal).getTime();
         });
     },
 
@@ -154,7 +156,7 @@ export const kpiEngineModule = {
      * Hasil di-cache; mengembalikan 0 bila data kurang dari 2 event.
      *
      * @param {string} equipId - Equipment id.
-     * @returns {string} MTBF dalam jam sebagai string 1 desimal, atau `'0'` bila data tidak cukup.
+     * @returns {string|number} MTBF dalam jam (string 1 desimal), atau angka `0` bila data tidak cukup.
      */
     calculateMTBF(equipId) {
         // Guard
@@ -208,7 +210,7 @@ export const kpiEngineModule = {
             .filter(l => l && l.EquipmentID === equipId && l.Jenis === 'Breakdown')
             .sort((a, b) => {
                 if (!a.Tanggal || !b.Tanggal) return 0;
-                return new Date(b.Tanggal) - new Date(a.Tanggal);
+                return new Date(b.Tanggal).getTime() - new Date(a.Tanggal).getTime();
             })[0];
 
         if (!lastBreakdown || !lastBreakdown.Tanggal) return 'No failures recorded';
@@ -253,4 +255,4 @@ export const kpiEngineModule = {
         console.log('[getEquipName] NOT FOUND');
         return "Unknown Asset";
     }
-};
+});

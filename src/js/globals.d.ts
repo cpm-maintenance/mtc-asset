@@ -10,6 +10,8 @@ export {};
 
 declare global {
   interface Window {
+    /** Alpine global (CDN bundle, dipakai window.Alpine.raw). */
+    Alpine?: any;
     /** Alpine root component (di-set di bootstrap). */
     app?: any;
     /** Alias state global (fallback lama). */

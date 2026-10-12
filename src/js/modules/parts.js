@@ -1,9 +1,11 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * Spare parts management module
  */
 import { validatePartForm, withRetry, isNetworkError, sanitizeDataForFirebase } from '../utils.js';
 
-export const partsModule = {
+export const partsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     showUsageHistory: false,
     usageHistoryPartId: null,
     usageHistoryPartName: '',
@@ -164,9 +166,9 @@ openPartModal(isEdit = false, data = null) {
             this.showPartModal = false;
         } catch (e) {
             console.error('Submit Spare Part Error:', e);
-            this.showNotification("Sync Error: " + e.message, "error");
+            this.showNotification("Sync Error: " + /** @type {any} */ (e).message, "error");
         } finally {
             this.isLoading = false;
         }
     }
-};
+});

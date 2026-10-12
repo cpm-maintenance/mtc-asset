@@ -1,10 +1,12 @@
+// @ts-check
+/** @typedef {import('../appstate').AppState} AppState */
 /**
  * Equipment management module
  */
 import { DEFAULT_EQUIP_FORM } from '../constants';
 import { validateEquipmentForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase } from '../utils.js';
 
-export const equipmentModule = {
+export const equipmentModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     openEquipModal(isEdit = false, data = null) {
         this.isEditingEquip = isEdit;
         if (isEdit && data) {
@@ -34,7 +36,7 @@ export const equipmentModule = {
         this.tempEquipFile = file;
         this.equipForm.foto = URL.createObjectURL(file);
         // Open crop modal
-        this.showCropModal(this.equipForm.foto, (croppedBlob) => {
+        this.showCropModal(this.equipForm.foto, (/** @type {Blob} */ croppedBlob) => {
             this.tempEquipFile = croppedBlob;
             this.equipForm.foto = URL.createObjectURL(croppedBlob);
         });
@@ -110,7 +112,7 @@ if (!this.isEditingEquip) {
             await withRetry(async () => {
                 await window.set(window.ref(window.db, 'Equipment/' + this.equipForm.id), sanitizedData);
                 if (!this.isEditingEquip) {
-                    await window.runTransaction(window.ref(window.db, 'Stats/totalEquip'), (curr) => (curr || 0) + 1);
+                    await window.runTransaction(window.ref(window.db, 'Stats/totalEquip'), (/** @type {any} */ curr) => (curr || 0) + 1);
                 }
             }, {
                 maxRetries: 3,
@@ -145,7 +147,7 @@ if (!this.isEditingEquip) {
             this.showEquipModal = false;
         } catch (e) {
             console.error('Submit Equipment Error:', e);
-            this.showNotification("Error: " + e.message, "error");
+            this.showNotification("Error: " + /** @type {any} */ (e).message, "error");
         } finally {
             this.isLoading = false;
         }
@@ -161,4 +163,4 @@ if (!this.isEditingEquip) {
             this.showNotification("Asset not found in database", "error");
         }
     }
-};
+});
