@@ -22,7 +22,7 @@ export default defineConfig({
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
     webServer: {
-        command: 'npm run dev',
+        command: process.env.CI ? 'npm run preview -- --port 3000' : 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: true,
         timeout: 60_000,
