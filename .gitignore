@@ -70,8 +70,9 @@ dist/
 # dataconnect generated files
 .dataconnect
 
-# Backup archive files (keep git history clean)
-# NOTE: backups/ folder IS committed to GitHub for data safety
+# Backup archive files — TIDAK di-commit (risiko PII/secret di repo publik).
+# Backup harian via workflow -> artifact GitHub Actions (retention 90 hari).
+backups/
 # Only ignore large individual files if needed
 *.zip
 *.7z

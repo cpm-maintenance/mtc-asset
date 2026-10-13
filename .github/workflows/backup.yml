@@ -17,7 +17,7 @@ jobs:
     name: Backup Firebase Database
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -91,41 +91,12 @@ jobs:
           echo "✅ Backup complete: ${BACKUP_FILE}"
           echo "SIZE=$(du -h "$BACKUP_FILE" | cut -f1)" >> $GITHUB_OUTPUT
 
-      - name: 📝 Update LATEST reference
-        run: |
-          # ponytail: pakai file terbaru, bukan timestamp baru — step terpisah bikin LATEST.txt
-          # menunjuk nama file yang tidak pernah dibuat.
-          cd backups
-          ls -1t backup-*.json 2>/dev/null | head -n 1 > LATEST.txt
-
-      - name: 🧹 Clean old backups (keep last 30)
-        run: |
-          cd backups
-          ls -1 backup-*.json 2>/dev/null | sort | head -n -30 | while read old; do
-            echo "  Removing old backup: $old"
-            rm "$old"
-          done
-
-      - name: Git Config
-        run: |
-          git config user.name "MTC Asset Bot"
-          git config user.email "mtc-asset-bot@users.noreply.github.com"
-
-      - name: 📤 Commit & Push Backup
-        run: |
-          git add backups/
-          # Only commit if there are changes
-          if git diff --staged --quiet; then
-            echo "✅ No changes to backup"
-          else
-            git commit -m "📦 Auto backup: $(date +'%Y-%m-%d %H:%M')
-            
-            Automatic Firebase database backup
-            Trigger: ${{ github.event_name }}
-            Run ID: ${{ github.run_id }}"
-            git push
-            echo "✅ Backup pushed to GitHub"
-          fi
+      - name: 📤 Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-backup-${{ github.run_id }}
+          path: backups/
+          retention-days: 90
 
       # P3-6: Kirim ringkasan backup via email (Gmail SMTP).
       # Secrets yang dibutuhkan (Settings → Secrets and variables → Actions):
@@ -156,7 +127,7 @@ jobs:
             echo ""
             echo "Status : $STATUS"
             echo "Trigger: ${{ github.event_name }}"
-            echo "Nodes  : Equipment, SpareParts, HistoryLog, AI_Settings, ImageUploads"
+            echo "Nodes  : Equipment, SpareParts, HistoryLog, Performance, Stats, ImageUploads"
             echo "Size   : ${SIZE:-n/a}"
             echo "Run ID : ${{ github.run_id }}"
             echo "Detail : $RUN_URL"
