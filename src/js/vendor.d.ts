@@ -1,8 +1,7 @@
 /**
  * @file Deklarasi tipe untuk paket npm yang belum menyertakan `.d.ts`.
- *
- * Hanya paket yang benar-benar dipakai lewat dynamic import di src/js.
  */
+
 declare module 'qrcode' {
   interface QROptions {
     width?: number;
@@ -13,4 +12,25 @@ declare module 'qrcode' {
     toDataURL(text: string, options?: QROptions): Promise<string>;
   };
   export default QRCode;
+}
+
+declare module 'jspdf-autotable' {
+  interface UserOptions {
+    startY?: number;
+    head?: any[][];
+    body?: any[][];
+    theme?: string;
+    headStyles?: any;
+    bodyStyles?: any;
+    margin?: any;
+    [key: string]: any;
+  }
+  export function autoTable(doc: any, options: UserOptions): void;
+}
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable(options: any): jsPDF;
+    lastAutoTable: { finalY: number };
+  }
 }
