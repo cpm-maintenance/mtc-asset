@@ -64,7 +64,11 @@ jobs:
           for NODE in "${NODES[@]}"; do
             echo "  Backing up /${NODE}..."
             echo "  \"${NODE}\": " >> "$BACKUP_FILE"
-            firebase database:get "/${NODE}" --project "$PROJECT_ID" --token "$FIREBASE_TOKEN" 2>/dev/null >> "$BACKUP_FILE" || echo "{}" >> "$BACKUP_FILE"
+            # Capture JSON ke variabel; buang baris warning firebase-tools (bocor ke stdout
+            # meski stderr sudah dibuang) supaya file tetap JSON valid.
+            JSON=$(firebase database:get "/${NODE}" --project "$PROJECT_ID" --token "$FIREBASE_TOKEN" 2>/dev/null | grep -v -E "Authenticating|deprecated|WARNING|⚠" || true)
+            [ -z "$JSON" ] && JSON="{}"
+            printf '%s' "$JSON" >> "$BACKUP_FILE"
             
             if [ "$NODE" != "${NODES[-1]}" ]; then
               echo "," >> "$BACKUP_FILE"
@@ -74,9 +78,14 @@ jobs:
           
           echo "}" >> "$BACKUP_FILE"
           
-          # Validasi JSON
+          # Validasi JSON — GAGALKAN step kalau invalid (cegah backup korup ter-commit)
           if command -v jq &> /dev/null; then
-            jq '.' "$BACKUP_FILE" > /dev/null && echo "✅ Valid JSON" || echo "❌ Invalid JSON"
+            if jq -e "." "$BACKUP_FILE" > /dev/null 2>&1; then
+              echo "✅ Valid JSON"
+            else
+              echo "❌ Invalid JSON — backup dibatalkan"
+              exit 1
+            fi
           fi
           
           echo "✅ Backup complete: ${BACKUP_FILE}"
