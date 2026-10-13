@@ -500,8 +500,98 @@ select option {
   filter: drop-shadow(0 0 12px var(--nexus-accent-glow));
 }
 
-#login-id, #login-key {
-  color: #000 !important;
-  background-color: #fff !important;
-  caret-color: #000;
+/* =========================================
+   NEUMORPHIC LOGIN (dark) — scoped to the login gate only.
+   Soft dual-shadow extrusion over the industrial dark palette.
+   Text kept at #e2e8f0 on #1c2230 for WCAG AA.
+   ========================================= */
+.neu-shell {
+  --neu-bg: #1c2230;
+  --neu-light: rgba(255, 255, 255, 0.05);
+  --neu-dark: rgba(0, 0, 0, 0.6);
+  --neu-text: #e2e8f0;
+  --neu-muted: #94a3b8;
+  --neu-out: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light);
+  --neu-in: inset 5px 5px 11px var(--neu-dark), inset -5px -5px 11px var(--neu-light);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 140, 26, 0.07), transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(0, 97, 255, 0.08), transparent 55%),
+    #0f131c;
+}
+
+.neu-card {
+  background: var(--neu-bg);
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--neu-out), 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+}
+
+.neu-icon {
+  background: var(--neu-bg);
+  border: 1px solid rgba(255, 140, 26, 0.22);
+  box-shadow: var(--neu-out);
+  color: var(--nexus-accent);
+}
+
+.neu-title {
+  color: var(--neu-text);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 1px rgba(0, 0, 0, 0.6);
+}
+
+.neu-sub { color: var(--nexus-accent); opacity: 0.8; }
+.neu-label { color: var(--neu-muted); }
+.neu-foot { color: #7c8ba1; }
+
+/* Sunken input wells. !important needed to beat the global input rules above. */
+.neu-shell input.neu-field {
+  background: var(--neu-bg) !important;
+  border: 1px solid transparent !important;
+  border-radius: 1rem !important;
+  color: var(--neu-text) !important;
+  caret-color: var(--nexus-accent);
+  box-shadow: var(--neu-in) !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.neu-shell input.neu-field::placeholder {
+  color: var(--neu-muted) !important;
+  opacity: 0.7;
+}
+
+/* Visible focus ring — neumorphism alone fails contrast requirements. */
+.neu-shell input.neu-field:focus {
+  border-color: var(--nexus-accent) !important;
+  box-shadow: var(--neu-in), 0 0 0 3px var(--nexus-accent-glow) !important;
+  outline: none;
+}
+
+/* Raised button that presses into a well on :active. */
+.neu-btn {
+  background: var(--neu-bg);
+  color: var(--nexus-accent);
+  border: 1px solid rgba(255, 140, 26, 0.22);
+  box-shadow: var(--neu-out);
+  transition: box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.neu-btn:hover:not(:disabled) {
+  color: #ffb74d;
+  box-shadow: 8px 8px 18px var(--neu-dark), -8px -8px 18px var(--neu-light);
+}
+
+.neu-btn:active:not(:disabled) {
+  box-shadow: var(--neu-in);
+}
+
+.neu-btn:disabled {
+  box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light);
+}
+
+.neu-btn:focus-visible {
+  outline: 2px solid var(--nexus-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neu-btn { transition: none; }
 }

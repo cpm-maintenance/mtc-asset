@@ -75,32 +75,32 @@
 
 <body x-data="app()" class="selection:bg-nexus-accent/30">
 
-  <!-- 🛡️ LOGIN SCREEN OVERLAY -->
-  <div x-show="!isLoggedIn" class="fixed inset-0 z-[200] bg-nexus-black flex items-center justify-center p-4">
-    <div class="w-full max-w-md space-y-8 p-10 card-modern border-nexus-accent/20">
+  <!-- 🛡️ LOGIN SCREEN OVERLAY --> (Neumorphic)
+  <div x-show="!isLoggedIn" class="neu-shell fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div class="neu-card w-full max-w-md space-y-8 p-10">
       <div class="text-center">
-        <div class="w-20 h-20 gold-gradient rounded-2xl flex items-center justify-center text-nexus-black text-4xl font-bold mx-auto mb-6 shadow-[0_0_30px_rgba(0,242,255,0.3)] animate-pulse-nexus overflow-hidden">
+        <div class="neu-icon w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden">
           <img src="/logo.png" alt="MTC" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerText='MTC'">
         </div>
-        <h2 class="text-3xl font-black text-nexus-text tracking-tight nexus-glow-text">System Access</h2>
-        <p class="text-nexus-accent/60 mt-2 font-medium uppercase tracking-[0.2em] text-xs">MTC ASSET | INTERFACE</p>
+        <h2 class="neu-title text-3xl font-black tracking-tight">System Access</h2>
+        <p class="neu-sub mt-2 font-medium uppercase tracking-[0.2em] text-xs">MTC ASSET | INTERFACE</p>
       </div>
       <form @submit.prevent="login()" class="space-y-6">
         <div>
-          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Authentication ID</label>
-          <input type="email" x-model="loginForm.email" required id="login-id" placeholder="name@planner.com" class="w-full p-4 glass">
+          <label for="login-id" class="neu-label text-[10px] uppercase font-black tracking-widest ml-1 mb-2 block">Authentication ID</label>
+          <input type="email" x-model="loginForm.email" required id="login-id" placeholder="name@planner.com" class="neu-field w-full p-4">
         </div>
         <div>
-          <label class="text-[10px] text-slate-500 uppercase font-black tracking-widest ml-1 mb-2 block">Secure Key</label>
-          <input type="password" x-model="loginForm.password" required id="login-key" placeholder="••••••••" class="w-full p-4 glass">
+          <label for="login-key" class="neu-label text-[10px] uppercase font-black tracking-widest ml-1 mb-2 block">Secure Key</label>
+          <input type="password" x-model="loginForm.password" required id="login-key" placeholder="••••••••" class="neu-field w-full p-4">
         </div>
         <button type="submit" :disabled="isLoading"
-          class="w-full gold-gradient font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase text-nexus-black disabled:opacity-50 disabled:cursor-not-allowed"
+          class="neu-btn w-full font-black tracking-[0.2em] p-5 rounded-2xl uppercase disabled:cursor-not-allowed"
           x-html="isLoading ? '<span class=\'flex items-center justify-center gap-3\'><svg class=\'animate-spin w-5 h-5\' viewBox=\'0 0 24 24\' fill=\'none\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>INITIALIZING...</span>' : 'Initialize Dashboard'">
         </button>
       </form>
       <div class="text-center pt-4">
-        <p class="text-[10px] text-slate-600 uppercase tracking-widest">Quantum Encryption Active</p>
+        <p class="neu-foot text-[10px] uppercase tracking-widest">Quantum Encryption Active</p>
       </div>
     </div>
   </div>
