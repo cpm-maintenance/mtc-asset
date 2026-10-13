@@ -93,7 +93,10 @@ jobs:
 
       - name: 📝 Update LATEST reference
         run: |
-          echo "backup-$(date +"%Y-%m-%d_%H-%M-%S").json" > backups/LATEST.txt
+          # ponytail: pakai file terbaru, bukan timestamp baru — step terpisah bikin LATEST.txt
+          # menunjuk nama file yang tidak pernah dibuat.
+          cd backups
+          ls -1t backup-*.json 2>/dev/null | head -n 1 > LATEST.txt
 
       - name: 🧹 Clean old backups (keep last 30)
         run: |
