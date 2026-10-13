@@ -48,8 +48,10 @@ jobs:
           BACKUP_FILE="backups/backup-${TIMESTAMP}.json"
           
           # Backup semua node
-          NODES=("Equipment" "SpareParts" "HistoryLog" "Performance" "Users" "Stats" "Settings" "AI_Settings" "ImageUploads")
-          
+          # ponytail: AI_Settings/Users/Settings TIDAK di-backup ke repo publik.
+          # AI_Settings memuat API key -> memicu GitHub push protection.
+          # Users/Settings = PII + config (repo public). Butuh storage privat bila perlu.
+          NODES=("Equipment" "SpareParts" "HistoryLog" "Performance" "Stats" "ImageUploads")
           echo "{" > "$BACKUP_FILE"
           echo '  "_metadata": {' >> "$BACKUP_FILE"
           echo '    "exportedAt": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",' >> "$BACKUP_FILE"
