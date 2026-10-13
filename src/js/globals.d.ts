@@ -11,6 +11,7 @@ import type { AppState } from './appstate';
 export {};
 
 declare global {
+  const Cropper: any;
   interface Window {
     /** API notifikasi (di-set notification module). */
     notificationAPI?: any;
@@ -69,5 +70,10 @@ declare global {
     _firebaseReadyResolve?: (() => void) | null;
     /** Firebase Auth helper (CDN, di-set firebase-config.js). */
     sendPasswordResetEmail?: any;
+    /** Modul export global (di-set export.js / fallback). */
+    exportModule?: any;
+    exportHistoryFallback?: () => void;
+    /** CropperJS (lazy CDN). */
+    Cropper?: any;
   }
 }

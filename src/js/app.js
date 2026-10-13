@@ -1,3 +1,4 @@
+// @ts-check
 import { authModule } from './modules/auth.js';
 import { uiModule } from './modules/ui.js';
 import { dataModule } from './modules/data.js';
@@ -17,8 +18,13 @@ import { bootstrapModule } from './bootstrap.js';
 import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
+/** @typedef {import("./appstate").AppState} AppState */
+/**
+ * Root Alpine app factory.
+ * @returns {AppState} The composed app state (APP_STATE members + mixins).
+ */
 export function app() {
-    return {
+    return /** @type {AppState} */ ({
         // --- APP STATE ---
         currentPage: 'dash', sidebarCollapsed: false, activeTab: 'hist', search: '', searchPart: '', partFilterEquip: '',
         installPromptEvent: null, showInstallButton: false,
@@ -332,7 +338,7 @@ export function app() {
                 } else {
                     this.auditLogs = [];
                 }
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.warn('[Audit] Load error:', e.message);
                 this.auditLogs = [];
             }
@@ -373,7 +379,7 @@ export function app() {
                 await window.setPersistence(window.auth, window.browserSessionPersistence);
                 await window.signInWithEmailAndPassword(window.auth, form.email, form.password);
                 this.showNotification("Welcome back!");
-            } catch (error) {
+            } catch (/** @type {any} */ error) {
                 console.error(error);
                 this.showNotification("Login failed: " + error.message, "error");
             } finally {
@@ -390,7 +396,7 @@ if (confirm('Are you sure you want to logout?')) {
                         this.user = null;
                         this.userRole = 'user';
                         this.showNotification("Logged out successfully", "info");
-                } catch (error) {
+                } catch (/** @type {any} */ error) {
                     this.showNotification("Error logging out: " + error.message, "error");
                 } finally {
                     this.isLoading = false;
@@ -486,6 +492,7 @@ if (confirm('Are you sure you want to logout?')) {
 
         // --- ROLE-BASED NAVIGATION ---
         get menuGroups() {
+            /** @type {Record<string, {name: string, items: any[]}>} */
             const groups = {};
             this.menuItems.filter(m => this.canAccess(m)).forEach(item => {
                 const g = item.group || 'Other';
@@ -518,7 +525,7 @@ if (confirm('Are you sure you want to logout?')) {
         woAgeDays(log) {
             if (!log || !log.Tanggal) return 0;
             const t = new Date(log.Tanggal);
-            if (isNaN(t)) return 0;
+            if (isNaN(t.getTime())) return 0;
             return Math.floor((Date.now() - t.getTime()) / 86400000);
         },
         woAgeBucket(days) {
@@ -541,6 +548,7 @@ if (confirm('Are you sure you want to logout?')) {
         },
         get backlogAging() {
             const wos = (this.logs || []).filter(l => l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Approved' || l.Status === 'In Progress'));
+            /** @type {Record<string, number>} */
             const buckets = { '0-1d': 0, '1-3d': 0, '3-7d': 0, '7d+': 0 };
             wos.forEach(l => { const d = this.woAgeDays(l); if (d >= 0) buckets[this.woAgeBucket(d)]++; });
             return buckets;
@@ -548,6 +556,7 @@ if (confirm('Are you sure you want to logout?')) {
         // ── Priority Scoring Matrix (R2) ──
         // Score = WO priority (0-3) + asset criticality (0-3) + health risk (0-3) → 0-9
         woPrioScore(wo) {
+            /** @type {Record<string, number>} */
             const map = { 'Emergency': 3, 'Urgent': 2.5, 'High': 2, 'Normal': 1, 'Low': 0.5, 'Planned': 0.5 };
             return map[(wo.woPriority || wo.priority || 'Normal')] ?? 1;
         },
@@ -559,6 +568,7 @@ if (confirm('Are you sure you want to logout?')) {
                 this._critMap = map;
                 this._critMapRef = this.equipment;
             }
+            /** @type {Record<string, number>} */
             const map = { 'High': 3, 'Medium': 2, 'Low': 1 };
             return map[this._critMap.get(equipId)] ?? 1;
         },
@@ -581,6 +591,7 @@ if (confirm('Are you sure you want to logout?')) {
         // ── R7: MTTR per technician ──
         mttrByTech() {
             if (this._mttrCache && this._mttrCacheRef === this.logs) return this._mttrCache.list;
+            /** @type {Record<string, {repairs: number, totalDown: number, breakdowns: number}>} */
             const map = {};
             (this.logs || []).forEach(l => {
                 if (!l || !l.assignedTo) return;
@@ -614,16 +625,17 @@ if (confirm('Are you sure you want to logout?')) {
         // ── R4: PM Effectiveness (RCM-lite) ──
         // Failures within X days after a PM on same equipment → PM likely ineffective
         pmEffectiveness(daysWindow = 14) {
+            /** @type {any[]} */
             const results = [];
             (this.pmList || []).forEach(pm => {
                 if (!pm || !pm.equipmentId || !pm.date || pm.status !== 'completed') return;
                 const pmDate = new Date(pm.date);
-                if (isNaN(pmDate)) return;
+                if (isNaN(pmDate.getTime())) return;
                 const failures = (this.logs || []).filter(l =>
                     l && l.EquipmentID === pm.equipmentId && l.Jenis === 'Breakdown' &&
                     l.Tanggal && (() => {
                         const d = new Date(l.Tanggal);
-                        const diff = (d - pmDate) / 86400000;
+                        const diff = (d.getTime() - pmDate.getTime()) / 86400000;
                         return diff >= 0 && diff <= daysWindow;
                     })()
                 );
@@ -639,8 +651,8 @@ if (confirm('Are you sure you want to logout?')) {
 
         get sortedByPriority() {
             return this.filteredWorkOrders
-                .map(l => ({ ...l, _score: this.backlogScore(l) }))
-                .sort((a, b) => b._score - a._score);
+                .map((/** @type {any} */ l) => ({ ...l, _score: this.backlogScore(l) }))
+                .sort((/** @type {any} */ a, /** @type {any} */ b) => b._score - a._score);
         },
 
         get topOverdueWO() {
@@ -658,6 +670,7 @@ if (confirm('Are you sure you want to logout?')) {
             return (this.requisitions || []).filter(r => r.status === 'pending').length;
         },
         badgeCount(itemId) {
+            /** @type {Record<string, any>} */
             const map = { wo: this.openWOCount, parts: this.lowStockCount, request: this.pendingReqCount };
             const c = map[itemId] || 0;
             return c > 0 ? c : '';
@@ -715,12 +728,12 @@ if (confirm('Are you sure you want to logout?')) {
         // Dashboard alert zone (P1)
         get dashAlerts() {
             const today = new Date().toISOString().split('T')[0];
-            const overduePM = (this.pmList || []).filter(pm => pm.status === 'pending' && pm.date < today).length;
+            const overduePM = (this.pmList || []).filter(pm => pm.status === 'pending' && pm.date && pm.date < today).length;
             const agingWO = (this.logs || []).filter(l => {
                 if (!(l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved')) return false;
                 if (!l.Tanggal) return false;
                 const d = new Date(l.Tanggal);
-                return !isNaN(d) && (new Date(today) - d) / 86400000 > 3;
+                return !isNaN(d.getTime()) && (new Date(today).getTime() - d.getTime()) / 86400000 > 3;
             }).length;
             const lowStock = (this.allParts || []).filter(p => Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0).length;
             return { overduePM, agingWO, lowStock };
@@ -728,6 +741,7 @@ if (confirm('Are you sure you want to logout?')) {
 
         // Dashboard KPI row (P1)
         get dashKPIs() {
+            /** @type {any[]} */
             const logs = this.logs || [];
             const breakdowns = logs.filter(l => l && l.Jenis === 'Breakdown');
             const totalBD = breakdowns.length;
@@ -751,7 +765,7 @@ if (confirm('Are you sure you want to logout?')) {
             // Date-range filter for stats
             const from = this.dashboardDateFrom || '';
             const to = this.dashboardDateTo || '';
-            const inRange = (d) => !d || ((!from || d >= from) && (!to || d <= to));
+            const inRange = (/** @type {any} */ d) => !d || ((!from || d >= from) && (!to || d <= to));
 
             // WO completion rate (filtered by date)
             const wos = (this.logs || []).filter(l => (l.woNumber || l.Status === 'Pending' || l.Status === 'Approved') && inRange(l.Tanggal));
@@ -793,7 +807,7 @@ if (confirm('Are you sure you want to logout?')) {
                 let eta = null, confidence = 0;
                 if (p.firstUsedDate || p.installedDate) {
                     const start = new Date(p.firstUsedDate || p.installedDate);
-                    if (!isNaN(start)) {
+                    if (!isNaN(start.getTime())) {
                         const daysUsed = Math.max(1, (Date.now() - start.getTime()) / 86400000);
                         const usagePerDay = usage / daysUsed;
                         if (usagePerDay > 0) {
@@ -843,6 +857,7 @@ if (confirm('Are you sure you want to logout?')) {
         // D4: Equipment hierarchy — group by Lokasi (area) → Tipe
         get equipmentTree() {
             const eq = this.equipment || [];
+            /** @type {Record<string, Record<string, any[]>>} */
             const areas = {};
             for (const e of eq) {
                 const area = e.Lokasi || 'Unassigned';
@@ -891,6 +906,7 @@ if (confirm('Are you sure you want to logout?')) {
             try {
                 let decoded = url.replace(/&#[xX](\w+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
                          .replace(/&(\w+);/g, (match, entity) => {
+                    /** @type {Record<string, string>} */
                     const entities = { 'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' ' };
                     return entities[entity] || match;
                 });
@@ -940,7 +956,7 @@ if (confirm('Are you sure you want to logout?')) {
                     this.isLoading = false;
                     this.showNotification("Data refreshed", "success");
                 }, 500);
-            } catch(e) {
+            } catch (/** @type {any} */ e) {
                 this.isLoading = false;
                 this.showNotification("Refresh failed: " + e.message, "error");
             }
@@ -981,6 +997,7 @@ if (confirm('Are you sure you want to logout?')) {
                     const url = j.data.url;
                     console.log('[Migrate]', id, '→', url);
 
+                    /** @type {Record<string, any>} */
                     const updates = {};
                     const prefix = data.slice(0, 100);
                     for (const [eqId, eq] of Object.entries(equipment)) {
@@ -1002,7 +1019,7 @@ if (confirm('Are you sure you want to logout?')) {
                     updates['ImageUploads/' + id] = null;
                     await window.update(window.ref(window.db), updates);
                     results.migrated++;
-                } catch (e) {
+                } catch (/** @type {any} */ e) {
                     results.failed++;
                     console.error('[Migrate]', id, 'failed:', e.message);
                 }
@@ -1025,7 +1042,7 @@ if (confirm('Are you sure you want to logout?')) {
                     await window.update(window.ref(window.db), { ['Equipment/' + eqId + '/FotoURL']: j.data.url });
                     results.migrated++;
                     console.log('[Migrate] Equipment', eqId, 'FotoURL →', j.data.url);
-                } catch (e) {
+                } catch (/** @type {any} */ e) {
                     results.failed++;
                     console.error('[Migrate] Equipment', eqId, 'failed:', e.message);
                 }
@@ -1036,7 +1053,7 @@ if (confirm('Are you sure you want to logout?')) {
             for (const [logId, log] of Object.entries(logs2)) {
                 const urls = log.PhotoURLs;
                 const list = Array.isArray(urls) ? urls : (typeof urls === 'string' ? (() => { try { return JSON.parse(urls); } catch { return []; } })() : []);
-                if (!list.some(u => typeof u === 'string' && u.startsWith('data:'))) continue;
+                if (!list.some((/** @type {any} */ u) => typeof u === 'string' && u.startsWith('data:'))) continue;
                 const newUrls = [];
                 for (const u of list) {
                     if (typeof u === 'string' && u.startsWith('data:')) {
@@ -1051,7 +1068,7 @@ if (confirm('Are you sure you want to logout?')) {
                             if (!j.success) throw new Error(j.error?.message || 'ImgBB fail');
                             newUrls.push(j.data.url);
                             results.migrated++;
-                        } catch (e) {
+                        } catch (/** @type {any} */ e) {
                             results.failed++;
                             console.error('[Migrate] Log', logId, 'photo failed:', e.message);
                             newUrls.push(u); // keep original
@@ -1265,21 +1282,21 @@ if (confirm('Are you sure you want to logout?')) {
         },
         get planningTechList() {
             const techs = new Set();
-            (this.planningWOs || []).forEach(w => { if (w.assignedTo) techs.add(w.assignedTo); });
+            (this.planningWOs || []).forEach((/** @type {any} */ w) => { if (w.assignedTo) techs.add(w.assignedTo); });
             return Array.from(techs).sort();
         },
         get planningFilteredWOs() {
-            let wos = this.planningWOs.filter(l => l.Jenis || l.Deskripsi || l.woNumber || l.EquipmentID);
+            let wos = this.planningWOs.filter((/** @type {any} */ l) => l.Jenis || l.Deskripsi || l.woNumber || l.EquipmentID);
             if (this.planningSearch) {
                 const q = this.planningSearch.toLowerCase();
-                wos = wos.filter(w => (w.woNumber||'').toLowerCase().includes(q) || (w.Deskripsi||'').toLowerCase().includes(q) || (w.assignedTo||'').toLowerCase().includes(q) || (w.EquipmentID||'').toLowerCase().includes(q));
+                wos = wos.filter((/** @type {any} */ w) => (w.woNumber||'').toLowerCase().includes(q) || (w.Deskripsi||'').toLowerCase().includes(q) || (w.assignedTo||'').toLowerCase().includes(q) || (w.EquipmentID||'').toLowerCase().includes(q));
             }
-            if (this.planningFilterTech) wos = wos.filter(w => w.assignedTo === this.planningFilterTech);
-            if (this.planningFilterPriority) wos = wos.filter(w => (w.woPriority || 'Normal') === this.planningFilterPriority);
+            if (this.planningFilterTech) wos = wos.filter((/** @type {any} */ w) => w.assignedTo === this.planningFilterTech);
+            if (this.planningFilterPriority) wos = wos.filter((/** @type {any} */ w) => (w.woPriority || 'Normal') === this.planningFilterPriority);
             return wos;
         },
         planningFilteredByColumn(...statuses) {
-            return (this.planningFilteredWOs || []).filter(w => statuses.includes(w.Status));
+            return (this.planningFilteredWOs || []).filter((/** @type {any} */ w) => statuses.includes(w.Status));
         },
         planningEquipName(id) {
             if (!id || !this.equipment) return id || '';
@@ -1287,6 +1304,7 @@ if (confirm('Are you sure you want to logout?')) {
             return e ? (e.Nama || id) : id;
         },
         planningPriorityColor(priority) {
+            /** @type {Record<string, string>} */
             const map = { 'Emergency': 'bg-red-500/20 text-red-400', 'Urgent': 'bg-orange-500/20 text-orange-400', 'Normal': 'bg-yellow-500/20 text-yellow-400', 'Planned': 'bg-emerald-500/20 text-emerald-400' };
             return map[priority] || 'bg-slate-500/20 text-slate-400';
         },
@@ -1355,8 +1373,8 @@ if (confirm('Are you sure you want to logout?')) {
             const dayW = 20; // width per day in px
             const startDate = wo.Tanggal || wo.dueDate;
             const endDate = wo.dueDate || wo.Tanggal || startDate;
-            const startIdx = days.findIndex(d => d.dateStr === startDate);
-            const endIdx = days.findIndex(d => d.dateStr === endDate);
+            const startIdx = days.findIndex((/** @type {any} */ d) => d.dateStr === startDate);
+            const endIdx = days.findIndex((/** @type {any} */ d) => d.dateStr === endDate);
             if (startIdx === -1 && endIdx === -1) return null;
             const left = Math.max(0, (startIdx >= 0 ? startIdx : 0)) * dayW;
             const end = (endIdx >= 0 ? endIdx : days.length - 1);
@@ -1371,28 +1389,29 @@ if (confirm('Are you sure you want to logout?')) {
         },
         get twTechList() {
             const techs = new Set();
-            this.twActiveWOs.forEach(w => { if (w.assignedTo) techs.add(w.assignedTo); });
+            this.twActiveWOs.forEach((/** @type {any} */ w) => { if (w.assignedTo) techs.add(w.assignedTo); });
             return Array.from(techs).sort();
         },
         get twTotalHours() {
-            return this.twFilteredTechs.reduce((sum, t) => sum + t.totalHours, 0);
+            return this.twFilteredTechs.reduce((/** @type {any} */ sum, /** @type {any} */ t) => sum + t.totalHours, 0);
         },
         get twOverloadCount() {
-            return this.twFilteredTechs.filter(t => t.totalHours > 40).length;
+            return this.twFilteredTechs.filter((/** @type {any} */ t) => t.totalHours > 40).length;
         },
         get twFilteredTechs() {
             const from = this.twDateFrom || '';
             const to = this.twDateTo || '';
             // Filter WOs by date range
-            const wos = this.twActiveWOs.filter(w => {
+            const wos = this.twActiveWOs.filter((/** @type {any} */ w) => {
                 const d = w.Tanggal || w.dueDate || '';
                 if (from && d < from) return false;
                 if (to && d > to) return false;
                 return true;
             });
             // Group by technician
+            /** @type {Record<string, {name: string, wos: any[], totalHours: number}>} */
             const map = {};
-            wos.forEach(w => {
+            wos.forEach((/** @type {any} */ w) => {
                 const name = w.assignedTo || 'Unassigned';
                 if (!map[name]) map[name] = { name, wos: [], totalHours: 0 };
                 map[name].wos.push(w);
@@ -1439,8 +1458,8 @@ if (confirm('Are you sure you want to logout?')) {
         },
         get mpTotalItems() { return this.mpPMTasks.length + this.mpOpenWOs.length; },
         get mpTotalHours() {
-            const pmHrs = this.mpPMTasks.reduce((s, t) => s + (Number(t.estimatedHours) || 0), 0);
-            const woHrs = this.mpOpenWOs.reduce((s, w) => s + (Number(w.estimatedHours) || 0), 0);
+            const pmHrs = this.mpPMTasks.reduce((/** @type {any} */ s, /** @type {any} */ t) => s + (Number(t.estimatedHours) || 0), 0);
+            const woHrs = this.mpOpenWOs.reduce((/** @type {any} */ s, /** @type {any} */ w) => s + (Number(w.estimatedHours) || 0), 0);
             return pmHrs + woHrs;
         },
         mpRefresh() { this.loadPMSchedule?.(); },
@@ -1450,6 +1469,7 @@ if (confirm('Are you sure you want to logout?')) {
             return eq ? (eq.Nama || eq.EquipmentID) : id;
         },
         mpPriorityColor(priority) {
+            /** @type {Record<string, string>} */
             const map = { Emergency: 'bg-rose-500/20 text-rose-400', Urgent: 'bg-orange-500/20 text-orange-400', Normal: 'bg-blue-500/20 text-blue-400', Planned: 'bg-emerald-500/20 text-emerald-400' };
             return map[priority] || 'bg-slate-500/20 text-slate-400';
         },
@@ -1485,7 +1505,7 @@ if (confirm('Are you sure you want to logout?')) {
                     doc.setFont('helvetica', 'bold');
                     doc.text('PM TASKS', 20, 40);
 
-                    const pmBody = this.mpPMTasks.map((t, i) => [
+                    const pmBody = this.mpPMTasks.map((/** @type {any} */ t, /** @type {any} */ i) => [
                         i + 1, t.taskName || t.description || '-', this.mpEquipName(t.equipmentId),
                         t.date || '-', t.assignedTo || '-', t.status || 'pending', t.priority || 'Medium'
                     ]);
@@ -1510,7 +1530,7 @@ if (confirm('Are you sure you want to logout?')) {
                     doc.setFont('helvetica', 'bold');
                     doc.text('OPEN WORK ORDERS', 20, woStartY + 6);
 
-                    const woBody = this.mpOpenWOs.map((w, i) => [
+                    const woBody = this.mpOpenWOs.map((/** @type {any} */ w, /** @type {any} */ i) => [
                         i + 1, w.woNumber || w.LogID?.slice(0,8) || '-', this.mpEquipName(w.EquipmentID),
                         w.Deskripsi || w.Jenis || '-', w.dueDate || w.Tanggal || '-', w.assignedTo || '-',
                         w.woPriority || 'Normal'
@@ -1528,7 +1548,7 @@ if (confirm('Are you sure you want to logout?')) {
 
                 doc.save(`Monthly_Plan_${monthName}_${this.mpYear}.pdf`);
                 this.showNotification('Monthly Plan PDF exported!');
-            } catch (e) {
+            } catch (/** @type {any} */ e) {
                 console.error('Export PDF error:', e);
                 this.showNotification('Error exporting PDF: ' + e.message, 'error');
             } finally {
@@ -1566,7 +1586,7 @@ if (confirm('Are you sure you want to logout?')) {
             if (!eqLogs.length) return null;
             const BreakdownLogs = eqLogs.filter(l => l.Jenis === 'Breakdown');
             const Failures = BreakdownLogs.length;
-            const days = BreakdownLogs.length >= 2 ? Math.max(0, (new Date(BreakdownLogs[BreakdownLogs.length-1].Tanggal) - new Date(BreakdownLogs[0].Tanggal)) / 86400000) : 0;
+            const days = BreakdownLogs.length >= 2 ? Math.max(0, (new Date(BreakdownLogs[BreakdownLogs.length-1].Tanggal).getTime() - new Date(BreakdownLogs[0].Tanggal).getTime()) / 86400000) : 0;
             const repairLogs = eqLogs.filter(l => l.Jenis === 'Repair');
             const avgRepairHrs = repairLogs.length ? repairLogs.reduce((s, l) => s + (Number(l.actualHours) || Number(l.Downtime) || 0), 0) / repairLogs.length : 0;
             return {
@@ -1630,7 +1650,7 @@ if (confirm('Are you sure you want to logout?')) {
         },
         applyCrop() {
             if (!this._cropper) return;
-            this._cropper.getCroppedCanvas().toBlob((blob) => {
+            this._cropper.getCroppedCanvas().toBlob((/** @type {any} */ blob) => {
                 if (this.cropCallback) this.cropCallback(blob);
                 this._cropper.destroy();
                 this._cropper = null;
@@ -1642,11 +1662,11 @@ if (confirm('Are you sure you want to logout?')) {
             const max = 4 - (this.logForm.photos?.length || 0);
             if (max <= 0) { this.showNotification('Max 4 photos', 'error'); return; }
             const preview = URL.createObjectURL(file);
-            this.showCropModal(preview, (croppedBlob) => {
+            this.showCropModal(preview, (/** @type {any} */ croppedBlob) => {
                 if (!this.logForm.photos) this.logForm.photos = [];
                 if (this.logForm.photos.length >= 4) return;
                 this.logForm.photos.push({ file: croppedBlob, preview: URL.createObjectURL(croppedBlob), base64: null });
             });
         },
-    };
+    });
 }
