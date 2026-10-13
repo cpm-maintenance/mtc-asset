@@ -92,3 +92,7 @@ blob-report/
 
 # Lighthouse CI artifacts
 .lighthouseci/
+
+# Agent diary & generated context (local only)
+diary/
+AGENT_CONTEXT.md
