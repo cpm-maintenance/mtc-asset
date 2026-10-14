@@ -73,7 +73,14 @@
 
 </head>
 
-<body x-data="app()" class="selection:bg-nexus-accent/30">
+<body x-data="app()" 
+  @keydown.window="
+    if ($event.key.toLowerCase() === 'n' && !$event.ctrlKey && !$event.altKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName) && !showLogModal && !showEquipModal && !showPartModal && isLoggedIn && isAdminOrSupervisor) {
+      $event.preventDefault();
+      openLogModal(false);
+    }
+  "
+  class="selection:bg-nexus-accent/30">
 
   <!-- 🛡️ LOGIN SCREEN OVERLAY --> (Neumorphic)
   <div x-show="!isLoggedIn" class="neu-shell fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -558,6 +565,13 @@
         </div>
 
       <div class="flex items-center gap-2 md:gap-3">
+        <!-- ⚡ Quick Action: + New WO Button -->
+        <button x-show="isAdminOrSupervisor" @click="openLogModal(false)"
+          title="Create New Work Order (Shortcut: N)" aria-label="Create New Work Order"
+          class="btn-nexus-gold text-xs font-black uppercase tracking-wider px-3 py-1.5 md:px-3.5 md:py-2 rounded-xl shadow-lg flex items-center gap-1.5 md:gap-2 active:scale-95 transition-all shrink-0">
+          <i class="fas fa-plus text-xs"></i>
+          <span class="hidden sm:inline">New WO</span>
+        </button>
         <!-- Offline Banner (Mobile) -->
         <div x-show="!isOnline" x-cloak class="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-[10px] font-black py-2 px-4 flex items-center justify-center gap-2 lg:hidden">
           <i class="fas fa-wifi-slash"></i> OFFLINE - Changes will sync when online
@@ -1033,7 +1047,13 @@
     <div class="w-full max-w-md glass border-t border-nexus-accent/20 rounded-t-3xl p-4 max-h-[70vh] overflow-y-auto"
       style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom))" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full">
       <div class="flex items-center justify-between mb-3 px-1">
-        <h3 class="font-display font-bold text-sm text-nexus-accent">All Menu</h3>
+        <div class="flex items-center gap-2">
+          <h3 class="font-display font-bold text-sm text-nexus-accent">All Menu</h3>
+          <button x-show="isAdminOrSupervisor" @click="showMoreMenu = false; openLogModal(false)"
+            class="btn-nexus-gold text-[10px] font-black uppercase px-2.5 py-1 rounded-lg flex items-center gap-1 shadow">
+            <i class="fas fa-plus text-[9px]"></i> New WO
+          </button>
+        </div>
         <button @click="showMoreMenu = false" aria-label="Close menu" class="w-8 h-8 rounded-xl bg-white/5 text-slate-400 hover:text-nexus-accent flex items-center justify-center">
           <i class="fas fa-times text-sm"></i>
         </button>
