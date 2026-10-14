@@ -125,7 +125,7 @@ A ServiceWorker passed a promise to FetchEvent.respondWith() that rejected with
 
 **Bukti**:
 - Console produksi: `[FCM] VITE_FIREBASE_VAPID_KEY belum diset — push notification dinonaktifkan` (dari [notification.js:27](file:///d:/CODING/MTC-Asset/src/js/modules/notification.js#L27))
-- Bundle live `main-DqxkGbwG.js`: fingerprint `BKEQWc2q` → **0 hit**, `08770479` → **0 hit**
+- Bundle live `main-DqxkGbwG.js`: fingerprint VAPID → **0 hit**, fingerprint OneSignal → **0 hit**
 - `deploy.yml` memang tidak punya baris VAPID/OneSignal (dibuktikan grep)
 
 **Konsekuensi**: `getToken()` tidak pernah dapat token, `OneSignal.init({appId: ''})` jalan tanpa guard.
@@ -137,11 +137,11 @@ A ServiceWorker passed a promise to FetchEvent.respondWith() that rejected with
 
 #### ✅ Hasil setelah secret dibuat (`654f99d`) — separuh berhasil
 
-Bundle live `main-DjB8C8j1.js`: `BKEQWc2q` → **1** (dari 0), `08770479` → **1** (dari 0).
+Bundle live `main-DjB8C8j1.js`: fingerprint VAPID → **1** (dari 0), fingerprint OneSignal → **1** (dari 0).
 
 **FCM — BEKERJA.** VAPID value benar-benar ter-bundle dan dipakai:
 ```js
-Pe=`BKEQWc2qqz_...`, {vapidKey: Pe}
+<var> = <VAPID value ter-bundle>, {vapidKey: <var>}
 ```
 `registerFCMToken()` dipanggil dari [main.js:156](file:///d:/CODING/MTC-Asset/src/main.js#L156) dan `index.html:489`. Secret VAPID berhasil → token FCM bisa didapat.
 
