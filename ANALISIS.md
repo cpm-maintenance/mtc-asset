@@ -2,6 +2,11 @@
 
 **Versi**: 1.0.0 | **Stack**: Alpine.js + Firebase RTDB + Vite + Tailwind | **Type**: PWA Maintenance Management
 
+> [!WARNING]
+> **DOKUMEN ARSIP — snapshot 11 Oktober 2026.** Angka di halaman ini sudah tidak mencerminkan kode saat ini.
+> Diperbarui sebagian pada 14 Okt (angka yang terbukti salah sudah dibetulkan). Jangan pakai sebagai acuan ukuran
+> tanpa mengukur ulang. Lihat [`TASK-REA-FIX.md`](file:///d:/CODING/MTC-Asset/TASK-REA-FIX.md) untuk temuan terkini.
+
 > Update 11 Oktober 2026 — `app.js` 1.635 baris, 152 unit/integration/component test + 28 rules test + E2E Playwright, lint 0 error
 
 ---
@@ -10,49 +15,51 @@
 
 | Metrik | Nilai |
 |---|---|
-| **Total JS files** | 30 files di `src/js/` (+ `store.js`, `db.js`, `icons.js`, `lucide-icons.js`, `enterprise-kpi.js`, `audit.js`, `onesignal.js`) |
-| **Total JS lines** | ~11.700 lines |
+| **Total JS files** | 32 file di `src/js/` (18 modul + 14 root; 5 di antaranya `.ts`/`.d.ts`) |
+| **Total JS lines** | ~12.400 lines (18 modul = 7.499 baris) |
 | **Total HTML pages** | 18 pages (`public/pages/`) |
-| **`app.js`** | **1.635 lines** (orchestrator + state + getters) |
+| **`app.js`** | **1653 lines** (orchestrator + state + getters) |
 | **Dependencies** | 14 produksi + 14 dev |
 
 ### Breakdown Modul
 
 | Modul | Lines | Fungsi |
 |---|---|---|
-| `export.js` | 1.073 | PDF, XLSX, CSV export/import |
-| `ai.js` | 834 | AI integration + multi-key + chat |
-| `logs.js` | 792 | Work Order CRUD + status flow |
-| `data.js` | 762 | Firebase data loading + sync |
-| `lucide-icons.js` | 705 | Icon set (inline SVG) |
-| `pm-schedule.js` | 682 | PM Schedule CRUD + calendar + gantt |
-| `charts.js` | 517 | Chart rendering |
-| `requisition.js` | 452 | Request Part CRUD + approval chain |
-| `utils.js` | 407 | Utility helpers |
-| `notification.js` | 400 | FCM + Browser notifications |
-| `ui.js` | 400 | Toast, modal, QR scanner |
-| `enterprise-kpi.js` | 399 | Enterprise KPI / analytics |
+| `export.js` | 735 | PDF, XLSX, CSV export/import |
+| `ai.js` | 839 | AI integration + multi-key + chat |
+| `logs.js` | 800 | Work Order CRUD + status flow |
+| `data.js` | 764 | Firebase data loading + sync |
+| `lucide-icons.js` | 706 | Icon set (inline SVG) |
+| `pm-schedule.js` | 685 | PM Schedule CRUD + calendar + gantt |
+| `utils.js` | 654 | Utility helpers |
+| `charts.js` | 519 | Chart rendering |
+| `requisition.js` | 454 | Request Part CRUD + approval chain |
+| `notification.js` | 402 | FCM + Browser notifications |
+| `enterprise-kpi.js` | 401 | Enterprise KPI / analytics |
 | `wo-pdf-template.js` | 395 | Premium WO PDF template |
-| `performance.js` | 303 | Performance data CRUD |
+| `ui.js` | 388 | Toast, modal, QR scanner |
+| `performance.js` | 305 | Performance data CRUD |
 | `indexeddb.js` | 273 | Offline cache |
-| `auth.js` | 268 | Login, role management |
-| `kpi-engine.js` | 199 | KPI calculation engine |
-| `bootstrap.js` | 175 | Init, watchers, lifecycle |
-| `parts.js` | 172 | Spare parts CRUD |
-| `equipment.js` | 164 | Equipment CRUD |
-| `onesignal.js` | 96 | OneSignal push client |
-| `audit.js` | 88 | Audit trail (append-only) |
-| `store.js` | 54 | State defaults (DEFAULT_STORE) |
-| `db.js` | 50 | Firebase DB helpers |
-| **`app.js`** | **1.635** | 🎯 Orchestrator + state + getter + thin helpers (spread 16 modul) |
+| `auth.js` | 270 | Login, role management |
+| `kpi-engine.js` | 258 | KPI calculation engine |
+| `bootstrap.js` | 177 | Init, watchers, lifecycle |
+| `parts.js` | 174 | Spare parts CRUD |
+| `equipment.js` | 167 | Equipment CRUD |
+| `onesignal.js` | 100 | ⚠️ **kode mati** — tidak di-import siapa pun, tree-shaken dari bundle |
+| `audit.js` | 89 | Audit trail (append-only) |
+| `db.js` | 52 | Firebase DB helpers |
+| **`app.js`** | **1653** | 🎯 Orchestrator + state + getter + thin helpers (spread 20 modul) |
+
+> [!NOTE]
+> **`store.js` sudah tidak ada** — dokumen versi lama menyebutnya 54 baris. Kalau butuh default state, cari di [`appstate.ts`](file:///d:/CODING/MTC-Asset/src/js/appstate.ts) / [`constants.ts`](file:///d:/CODING/MTC-Asset/src/js/constants.ts).
 
 ---
 
 ## 🏗️ 1. Arsitektur: **7.5/10** ↑
 
 ### ✅ Kelebihan
-- **Modular pattern** — 16 modul terpisah, each focused
-- **`app.js` 1.635 lines** — state + getter + thin helpers, 16 modul di-spread
+- **Modular pattern** — 18 modul terpisah + 14 file root, each focused
+- **`app.js` 1653 lines** — state + getter + thin helpers, 20 modul di-spread
 - **ComponentLoader** — Halaman on-demand `x-page` directive
 - **Firebase Realtime** — real-time sync via `onValue`
 - **Chunk splitting** — ✅ Vite manualChunks
@@ -131,9 +138,10 @@ Chunk splitting ✅, Firebase streaming ✅, Canvas retry ✅.
 ## 🔧 8. Maintainability: **7/10** ↑
 
 - Folder jelas, naming consistent, Git rapi, GitHub Actions
-- `app.js` sekarang **1.635 lines** — state + getter + thin helpers
-- Modules terfokus, zero duplication
-- Minus: No TypeScript, no JSDoc, `window.app` global
+- `app.js` sekarang **1653 lines** — state + getter + thin helpers
+- Modules terfokus; **duplikasi logika sudah dipangkas**, tapi lihat catatan `onesignal.js` di tabel
+- **Sudah ada TypeScript sebagian**: `appstate.ts`, `types.ts`, `constants.ts`, `globals.d.ts`, `vendor.d.ts` + `// @ts-check` + JSDoc. Klaim lama "no TypeScript, no JSDoc" **tidak berlaku lagi**.
+- Minus: `window.app` global, Alpine.js implicit coupling
 
 ---
 
@@ -198,7 +206,7 @@ AGENTS.md, ANALISIS.md, commit messages deskriptif ✅.
 ## 🧠 Insight Arsitektur
 
 ```
-app.js (orchestrator + state + getters, 1.635 lines)
+app.js (orchestrator + state + getters, 1653 lines)
  ├── State (equipment, logs, parts, filters, forms)
  ├── Getters (filteredWorkOrders, filteredEquip, ...)
  ├── Thin helpers (confirmDelete, cleanUrl, forceRefreshLogs, ...)
@@ -226,7 +234,7 @@ app.js (orchestrator + state + getters, 1.635 lines)
 ### Next Evolution
 - **Store pattern**: Pisah state dari getter → `stores/`
 - **Dependency injection**: Module ga perlu `this.***` cari di spread
-- **TypeScript**: Interface untuk Equipment, Parts, Logs
+- **TypeScript**: Sudah dimulai (`appstate.ts`, `types.ts`) — lanjutkan, jangan mulai dari nol
 
 ---
 
@@ -235,5 +243,5 @@ app.js (orchestrator + state + getters, 1.635 lines)
 **Skor: 8.10/10** — naik dari 7.51 setelah hardening rules, role-based access, test suite lengkap, dan perbaikan render guard.
 
 - **Kekuatan**: Fitur lengkap + modular + CI/CD + PWA + rules ketat + test coverage
-- **Kelemahan**: `app.js` masih besar (1.635 baris), no TypeScript, Alpine.js implicit coupling
+- **Kelemahan**: `app.js` masih besar (1653 baris), Alpine.js implicit coupling, `onesignal.js` kode mati
 - **Prioritas #1**: Migrasi bertahap ke store pattern / TypeScript
