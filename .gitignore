@@ -96,3 +96,4 @@ blob-report/
 # Agent diary & generated context (local only)
 diary/
 AGENT_CONTEXT.md
+TASK-REVIEW.md

@@ -59,6 +59,8 @@ Setelah setup, backup akan otomatis:
 
 Helper satu-kali-pakai (`.mjs`) sudah DIHAPUS dari folder ini (v1-palette, r1-aging, r2-score, r3, r5-pred, dll) — kode sudah di-merge permanen ke `src/js` & `public/pages/*.html`.
 
+**Update 2026-10-14**: seluruh `patch-*.mjs` (14 file) + `update-notes.mjs` + `update-tasklist.mjs` ikut DIHAPUS — patch-nya sudah permanen di file target, dan 0 referensi eksternal. Yang disimpan: utility yang masih bisa dipakai ulang (`fix-clean-fotourl.mjs`, `seed-real-data.mjs`, `sync-kpi-canvas.mjs`).
+
 **Yang disimpan** (dipakai buat backup):
 - `backup-firebase.js` — backup data Firebase (dijalankan via `npm run backup:firebase`)
 - `backup.js` — backup + git push (`npm run backup`)
