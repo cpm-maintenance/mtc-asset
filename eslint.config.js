@@ -46,7 +46,6 @@ export default [
         Html5Qrcode: 'readonly',
         Sentry: 'readonly',
         QRCode: 'readonly',
-        OneSignal: 'readonly',
         Cropper: 'readonly',
         process: 'readonly',
       },
@@ -72,7 +71,7 @@ export default [
 
   // ── Node scripts & tooling ─────────────────────────────────────────────
   {
-    files: ['scripts/**/*.{js,mjs}', 'api/**/*.js', 'onesignal-server/**/*.js'],
+    files: ['scripts/**/*.{js,mjs}', 'api/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

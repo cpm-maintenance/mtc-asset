@@ -31,9 +31,6 @@ declare global {
     auditModule?: any;
     /** Hook re-init Lucide icons. */
     __initLucide?: () => void;
-    /** OneSignal deferred queue + SDK (v16). */
-    OneSignalDeferred?: any[];
-    OneSignal?: any;
     /** Singleton ComponentLoader (di-set component-loader.js). */
     componentLoader?: any;
     /** Sentry global (CDN). */

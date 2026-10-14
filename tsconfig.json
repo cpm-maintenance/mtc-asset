@@ -23,6 +23,6 @@
   "include": ["src/js/**/*.js", "src/js/**/*.ts"],
   "exclude": [
     "node_modules", "dist", "coverage", "tests", "e2e", "public",
-    "scripts", "api", "onesignal-server", ".open", "scratch", "backups", "backup"
+    "scripts", "api", ".open", "scratch", "backups", "backup"
   ]
 }

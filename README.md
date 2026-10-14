@@ -105,9 +105,7 @@ Selain Firebase, ada beberapa backend tambahan untuk push notification:
 
 | Komponen | Platform | Fungsi |
 |----------|----------|--------|
-| `api/push.js` | Vercel serverless | Proxy OneSignal push — baca `ONESIGNAL_API_KEY` dari env Vercel |
 | `api/fcm-push.js` | Vercel serverless | Proxy FCM push |
-| `onesignal-server/` | Render (standalone) | Backend OneSignal mandiri (`index.js` + `package.json`) |
 
 > API key push **tidak** dibundel ke frontend — selalu lewat proxy server (env), sesuai pola `.env`.
 
@@ -135,11 +133,7 @@ Isi email: status (success/failure), trigger, daftar node, ukuran file, Run ID, 
 mtc-asset/
 ├── index.html              # Main SPA shell (sidebar, nav, routing)
 ├── api/                    # Vercel serverless functions
-│   ├── push.js             # OneSignal push proxy (env: ONESIGNAL_API_KEY)
 │   └── fcm-push.js         # FCM push proxy
-├── onesignal-server/       # Standalone OneSignal backend (Render)
-│   ├── index.js
-│   └── package.json
 ├── public/
 │   ├── pages/              # Route components (loaded on-demand, 18 pages)
 │   │   ├── Dashboard.html
@@ -193,7 +187,7 @@ mtc-asset/
 │           ├── audit.js           # Audit trail (append-only)
 │           ├── ai.js              # AI integration
 │           ├── notification.js    # FCM + browser notifs
-│           ├── onesignal.js       # OneSignal push client
+│           ├── push-client.js     # Push ke /api/fcm-push
 │           ├── wo-pdf-template.js # WO PDF template
 │           └── indexeddb.js       # Offline cache
 ├── tests/                  # Vitest (unit/integration/component + rules)

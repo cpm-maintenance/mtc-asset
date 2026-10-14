@@ -27,7 +27,7 @@ vi.mock('../src/js/modules/notification.js', () => ({
     sendBrowserNotification: vi.fn(),
 }));
 
-vi.mock('../src/js/modules/onesignal.js', () => ({
+vi.mock('../src/js/modules/push-client.js', () => ({
     sendPushViaProxy: vi.fn(),
 }));
 

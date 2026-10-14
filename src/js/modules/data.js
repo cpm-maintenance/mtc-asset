@@ -6,7 +6,7 @@
 import { withRetry, isNetworkError } from '../utils.js';
 import { idbManager, CAN_USE_IDB } from './indexeddb.js';
 import { sendBrowserNotification } from './notification.js';
-import { sendPushViaProxy } from './onesignal.js';
+import { sendPushViaProxy } from './push-client.js';
 
 // Clean URL from encoding issues (e.g., &#x2F; -> /, %2F -> /)
 function cleanFirebaseUrl(/** @type {any} */ url) {

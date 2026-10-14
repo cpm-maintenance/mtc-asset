@@ -25,7 +25,7 @@
 
 import { sendBrowserNotification } from './notification.js';
 import { checkPartAvailability } from '../utils.js';
-import { sendPushViaProxy } from './onesignal.js';
+import { sendPushViaProxy } from './push-client.js';
 
 const NEW_LINE_ITEM = () => ({
     itemType: 'part',
