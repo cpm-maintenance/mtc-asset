@@ -571,8 +571,8 @@ export interface AppState {
   updateLogStatus: (...args: any[]) => any;
   updateModelOptions: (...args: any[]) => any;
   updatePerfHours: (...args: any[]) => any;
-  uploadAsDataURL: (...args: any[]) => any;
-  uploadToImgBB: (...args: any[]) => any;
+  uploadBase64Image: (...args: any[]) => any;
+  uploadImage: (...args: any[]) => any;
   get usageHistoryLogs(): any;
   get visibleEquipLogs(): any;
   woAgeBucket: (...args: any[]) => any;
