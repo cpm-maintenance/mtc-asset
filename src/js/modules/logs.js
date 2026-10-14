@@ -315,7 +315,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             
             const logId = this.isEditingLog ? this.logForm.logId : "LOG-" + Date.now();
             
-            // Handle photos - upload NEW photos (file/base64) to ImgBB, keep existing URLs
+            // Handle photos - upload NEW photos (file/base64) to Cloudinary, keep existing URLs
             let photoUrls = [];
             const rawPhotos = this.logForm?.photos;
             let photoList = [];
@@ -337,16 +337,22 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                         photoUrls.push(src);
                         continue;
                     }
-                    // New photo: upload via ImgBB (fallback base64)
+                    // New photo: upload to Cloudinary
                     const file = ph.file;
-                    if (file && typeof this.uploadToImgBB === 'function') {
+                    if (file && typeof this.uploadImage === 'function') {
                         try {
-                            const url = await this.uploadToImgBB(file);
+                            const url = await this.uploadImage(file);
                             if (url) { photoUrls.push(url); continue; }
                         } catch(/** @type {any} */ e) { console.warn('[SubmitLog] photo upload failed:', e.message); }
                     }
-                    // Fallback: keep base64 data URL if available
-                    if (src && src.startsWith('data:')) photoUrls.push(src);
+                    // Existing legacy base64 (no file to re-upload): keep it, do not lose data.
+                    if (!file && src.startsWith('data:')) {
+                        photoUrls.push(src);
+                        continue;
+                    }
+                    // New upload failed — no base64 fallback (see uploadImage). Drop it and tell the user.
+                    console.warn('[SubmitLog] photo skipped: upload failed');
+                    this.showNotification('Sebagian foto gagal diupload — coba lagi', 'warning');
                 }
             }
             

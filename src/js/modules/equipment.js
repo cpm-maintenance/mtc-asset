@@ -53,9 +53,10 @@ export const equipmentModule = /** @type {Partial<AppState> & ThisType<AppState>
             let finalFotoURL = this.equipForm.foto || '';
             if (this.tempEquipFile) {
                 console.log('Uploading image file:', this.tempEquipFile.name, this.tempEquipFile.size);
-                const imgbbUrl = await this.uploadToImgBB(this.tempEquipFile);
-                console.log('ImgBB URL result:', imgbbUrl);
-                finalFotoURL = imgbbUrl ? decodeURIComponent(imgbbUrl) : this.equipForm.foto || '';
+                const url = await this.uploadImage(this.tempEquipFile);
+                console.log('Cloudinary URL result:', url);
+                // uploadImage returns a clean URL; decoding it would corrupt any %-escapes.
+                finalFotoURL = url || this.equipForm.foto || '';
             }
             console.log('Final FotoURL:', finalFotoURL);
             if (!finalFotoURL || finalFotoURL === 'null') finalFotoURL = '';

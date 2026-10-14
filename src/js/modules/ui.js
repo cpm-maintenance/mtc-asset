@@ -6,6 +6,15 @@
 // Lazy-load qrcode (only used for QR modal — keeps it out of initial bundle)
 import { CONSTANTS } from '../constants';
 
+// Cloudinary unsigned uploads. An unsigned preset is *designed* to be used from the
+// browser, so there is no API secret anywhere in the client — nothing to leak, nothing
+// to revoke. Hardcoded on purpose: VITE_* vars are inlined into the bundle anyway, so an
+// env var here would add indirection without adding safety.
+// Fill these from the Cloudinary dashboard (Settings → Upload → Upload presets).
+const CLOUDINARY_CLOUD = 'g3lkh1pu';
+const CLOUDINARY_PRESET = 'mtc-asset-unsigned';
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     setTheme(t) {
         if (!['night', 'navy', 'purple', 'light'].includes(t)) t = 'night';
@@ -272,59 +281,61 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         });
     },
 
-    // Upload image to ImgBB (URL) with fallback to Firebase DB base64 if ImgBB fails.
-    async uploadToImgBB(file) {
+    // POST a base64 image to Cloudinary via an unsigned preset. Returns the hosted URL, or null on failure.
+    async uploadBase64Image(base64) {
+        if (!base64) return null;
+        if (!CLOUDINARY_CLOUD || !CLOUDINARY_PRESET) {
+            console.error('[Cloudinary] CLOUDINARY_CLOUD / CLOUDINARY_PRESET not configured (src/js/modules/ui.js)');
+            return null;
+        }
+        try {
+            const form = new FormData();
+            form.append('file', base64);
+            form.append('upload_preset', CLOUDINARY_PRESET);
+            // No public_id on purpose: the preset already sets the Asset folder and
+            // auto-generates an unguessable ID. Sending our own risks doubling the
+            // folder prefix (mtc-asset/mtc-asset/...) and can collide on re-uploads.
+            const r = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: form });
+            const j = await r.json();
+            if (!r.ok) {
+                console.warn('[Cloudinary] upload failed:', j?.error?.message || `HTTP ${r.status}`);
+                return null;
+            }
+            return j.secure_url || null;
+        } catch (e) {
+            console.warn('[Cloudinary] network error:', /** @type {any} */ (e).message);
+            return null;
+        }
+    },
+
+    // Compress a File, then upload it to Cloudinary. Returns the hosted URL, or null.
+    async uploadImage(file) {
         if (!file) return null;
-        
+
         try {
             this.showNotification('Uploading image...', 'info');
             console.log('Starting image upload, file:', file.name, file.size);
-            
+
             const compressed = await this.compressImage(file);
             console.log('Compression result:', compressed ? compressed.size : 'failed');
             if (!compressed) {
                 this.showNotification('Image compression failed', 'error');
                 return null;
             }
-            
+
             const base64 = await this.blobToBase64(compressed);
-            const rawB64 = base64.split(',')[1] || base64;
-            
-            // Try ImgBB first (stores URL, keeps DB small)
-            const imgbbKey = import.meta.env.VITE_IMGBB_API_KEY;
-            if (imgbbKey) {
-                try {
-                    const form = new FormData();
-                    form.append('key', imgbbKey);
-                    form.append('image', rawB64);
-                    const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
-                    const json = await res.json();
-                    if (json.success && json.data?.url) {
-                        console.log('Image uploaded to ImgBB:', json.data.url);
-                        this.showNotification('Image uploaded successfully', 'success');
-                        return json.data.url;
-                    }
-                    console.warn('[ImgBB] Upload failed, falling back to DB:', json.error?.message || 'unknown');
-                } catch (e) {
-                    console.warn('[ImgBB] Network error, falling back to DB:', /** @type {any} */ (e).message);
-                }
+            const url = await this.uploadBase64Image(base64);
+            if (url) {
+                console.log('Image uploaded to Cloudinary:', url);
+                this.showNotification('Image uploaded successfully', 'success');
+                return url;
             }
-            
-            // Fallback: store base64 in Firebase Database (legacy behavior)
-            const dataUrl = `data:${compressed.type || 'image/jpeg'};base64,${rawB64}`;
-            const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const truncatedData = dataUrl.substring(0, 400000);
-            
-            await window.set(window.ref(window.db, `ImageUploads/${imageId}`), {
-                data: truncatedData,
-                type: compressed.type || 'image/jpeg',
-                created: Date.now()
-            });
-            
-            console.log('Image saved to Firebase Database (fallback)');
-            this.showNotification('Image uploaded (database mode)', 'success');
-            return truncatedData;
-            
+
+            // No base64 fallback: writing image bytes into the DB bloats every client's sync
+            // and the record itself. Fail loudly instead — the caller keeps the previous image.
+            this.showNotification('Image upload failed — coba lagi', 'error');
+            return null;
+
         } catch (e) {
             console.error('Image Upload Error:', e);
             this.showNotification('Image upload failed - will save without image', 'warning');
@@ -332,31 +343,6 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         }
     },
     
-    // Fallback: convert to data URL and store in Firebase Database
-    async uploadAsDataURL(file) {
-        try {
-            const compressed = await this.compressImage(file);
-            if (!compressed) return null;
-            
-            const base64 = await this.blobToBase64(compressed);
-            // Store as data URL format
-            const dataUrl = `data:${compressed.type || 'image/jpeg'};base64,${base64.split(',')[1]}`;
-            
-            // Save to Firebase Database under a special node
-            const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await window.set(window.ref(window.db, `ImageUploads/${imageId}`), {
-                data: dataUrl.substring(0, 500000), // limit size
-                created: Date.now()
-            });
-            
-            this.showNotification('Image uploaded (database mode)', 'success');
-            return dataUrl;
-        } catch (e) {
-            console.error('DataURL upload error:', e);
-            return null;
-        }
-    },
-
     async blobToBase64(blob) {
         if (!blob) return '';
         return new Promise((resolve) => {

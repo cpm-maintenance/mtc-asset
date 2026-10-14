@@ -962,7 +962,7 @@ if (confirm('Are you sure you want to logout?')) {
             }
         },
 
-        // ── Phase 2: Migrate legacy base64 ImageUploads → ImgBB URLs ──
+        // ── Phase 2: Migrate legacy base64 ImageUploads → hosted URLs ──
         // Run from browser console: await window.app.migrateLegacyImages()
         async migrateLegacyImages() {
             const results = { migrated: 0, failed: 0, skipped: 0 };
@@ -986,15 +986,8 @@ if (confirm('Are you sure you want to logout?')) {
                 const data = entry?.data || entry?.dataUrl || '';
                 if (!data || !data.startsWith('data:')) { results.skipped++; continue; }
                 try {
-                    const rawB64 = data.split('base64,')[1] || data;
-                    const form = new FormData();
-                    form.append('key', import.meta.env.VITE_IMGBB_API_KEY);
-                    form.append('image', rawB64);
-                    form.append('name', id);
-                    const r = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
-                    const j = await r.json();
-                    if (!j.success) throw new Error(j.error?.message || 'ImgBB fail');
-                    const url = j.data.url;
+                    const url = await this.uploadBase64Image(data);
+                    if (!url) throw new Error('Image upload failed');
                     console.log('[Migrate]', id, '→', url);
 
                     /** @type {Record<string, any>} */
@@ -1031,17 +1024,11 @@ if (confirm('Are you sure you want to logout?')) {
                 const foto = eq.FotoURL;
                 if (!foto || !String(foto).startsWith('data:')) continue;
                 try {
-                    const rawB64 = String(foto).split('base64,')[1] || String(foto);
-                    const form = new FormData();
-                    form.append('key', import.meta.env.VITE_IMGBB_API_KEY);
-                    form.append('image', rawB64);
-                    form.append('name', 'eq_' + eqId);
-                    const r = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
-                    const j = await r.json();
-                    if (!j.success) throw new Error(j.error?.message || 'ImgBB fail');
-                    await window.update(window.ref(window.db), { ['Equipment/' + eqId + '/FotoURL']: j.data.url });
+                    const url = await this.uploadBase64Image(String(foto));
+                    if (!url) throw new Error('Image upload failed');
+                    await window.update(window.ref(window.db), { ['Equipment/' + eqId + '/FotoURL']: url });
                     results.migrated++;
-                    console.log('[Migrate] Equipment', eqId, 'FotoURL →', j.data.url);
+                    console.log('[Migrate] Equipment', eqId, 'FotoURL →', url);
                 } catch (/** @type {any} */ e) {
                     results.failed++;
                     console.error('[Migrate] Equipment', eqId, 'failed:', e.message);
@@ -1058,15 +1045,9 @@ if (confirm('Are you sure you want to logout?')) {
                 for (const u of list) {
                     if (typeof u === 'string' && u.startsWith('data:')) {
                         try {
-                            const rawB64 = u.split('base64,')[1] || u;
-                            const form = new FormData();
-                            form.append('key', import.meta.env.VITE_IMGBB_API_KEY);
-                            form.append('image', rawB64);
-                            form.append('name', 'log_' + logId);
-                            const r = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
-                            const j = await r.json();
-                            if (!j.success) throw new Error(j.error?.message || 'ImgBB fail');
-                            newUrls.push(j.data.url);
+                            const url = await this.uploadBase64Image(u);
+                            if (!url) throw new Error('Image upload failed');
+                            newUrls.push(url);
                             results.migrated++;
                         } catch (/** @type {any} */ e) {
                             results.failed++;
@@ -1081,7 +1062,7 @@ if (confirm('Are you sure you want to logout?')) {
             }
 
             console.log('[Migrate] Done:', JSON.stringify(results));
-            this.showNotification('Migrated ' + results.migrated + ' images to ImgBB', 'success');
+            this.showNotification('Migrated ' + results.migrated + ' images', 'success');
             return results;
         },
 

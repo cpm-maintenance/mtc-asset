@@ -75,7 +75,7 @@ function baseState(overrides = {}) {
         saveToIndexedDB: vi.fn(async () => {}),
         queueOfflineOperation: vi.fn(async () => true),
         showCropModal: vi.fn(),
-        uploadToImgBB: vi.fn(async () => 'https://img.test/x.jpg'),
+        uploadImage: vi.fn(async () => 'https://img.test/x.jpg'),
         ...overrides,
     };
 }
