@@ -4,6 +4,7 @@ export default defineConfig({
     test: {
         include: ['tests/**/*.test.js'],
         exclude: ['node_modules/**', 'dist/**', '.open/**', 'backup/**', 'tests/rules/**'],
+        setupFiles: ['tests/setup.js'],
         coverage: {
             provider: 'v8',
             reporter: ['text', 'html', 'lcov'],

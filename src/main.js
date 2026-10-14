@@ -184,23 +184,6 @@ window.notificationAPI = {
 };
 
 // ============================================================
-// Initialize Notifications
-// ============================================================
-setTimeout(() => {
-  if (Notification.permission === 'granted') {
-    registerFCMToken().then(token => {
-      if (token) setupForegroundListener();
-    });
-
-    console.log('[Notif] Notification system initialized');
-  } else if (Notification.permission === 'default') {
-    console.log('[Notif] Permission not yet requested');
-  } else {
-    console.log('[Notif] Permission denied');
-  }
-}, 4000);
-
-// ============================================================
 // PWA Install Prompt
 // ============================================================
 window.addEventListener('beforeinstallprompt', (e) => {

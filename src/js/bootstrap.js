@@ -14,6 +14,11 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             // Global error handler for uncaught errors
             window.addEventListener('error', (e) => {
                 const msg = e.message || '';
+                if (msg.includes('JSON')) {
+                    console.warn('JSON parse error intercepted:', msg);
+                    e.preventDefault();
+                    return;
+                }
                 if (msg.includes('Alpine') || msg.includes('proxy') || msg.includes('cannot clone')) {
                     console.warn('Alpine reactivity issue:', msg);
                     this.showNotification('Data sync issue detected, refreshing...', 'warning');
@@ -22,8 +27,14 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             
             // Global unhandled promise rejection handler
             window.addEventListener('unhandledrejection', (e) => {
-                console.error('Unhandled rejection:', e.reason);
-                if (e.reason?.message?.includes('proxy') || e.reason?.message?.includes('clone')) {
+                const reason = e.reason;
+                if (typeof reason === 'string' && reason.includes('JSON')) {
+                    console.warn('JSON rejection intercepted:', reason);
+                    e.preventDefault();
+                    return;
+                }
+                console.error('Unhandled rejection:', reason);
+                if (reason?.message?.includes('proxy') || reason?.message?.includes('clone')) {
                     this.showNotification('Data sync issue, please refresh', 'warning');
                 }
             });
@@ -60,21 +71,6 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
 
             // Load AI settings on init (before login)
             this.loadAISettings();
-
-            // Global error handlers
-            window.addEventListener('error', (e) => {
-                if (e.message && e.message.includes('JSON')) {
-                    console.warn('JSON parse error intercepted:', e.message);
-                    e.preventDefault();
-                }
-            });
-            
-            window.addEventListener('unhandledrejection', (e) => {
-                if (e.reason && typeof e.reason === 'string' && e.reason.includes('JSON')) {
-                    console.warn('JSON rejection intercepted:', e.reason);
-                    e.preventDefault();
-                }
-            });
 
             // Browser online/offline status
             window.addEventListener('online', () => this.isOnline = true);

@@ -87,22 +87,12 @@
   background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Force semi-transparent backgrounds even in light mode to maintain design */
-[data-theme='light'] .card-modern {
-  background: rgba(255, 255, 255, 0.8) !important;
-}
-
-[data-theme='light'] .glass {
-  background: rgba(255, 255, 255, 0.6) !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
 [data-theme='light'] input,
 [data-theme='light'] select,
 [data-theme='light'] textarea {
-  background-color: #f1f5f9 !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #0f172a;
 }
 
 body { 
@@ -315,8 +305,17 @@ select option {
 [x-cloak] { display: none !important; }
 
 
-/* Mobile Header Compact */
+/* Mobile Header Compact & Performance */
 @media (max-width: 1023px) {
+  .card-modern {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+  .glass {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
   header.sticky {
     min-height: 50px;
   }
@@ -593,5 +592,13 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .neu-btn { transition: none; }
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-ping, .animate-spin, .animate-pulse {
+    animation: none !important;
+  }
 }

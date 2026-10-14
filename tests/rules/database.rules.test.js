@@ -224,6 +224,38 @@ describe('Regresi — node lain tetap sesuai desain', () => {
     const db = testEnv.authenticatedContext(USER.uid).database();
     await assertFails(db.ref(`Users/${ADMIN.uid}/role`).set('admin'));
   });
+
+  it('USER DITOLAK menulis Users/{uid sendiri}/role (privilege escalation)', async () => {
+    const db = testEnv.authenticatedContext(USER.uid).database();
+    await assertFails(db.ref(`Users/${USER.uid}/role`).set('admin'));
+  });
+
+  it('USER biasa DITOLAK update profile dengan menyisipkan role admin', async () => {
+    const db = testEnv.authenticatedContext(USER.uid).database();
+    await assertFails(db.ref(`Users/${USER.uid}`).update({ role: 'admin', lastLogin: '2026-10-14' }));
+  });
+
+  it('USER biasa BOLEH update profile miliknya tanpa mengubah role', async () => {
+    const db = testEnv.authenticatedContext(USER.uid).database();
+    await assertSucceeds(db.ref(`Users/${USER.uid}`).update({ lastLogin: '2026-10-14' }));
+  });
+
+  it('USER baru BOLEH set profile awal tanpa field role', async () => {
+    const newUid = 'new-user-123';
+    const db = testEnv.authenticatedContext(newUid).database();
+    await assertSucceeds(db.ref(`Users/${newUid}`).set({ uid: newUid, email: 'new@planner.com', lastLogin: '2026-10-14' }));
+  });
+
+  it('USER baru DITOLAK set profile awal dengan field role admin', async () => {
+    const newUid = 'new-user-456';
+    const db = testEnv.authenticatedContext(newUid).database();
+    await assertFails(db.ref(`Users/${newUid}`).set({ uid: newUid, email: 'new@planner.com', role: 'admin' }));
+  });
+
+  it('ADMIN BOLEH mengubah role user lain', async () => {
+    const db = testEnv.authenticatedContext(ADMIN.uid).database();
+    await assertSucceeds(db.ref(`Users/${USER.uid}/role`).set('supervisor'));
+  });
 });
 
 describe('P0-3 · Requisitions — user boleh create pending, hanya admin/supervisor update/delete', () => {
