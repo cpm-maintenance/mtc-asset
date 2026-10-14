@@ -39,7 +39,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         const fetchAndCache = fetch(event.request).then((response) => {
-          caches.open(CACHE_NAME).put(event.request, response.clone());
+          // Clone synchronously: the nested .then may run after the page has consumed the body.
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           return response;
         });
         return cached || fetchAndCache;
