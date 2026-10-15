@@ -17,6 +17,9 @@ const CLOUDINARY_PRESET = 'mtc-asset-unsigned';
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
 
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
+    // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
+    manualScanId: '',
+
     setTheme(t) {
         if (!['night', 'navy', 'purple', 'light'].includes(t)) t = 'night';
         this.themeMode = t;
@@ -79,6 +82,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR Scanner
     async openQR() {
         this.showScanner = true;
+        this.manualScanId = '';
         this.$nextTick(async () => {
             try {
                 const { Html5Qrcode } = await import('html5-qrcode');
@@ -88,17 +92,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
                 await this.html5QrCode.start(
                     { facingMode: "environment" },
                     config,
-                    (/** @type {string} */ decodedText) => {
-                        this.stopScanner();
-                        const cleanId = decodedText.trim().toUpperCase();
-                        const e = this.equipment.find(x => String(x.EquipmentID).toUpperCase() === cleanId);
-                        if (e) {
-                            this.goToDetail(e.EquipmentID);
-                            this.showNotification("Asset Found: " + e.Nama);
-                        } else {
-                            this.showNotification("QR Scanned: " + cleanId + " (Not found in database)", "error");
-                        }
-                    },
+                    (/** @type {string} */ decodedText) => this.handleScanResult(decodedText),
                     (/** @type {string} */ errorMessage) => { }
                 );
             } catch (err) {
@@ -107,6 +101,37 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
                 this.showScanner = false;
             }
         });
+    },
+
+    /**
+     * Titik masuk tunggal untuk hasil pembacaan kode: dipakai oleh stream kamera
+     * html5-qrcode maupun oleh entri ID manual. Menutup scanner lalu membuka unit
+     * yang cocok, atau memberi notifikasi error bila tidak ada di database.
+     *
+     * @param {string} decodedText - Isi QR / ID yang diketik operator.
+     */
+    handleScanResult(decodedText) {
+        const cleanId = String(decodedText || '').trim().toUpperCase();
+        this.stopScanner();
+        if (!cleanId) return;
+        const e = (this.equipment || []).find(x => String(x.EquipmentID).toUpperCase() === cleanId);
+        if (e) {
+            this.goToDetail(e.EquipmentID);
+            this.showNotification("Asset Found: " + e.Nama);
+        } else {
+            this.showNotification("QR Scanned: " + cleanId + " (Not found in database)", "error");
+        }
+    },
+
+    /**
+     * Fallback tanpa kamera (izin ditolak / unit tanpa lensa): operator mengetik
+     * Equipment ID langsung. Memakai jalur hasil yang sama dengan scanner optik.
+     */
+    submitManualScan() {
+        const id = String(this.manualScanId || '').trim();
+        if (!id) return;
+        this.handleScanResult(id);
+        this.manualScanId = '';
     },
 
     async stopScanner() {

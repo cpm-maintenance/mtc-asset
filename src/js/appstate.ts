@@ -138,6 +138,7 @@ export interface AppState {
   logsLimit: number;
   logsLoadingMore: boolean;
   logsPage: number;
+  manualScanId?: string;
   menuItems: any[];
   analyticsTabs: any[];
   analyticsTab: string;
@@ -401,6 +402,7 @@ export interface AppState {
   handleError: (...args: any[]) => any;
   handleLogPhoto: (...args: any[]) => any;
   handleLogPhotoDrop: (...args: any[]) => any;
+  handleScanResult: (...args: any[]) => any;
   healthRiskScore: (...args: any[]) => any;
   get historyCurrentPageLogs(): any;
   historyExportExcel: (...args: any[]) => any;
@@ -568,6 +570,7 @@ export interface AppState {
   submitCreateUser: (...args: any[]) => any;
   submitEquipment: (...args: any[]) => any;
   submitLog: (...args: any[]) => any;
+  submitManualScan: (...args: any[]) => any;
   submitPM: (...args: any[]) => any;
   submitPerformance: (...args: any[]) => any;
   submitRequisition: (...args: any[]) => any;

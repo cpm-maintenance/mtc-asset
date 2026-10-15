@@ -1745,42 +1745,90 @@
   </template>
 
 
-  <!-- QR SCANNER MODAL -->
+  <!-- QR SCANNER MODAL (Stitch: The Industrial Monolith Port — 'Scanner Dashboard') -->
   <template x-if="showScanner">
-  <div x-cloak
-    class="fixed inset-0 z-[100] bg-nexus-black flex flex-col items-center justify-center p-6 backdrop-blur-2xl">
-    <div class="w-full max-w-sm space-y-10 text-center relative">
-      <div class="absolute -top-16 right-0">
-        <button @click="stopScanner()" aria-label="Close scanner" class="text-white/30 hover:text-nexus-accent transition-colors">
-          <i class="fas fa-times text-3xl"></i>
+  <div x-cloak class="fixed inset-0 z-[100] bg-[#131313]/95 backdrop-blur-2xl overflow-y-auto">
+    <div class="min-h-full w-full max-w-3xl mx-auto p-4 sm:p-6 flex flex-col gap-5">
+
+      <!-- Command strip -->
+      <header class="flex items-start justify-between gap-4 bg-stitch-surface-low border border-stitch-ghost-border p-5">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-2.5 h-2.5 bg-stitch-gold"></span>
+            <span class="font-mono text-[10px] font-bold uppercase tracking-widest text-stitch-on-surface-variant">SCAN STATION · OPTICAL INTAKE</span>
+          </div>
+          <h3 class="font-display font-black text-3xl lg:text-4xl uppercase tracking-tight text-stitch-on-surface">Optical_Scanner</h3>
+          <p class="font-mono text-[11px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mt-1"
+            x-text="html5QrCode ? 'Operational Status: Live Feed Active' : 'Operational Status: Standby'"></p>
+        </div>
+        <button type="button" @click="stopScanner()" aria-label="Close scanner"
+          class="min-w-[64px] min-h-[64px] bg-stitch-surface-high border border-stitch-ghost-border text-stitch-on-surface-variant hover:text-white hover:bg-stitch-surface-highest transition-colors flex items-center justify-center">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </header>
+
+      <!-- Viewfinder (html5-qrcode injects the <video> into #reader) -->
+      <div class="bg-stitch-surface-low border border-stitch-ghost-border p-1">
+        <div class="relative w-full aspect-square max-h-[62vh] mx-auto overflow-hidden bg-black">
+          <div id="reader" class="w-full h-full"></div>
+
+          <!-- Reticle -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-64 h-64 border-2 border-stitch-gold/30 relative">
+              <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-stitch-gold"></div>
+              <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-stitch-gold"></div>
+              <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-stitch-gold"></div>
+              <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-stitch-gold"></div>
+            </div>
+          </div>
+
+          <!-- HUD: live feed -->
+          <div class="absolute bottom-4 left-4 flex items-center gap-3 pointer-events-none">
+            <span class="w-3 h-3 bg-red-600 animate-pulse"></span>
+            <span class="font-mono text-[10px] font-bold uppercase tracking-widest text-white">Live Optical Feed</span>
+          </div>
+
+          <!-- HUD: mode readout -->
+          <div class="absolute top-4 right-4 text-right pointer-events-none">
+            <p class="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-stitch-on-surface-variant">Mode</p>
+            <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-stitch-gold">QR · 250×250</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
+        <button type="button" @click="stopScanner().then(() => openQR())"
+          title="Restart the camera feed"
+          class="min-h-[64px] bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-display font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 active:scale-[0.99] transition-all">
+          <i class="fas fa-barcode"></i> Initiate Scan
+        </button>
+        <button type="button" @click="stopScanner()"
+          class="min-h-[64px] bg-stitch-surface-highest text-stitch-gold font-display font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:bg-[#93000A] hover:text-white transition-colors active:scale-[0.99]">
+          <i class="fas fa-power-off"></i> Abort Operation
         </button>
       </div>
 
-      <div class="space-y-3 mb-10">
-        <h3 class="text-3xl font-black text-white nexus-glow-text uppercase tracking-tighter">Optical Scanner</h3>
-        <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Aligning with System Node QR</p>
+      <!-- Manual ID entry (fallback tanpa kamera) -->
+      <div class="bg-stitch-surface-low border border-stitch-ghost-border p-5">
+        <label for="qr-manual-id" class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-stitch-on-surface-variant block mb-2">Manual ID Entry</label>
+        <div class="flex flex-col sm:flex-row gap-1">
+          <div class="flex-1 bg-stitch-surface-lowest border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors flex items-center">
+            <i class="fas fa-keyboard text-stitch-on-surface-variant/60 ml-3 text-sm"></i>
+            <input id="qr-manual-id" type="text" x-model="manualScanId" @keydown.enter.prevent="submitManualScan()"
+              placeholder="EQUIPMENT ID, MIS. EX-001" autocomplete="off"
+              class="bg-transparent w-full p-4 text-stitch-on-surface text-sm font-bold uppercase tracking-wider border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+          </div>
+          <button type="button" @click="submitManualScan()"
+            class="min-h-[64px] px-6 bg-stitch-surface-high border border-stitch-ghost-border text-stitch-gold font-black uppercase tracking-widest text-[11px] hover:bg-stitch-surface-highest transition-colors">
+            Resolve ID
+          </button>
+        </div>
+        <p x-show="manualScanId" class="font-mono text-[10px] font-bold uppercase tracking-widest mt-2"
+          :class="equipment.some(e => String(e.EquipmentID).toUpperCase() === String(manualScanId || '').trim().toUpperCase()) ? 'text-emerald-300' : 'text-rose-300'"
+          x-text="equipment.some(e => String(e.EquipmentID).toUpperCase() === String(manualScanId || '').trim().toUpperCase()) ? 'Target locked — press Resolve ID' : 'No match in equipment registry'"></p>
       </div>
 
-      <div
-        class="relative mx-auto w-full aspect-square max-w-[320px] overflow-hidden rounded-[3rem] border-4 border-nexus-accent/20 shadow-[0_0_50px_rgba(0,242,255,0.15)] bg-black">
-        <div id="reader" class="w-full h-full"></div>
-
-        <!-- Professional Scanner Overlay -->
-        <div class="absolute inset-0 pointer-events-none border-[50px] border-black/60"></div>
-        <div
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 border border-nexus-accent/30 rounded-[2rem] animate-pulse-nexus">
-          <div class="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-nexus-accent rounded-tl-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
-          <div class="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-nexus-accent rounded-tr-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
-          <div class="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-nexus-accent rounded-bl-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
-          <div class="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-nexus-accent rounded-br-xl shadow-[0_0_15px_rgba(0,242,255,0.5)]"></div>
-        </div>
-        <div
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[2px] bg-nexus-accent/40 shadow-[0_0_20px_rgba(0,242,255,0.8)] animate-[scan_2s_infinite]">
-        </div>
-      </div>
-
-      <button @click="stopScanner()"
-        class="glass border-rose-500/30 text-rose-400 px-12 py-5 rounded-2xl font-black tracking-[0.4em] text-[10px] transition-all uppercase hover:bg-rose-500 hover:text-white">Abort Operation</button>
     </div>
   </div>
   </template>

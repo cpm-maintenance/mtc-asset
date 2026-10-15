@@ -125,3 +125,63 @@ describe('QR — downloadAllQRs (bulk PDF)', () => {
     spy.mockRestore();
   });
 });
+
+describe('QR — handleScanResult / submitManualScan (S-5 scanner wiring)', () => {
+  function scannerCtx(equipment = []) {
+    return Object.assign(makeCtx({ equipment }), {
+      goToDetail: vi.fn(),
+      stopScanner: vi.fn(),
+      manualScanId: '',
+      // submitManualScan memanggil method saudaranya di app object yang sama;
+      // di unit test objek context dibuat manual, jadi harus di-bind eksplisit.
+      handleScanResult: uiModule.handleScanResult,
+    });
+  }
+
+  it('handleScanResult menutup scanner, membuka unit, dan menotifikasi nama unit', () => {
+    const ctx = scannerCtx([{ EquipmentID: 'EX-001', Nama: 'Hydraulic Press' }]);
+    uiModule.handleScanResult.call(ctx, 'EX-001');
+    expect(ctx.stopScanner).toHaveBeenCalled();
+    expect(ctx.goToDetail).toHaveBeenCalledWith('EX-001');
+    expect(ctx.showNotification).toHaveBeenCalledWith('Asset Found: Hydraulic Press');
+  });
+
+  it('handleScanResult menormalisasi spasi & huruf kecil dari hasil decode', () => {
+    const ctx = scannerCtx([{ EquipmentID: 'EX-001', Nama: 'Pump' }]);
+    uiModule.handleScanResult.call(ctx, '  ex-001 \n');
+    expect(ctx.goToDetail).toHaveBeenCalledWith('EX-001');
+  });
+
+  it('handleScanResult memberi error bila ID tidak ada di registry', () => {
+    const ctx = scannerCtx([{ EquipmentID: 'EX-001' }]);
+    uiModule.handleScanResult.call(ctx, 'NOPE-9');
+    expect(ctx.goToDetail).not.toHaveBeenCalled();
+    expect(ctx.showNotification).toHaveBeenCalledWith(
+      'QR Scanned: NOPE-9 (Not found in database)',
+      'error'
+    );
+  });
+
+  it('handleScanResult mengabaikan input kosong (tetap menutup scanner)', () => {
+    const ctx = scannerCtx([{ EquipmentID: 'EX-001' }]);
+    uiModule.handleScanResult.call(ctx, '   ');
+    expect(ctx.showNotification).not.toHaveBeenCalled();
+    expect(ctx.goToDetail).not.toHaveBeenCalled();
+  });
+
+  it('submitManualScan memakai jalur hasil yang sama lalu mengosongkan input', () => {
+    const ctx = scannerCtx([{ EquipmentID: 'EX-002', Nama: 'Conveyor' }]);
+    ctx.manualScanId = 'ex-002';
+    uiModule.submitManualScan.call(ctx);
+    expect(ctx.goToDetail).toHaveBeenCalledWith('EX-002');
+    expect(ctx.manualScanId).toBe('');
+  });
+
+  it('submitManualScan tidak melakukan apa pun saat input kosong', () => {
+    const ctx = scannerCtx([{ EquipmentID: 'EX-002' }]);
+    ctx.manualScanId = '  ';
+    uiModule.submitManualScan.call(ctx);
+    expect(ctx.stopScanner).not.toHaveBeenCalled();
+    expect(ctx.showNotification).not.toHaveBeenCalled();
+  });
+});
