@@ -1,19 +1,33 @@
+// MTC-ASSET Service Worker — custom (strategi injectManifest via vite-plugin-pwa)
 // No OneSignal — app uses FCM directly via Firebase Messaging
-const CACHE_NAME = 'goldtrack-v2';
-// self.__WB_MANIFEST will be replaced by workbox with the precache manifest
-self.__WB_MANIFEST;
-const ASSETS = [
+
+// Nama cache menyertakan brand + versi rilis. Naikkan angka versi saat rilis
+// besar supaya cache lama dibuang bersih di handler 'activate'.
+const CACHE_NAME = 'mtc-asset-v3';
+
+// vite-plugin-pwa mengganti `self.__WB_MANIFEST` dengan daftar aset hasil build
+// (HTML, components, icons, dan SELURUH bundle JS/CSS). Dulu nilai ini hanya
+// ditulis sebagai statement kosong sehingga dibuang — akibatnya bundle tidak
+// pernah ter-precache dan aplikasi blank saat offline.
+const WB_MANIFEST = self.__WB_MANIFEST || [];
+const WB_URLS = WB_MANIFEST.map((entry) => (typeof entry === 'string' ? entry : entry.url));
+
+// App shell wajib + seluruh aset build, tanpa duplikat.
+const PRECACHE_ASSETS = Array.from(new Set([
   '/',
   '/index.html',
   '/manifest.json',
-];
+  '/offline.html',
+  ...WB_URLS,
+]));
 
-// Install Service Worker
+// Install — precache tahan-banting: satu aset gagal (mis. 404) tidak
+// membatalkan seluruh instalasi service worker.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(PRECACHE_ASSETS.map((url) => cache.add(url)))
+    )
   );
   self.skipWaiting();
 });
