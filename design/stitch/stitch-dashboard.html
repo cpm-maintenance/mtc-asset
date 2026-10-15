@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-base": "#0b0f15", "sync-cyan-glow": "rgba(6, 182, 212, 0.2)", "on-tertiary": "#68000a", "on-secondary": "#003640", "surface-variant": "#2e3540", "gold-glow": "rgba(245, 158, 11, 0.18)", "surface-dim": "#0d141d", "inverse-primary": "#855300", "border-subtle": "rgba(255, 255, 255, 0.06)", "outline-variant": "#534434", "primary-fixed-dim": "#ffb95f", "inverse-on-surface": "#2a313b", "on-secondary-container": "#00424e", "outline": "#a08e7a", "on-primary-container": "#613b00", "gold-bright": "#fbbf24", "tertiary": "#ffbcb7", "secondary": "#4cd7f6", "status-operational": "#10b981", "on-background": "#dce3f1", "error-container": "#93000a", "sync-cyan": "#06b6d4", "tertiary-container": "#ff938c", "status-emergency": "#ef4444", "primary-container": "#f59e0b", "surface-container-lowest": "#080f18", "on-tertiary-fixed-variant": "#930013", "border-tactical": "#283446", "on-surface-variant": "#d8c3ad", "surface-container": "#19202a", "on-primary-fixed-variant": "#653e00", "on-tertiary-container": "#8d0012", "surface-card": "#161d27", "surface-recessed": "#0a0e14", "on-surface": "#dce3f1", "surface-bright": "#333a44", "on-secondary-fixed": "#001f26", "surface-tint": "#ffb95f", "on-secondary-fixed-variant": "#004e5c", "background": "#0d141d", "surface-canvas": "#0f141c", "inverse-surface": "#dce3f1", "primary": "#ffc174", "on-primary": "#472a00", "on-error-container": "#ffdad6", "surface-container-high": "#232a35", "error": "#ffb4ab", "secondary-container": "#03b5d3", "tertiary-fixed-dim": "#ffb3ad", "surface": "#0d141d", "gold-dim": "#b45309", "tertiary-fixed": "#ffdad7", "secondary-fixed": "#acedff", "status-repair": "#f59e0b", "on-primary-fixed": "#2a1700", "on-tertiary-fixed": "#410004", "surface-elevated": "#1e2634", "surface-container-highest": "#2e3540", "primary-fixed": "#ffddb8", "on-error": "#690005", "secondary-fixed-dim": "#4cd7f6", "status-standby": "#64748b", "surface-container-low": "#151c26" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "1rem", "gutter-desktop": "1.5rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "margin-desktop": "2rem", "space-md": "1rem", "gutter": "1rem" }, "fontFamily": { "headline-lg": ["Inter"], "display-hero": ["Inter"], "label-mono-sm": ["JetBrains Mono"], "headline-lg-mobile": ["Inter"], "headline-md": ["Inter"], "body-md": ["Inter"], "label-mono-lg": ["JetBrains Mono"], "label-mono-md": ["JetBrains Mono"], "body-lg": ["Inter"], "body-sm": ["Inter"] }, "fontSize": { "headline-lg": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "display-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-mono-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "500" }], "headline-lg-mobile": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "500" }], "label-mono-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased select-none"><header class="fixed top-0 left-0 right-0 h-16 z-50 bg-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="MTC ASSET Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1X7lil7epG74Ldc7faSYez_uK8O4IL8PeeKxMRFKNj-vLPPyKXKjZwMQfqNn4gG6nJLllnaeOgIU1ZvBa7fs40MyjEB5gwN4Ny3_xmoSdLhD6ZpyRerChMz9cC9qXw1VTf0Yhq7xWTAxy6AxIykHAwpGQLFanBeaFLY2ifkqDX8g21nE3vwYJGTbLhKcBZPnKHSnMAxwDFPagx-icnHnhkRIUttcm_dL-wkoerqVFDF-EUo9XC5dfk-97o"/><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight uppercase text-on-surface">MTC ASSET</span><span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase tracking-wider">Industrial Telemetry Core</span></div><div class="hidden xl:flex items-center gap-space-xs pl-space-sm"><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container shadow-[0_0_12px_rgba(16,185,129,0.15)]"><span class="h-2 w-2 rounded-full bg-status-operational animate-pulse"></span><span class="font-label-mono-sm text-label-mono-sm text-on-surface">ONLINE - SYNCED</span></div><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container"><span class="material-symbols-outlined text-sync-cyan text-[14px]">wifi_tethering</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">PWA READY / NODE: ALPHA-7</span></div></div></div><div class="flex-1 max-w-md hidden md:flex items-center"><div class="relative w-full flex items-center bg-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]"><span class="material-symbols-outlined text-status-standby text-[18px] mr-space-sm">search</span><span class="font-body-sm text-body-sm text-status-standby flex-1">Search Asset, Tag, WO...</span><kbd class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-mono-sm text-label-mono-sm text-on-surface-variant shadow-sm">Ctrl+K</kbd></div></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-space-xs px-space-md py-space-xs rounded bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:bg-gold-bright hover:text-on-primary-container transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]"><span class="material-symbols-outlined text-[16px]">add</span><span>+ NEW WO</span></button><div class="hidden lg:flex items-center bg-surface-recessed p-0.5 rounded"><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm bg-primary-container text-on-primary-container">GOLD</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">NAVY</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">PURPLE</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">LIGHT</button></div><div class="relative flex items-center justify-center p-space-xs rounded hover:bg-surface-container-high hover:text-on-surface cursor-pointer text-status-standby transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-0 right-0 h-4 min-w-[16px] px-1 rounded-full bg-status-emergency font-label-mono-sm text-label-mono-sm text-on-surface flex items-center justify-center font-bold">3</span></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_0_12px_rgba(255,193,116,0.3)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden sm:flex flex-col text-left"><span class="font-label-mono-md text-label-mono-md text-on-surface">AJENG AI</span><span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">RELIABILITY ENG</span></div></div></div></div></header><aside class="fixed left-0 top-16 bottom-10 w-64 bg-surface-container-lowest z-40 flex flex-col py-space-md shadow-[4px_0_16px_rgba(0,0,0,0.4)]"><div class="px-space-md pb-space-sm"><span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">PLANT OPERATIONS</span></div><nav class="flex-1 px-space-sm space-y-1 overflow-y-auto" data-active-classes="bg-primary-container text-on-primary-container font-headline-md rounded-lg shadow-[0_0_12px_rgba(245,158,11,0.2)]"><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm transition-all bg-primary-container text-on-primary-container font-headline-md rounded-lg shadow-[0_0_12px_rgba(245,158,11,0.2)]" data-path="overview" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Overview Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="asset-fleet" href="#"><span class="material-symbols-outlined text-[18px]">precision_manufacturing</span><span class="font-body-md text-body-md">Assets Telemetry</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="work-orders" href="#"><span class="material-symbols-outlined text-[18px]">engineering</span><span class="font-body-md text-body-md">Work Orders</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="spare-parts" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span class="font-body-md text-body-md">Spare Parts Stock</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="performance-protocol" href="#"><span class="material-symbols-outlined text-[18px]">monitoring</span><span class="font-body-md text-body-md">Performance HM/WH</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="qr-scanner" href="#"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span><span class="font-body-md text-body-md">Scanner QR Node</span></a><div class="pt-space-md px-space-sm"><span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">TELEMETRY &amp; ACCESS</span></div><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="system-access" href="#"><span class="material-symbols-outlined text-[18px]">manage_accounts</span><span class="font-body-md text-body-md">Access &amp; Personnel</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="neural-diagnostics" href="#"><span class="material-symbols-outlined text-[18px]">neurology</span><span class="font-body-md text-body-md">Ajeng AI Diagnostics</span></a></nav><div class="p-space-md mt-auto"><div class="bg-surface-recessed p-space-sm rounded flex flex-col gap-1 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]"><div class="flex items-center justify-between"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">PWA CACHE</span><span class="font-label-mono-sm text-label-mono-sm text-secondary">98.4% HYDRATED</span></div><div class="w-full h-1 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-secondary" style="width: 98.4%"></div></div></div></div></aside><div class="pl-64"><main class="relative pt-16 pb-12 w-full px-gutter-desktop min-h-screen bg-surface"><div class="flex flex-col w-full gap-space-lg pb-12">
+<!-- Top System PWA Offline & Telemetry Banner -->
+<section class="w-full bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-64 h-64 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md relative z-10">
+<!-- Status Badge & Sync Info -->
+<div class="flex items-center gap-space-md flex-wrap">
+<div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-surface-recessed shadow-inner border border-white/5">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sync-cyan opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-sync-cyan"></span>
+</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface uppercase tracking-wider">PWA Active / Offline Storage Enabled</span>
+</div>
+<div class="flex items-center gap-space-xs text-status-standby">
+<span class="material-symbols-outlined text-[16px] text-sync-cyan animate-spin" style="animation-duration: 4s;">sync</span>
+<span class="font-label-mono-sm text-label-mono-sm">Syncing with Nexus (IndexedDB Storage Level: <strong class="text-on-surface">OPTIMAL</strong>)</span>
+</div>
+</div>
+<!-- Quick Action Controls & Theme Pill -->
+<div class="flex items-center gap-space-sm flex-wrap self-end lg:self-auto">
+<!-- Theme Selector Pills (Direct reference matching prompt) -->
+<div class="flex items-center bg-surface-recessed p-1 rounded-lg border border-white/5 shadow-inner">
+<button class="px-2.5 py-1 rounded font-label-mono-sm text-label-mono-sm bg-primary-container text-on-primary-container font-semibold transition-all">GOLD</button>
+<button class="px-2.5 py-1 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface transition-colors">NAVY</button>
+<button class="px-2.5 py-1 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface transition-colors">PURPLE</button>
+<button class="px-2.5 py-1 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface transition-colors">LIGHT</button>
+</div>
+<!-- Quick Desktop Install Trigger -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-mono-md text-label-mono-md transition-all shadow-md active:scale-95">
+<span class="material-symbols-outlined text-[16px] text-gold-bright">download</span>
+<span>Install App</span>
+</button>
+<!-- Neural Diagnostic Switch -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/15 hover:bg-secondary/25 text-secondary font-label-mono-md text-label-mono-md transition-all shadow-[0_0_12px_rgba(76,215,246,0.15)] active:scale-95" id="open-ajeng-drawer">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+<span>Ajeng AI Node</span>
+</button>
+</div>
+</div>
+</section>
+<!-- KPI Industrial Telemetry Matrix -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- KPI 1: Operational Asset Fleet Ratio -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative group hover:bg-surface-elevated transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">FLEET INTEGRITY</span>
+<h2 class="font-display-hero text-display-hero text-on-surface mt-1">92.4<span class="font-headline-md text-headline-md text-status-operational ml-1">%</span></h2>
+</div>
+<div class="w-10 h-10 rounded-lg bg-status-operational/15 text-status-operational flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">precision_manufacturing</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-white/5 space-y-2">
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-on-surface-variant">Active Assets:</span>
+<span class="text-status-operational font-bold">54 / 58 Operational</span>
+</div>
+<!-- Fleet Micro Tags -->
+<div class="flex items-center gap-1 text-[10px] font-label-mono-sm overflow-x-auto pb-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-recessed text-on-surface-variant">Repair: 3</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-recessed text-on-surface-variant">Standby: 5</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-recessed text-status-emergency">Offline: 1</span>
+</div>
+</div>
+</div>
+<!-- KPI 2: Physical Availability (PA%) Sparkline -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative group hover:bg-surface-elevated transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">ACTUAL PA% vs TARGET</span>
+<div class="flex items-baseline gap-2 mt-1">
+<h2 class="font-display-hero text-display-hero text-gold-bright">95.2<span class="text-sm text-on-surface-variant font-normal">%</span></h2>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational bg-status-operational/15 px-1.5 py-0.5 rounded">Target: 94.8%</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 text-gold-bright flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">monitoring</span>
+</div>
+</div>
+<!-- Inline Mini Sparkline Chart -->
+<div class="mt-4 pt-3 border-t border-white/5">
+<div class="h-8 w-full flex items-end gap-1">
+<div class="flex-1 bg-surface-container-high rounded-t hover:bg-gold-bright transition-all" style="height: 60%;" title="Mon: 93.1%"></div>
+<div class="flex-1 bg-surface-container-high rounded-t hover:bg-gold-bright transition-all" style="height: 75%;" title="Tue: 94.2%"></div>
+<div class="flex-1 bg-surface-container-high rounded-t hover:bg-gold-bright transition-all" style="height: 65%;" title="Wed: 93.8%"></div>
+<div class="flex-1 bg-surface-container-high rounded-t hover:bg-gold-bright transition-all" style="height: 85%;" title="Thu: 95.0%"></div>
+<div class="flex-1 bg-surface-container-high rounded-t hover:bg-gold-bright transition-all" style="height: 80%;" title="Fri: 94.6%"></div>
+<div class="flex-1 bg-surface-container-high rounded-t hover:bg-gold-bright transition-all" style="height: 92%;" title="Sat: 95.4%"></div>
+<div class="flex-1 bg-primary-container rounded-t shadow-[0_0_8px_rgba(245,158,11,0.4)]" style="height: 96%;" title="Today: 95.2%"></div>
+</div>
+<div class="flex justify-between items-center text-status-standby font-label-mono-sm text-label-mono-sm mt-1">
+<span>7-DAY TELEMETRY</span>
+<span class="text-gold-bright">+0.4% GAIN</span>
+</div>
+</div>
+</div>
+<!-- KPI 3: Total Running Hours (HM) & Breakdown Frequency -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative group hover:bg-surface-elevated transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">TOTAL RUNNING HM / MTBF</span>
+<h2 class="font-display-hero text-display-hero text-on-surface mt-1">48,290 <span class="font-label-mono-md text-label-mono-md text-status-standby">HRS</span></h2>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-sync-cyan flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">timer</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<div>
+<span class="text-status-standby block">MTBF ESTIMATE</span>
+<span class="text-on-surface font-bold">412.6 hrs</span>
+</div>
+<div class="text-right">
+<span class="text-status-standby block">BD FREQ (30D)</span>
+<span class="text-status-repair font-bold">2 INCIDENTS</span>
+</div>
+</div>
+</div>
+<!-- KPI 4: Mission Status Work Orders -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative group hover:bg-surface-elevated transition-colors">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">MISSION STATUS (WOs)</span>
+<div class="flex items-baseline gap-2 mt-1">
+<h2 class="font-display-hero text-display-hero text-on-surface">22</h2>
+<span class="font-label-mono-sm text-label-mono-sm text-status-emergency bg-status-emergency/15 px-1.5 py-0.5 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-emergency animate-ping"></span>
+              2 Emergency
+            </span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-status-emergency/15 text-status-emergency flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">assignment_late</span>
+</div>
+</div>
+<!-- Breakdown badges of work orders -->
+<div class="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-1 font-label-mono-sm text-label-mono-sm text-center">
+<div class="bg-surface-recessed p-1.5 rounded shadow-inner">
+<span class="text-status-standby block text-[9px]">PENDING</span>
+<span class="text-primary font-bold">8</span>
+</div>
+<div class="bg-surface-recessed p-1.5 rounded shadow-inner">
+<span class="text-status-standby block text-[9px]">IN PROG</span>
+<span class="text-sync-cyan font-bold">12</span>
+</div>
+<div class="bg-surface-recessed p-1.5 rounded shadow-inner">
+<span class="text-status-standby block text-[9px]">DONE</span>
+<span class="text-status-operational font-bold">145</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive 12-Column Main Operation Workspace -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: Maintenance Activity Protocol & Active Missions (8 Cols) -->
+<section class="xl:col-span-8 flex flex-col gap-space-md">
+<!-- Section Header with Control Strip -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-gold-bright text-[22px]">assignment_turned_in</span>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Maintenance Activity Protocol</h3>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Real-Time Dispatch &amp; Field Execution Stream</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-status-standby text-[16px]">filter_list</span>
+<input class="pl-8 pr-3 py-1 bg-surface-recessed rounded text-body-sm text-on-surface placeholder-status-standby border border-white/5 focus:outline-none focus:border-primary-container text-xs w-48 shadow-inner" placeholder="Filter WOs / Assets..." type="text"/>
+</div>
+<button class="flex items-center gap-1 px-3 py-1 bg-primary-container hover:bg-gold-bright text-on-primary-container rounded font-label-mono-md text-label-mono-md shadow-md transition-all active:scale-95">
+<span class="material-symbols-outlined text-[15px]">add</span>
+<span>+ NEW WO</span>
+</button>
+</div>
+</div>
+<!-- Critical Active Mission Cards -->
+<div class="space-y-space-md">
+<!-- WORK ORDER ITEM 1: Urgent PM Ball Mill -->
+<article class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/10 flex flex-col gap-space-md relative overflow-hidden transition-all hover:border-gold-bright/30">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-white/5 pb-space-sm">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-2 py-0.5 rounded bg-surface-recessed border border-white/5 font-label-mono-md text-label-mono-md text-gold-bright shadow-inner">WO #2024-089</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 text-gold-bright font-label-mono-sm text-label-mono-sm uppercase font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gold-bright"></span> Urgent - Fix Today
+              </span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Classification: <strong class="text-on-surface">Ball Mill</strong></span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan bg-sync-cyan/10 px-2 py-0.5 rounded">Timeline: TODAY 08:30 WIB</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-repair flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[14px]">hourglass_top</span> Est: 4.5 hrs
+              </span>
+</div>
+</div>
+<!-- Target Asset Details & RCA -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Machine Details & Visual Signature -->
+<div class="space-y-2">
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-status-standby">TARGET ASSET</span>
+<div class="flex items-start gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed overflow-hidden relative flex-shrink-0 border border-white/10">
+<img class="w-full h-full object-cover" data-alt="Close-up macro industrial photograph of a massive industrial Ball Mill gear and bearing trunnion coated in heavy grease within a dark mining grinding facility, dramatic amber volumetric rim lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJTbd7Bs3VW69LlyYRIyCESr8eqZEQ3D__9Bnl215fYILm7-oG646dKpJhapILGhIjQpvd29mhXy-p3pxfgpsoSGZcIWwlnMu1OlWmm-ms0WQ_2-W45EjE12uzEyvZgtC-GhnM910o7sGqAe11J-2HKrMVuZc7INyBvkUpGeWdVS2AOSpB-pwX0U70cRLPt4IWyrnKKbtvvglHudj6wiukRdimIO2c5y8rj5jPBhdvUl-wFJGgELPB"/>
+</div>
+<div>
+<h4 class="font-headline-md text-[15px] text-on-surface">Ball Mill 02</h4>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant block">Sector A-North (Comminution)</span>
+<span class="font-label-mono-sm text-label-mono-sm text-gold-dim">Meter: 12,450 HM</span>
+</div>
+</div>
+</div>
+<!-- Activity Scope & RCA -->
+<div class="space-y-1">
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-status-standby">ACTIVITY TYPE &amp; DISPATCH</span>
+<p class="font-body-sm text-body-sm text-on-surface">Preventive Maintenance (PM-500H) on primary trunnion bearing lubrication &amp; drive pinions.</p>
+<div class="flex items-center gap-2 pt-1">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Tech:</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">person</span> R. Pratama (Lead)
+                </span>
+</div>
+</div>
+<!-- Linked Components & Specs -->
+<div class="bg-surface-recessed p-2.5 rounded-lg border border-white/5 space-y-1.5 shadow-inner">
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">LINKED SPARE:</span>
+<span class="text-secondary font-bold">BRG-SKF-23088</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">DEPT REQUEST:</span>
+<span class="text-on-surface">Engineering / Mining</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">OP DOWN (EST):</span>
+<span class="text-gold-bright font-bold">2.0 hrs</span>
+</div>
+</div>
+</div>
+<!-- Bottom Action Deck for Card -->
+<div class="flex items-center justify-between pt-2 border-t border-white/5 flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[14px]">link</span>
+<span>+ Link Part</span>
+</button>
+<button class="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+<span>Optical Data (2)</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 rounded bg-surface-recessed hover:bg-error-container/40 text-error font-label-mono-sm text-label-mono-sm border border-error/30 transition-all">
+                Reject WO
+              </button>
+<button class="px-4 py-1 rounded bg-primary-container hover:bg-gold-bright text-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-md transition-all active:scale-95">
+                Approve &amp; Dispatch
+              </button>
+</div>
+</div>
+</article>
+<!-- WORK ORDER ITEM 2: Emergency Breakdown Conveyor Belt -->
+<article class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-status-emergency/40 flex flex-col gap-space-md relative overflow-hidden transition-all">
+<div class="absolute top-0 right-0 w-32 h-32 bg-status-emergency/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-white/5 pb-space-sm relative z-10">
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="px-2 py-0.5 rounded bg-surface-recessed border border-white/5 font-label-mono-md text-label-mono-md text-status-emergency shadow-inner">WO #2024-084</span>
+<span class="px-2 py-0.5 rounded bg-status-emergency/20 text-status-emergency font-label-mono-sm text-label-mono-sm uppercase font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-emergency animate-ping"></span> Emergency - Production Stopped
+              </span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Classification: <strong class="text-on-surface">Conveyor</strong></span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-mono-sm text-label-mono-sm text-status-emergency bg-status-emergency/15 px-2 py-0.5 rounded font-bold">STATUS: IN PROGRESS</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Elapsed: 1h 45m</span>
+</div>
+</div>
+<!-- Details & RCA Diagnostic -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md relative z-10">
+<!-- Machine Node -->
+<div class="space-y-2">
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-status-standby">TARGET ASSET</span>
+<div class="flex items-start gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed overflow-hidden relative flex-shrink-0 border border-white/10">
+<img class="w-full h-full object-cover" data-alt="High contrast photograph of a heavy duty coal conveyor belt drive pulley showing steel cord tear and mechanical friction wear, dark industrial refinery background with neon cyan indicator light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqCvmvELS59ATMm8SPbNemUHb4X3lWSjmHtxghwEDlIlxZdJotkpNeZyH2NRN1C8xsq89sJ-444wP4x5Zj-saM4nRR35T2Zgw3WPxQXjR3miiAsSldfz_YfBBPC-o_VTq4e5Xr07X2f5CGCJgU2De5zACxCFsCkJwYPbHOxFjA8AxHb7ZBqzR5Woe-TiuaIPXseeSl40GHNnqPwERwM5evEuGDo_jXdtUAmAJKtwHvqn9nfDjQSqz4"/>
+</div>
+<div>
+<h4 class="font-headline-md text-[15px] text-on-surface">Conveyor Belt CV-104</h4>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant block">Sector C-Transfer Tower</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-emergency">Current HM: 8,920 HM</span>
+</div>
+</div>
+</div>
+<!-- Root Cause Analysis -->
+<div class="space-y-1">
+<span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-status-standby">NEURAL RCA (PRIMARY)</span>
+<div class="p-2 rounded bg-surface-recessed border border-white/5">
+<span class="font-label-mono-sm text-label-mono-sm text-gold-bright block font-semibold">Root Cause: Fatigue / Wear</span>
+<p class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">Belt splice detachment due to cyclic mechanical stress at tail drum junction.</p>
+</div>
+</div>
+<!-- Field Technicians & Downtime -->
+<div class="bg-surface-recessed p-2.5 rounded-lg border border-white/5 space-y-1.5 shadow-inner">
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">ASSIGNED SQUAD:</span>
+<span class="text-on-surface font-semibold">T. Wicaksono + 2 Techs</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">OPERATIONAL DOWN:</span>
+<span class="text-status-emergency font-bold">1.8 hrs / $4,200 loss</span>
+</div>
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">REPAIR STATUS:</span>
+<span class="text-sync-cyan font-bold">Splicing in progress</span>
+</div>
+</div>
+</div>
+<!-- Bottom Action Deck -->
+<div class="flex items-center justify-between pt-2 border-t border-white/5 relative z-10 flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Optical Telemetry:</span>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-secondary">3 Photos Captured</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-mono-sm text-label-mono-sm transition-all">
+                Update Protocol Log
+              </button>
+<button class="px-3 py-1 rounded bg-status-operational hover:bg-emerald-400 text-surface-container-lowest font-label-mono-md text-label-mono-md font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                Mark Mission Completed
+              </button>
+</div>
+</div>
+</article>
+</div>
+<!-- Neural Performance Protocol & Breakdown Analytics Matrix -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-md mt-2">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">troubleshoot</span>
+<h4 class="font-headline-md text-[16px] text-on-surface">Neural Performance Protocol (HM vs WH)</h4>
+</div>
+<div class="flex items-center gap-2 font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby">TIMELINE:</span>
+<span class="px-2 py-0.5 rounded bg-surface-recessed text-on-surface border border-white/5">2024-Q2 ACTIVE SHIFT</span>
+</div>
+</div>
+<!-- Telemetry Table (Clean Neumorphic Data View) -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left font-label-mono-sm text-label-mono-sm">
+<thead>
+<tr class="bg-surface-recessed text-status-standby uppercase border-b border-white/5">
+<th class="py-2.5 px-3">Asset Index</th>
+<th class="py-2.5 px-3">Ops Area</th>
+<th class="py-2.5 px-3">HM (Running)</th>
+<th class="py-2.5 px-3">WH (Work)</th>
+<th class="py-2.5 px-3">Total Down</th>
+<th class="py-2.5 px-3">Standby</th>
+<th class="py-2.5 px-3">BD Freq</th>
+<th class="py-2.5 px-3 text-right">Target PA%</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 font-body-sm text-[13px]">
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-2.5 px-3 font-label-mono-sm text-label-mono-sm text-on-surface font-bold">CRUSH-01 (Jaw Crusher)</td>
+<td class="py-2.5 px-3 text-on-surface-variant">Primary Pit</td>
+<td class="py-2.5 px-3 font-label-mono-sm">18,420 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-operational">17.5 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-emergency">0.5 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-standby">2.0 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-on-surface">0</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-right text-gold-bright font-bold">96.8%</td>
+</tr>
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-2.5 px-3 font-label-mono-sm text-label-mono-sm text-on-surface font-bold">THICK-03 (High Rate Thickener)</td>
+<td class="py-2.5 px-3 text-on-surface-variant">Hydrometallurgy</td>
+<td class="py-2.5 px-3 font-label-mono-sm">24,190 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-operational">23.0 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-standby">0.0 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-standby">1.0 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-on-surface">0</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-right text-status-operational font-bold">98.2%</td>
+</tr>
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-2.5 px-3 font-label-mono-sm text-label-mono-sm text-on-surface font-bold">FURN-01 (Smelter Flash Furnace)</td>
+<td class="py-2.5 px-3 text-on-surface-variant">Smelter Sector</td>
+<td class="py-2.5 px-3 font-label-mono-sm">31,540 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-operational">20.5 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-emergency">2.5 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-standby">1.0 hrs</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-status-repair font-bold">1</td>
+<td class="py-2.5 px-3 font-label-mono-sm text-right text-status-repair font-bold">89.4%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Breakdown Root Cause Analysis (RCA) Distribution Bar -->
+<div class="space-y-2 pt-2 border-t border-white/5">
+<div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+<span class="text-status-standby uppercase">RCA DISTRIBUTION: (30-DAY ANOMALY CLASSIFICATION)</span>
+<span class="text-on-surface-variant">TOTAL CLASSIFIED: 24 INCIDENTS</span>
+</div>
+<div class="h-3 w-full bg-surface-recessed rounded-full flex overflow-hidden p-0.5 shadow-inner">
+<div class="bg-primary-container h-full rounded-l" style="width: 48%;" title="Fatigue / Wear: 48%"></div>
+<div class="bg-secondary h-full" style="width: 22%;" title="Natural Wear: 22%"></div>
+<div class="bg-status-repair h-full" style="width: 15%;" title="Human Error: 15%"></div>
+<div class="bg-error h-full" style="width: 10%;" title="Design / Quality: 10%"></div>
+<div class="bg-status-standby h-full rounded-r" style="width: 5%;" title="External Factor: 5%"></div>
+</div>
+<!-- RCA Legend Chips -->
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-mono-sm text-label-mono-sm pt-1">
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-primary-container"></span> Fatigue/Wear (48%)</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-secondary"></span> Natural Wear (22%)</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-status-repair"></span> Human Error (15%)</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-error"></span> Design / Part Quality (10%)</span>
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-status-standby"></span> External Factor (5%)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT COLUMN: System Access, Quick Scanner & Spare Parts Stock (4 Cols) -->
+<aside class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- System Access Card (Directly inspired by reference hero card) -->
+<section class="bg-surface-card rounded-2xl p-6 shadow-2xl border-t border-white/10 flex flex-col items-center text-center relative overflow-hidden">
+<div class="w-16 h-16 rounded-2xl bg-surface-recessed border border-white/5 shadow-inner flex items-center justify-center p-2 mb-3">
+<svg class="w-10 h-10 text-gold-bright" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"></path>
+</svg>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">System Access</h3>
+<span class="font-label-mono-sm text-label-mono-sm text-gold-bright tracking-widest uppercase mt-0.5">MTC ASSET | INTERFACE</span>
+<!-- Recessed Interactive Form Switchboard -->
+<form class="w-full space-y-3.5 mt-5 text-left" onsubmit="event.preventDefault();">
+<div>
+<label class="block font-label-mono-sm text-label-mono-sm text-status-standby uppercase mb-1">AUTHENTICATION ID</label>
+<div class="relative">
+<input class="w-full bg-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-on-surface font-label-mono-sm border border-white/5 focus:outline-none focus:border-gold-bright shadow-inner" type="text" value="planner.ops@mtc-core.internal"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-status-standby text-[16px]">fingerprint</span>
+</div>
+</div>
+<div>
+<label class="block font-label-mono-sm text-label-mono-sm text-status-standby uppercase mb-1">SECURE KEY (QUANTUM ENCRYPTION)</label>
+<div class="relative">
+<input class="w-full bg-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-on-surface font-label-mono-sm border border-white/5 focus:outline-none focus:border-gold-bright shadow-inner tracking-widest" type="password" value="••••••••••••••••"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-status-standby text-[16px]">vpn_key</span>
+</div>
+</div>
+<button class="w-full py-3 px-4 rounded-xl bg-surface-card hover:bg-surface-elevated text-gold-bright font-label-mono-md text-label-mono-md uppercase tracking-wider font-bold shadow-[12px_16px_28px_rgba(0,0,0,0.6),-4px_-4px_14px_rgba(255,255,255,0.03)] border-t border-white/10 active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)] transition-all mt-2" type="submit">
+            INITIALIZE DASHBOARD
+          </button>
+</form>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase tracking-wider mt-4">
+          QUANTUM ENCRYPTION ACTIVE
+        </span>
+</section>
+<!-- Optical Scanner & System Node QR Widget -->
+<section class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sync-cyan text-[18px]">qr_code_scanner</span>
+<h4 class="font-headline-md text-[15px] text-on-surface">Optical Scanner</h4>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational bg-status-operational/10 px-2 py-0.5 rounded">NODE READY</span>
+</div>
+<p class="font-body-sm text-body-sm text-status-standby">Align terminal viewfinder with physical machine asset QR node tag for rapid HM check.</p>
+<!-- Simulated Viewfinder Target Box -->
+<div class="w-full h-36 bg-surface-recessed rounded-lg border border-dashed border-white/10 relative flex flex-col items-center justify-center overflow-hidden shadow-inner group cursor-pointer">
+<div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-sync-cyan shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse"></div>
+<span class="material-symbols-outlined text-sync-cyan text-[36px] opacity-70 group-hover:scale-110 transition-transform">center_focus_strong</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant mt-2 tracking-wide">ALIGNING WITH ASSET QR NODE</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<button class="font-label-mono-sm text-label-mono-sm text-status-emergency hover:underline">Abort Operation</button>
+<button class="px-3 py-1 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]">save</span>
+<span>Save Optical Data</span>
+</button>
+</div>
+</section>
+<!-- Spare Parts & Neural Links Quick Widget -->
+<section class="bg-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold-bright text-[18px]">inventory_2</span>
+<h4 class="font-headline-md text-[15px] text-on-surface">Critical Spare Parts Stock</h4>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Sector 4-Whse</span>
+</div>
+<!-- Inventory List Items -->
+<div class="space-y-2 pt-1">
+<!-- Part 1 -->
+<div class="p-2.5 rounded-lg bg-surface-recessed border border-white/5 flex items-center justify-between shadow-inner">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-mono-md text-label-mono-md text-on-surface font-bold">BRG-SKF-23088</span>
+<span class="font-label-mono-sm text-[9px] px-1 rounded bg-secondary/10 text-secondary">Ball Mill 02</span>
+</div>
+<span class="font-body-sm text-[11px] text-status-standby block">Spherical Roller Bearing • IDR 48,500,000</span>
+</div>
+<div class="text-right">
+<span class="font-label-mono-md text-label-mono-md text-status-operational font-bold">3 Units</span>
+<span class="font-label-mono-sm text-[9px] text-status-standby block">Safety: 2</span>
+</div>
+</div>
+<!-- Part 2 -->
+<div class="p-2.5 rounded-lg bg-surface-recessed border border-white/5 flex items-center justify-between shadow-inner">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-mono-md text-label-mono-md text-on-surface font-bold">BLT-CV-EP400</span>
+<span class="font-label-mono-sm text-[9px] px-1 rounded bg-status-emergency/10 text-status-emergency">Low Stock</span>
+</div>
+<span class="font-body-sm text-[11px] text-status-standby block">EP400 4-Ply Rubber Belt Roll • IDR 82,000,000</span>
+</div>
+<div class="text-right">
+<span class="font-label-mono-md text-label-mono-md text-status-repair font-bold">1 Roll</span>
+<span class="font-label-mono-sm text-[9px] text-status-repair block">Safety: 3</span>
+</div>
+</div>
+<!-- Part 3 -->
+<div class="p-2.5 rounded-lg bg-surface-recessed border border-white/5 flex items-center justify-between shadow-inner">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-mono-md text-label-mono-md text-on-surface font-bold">HYD-VAL-REX-04</span>
+<span class="font-label-mono-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant">Crusher</span>
+</div>
+<span class="font-body-sm text-[11px] text-status-standby block">Rexroth Proportional Relief Valve • IDR 16,700,000</span>
+</div>
+<div class="text-right">
+<span class="font-label-mono-md text-label-mono-md text-status-operational font-bold">6 Units</span>
+<span class="font-label-mono-sm text-[9px] text-status-standby block">Safety: 4</span>
+</div>
+</div>
+</div>
+<button class="w-full py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-mono-sm text-label-mono-sm transition-colors text-center block mt-2">
+          View Complete Parts Ledger (240 SKUs)
+        </button>
+</section>
+</aside>
+</div>
+<!-- Persistent / Expandable Ajeng Neural Assistant Diagnostic Drawer (Modal Overlay Structure) -->
+<div class="fixed right-6 bottom-14 z-50 w-96 max-w-[calc(100vw-2rem)] bg-surface-card rounded-2xl p-5 shadow-2xl border-t border-secondary/30 hidden flex-col gap-3 backdrop-blur-xl" id="ajeng-drawer">
+<div class="flex items-center justify-between pb-2 border-b border-white/5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-secondary/15 text-secondary flex items-center justify-center shadow-[0_0_10px_rgba(76,215,246,0.3)]">
+<span class="material-symbols-outlined text-[18px]">neurology</span>
+</div>
+<div>
+<h4 class="font-headline-md text-[14px] text-on-surface">Ajeng AI Diagnostics</h4>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-operational"></span> Multi-Provider Active
+          </span>
+</div>
+</div>
+<button class="text-status-standby hover:text-on-surface" id="close-ajeng-drawer">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Provider Configuration Switch -->
+<div class="space-y-1">
+<label class="block font-label-mono-sm text-label-mono-sm text-status-standby uppercase">ACTIVE LLM PROVIDER</label>
+<div class="grid grid-cols-3 gap-1 bg-surface-recessed p-1 rounded-lg border border-white/5 text-center font-label-mono-sm text-label-mono-sm shadow-inner">
+<button class="py-1 rounded bg-secondary text-on-secondary font-bold">OpenAI</button>
+<button class="py-1 rounded text-status-standby hover:text-on-surface">Claude</button>
+<button class="py-1 rounded text-status-standby hover:text-on-surface">OpenRouter</button>
+</div>
+</div>
+<!-- Diagnostic Field Recommendation -->
+<div class="p-3 rounded-lg bg-surface-recessed border border-white/5 space-y-1 shadow-inner">
+<span class="font-label-mono-sm text-label-mono-sm text-secondary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">lightbulb</span> Telemetry Recommendation
+      </span>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-relaxed">
+        Ball Mill 02 vibration trend indicates bearing inner raceway spalling. Recommend checking grease viscosity and approving WO #2024-089 prior to night shift.
+      </p>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-mono-sm text-[10px] text-status-standby">API Keys Auto-Rotate (5 Active)</span>
+<button class="px-3 py-1 rounded bg-primary-container text-on-primary-container font-label-mono-sm text-label-mono-sm font-bold shadow-md hover:bg-gold-bright transition-all">
+        Run Full RCA
+      </button>
+</div>
+</div>
+<!-- Inline Vanilla Script for Micro-Interactions -->
+<script>
+    (function initMTCAssetInteractions() {
+      const openDrawerBtn = document.getElementById('open-ajeng-drawer');
+      const closeDrawerBtn = document.getElementById('close-ajeng-drawer');
+      const drawer = document.getElementById('ajeng-drawer');
+
+      if (openDrawerBtn && drawer) {
+        openDrawerBtn.addEventListener('click', () => {
+          drawer.classList.remove('hidden');
+          drawer.classList.add('flex');
+        });
+      }
+
+      if (closeDrawerBtn && drawer) {
+        closeDrawerBtn.addEventListener('click', () => {
+          drawer.classList.add('hidden');
+          drawer.classList.remove('flex');
+        });
+      }
+    })();
+  </script>
+</div></main></div><footer class="fixed bottom-0 left-0 right-0 h-10 z-50 bg-surface-container-lowest/95 backdrop-blur-md flex items-center justify-between px-gutter-desktop shadow-[0_-1px_6px_rgba(0,0,0,0.5)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="h-1.5 w-1.5 rounded-full bg-status-operational"></span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">LATENCY: 18ms (LOW)</span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-sync-cyan">cloud_done</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">SYNC: AUTONOMOUS REALTIME</span></div><div class="hidden md:flex items-center gap-space-xs"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">INDEXEDDB: STORAGE OPTIMAL</span></div></div><div class="flex items-center gap-space-md"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">MTC CORE v4.12.0-PROD</span><button class="flex items-center gap-1 px-space-sm py-0.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-on-surface font-label-mono-sm text-label-mono-sm text-primary transition-all active:scale-95"><span class="material-symbols-outlined text-[13px]">sync</span><span>FAST SYNC</span></button></div></footer></body></html>

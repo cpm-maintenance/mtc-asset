@@ -5,13 +5,20 @@
 import { execSync } from 'child_process';
 
 const ENDPOINT = 'https://stitch.googleapis.com/mcp';
-const GCLOUD_CMD = 'C:/Users/andi.supriadi/.stitch-mcp/google-cloud-sdk/bin/gcloud.cmd';
-const GCLOUD_CONFIG = 'C:/Users/andi.supriadi/.stitch-mcp/config';
-const PROJECT_ID = 'mtc-asset';
+const GCLOUD_CMD = process.env.STITCH_GCLOUD_CMD || 'C:/Users/andi.supriadi/.stitch-mcp/google-cloud-sdk/bin/gcloud.cmd';
+const GCLOUD_CONFIG = process.env.STITCH_GCLOUD_CONFIG || 'C:/Users/andi.supriadi/.stitch-mcp/config';
+
+// Dua project Stitch MTC dipegang akun Google yang BERBEDA, dan masing-masing butuh
+// quota project (header X-Goog-User-Project) miliknya sendiri:
+//   projects/15538611438628478374 -> adhymlb01@gmail.com / mtc-asset
+//   projects/2861085646384681595 -> adhymlb@gmail.com   / gen-lang-client-0051799821
+// Override per-panggilan lewat env STITCH_ACCOUNT + STITCH_QUOTA_PROJECT.
+const DEFAULT_QUOTA_PROJECT = 'mtc-asset';
 
 function getAccessToken() {
+    const account = process.env.STITCH_ACCOUNT || '';
     try {
-        const token = execSync(`"${GCLOUD_CMD}" auth print-access-token`, {
+        const token = execSync(`"${GCLOUD_CMD}" auth print-access-token${account ? ` --account=${account}` : ''}`, {
             env: { ...process.env, CLOUDSDK_CONFIG: GCLOUD_CONFIG },
             shell: 'cmd.exe',
             encoding: 'utf-8',
@@ -29,7 +36,7 @@ export async function callStitchTool(toolName, args = {}) {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
-            'X-Goog-User-Project': PROJECT_ID,
+            'X-Goog-User-Project': process.env.STITCH_QUOTA_PROJECT || DEFAULT_QUOTA_PROJECT,
         },
         body: JSON.stringify({
             jsonrpc: '2.0',

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-base": "#0b0f15", "sync-cyan-glow": "rgba(6, 182, 212, 0.2)", "on-tertiary": "#68000a", "on-secondary": "#003640", "surface-variant": "#2e3540", "gold-glow": "rgba(245, 158, 11, 0.18)", "surface-dim": "#0d141d", "inverse-primary": "#855300", "border-subtle": "rgba(255, 255, 255, 0.06)", "outline-variant": "#534434", "primary-fixed-dim": "#ffb95f", "inverse-on-surface": "#2a313b", "on-secondary-container": "#00424e", "outline": "#a08e7a", "on-primary-container": "#613b00", "gold-bright": "#fbbf24", "tertiary": "#ffbcb7", "secondary": "#4cd7f6", "status-operational": "#10b981", "on-background": "#dce3f1", "error-container": "#93000a", "sync-cyan": "#06b6d4", "tertiary-container": "#ff938c", "status-emergency": "#ef4444", "primary-container": "#f59e0b", "surface-container-lowest": "#080f18", "on-tertiary-fixed-variant": "#930013", "border-tactical": "#283446", "on-surface-variant": "#d8c3ad", "surface-container": "#19202a", "on-primary-fixed-variant": "#653e00", "on-tertiary-container": "#8d0012", "surface-card": "#161d27", "surface-recessed": "#0a0e14", "on-surface": "#dce3f1", "surface-bright": "#333a44", "on-secondary-fixed": "#001f26", "surface-tint": "#ffb95f", "on-secondary-fixed-variant": "#004e5c", "background": "#0d141d", "surface-canvas": "#0f141c", "inverse-surface": "#dce3f1", "primary": "#ffc174", "on-primary": "#472a00", "on-error-container": "#ffdad6", "surface-container-high": "#232a35", "error": "#ffb4ab", "secondary-container": "#03b5d3", "tertiary-fixed-dim": "#ffb3ad", "surface": "#0d141d", "gold-dim": "#b45309", "tertiary-fixed": "#ffdad7", "secondary-fixed": "#acedff", "status-repair": "#f59e0b", "on-primary-fixed": "#2a1700", "on-tertiary-fixed": "#410004", "surface-elevated": "#1e2634", "surface-container-highest": "#2e3540", "primary-fixed": "#ffddb8", "on-error": "#690005", "secondary-fixed-dim": "#4cd7f6", "status-standby": "#64748b", "surface-container-low": "#151c26" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "1rem", "gutter-desktop": "1.5rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "margin-desktop": "2rem", "space-md": "1rem", "gutter": "1rem" }, "fontFamily": { "headline-lg": ["Inter"], "display-hero": ["Inter"], "label-mono-sm": ["JetBrains Mono"], "headline-lg-mobile": ["Inter"], "headline-md": ["Inter"], "body-md": ["Inter"], "label-mono-lg": ["JetBrains Mono"], "label-mono-md": ["JetBrains Mono"], "body-lg": ["Inter"], "body-sm": ["Inter"] }, "fontSize": { "headline-lg": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "display-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-mono-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "500" }], "headline-lg-mobile": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "500" }], "label-mono-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased select-none"><header class="fixed top-0 left-0 right-0 h-16 z-50 bg-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="MTC ASSET Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1X7lil7epG74Ldc7faSYez_uK8O4IL8PeeKxMRFKNj-vLPPyKXKjZwMQfqNn4gG6nJLllnaeOgIU1ZvBa7fs40MyjEB5gwN4Ny3_xmoSdLhD6ZpyRerChMz9cC9qXw1VTf0Yhq7xWTAxy6AxIykHAwpGQLFanBeaFLY2ifkqDX8g21nE3vwYJGTbLhKcBZPnKHSnMAxwDFPagx-icnHnhkRIUttcm_dL-wkoerqVFDF-EUo9XC5dfk-97o"/><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight uppercase text-on-surface">MTC ASSET</span><span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase tracking-wider">Industrial Telemetry Core</span></div><div class="hidden xl:flex items-center gap-space-xs pl-space-sm"><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container shadow-[0_0_12px_rgba(16,185,129,0.15)]"><span class="h-2 w-2 rounded-full bg-status-operational animate-pulse"></span><span class="font-label-mono-sm text-label-mono-sm text-on-surface">ONLINE - SYNCED</span></div><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container"><span class="material-symbols-outlined text-sync-cyan text-[14px]">wifi_tethering</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">PWA READY / NODE: ALPHA-7</span></div></div></div><div class="flex-1 max-w-md hidden md:flex items-center"><div class="relative w-full flex items-center bg-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]"><span class="material-symbols-outlined text-status-standby text-[18px] mr-space-sm">search</span><span class="font-body-sm text-body-sm text-status-standby flex-1">Search Asset, Tag, WO...</span><kbd class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-mono-sm text-label-mono-sm text-on-surface-variant shadow-sm">Ctrl+K</kbd></div></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-space-xs px-space-md py-space-xs rounded bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:bg-gold-bright hover:text-on-primary-container transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]"><span class="material-symbols-outlined text-[16px]">add</span><span>+ NEW WO</span></button><div class="hidden lg:flex items-center bg-surface-recessed p-0.5 rounded"><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm bg-primary-container text-on-primary-container">GOLD</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">NAVY</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">PURPLE</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">LIGHT</button></div><div class="relative flex items-center justify-center p-space-xs rounded hover:bg-surface-container-high hover:text-on-surface cursor-pointer text-status-standby transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-0 right-0 h-4 min-w-[16px] px-1 rounded-full bg-status-emergency font-label-mono-sm text-label-mono-sm text-on-surface flex items-center justify-center font-bold">3</span></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_0_12px_rgba(255,193,116,0.3)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden sm:flex flex-col text-left"><span class="font-label-mono-md text-label-mono-md text-on-surface">AJENG AI</span><span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">RELIABILITY ENG</span></div></div></div></div></header><aside class="fixed left-0 top-16 bottom-10 w-64 bg-surface-container-lowest z-40 flex flex-col py-space-md shadow-[4px_0_16px_rgba(0,0,0,0.4)]"><div class="px-space-md pb-space-sm"><span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">PLANT OPERATIONS</span></div><nav class="flex-1 px-space-sm space-y-1 overflow-y-auto" data-active-classes="bg-primary-container text-on-primary-container font-headline-md rounded-lg shadow-[0_0_12px_rgba(245,158,11,0.2)]"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="overview" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Overview Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="asset-fleet" href="#"><span class="material-symbols-outlined text-[18px]">precision_manufacturing</span><span class="font-body-md text-body-md">Assets Telemetry</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="work-orders" href="#"><span class="material-symbols-outlined text-[18px]">engineering</span><span class="font-body-md text-body-md">Work Orders</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="spare-parts" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span class="font-body-md text-body-md">Spare Parts Stock</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="performance-protocol" href="#"><span class="material-symbols-outlined text-[18px]">monitoring</span><span class="font-body-md text-body-md">Performance HM/WH</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="qr-scanner" href="#"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span><span class="font-body-md text-body-md">Scanner QR Node</span></a><div class="pt-space-md px-space-sm"><span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">TELEMETRY &amp; ACCESS</span></div><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="system-access" href="#"><span class="material-symbols-outlined text-[18px]">manage_accounts</span><span class="font-body-md text-body-md">Access &amp; Personnel</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="neural-diagnostics" href="#"><span class="material-symbols-outlined text-[18px]">neurology</span><span class="font-body-md text-body-md">Ajeng AI Diagnostics</span></a></nav><div class="p-space-md mt-auto"><div class="bg-surface-recessed p-space-sm rounded flex flex-col gap-1 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]"><div class="flex items-center justify-between"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">PWA CACHE</span><span class="font-label-mono-sm text-label-mono-sm text-secondary">98.4% HYDRATED</span></div><div class="w-full h-1 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-secondary" style="width: 98.4%"></div></div></div></div></aside><div class="pl-64"><main class="relative pt-16 pb-12 w-full px-gutter-desktop min-h-screen bg-surface"><div class="flex flex-col w-full">
+<!-- PWA Offline-Sync Tactical Strip -->
+<div class="relative w-full bg-surface-recessed px-gutter-desktop py-space-sm mb-space-md rounded-lg flex flex-wrap items-center justify-between gap-space-sm shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="h-2 w-2 rounded-full bg-sync-cyan animate-pulse"></span>
+<span class="font-label-mono-sm text-label-mono-sm uppercase text-sync-cyan tracking-wider">OFFLINE CACHE ENGINE ACTIVATED</span>
+</div>
+<div class="hidden sm:flex items-center gap-space-xs text-status-standby">
+<span class="material-symbols-outlined text-[15px]">database</span>
+<span class="font-label-mono-sm text-label-mono-sm">INDEXEDDB PROTOCOL V3.8 // AUTO-PERSIST EVERY 1.5s</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant uppercase">TX QUEUE: 0 PENDING</span>
+<div class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-gold-bright flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[12px]">security</span>
+<span>AUTH VERIFIED: UID #8812</span>
+</div>
+</div>
+</div>
+<!-- Operational Protocol Header -->
+<div class="relative w-full mb-space-lg">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm mb-1">
+<span class="px-space-xs py-0.5 rounded bg-primary-container text-on-primary-container font-label-mono-sm text-label-mono-sm font-semibold tracking-wider uppercase">PROTO-COMM #741</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">CREATED BY ENG AJENG AI • SECTOR NORTH</span>
+</div>
+<div class="flex items-baseline gap-space-md flex-wrap">
+<h2 class="font-display-hero text-display-hero text-on-surface uppercase tracking-tight">DISPATCH WORK ORDER</h2>
+<div class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-card shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
+<span class="material-symbols-outlined text-[16px] text-primary">tag</span>
+<span class="font-label-mono-lg text-label-mono-lg text-gold-bright font-bold tracking-wider">#WO-2024-090</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">AUTO-GEN</span>
+</div>
+</div>
+</div>
+<!-- Quick Metrics Ribbon -->
+<div class="flex items-center gap-space-sm overflow-x-auto py-1">
+<div class="bg-surface-card p-space-sm rounded-lg flex flex-col min-w-[120px] shadow-[4px_6px_14px_rgba(0,0,0,0.4)]">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">PLANT AVAIL.</span>
+<span class="font-label-mono-lg text-label-mono-lg text-status-operational font-bold">96.8%</span>
+</div>
+<div class="bg-surface-card p-space-sm rounded-lg flex flex-col min-w-[120px] shadow-[4px_6px_14px_rgba(0,0,0,0.4)]">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">OPEN TICKETS</span>
+<span class="font-label-mono-lg text-label-mono-lg text-on-surface font-bold">14 ACTIVE</span>
+</div>
+<div class="bg-surface-card p-space-sm rounded-lg flex flex-col min-w-[140px] shadow-[4px_6px_14px_rgba(0,0,0,0.4)]">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">DOWN IMPACT</span>
+<span class="font-label-mono-lg text-label-mono-lg text-status-repair font-bold">2.4h EST</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Primary Asymmetric Two-Column Matrix -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-desktop items-start">
+<!-- LEFT COLUMN: Form Calibration Matrix (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg">
+<!-- Panel 1: Neural Target / Asset Telemetry -->
+<div class="bg-surface-card p-space-md rounded-xl flex flex-col gap-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">precision_manufacturing</span>
+<span class="font-headline-md text-headline-md text-on-surface uppercase">01 // Neural Target Asset</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-recessed font-label-mono-sm text-label-mono-sm text-secondary">ACTIVE NODE</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Asset Selector -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby tracking-wider">TARGET ASSET SELECTION</label>
+<div class="relative bg-surface-recessed rounded-lg p-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<select class="w-full bg-transparent px-space-sm py-space-xs font-body-md text-body-md text-on-surface focus:outline-none cursor-pointer" id="assetSelect">
+<option class="bg-surface-recessed text-on-surface" value="CRUSH-01">CRUSHER CRUSH-01 (Primary Jaw)</option>
+<option class="bg-surface-recessed text-on-surface" value="BM-02">BALL MILL BM-02 (Sector A Grinding)</option>
+<option class="bg-surface-recessed text-on-surface" selected="" value="CV-104">CONVEYOR BELT CV-104 (Transfer Line)</option>
+<option class="bg-surface-recessed text-on-surface" value="FLOT-05">FLOTATION CELL FLOT-05 (Beneficiation)</option>
+</select>
+</div>
+</div>
+<!-- Ops Sector -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby tracking-wider">OPERATIONAL SECTOR / ZONE</label>
+<div class="bg-surface-recessed rounded-lg px-space-md py-space-sm shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)] flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface" id="sectorDisplay">ZONE-C / ORE TRANSFER SHAFT</span>
+<span class="material-symbols-outlined text-[16px] text-sync-cyan">pin_drop</span>
+</div>
+</div>
+</div>
+<!-- Telemetry Strip Under Target -->
+<div class="grid grid-cols-3 gap-space-sm pt-space-xs">
+<div class="bg-surface-elevated p-space-sm rounded-lg flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">CURRENT HM METER</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-label-mono-lg text-label-mono-lg text-on-surface font-semibold">14,892.4</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">HRS</span>
+</div>
+</div>
+<div class="bg-surface-elevated p-space-sm rounded-lg flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">CRITICALITY LEVEL</span>
+<div class="flex items-center gap-1 mt-1">
+<span class="h-2 w-2 rounded-full bg-status-emergency"></span>
+<span class="font-label-mono-lg text-label-mono-lg text-status-emergency font-semibold">RANK AAA</span>
+</div>
+</div>
+<div class="bg-surface-elevated p-space-sm rounded-lg flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">MTBF PROJECTION</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-label-mono-lg text-label-mono-lg text-status-operational font-semibold">348</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">HRS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel 2: Activity Protocol & Mission Priority -->
+<div class="bg-surface-card p-space-md rounded-xl flex flex-col gap-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">tune</span>
+<span class="font-headline-md text-headline-md text-on-surface uppercase">02 // Protocol &amp; Priority</span>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">SLA RESPONSE ENGINE</span>
+</div>
+<!-- Activity Type Pills -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby tracking-wider">MAINTENANCE ACTIVITY TYPE</label>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-xs" id="activityPills">
+<button class="activity-btn px-space-sm py-space-sm rounded-lg bg-surface-recessed text-status-standby hover:text-on-surface font-label-mono-md text-label-mono-md uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[15px]">event_repeat</span>
+<span>PM (PREVENT)</span>
+</button>
+<button class="activity-btn px-space-sm py-space-sm rounded-lg bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md font-bold uppercase flex items-center justify-center gap-1 transition-all shadow-[0_0_12px_rgba(245,158,11,0.25)]" type="button">
+<span class="material-symbols-outlined text-[15px]">build</span>
+<span>REPAIR (MECH)</span>
+</button>
+<button class="activity-btn px-space-sm py-space-sm rounded-lg bg-surface-recessed text-status-standby hover:text-on-surface font-label-mono-md text-label-mono-md uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[15px]">search_check</span>
+<span>INSPECTION</span>
+</button>
+<button class="activity-btn px-space-sm py-space-sm rounded-lg bg-surface-recessed text-status-standby hover:text-on-surface font-label-mono-md text-label-mono-md uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[15px]">warning</span>
+<span>BREAKDOWN</span>
+</button>
+<button class="activity-btn px-space-sm py-space-sm rounded-lg bg-surface-recessed text-status-standby hover:text-on-surface font-label-mono-md text-label-mono-md uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[15px]">straighten</span>
+<span>CALIBRATION</span>
+</button>
+<button class="activity-btn px-space-sm py-space-sm rounded-lg bg-surface-recessed text-status-standby hover:text-on-surface font-label-mono-md text-label-mono-md uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[15px]">add_box</span>
+<span>INSTALLATION</span>
+</button>
+</div>
+</div>
+<!-- Priority Matrix Spectrum -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby tracking-wider">MISSION PRIORITY SPECTRUM</label>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-xs">
+<label class="cursor-pointer">
+<input class="sr-only peer" name="priority" type="radio" value="planned"/>
+<div class="p-space-sm rounded-lg bg-surface-recessed peer-checked:bg-surface-elevated text-status-standby peer-checked:text-on-surface flex flex-col gap-1 transition-all shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-md text-label-mono-md font-bold">PLANNED</span>
+<span class="h-2 w-2 rounded-full bg-status-standby"></span>
+</div>
+<span class="font-body-sm text-body-sm text-status-standby">Standard cycle</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="sr-only peer" name="priority" type="radio" value="normal"/>
+<div class="p-space-sm rounded-lg bg-surface-recessed peer-checked:bg-surface-elevated text-status-standby peer-checked:text-secondary flex flex-col gap-1 transition-all shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-md text-label-mono-md font-bold">NORMAL</span>
+<span class="h-2 w-2 rounded-full bg-sync-cyan"></span>
+</div>
+<span class="font-body-sm text-body-sm text-status-standby">&lt; 72h schedule</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="sr-only peer" name="priority" type="radio" value="urgent"/>
+<div class="p-space-sm rounded-lg bg-surface-recessed peer-checked:bg-surface-elevated text-status-standby peer-checked:text-primary-container flex flex-col gap-1 transition-all shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-md text-label-mono-md font-bold">URGENT</span>
+<span class="h-2 w-2 rounded-full bg-status-repair animate-pulse"></span>
+</div>
+<span class="font-body-sm text-body-sm text-status-standby">Fix Today (Shift 2)</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="sr-only peer" name="priority" type="radio" value="emergency"/>
+<div class="p-space-sm rounded-lg bg-surface-recessed peer-checked:bg-error-container peer-checked:text-error text-status-standby flex flex-col gap-1 transition-all shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-md text-label-mono-md font-bold">EMERGENCY</span>
+<span class="h-2 w-2 rounded-full bg-status-emergency"></span>
+</div>
+<span class="font-body-sm text-body-sm text-status-standby">Plant Halted</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Schedule & Hours Calibration -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm pt-space-xs">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">TIMELINE START</label>
+<div class="bg-surface-recessed rounded-lg p-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<input class="w-full bg-transparent px-space-xs py-1 font-label-mono-sm text-label-mono-sm text-on-surface focus:outline-none" type="date" value="2024-11-04"/>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">DUE DATE</label>
+<div class="bg-surface-recessed rounded-lg p-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<input class="w-full bg-transparent px-space-xs py-1 font-label-mono-sm text-label-mono-sm text-on-surface focus:outline-none" type="date" value="2024-11-04"/>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">EST. HOURS</label>
+<span class="font-label-mono-sm text-label-mono-sm text-primary font-bold" id="estHoursDisplay">4.5 HRS</span>
+</div>
+<div class="bg-surface-recessed rounded-lg px-space-sm py-2 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)] flex items-center">
+<input class="w-full accent-primary-container cursor-pointer" id="estHoursSlider" max="24" min="0.5" step="0.5" type="range" value="4.5"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel 3: Department Request Authorization & RCA Picker -->
+<div class="bg-surface-card p-space-md rounded-xl flex flex-col gap-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">account_tree</span>
+<span class="font-headline-md text-headline-md text-on-surface uppercase">03 // Authorization &amp; RCA</span>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">ISO 55001 COMPLIANT</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">ORIGINATING DEPARTMENT</label>
+<div class="bg-surface-recessed rounded-lg p-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<select class="w-full bg-transparent px-space-sm py-space-xs font-body-md text-body-md text-on-surface focus:outline-none">
+<option class="bg-surface-recessed">Operations (Plant Floor)</option>
+<option class="bg-surface-recessed" selected="">Mechanical Maintenance</option>
+<option class="bg-surface-recessed">Reliability Engineering</option>
+<option class="bg-surface-recessed">EHS Safety Board</option>
+<option class="bg-surface-recessed">Production Sector</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">REQUESTED BY / PHO</label>
+<div class="bg-surface-recessed rounded-lg px-space-md py-space-sm shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)] flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface">Supv. Hendra Kusuma</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">ID: 4421</span>
+</div>
+</div>
+</div>
+<!-- RCA (Neural Root Cause Analysis) Selector -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby tracking-wider">NEURAL ROOT CAUSE (RCA) CLASSIFICATION</label>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-xs" id="rcaPills">
+<button class="rca-btn px-space-sm py-space-xs rounded-lg bg-surface-recessed text-on-surface-variant font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 hover:bg-surface-elevated transition-all shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[14px] text-sync-cyan">schedule</span>
+<span>NORMAL PM</span>
+</button>
+<button class="rca-btn px-space-sm py-space-xs rounded-lg bg-surface-elevated text-gold-bright font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px] text-gold-bright">broken_image</span>
+<span>FATIGUE / WEAR</span>
+</button>
+<button class="rca-btn px-space-sm py-space-xs rounded-lg bg-surface-recessed text-on-surface-variant font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 hover:bg-surface-elevated transition-all shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[14px] text-status-repair">engineering</span>
+<span>HUMAN ERROR</span>
+</button>
+<button class="rca-btn px-space-sm py-space-xs rounded-lg bg-surface-recessed text-on-surface-variant font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 hover:bg-surface-elevated transition-all shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[14px] text-status-operational">nature</span>
+<span>NATURAL WEAR</span>
+</button>
+<button class="rca-btn px-space-sm py-space-xs rounded-lg bg-surface-recessed text-on-surface-variant font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 hover:bg-surface-elevated transition-all shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[14px] text-status-standby">cloud</span>
+<span>EXTERNAL FACTOR</span>
+</button>
+<button class="rca-btn px-space-sm py-space-xs rounded-lg bg-surface-recessed text-on-surface-variant font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 hover:bg-surface-elevated transition-all shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]" type="button">
+<span class="material-symbols-outlined text-[14px] text-error">manufacturing</span>
+<span>PART QUALITY</span>
+</button>
+</div>
+</div>
+<!-- Technical Field Notes Editor -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">TECHNICAL BRIEFING &amp; FIELD INSTRUCTIONS</label>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">MARKDOWN SUPPORTED</span>
+</div>
+<div class="bg-surface-recessed rounded-lg p-space-sm shadow-[inset_2px_2px_5px_rgba(0,0,0,0.7)] flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs pb-1 text-status-standby">
+<button class="p-1 hover:text-on-surface rounded hover:bg-surface-container" type="button"><span class="material-symbols-outlined text-[14px]">format_bold</span></button>
+<button class="p-1 hover:text-on-surface rounded hover:bg-surface-container" type="button"><span class="material-symbols-outlined text-[14px]">format_italic</span></button>
+<button class="p-1 hover:text-on-surface rounded hover:bg-surface-container" type="button"><span class="material-symbols-outlined text-[14px]">format_list_bulleted</span></button>
+<button class="p-1 hover:text-on-surface rounded hover:bg-surface-container" type="button"><span class="material-symbols-outlined text-[14px]">terminal</span></button>
+<div class="ml-auto font-label-mono-sm text-label-mono-sm text-sync-cyan">PROMPT: AJENG AI ASSIST READY</div>
+</div>
+<textarea class="w-full bg-transparent font-label-mono-sm text-label-mono-sm text-on-surface resize-none focus:outline-none" placeholder="Enter execution protocols, safety hazards, torque specifications..." rows="4">&gt;&gt; INITIAL DIAGNOSTIC: Excessive thermal signature detected on Pulley 02 drive bearing (+18°C above ambient baseline). High frequency acoustic emission suggests micro-pitting in outer raceway.
+&gt;&gt; INSTRUCTIONS:
+1. Lockout-Tagout (LOTO) Breaker #B-104-E.
+2. Dismount worn SKF-23088 bearing using hydraulic puller.
+3. Inspect journal shaft for runout tolerance (&lt;0.03mm).
+4. Apply Mobilgrease XHP 222 prior to remounting.</textarea>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Telemetry, Optical & Squad Dispatch (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg">
+<!-- Panel 4: Optical Telemetry & Visual Documentation -->
+<div class="bg-surface-card p-space-md rounded-xl flex flex-col gap-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary">photo_camera</span>
+<span class="font-headline-md text-headline-md text-on-surface uppercase">Visual Proof Telemetry</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-recessed font-label-mono-sm text-label-mono-sm text-sync-cyan">EDGE COMPRESS ON</span>
+</div>
+<!-- Drag & Drop Zone with Direct Cam Trigger -->
+<div class="relative bg-surface-recessed rounded-xl p-space-md flex flex-col items-center justify-center text-center cursor-pointer shadow-[inset_2px_2px_6px_rgba(0,0,0,0.7)] hover:bg-surface-container-high transition-colors group">
+<div class="h-12 w-12 rounded-full bg-surface-elevated flex items-center justify-center mb-space-xs text-primary group-hover:scale-110 transition-transform shadow-md">
+<span class="material-symbols-outlined text-[24px]">add_a_photo</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">TAP TO ACTIVATE FIELD CAM</span>
+<span class="font-body-sm text-body-sm text-status-standby mt-0.5">or drop inspection thermal capture (WEBP / JPG &lt; 25MB)</span>
+<div class="flex items-center gap-space-xs mt-space-sm">
+<span class="material-symbols-outlined text-[14px] text-status-operational">offline_bolt</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational">OFFLINE LOCAL PERSISTENCE BUFFERED</span>
+</div>
+</div>
+<!-- Optical Telemetry Thumbnail Gallery -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="relative rounded-lg overflow-hidden bg-surface-recessed shadow-md group">
+<img class="w-full h-24 object-cover opacity-85 group-hover:opacity-100 transition-opacity" data-alt="Close-up macro industrial photograph of a scored spherical roller bearing with metallic grease buildup and heat discoloration, illuminated under harsh fluorescent inspection lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrIeXKjloy_GMDa2bVfSdrhoKFgX1uV2xTq1YLV-eS35MzU587MLZ4d5YRI6KD_E78xvVNz3c8uINVxcuA3AQfpdZqUwz1cAmNxgne5FCX2Kdn8gfOCwATIC3zdIgXNYv8KaZusv5osWyWmWiuYjLyAF0F0zwLeBE5B4FWXDbReE9XhG8CslsdSj71Eaie0SWdFeMFjyIlnCi1FQgz0q1Z8ZzyDxNPQKBs0laGWhRD_Cf0EaH3dQLL"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-recessed via-transparent to-transparent"></div>
+<div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-semibold truncate">BEARING_PULL_01.JPG</span>
+<span class="px-1 rounded bg-status-emergency/80 font-label-mono-sm text-label-mono-sm text-on-surface">CRIT</span>
+</div>
+</div>
+<div class="relative rounded-lg overflow-hidden bg-surface-recessed shadow-md group">
+<img class="w-full h-24 object-cover opacity-85 group-hover:opacity-100 transition-opacity" data-alt="Technical thermal infrared imaging telemetry scan displaying bright orange and yellow heat distribution hotspots on an industrial conveyor drive motor shaft assembly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADqrQz_geM76Fv7Se0kTmfzG_xXVPwueGsAy7xq2rcE62Ffp0fjez4dzUlhuG6CN6kI-S5sASTtILKuwS41U3umvT4t6X32CCaJl7OKpE1G4XozKxHv9b9KBzUqGdlaSQz9AX7L5t-5tt2vhPEESbXFCVKi5Ic7cYrF-7Yo426I0SubGCkGqoC22syS1H9XZenGcsN2Yr5SpDjJNvgS8F8Sj7HpE8DtlDvzSUoCGFNO5uw038Lj_1I"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-recessed via-transparent to-transparent"></div>
+<div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface font-semibold truncate">THERMAL_IR_SCAN.DAT</span>
+<span class="px-1 rounded bg-secondary/80 font-label-mono-sm text-label-mono-sm text-on-secondary">84°C</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel 5: Components & Critical Spare Linked -->
+<div class="bg-surface-card p-space-md rounded-xl flex flex-col gap-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">inventory_2</span>
+<span class="font-headline-md text-headline-md text-on-surface uppercase">Critical Spares Linked</span>
+</div>
+<button class="flex items-center gap-1 px-space-xs py-0.5 rounded bg-surface-elevated hover:bg-surface-bright text-primary font-label-mono-sm text-label-mono-sm uppercase transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[13px]">add</span>
+<span>Link Part</span>
+</button>
+</div>
+<!-- Part Item Row 1 -->
+<div class="bg-surface-recessed p-space-sm rounded-lg flex flex-col gap-space-xs shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col">
+<span class="font-label-mono-md text-label-mono-md text-on-surface font-bold">BRG-SKF-23088</span>
+<span class="font-body-sm text-body-sm text-status-standby">Spherical Roller Bearing (Tapered Bore)</span>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational bg-surface-container px-space-xs py-0.5 rounded">3 IN STOCK</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">QTY REQ:</span>
+<div class="flex items-center bg-surface-container rounded px-1">
+<button class="text-status-standby hover:text-on-surface px-1" type="button">-</button>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface px-1.5 font-bold">1</span>
+<button class="text-status-standby hover:text-on-surface px-1" type="button">+</button>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">VALUATION:</span>
+<span class="font-label-mono-sm text-label-mono-sm text-gold-bright font-bold">$1,450.00</span>
+<button class="text-status-standby hover:text-error transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button>
+</div>
+</div>
+</div>
+<!-- Part Item Row 2 -->
+<div class="bg-surface-recessed p-space-sm rounded-lg flex flex-col gap-space-xs shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col">
+<span class="font-label-mono-md text-label-mono-md text-on-surface font-bold">EP400/3-RUBBER</span>
+<span class="font-body-sm text-body-sm text-status-standby">Cold Splice Kit &amp; Cement Primer</span>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational bg-surface-container px-space-xs py-0.5 rounded">8 IN STOCK</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">QTY REQ:</span>
+<div class="flex items-center bg-surface-container rounded px-1">
+<button class="text-status-standby hover:text-on-surface px-1" type="button">-</button>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface px-1.5 font-bold">2</span>
+<button class="text-status-standby hover:text-on-surface px-1" type="button">+</button>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">VALUATION:</span>
+<span class="font-label-mono-sm text-label-mono-sm text-gold-bright font-bold">$380.00</span>
+<button class="text-status-standby hover:text-error transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button>
+</div>
+</div>
+</div>
+<!-- Subtotal Strip -->
+<div class="flex items-center justify-between px-space-xs pt-1">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">ESTIMATED SPARES COST</span>
+<span class="font-label-mono-lg text-label-mono-lg text-gold-bright font-bold">$1,830.00 USD</span>
+</div>
+</div>
+<!-- Panel 6: Assigned Technician & Squad Dispatch -->
+<div class="bg-surface-card p-space-md rounded-xl flex flex-col gap-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">groups</span>
+<span class="font-headline-md text-headline-md text-on-surface uppercase">Squad Dispatch Engine</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-recessed font-label-mono-sm text-label-mono-sm text-status-operational">3 TECHS ON SHIFT</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-mono-sm text-label-mono-sm uppercase text-status-standby">LEAD FIELD TECHNICIAN</label>
+<div class="bg-surface-recessed rounded-lg p-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<select class="w-full bg-transparent px-space-sm py-space-xs font-body-md text-body-md text-on-surface focus:outline-none">
+<option class="bg-surface-recessed" selected="">R. Pratama (Cert: Vibration Analysis CAT-II)</option>
+<option class="bg-surface-recessed">T. Wicaksono (Cert: Millwright Master)</option>
+<option class="bg-surface-recessed">D. Siregar (Cert: High Voltage Safety)</option>
+</select>
+</div>
+</div>
+<!-- Squad Allocation Grid -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="bg-surface-recessed p-space-sm rounded-lg flex items-center justify-between shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">SQUAD CREW</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface font-bold">2 TECHNICIANS</span>
+</div>
+<div class="bg-surface-recessed p-space-sm rounded-lg flex items-center justify-between shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">TOOL PROTOCOL</span>
+<span class="font-label-mono-md text-label-mono-md text-secondary font-bold">RIG KIT #04</span>
+</div>
+</div>
+<!-- Risk Notification Warning Box -->
+<div class="bg-surface-elevated p-space-sm rounded-lg flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">verified_user</span>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-gold-bright font-bold">LOCKOUT / TAGOUT MANDATORY</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Conveyor interlock requires physical padlocks on motor disconnect switch 04B before access.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Command Action Dock Footer -->
+<div class="mt-space-xl pt-space-md pb-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md w-full sm:w-auto">
+<button class="w-full sm:w-auto px-space-md py-space-sm rounded-lg bg-surface-card hover:bg-surface-elevated text-status-standby hover:text-error font-label-mono-md text-label-mono-md uppercase transition-colors flex items-center justify-center gap-2 shadow-[4px_6px_14px_rgba(0,0,0,0.3)]" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+<span>ABORT / CANCEL</span>
+</button>
+<button class="w-full sm:w-auto px-space-md py-space-sm rounded-lg bg-surface-card hover:bg-surface-elevated text-on-surface hover:text-gold-bright font-label-mono-md text-label-mono-md uppercase transition-colors flex items-center justify-center gap-2 shadow-[4px_6px_14px_rgba(0,0,0,0.3)]" id="saveDraftBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">save</span>
+<span>SAVE OFFLINE DRAFT</span>
+</button>
+</div>
+<!-- Prominent Luminous Gold Dispatch Button -->
+<button class="w-full sm:w-auto px-space-xl py-space-md rounded-lg bg-primary-container text-on-primary-container font-label-mono-lg text-label-mono-lg font-bold uppercase tracking-wider flex items-center justify-center gap-space-sm shadow-[0_0_24px_rgba(245,158,11,0.35)] hover:bg-gold-bright hover:shadow-[0_0_32px_rgba(245,158,11,0.5)] transition-all active:scale-[0.98] active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)]" id="dispatchBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span>APPROVE &amp; DISPATCH WORK ORDER</span>
+</button>
+</div>
+</div>
+<script>
+  // Micro-interaction handlers for WO Creation Screen
+  const estHoursSlider = document.getElementById('estHoursSlider');
+  const estHoursDisplay = document.getElementById('estHoursDisplay');
+
+  if (estHoursSlider && estHoursDisplay) {
+    estHoursSlider.addEventListener('input', (e) => {
+      estHoursDisplay.textContent = `${parseFloat(e.target.value).toFixed(1)} HRS`;
+    });
+  }
+
+  // Interactive Activity Pill Selection
+  const activityButtons = document.querySelectorAll('.activity-btn');
+  activityButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activityButtons.forEach((b) => {
+        b.className = 'activity-btn px-space-sm py-space-sm rounded-lg bg-surface-recessed text-status-standby hover:text-on-surface font-label-mono-md text-label-mono-md uppercase flex items-center justify-center gap-1 transition-all active:scale-95 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]';
+      });
+      btn.className = 'activity-btn px-space-sm py-space-sm rounded-lg bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md font-bold uppercase flex items-center justify-center gap-1 transition-all shadow-[0_0_12px_rgba(245,158,11,0.25)]';
+    });
+  });
+
+  // Interactive RCA Button Selection
+  const rcaButtons = document.querySelectorAll('.rca-btn');
+  rcaButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      rcaButtons.forEach((b) => {
+        b.className = 'rca-btn px-space-sm py-space-xs rounded-lg bg-surface-recessed text-on-surface-variant font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 hover:bg-surface-elevated transition-all shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]';
+      });
+      btn.className = 'rca-btn px-space-sm py-space-xs rounded-lg bg-surface-elevated text-gold-bright font-label-mono-sm text-label-mono-sm uppercase text-left flex items-center gap-2 transition-all shadow-sm';
+    });
+  });
+
+  // Asset Select change dynamically updates sector
+  const assetSelect = document.getElementById('assetSelect');
+  const sectorDisplay = document.getElementById('sectorDisplay');
+  if (assetSelect && sectorDisplay) {
+    assetSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val === 'CRUSH-01') sectorDisplay.textContent = 'ZONE-A / CRUSHING PRIMARY';
+      else if (val === 'BM-02') sectorDisplay.textContent = 'ZONE-B / WET MILLING HALL';
+      else if (val === 'CV-104') sectorDisplay.textContent = 'ZONE-C / ORE TRANSFER SHAFT';
+      else if (val === 'FLOT-05') sectorDisplay.textContent = 'ZONE-D / CHEMICAL RECOVERY';
+    });
+  }
+
+  // Dispatch Trigger feedback
+  const dispatchBtn = document.getElementById('dispatchBtn');
+  if (dispatchBtn) {
+    dispatchBtn.addEventListener('click', () => {
+      const originalText = dispatchBtn.innerHTML;
+      dispatchBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">refresh</span><span>DISPATCHING TELEMETRY...</span>';
+      dispatchBtn.disabled = true;
+      setTimeout(() => {
+        dispatchBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] text-status-operational">task_alt</span><span>DISPATCHED TO CREW #04</span>';
+        dispatchBtn.classList.remove('bg-primary-container');
+        dispatchBtn.classList.add('bg-surface-elevated', 'text-status-operational');
+      }, 1200);
+    });
+  }
+
+  // Save Draft Feedback
+  const saveDraftBtn = document.getElementById('saveDraftBtn');
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', () => {
+      const orig = saveDraftBtn.innerHTML;
+      saveDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] text-sync-cyan">done</span><span class="text-sync-cyan">BUFFERED TO PWA CACHE</span>';
+      setTimeout(() => {
+        saveDraftBtn.innerHTML = orig;
+      }, 1800);
+    });
+  }
+</script></main></div><footer class="fixed bottom-0 left-0 right-0 h-10 z-50 bg-surface-container-lowest/95 backdrop-blur-md flex items-center justify-between px-gutter-desktop shadow-[0_-1px_6px_rgba(0,0,0,0.5)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="h-1.5 w-1.5 rounded-full bg-status-operational"></span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">LATENCY: 18ms (LOW)</span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-sync-cyan">cloud_done</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">SYNC: AUTONOMOUS REALTIME</span></div><div class="hidden md:flex items-center gap-space-xs"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">INDEXEDDB: STORAGE OPTIMAL</span></div></div><div class="flex items-center gap-space-md"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">MTC CORE v4.12.0-PROD</span><button class="flex items-center gap-1 px-space-sm py-0.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-on-surface font-label-mono-sm text-label-mono-sm text-primary transition-all active:scale-95"><span class="material-symbols-outlined text-[13px]">sync</span><span>FAST SYNC</span></button></div></footer></body></html>

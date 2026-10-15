@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-base": "#0b0f15", "sync-cyan-glow": "rgba(6, 182, 212, 0.2)", "on-tertiary": "#68000a", "on-secondary": "#003640", "surface-variant": "#2e3540", "gold-glow": "rgba(245, 158, 11, 0.18)", "surface-dim": "#0d141d", "inverse-primary": "#855300", "border-subtle": "rgba(255, 255, 255, 0.06)", "outline-variant": "#534434", "primary-fixed-dim": "#ffb95f", "inverse-on-surface": "#2a313b", "on-secondary-container": "#00424e", "outline": "#a08e7a", "on-primary-container": "#613b00", "gold-bright": "#fbbf24", "tertiary": "#ffbcb7", "secondary": "#4cd7f6", "status-operational": "#10b981", "on-background": "#dce3f1", "error-container": "#93000a", "sync-cyan": "#06b6d4", "tertiary-container": "#ff938c", "status-emergency": "#ef4444", "primary-container": "#f59e0b", "surface-container-lowest": "#080f18", "on-tertiary-fixed-variant": "#930013", "border-tactical": "#283446", "on-surface-variant": "#d8c3ad", "surface-container": "#19202a", "on-primary-fixed-variant": "#653e00", "on-tertiary-container": "#8d0012", "surface-card": "#161d27", "surface-recessed": "#0a0e14", "on-surface": "#dce3f1", "surface-bright": "#333a44", "on-secondary-fixed": "#001f26", "surface-tint": "#ffb95f", "on-secondary-fixed-variant": "#004e5c", "background": "#0d141d", "surface-canvas": "#0f141c", "inverse-surface": "#dce3f1", "primary": "#ffc174", "on-primary": "#472a00", "on-error-container": "#ffdad6", "surface-container-high": "#232a35", "error": "#ffb4ab", "secondary-container": "#03b5d3", "tertiary-fixed-dim": "#ffb3ad", "surface": "#0d141d", "gold-dim": "#b45309", "tertiary-fixed": "#ffdad7", "secondary-fixed": "#acedff", "status-repair": "#f59e0b", "on-primary-fixed": "#2a1700", "on-tertiary-fixed": "#410004", "surface-elevated": "#1e2634", "surface-container-highest": "#2e3540", "primary-fixed": "#ffddb8", "on-error": "#690005", "secondary-fixed-dim": "#4cd7f6", "status-standby": "#64748b", "surface-container-low": "#151c26" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin": "1rem", "gutter-desktop": "1.5rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "margin-desktop": "2rem", "space-md": "1rem", "gutter": "1rem" }, "fontFamily": { "headline-lg": ["Inter"], "display-hero": ["Inter"], "label-mono-sm": ["JetBrains Mono"], "headline-lg-mobile": ["Inter"], "headline-md": ["Inter"], "body-md": ["Inter"], "label-mono-lg": ["JetBrains Mono"], "label-mono-md": ["JetBrains Mono"], "body-lg": ["Inter"], "body-sm": ["Inter"] }, "fontSize": { "headline-lg": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "display-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-mono-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "500" }], "headline-lg-mobile": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-mono-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "500" }], "label-mono-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased select-none"><header class="fixed top-0 left-0 right-0 h-16 z-50 bg-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="MTC ASSET Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1X7lil7epG74Ldc7faSYez_uK8O4IL8PeeKxMRFKNj-vLPPyKXKjZwMQfqNn4gG6nJLllnaeOgIU1ZvBa7fs40MyjEB5gwN4Ny3_xmoSdLhD6ZpyRerChMz9cC9qXw1VTf0Yhq7xWTAxy6AxIykHAwpGQLFanBeaFLY2ifkqDX8g21nE3vwYJGTbLhKcBZPnKHSnMAxwDFPagx-icnHnhkRIUttcm_dL-wkoerqVFDF-EUo9XC5dfk-97o"/><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight uppercase text-on-surface">MTC ASSET</span><span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase tracking-wider">Industrial Telemetry Core</span></div><div class="hidden xl:flex items-center gap-space-xs pl-space-sm"><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container shadow-[0_0_12px_rgba(16,185,129,0.15)]"><span class="h-2 w-2 rounded-full bg-status-operational animate-pulse"></span><span class="font-label-mono-sm text-label-mono-sm text-on-surface">ONLINE - SYNCED</span></div><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container"><span class="material-symbols-outlined text-sync-cyan text-[14px]">wifi_tethering</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">PWA READY / NODE: ALPHA-7</span></div></div></div><div class="flex-1 max-w-md hidden md:flex items-center"><div class="relative w-full flex items-center bg-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]"><span class="material-symbols-outlined text-status-standby text-[18px] mr-space-sm">search</span><span class="font-body-sm text-body-sm text-status-standby flex-1">Search Asset, Tag, WO...</span><kbd class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-mono-sm text-label-mono-sm text-on-surface-variant shadow-sm">Ctrl+K</kbd></div></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-space-xs px-space-md py-space-xs rounded bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:bg-gold-bright hover:text-on-primary-container transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]"><span class="material-symbols-outlined text-[16px]">add</span><span>+ NEW WO</span></button><div class="hidden lg:flex items-center bg-surface-recessed p-0.5 rounded"><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm bg-primary-container text-on-primary-container">GOLD</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">NAVY</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">PURPLE</button><button class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm text-status-standby hover:text-on-surface hover:bg-surface-container-high">LIGHT</button></div><div class="relative flex items-center justify-center p-space-xs rounded hover:bg-surface-container-high hover:text-on-surface cursor-pointer text-status-standby transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-0 right-0 h-4 min-w-[16px] px-1 rounded-full bg-status-emergency font-label-mono-sm text-label-mono-sm text-on-surface flex items-center justify-center font-bold">3</span></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_0_12px_rgba(255,193,116,0.3)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden sm:flex flex-col text-left"><span class="font-label-mono-md text-label-mono-md text-on-surface">AJENG AI</span><span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">RELIABILITY ENG</span></div></div></div></div></header><aside class="fixed left-0 top-16 bottom-10 w-64 bg-surface-container-lowest z-40 flex flex-col py-space-md shadow-[4px_0_16px_rgba(0,0,0,0.4)]"><div class="px-space-md pb-space-sm"><span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">PLANT OPERATIONS</span></div><nav class="flex-1 px-space-sm space-y-1 overflow-y-auto" data-active-classes="bg-primary-container text-on-primary-container font-headline-md rounded-lg shadow-[0_0_12px_rgba(245,158,11,0.2)]"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="overview" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Overview Matrix</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="asset-fleet" href="#"><span class="material-symbols-outlined text-[18px]">precision_manufacturing</span><span class="font-body-md text-body-md">Assets Telemetry</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="work-orders" href="#"><span class="material-symbols-outlined text-[18px]">engineering</span><span class="font-body-md text-body-md">Work Orders</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="spare-parts" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span class="font-body-md text-body-md">Spare Parts Stock</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="performance-protocol" href="#"><span class="material-symbols-outlined text-[18px]">monitoring</span><span class="font-body-md text-body-md">Performance HM/WH</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="qr-scanner" href="#"><span class="material-symbols-outlined text-[18px]">qr_code_scanner</span><span class="font-body-md text-body-md">Scanner QR Node</span></a><div class="pt-space-md px-space-sm"><span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-status-standby">TELEMETRY &amp; ACCESS</span></div><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="system-access" href="#"><span class="material-symbols-outlined text-[18px]">manage_accounts</span><span class="font-body-md text-body-md">Access &amp; Personnel</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="neural-diagnostics" href="#"><span class="material-symbols-outlined text-[18px]">neurology</span><span class="font-body-md text-body-md">Ajeng AI Diagnostics</span></a></nav><div class="p-space-md mt-auto"><div class="bg-surface-recessed p-space-sm rounded flex flex-col gap-1 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]"><div class="flex items-center justify-between"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">PWA CACHE</span><span class="font-label-mono-sm text-label-mono-sm text-secondary">98.4% HYDRATED</span></div><div class="w-full h-1 bg-surface-container rounded-full overflow-hidden"><div class="h-full bg-secondary" style="width: 98.4%"></div></div></div></div></aside><div class="pl-64"><main class="relative pt-16 pb-12 w-full px-gutter-desktop min-h-screen bg-surface"><div class="flex flex-col w-full">
+<!-- PWA Offline / Autonomous Sync Telemetry Sub-Banner -->
+<div class="w-full mb-space-md rounded bg-surface-container-low shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)] px-space-md py-space-xs flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="flex h-2 w-2 rounded-full bg-status-operational animate-ping"></span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational uppercase tracking-widest">STOCK REGISTRY SYNCED // SECTOR NODES [01..04] ACTIVE</span>
+<span class="hidden sm:inline font-label-mono-sm text-label-mono-sm text-status-standby">|</span>
+<span class="hidden sm:inline font-label-mono-sm text-label-mono-sm text-on-surface-variant">LOCAL INDEXEDDB: 1,842 RECORDS READY FOR OFFLINE COMMITS</span>
+</div>
+<div class="flex items-center gap-space-md">
+<span class="font-label-mono-sm text-label-mono-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">warehouse</span>
+        WHSE CENTRAL: ALPHA-BAY
+      </span>
+<button class="px-space-xs py-0.5 rounded bg-surface-container-high hover:bg-surface-bright text-primary font-label-mono-sm text-label-mono-sm transition-colors active:scale-95">
+        FORCE SCAN
+      </button>
+</div>
+</div>
+<!-- Screen Master Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono-sm text-label-mono-sm text-primary uppercase tracking-widest">MTC-INV // PROTOCOL 77-B</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">/</span>
+<span class="font-label-mono-sm text-label-mono-sm text-secondary uppercase">CATALOG LEVEL 4</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1 flex items-center gap-space-sm">
+        Critical Spare Parts Stock Ledger
+        <span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-gold-bright tracking-normal">REV 2025.04</span>
+</h1>
+<p class="font-body-sm text-body-sm text-status-standby mt-0.5">Autonomous physical stock tracking, MTBF degradation correlation, and node-compatible staging.</p>
+</div>
+<div class="flex items-center flex-wrap gap-space-sm">
+<button class="px-space-md py-space-sm rounded bg-surface-card hover:bg-surface-container-high text-on-surface font-label-mono-md text-label-mono-md shadow-[4px_6px_14px_rgba(0,0,0,0.4)] flex items-center gap-space-xs transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
+<span class="material-symbols-outlined text-[18px] text-secondary">qr_code_scanner</span>
+<span>RAPID SCANNER</span>
+</button>
+<button class="px-space-md py-space-sm rounded bg-surface-card hover:bg-surface-container-high text-on-surface font-label-mono-md text-label-mono-md shadow-[4px_6px_14px_rgba(0,0,0,0.4)] flex items-center gap-space-xs transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)]">
+<span class="material-symbols-outlined text-[18px] text-gold-bright">file_download</span>
+<span>AUDIT EXPORT</span>
+</button>
+<button class="px-space-md py-space-sm rounded bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md shadow-[0_0_16px_rgba(245,158,11,0.28)] hover:bg-gold-bright transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)] flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">add_box</span>
+<span>REGISTER NEW SKU</span>
+</button>
+</div>
+</div>
+<!-- Top KPI Stats Matrix -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md mb-space-lg">
+<!-- KPI 1: Total Stock Valuation -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Total Asset Valuation</span>
+<span class="font-display-hero text-display-hero text-gold-bright tracking-tight mt-1">IDR 1.42B</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant mt-0.5">≈ USD $91,460.00 EQV</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between text-body-sm text-body-sm">
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +3.8% MoM Replenish
+        </span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">CAPEX ALLOCATED</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-bright to-transparent opacity-40"></div>
+</div>
+<!-- KPI 2: Active SKUs -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Active Catalog SKUs</span>
+<span class="font-display-hero text-display-hero text-on-surface tracking-tight mt-1">240 <span class="font-headline-md text-headline-md text-secondary">ITEMS</span></span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant mt-0.5">Distributed over 4 Plant Sectors</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
+<span class="material-symbols-outlined text-[22px]">inventory_2</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<div class="flex items-center gap-1.5 font-label-mono-sm text-label-mono-sm text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-status-operational"></span>218 Optimal
+          <span class="w-1.5 h-1.5 rounded-full bg-status-emergency ml-2"></span>3 Alert
+        </div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">97.2% HEALTH</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-40"></div>
+</div>
+<!-- KPI 3: Low Stock Alerts -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Urgent Stock Alerts</span>
+<div class="flex items-baseline gap-space-xs mt-1">
+<span class="font-display-hero text-display-hero text-status-emergency tracking-tight">03</span>
+<span class="font-label-mono-md text-label-mono-md text-tertiary">BELOW SAFETY</span>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-error mt-0.5">Immediate WO risk: Ball Mill 02</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-status-emergency shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)] animate-pulse">
+<span class="material-symbols-outlined text-[22px]">warning</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-error flex items-center gap-1">
+<span class="h-2 w-2 rounded-full bg-status-emergency"></span>ACTION REQ: PO DISPATCH
+        </span>
+<button class="font-label-mono-sm text-label-mono-sm text-primary hover:underline">VIEW (3)</button>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-status-emergency to-transparent opacity-70"></div>
+</div>
+<!-- KPI 4: In-Transit / Pending PO -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">In-Transit / Replenish</span>
+<span class="font-display-hero text-display-hero text-sync-cyan tracking-tight mt-1">05 <span class="font-headline-md text-headline-md text-on-surface">ORDERS</span></span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant mt-0.5">PO-8849, PO-8851 Staged</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-sync-cyan shadow-[inset_1px_1px_2px_rgba(0,0,0,0.6)]">
+<span class="material-symbols-outlined text-[22px]">local_shipping</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-secondary">ETA: 48H TO MAIN DOCK</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">CUSTOMS CLR</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-sync-cyan to-transparent opacity-40"></div>
+</div>
+</div>
+<!-- Main Workstation Layout: 12-Column Grid + Quick Inspection Node -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Left Column: Search Filter Console & Detailed Parts Ledger (8 Cols) -->
+<div class="lg:col-span-8 flex flex-col gap-space-md">
+<!-- Filter Console (Recessed Tactical Switchboard) -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] flex flex-col gap-space-md">
+<!-- Top Search Row -->
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-space-sm">
+<div class="flex-1 relative flex items-center bg-surface-recessed rounded-lg px-space-md py-space-sm shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)] focus-within:ring-1 focus-within:ring-primary-container">
+<span class="material-symbols-outlined text-status-standby mr-space-sm text-[20px]">search</span>
+<input class="bg-transparent border-0 outline-none text-on-surface font-body-md text-body-md placeholder:text-status-standby w-full" placeholder="Search Part ID, Nomenclature, Serial, or Machine Link..." type="text" value="BRG-SKF"/>
+<span class="font-label-mono-sm text-label-mono-sm px-space-xs py-0.5 rounded bg-surface-container-high text-status-standby ml-2">ESC TO CLEAR</span>
+</div>
+<!-- Urgent Urgency Quick Toggle -->
+<div class="flex items-center gap-space-xs bg-surface-recessed p-1 rounded-lg shadow-[inset_2px_2px_4px_rgba(0,0,0,0.6)]">
+<button class="px-space-sm py-space-xs rounded font-label-mono-sm text-label-mono-sm text-on-surface-variant hover:text-on-surface transition-colors">ALL (240)</button>
+<button class="px-space-sm py-space-xs rounded font-label-mono-sm text-label-mono-sm bg-surface-container text-gold-bright shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gold-bright"></span>OPTIMAL (218)
+            </button>
+<button class="px-space-sm py-space-xs rounded font-label-mono-sm text-label-mono-sm bg-error-container text-on-error-container shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-emergency animate-pulse"></span>CRITICAL (3)
+            </button>
+</div>
+</div>
+<!-- Secondary Filter Selectors: Classification, Sector, Asset Node -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm pt-space-xs">
+<!-- Classification Selector -->
+<div class="flex flex-col gap-1">
+<label class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Classification Segment</label>
+<div class="relative bg-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_4px_rgba(0,0,0,0.6)] flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface truncate">Bearings &amp; Assemblies (48)</span>
+<span class="material-symbols-outlined text-status-standby text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Whse Storage Sector -->
+<div class="flex flex-col gap-1">
+<label class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Plant Storage Sector</label>
+<div class="relative bg-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_4px_rgba(0,0,0,0.6)] flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface truncate">Sector 4 - Whse Heavy Bay</span>
+<span class="material-symbols-outlined text-status-standby text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Machine Compatibility -->
+<div class="flex flex-col gap-1">
+<label class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">Asset Node Link</label>
+<div class="relative bg-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_4px_rgba(0,0,0,0.6)] flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-primary truncate">Ball Mill 02 (MT-BM-02)</span>
+<span class="material-symbols-outlined text-status-standby text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Active Filter Pills Bar -->
+<div class="flex flex-wrap items-center gap-space-xs pt-1">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase mr-1">ACTIVE FILTERS:</span>
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-surface-container font-label-mono-sm text-label-mono-sm text-secondary">
+            Cat: Bearings
+            <span class="material-symbols-outlined text-[12px] cursor-pointer hover:text-on-surface">close</span>
+</span>
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-surface-container font-label-mono-sm text-label-mono-sm text-gold-bright">
+            Sector 4 Whse
+            <span class="material-symbols-outlined text-[12px] cursor-pointer hover:text-on-surface">close</span>
+</span>
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-surface-container font-label-mono-sm text-label-mono-sm text-on-surface-variant">
+            Safety Level: Low &amp; Optimal
+            <span class="material-symbols-outlined text-[12px] cursor-pointer hover:text-on-surface">close</span>
+</span>
+<button class="font-label-mono-sm text-label-mono-sm text-status-standby hover:text-error underline ml-auto">RESET FILTERS</button>
+</div>
+</div>
+<!-- Parts Inventory Table / Stream -->
+<div class="rounded-xl bg-surface-card shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] overflow-hidden">
+<!-- Table Control Toolbar -->
+<div class="px-space-md py-space-sm bg-surface-container-low flex items-center justify-between gap-space-md shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">PARTS STREAM</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-high font-label-mono-sm text-label-mono-sm text-on-surface">DISPLAYING 5 OF 240 SKUs</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="p-1 rounded text-status-standby hover:text-on-surface hover:bg-surface-container flex items-center" title="Sort by Urgency">
+<span class="material-symbols-outlined text-[18px]">swap_vert</span>
+</button>
+<button class="p-1 rounded text-status-standby hover:text-on-surface hover:bg-surface-container flex items-center" title="Density Matrix">
+<span class="material-symbols-outlined text-[18px]">density_medium</span>
+</button>
+</div>
+</div>
+<!-- Ledger Entries List -->
+<div class="divide-y divide-border-subtle flex flex-col">
+<!-- Part Record 1: SKF Spherical Roller Bearing (CRITICAL ALERT) -->
+<div class="p-space-md bg-surface-card hover:bg-surface-container-high/60 transition-colors relative flex flex-col gap-space-sm cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-emergency"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed flex items-center justify-center p-1 shrink-0 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<span class="material-symbols-outlined text-status-emergency text-[26px]">circle</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-mono-lg text-label-mono-lg text-primary font-bold">BRG-SKF-23088</span>
+<span class="px-space-xs py-0.5 rounded bg-error-container text-on-error-container font-label-mono-sm text-label-mono-sm font-semibold tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-emergency animate-ping"></span>CRITICAL DEFICIT
+                    </span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-standby">BEARINGS</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface mt-0.5 group-hover:text-gold-bright transition-colors">
+                    Spherical Roller Bearing CCJA/W33 (440x650x157mm)
+                  </span>
+<div class="flex items-center gap-space-sm mt-1 flex-wrap">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">hub</span>
+                      LINKED ASSET: <span class="text-on-surface font-semibold">Ball Mill 02 (MT-BM-02)</span>
+</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">|</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                      LOC: <span class="text-secondary">Rack B4-12 // Sector 4 Whse</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Stock Indicator Pill & Numbers -->
+<div class="flex md:flex-col items-end justify-between md:justify-center shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-status-emergency font-bold">1</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">/ MIN 3 UNITS</span>
+</div>
+<!-- Mini Progress Ratio -->
+<div class="w-32 h-1.5 bg-surface-recessed rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-status-emergency rounded-full" style="width: 33%"></div>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-error mt-1 uppercase font-semibold">REORDER TRIGGERED</span>
+</div>
+</div>
+<!-- Detailed Telemetry Row inside Card -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-space-xs mt-1 bg-surface-container-low/70 p-space-sm rounded">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">UNIT VALUATION</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">IDR 184,500,000</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">≈ $11,900 USD</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">LAST INSTALLED</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">14 Jan 2024</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">420 Days in Service</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">EST. MTBF LIFETIME</span>
+<span class="font-label-mono-md text-label-mono-md text-status-repair">14,200 Running Hrs</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-emergency">92% Elapsed (At Risk)</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">PRIMARY VENDOR</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface truncate">SKF Indo Industrial</span>
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">VEND-CODE: #SKF-902</span>
+</div>
+</div>
+<!-- Action Command Footer inside Card -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs text-body-sm text-status-standby">
+<span class="material-symbols-outlined text-[16px] text-gold-bright">emergency</span>
+<span class="font-label-mono-sm text-label-mono-sm text-gold-bright">Assigned to Active WO: #WO-2025-0814</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">link</span>
+<span>LINK TO WO</span>
+</button>
+<button class="px-space-sm py-1 rounded bg-status-emergency text-on-surface font-label-mono-sm text-label-mono-sm font-semibold flex items-center gap-1 shadow-[0_0_12px_rgba(239,68,68,0.3)] hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[14px]">shopping_cart_checkout</span>
+<span>INSTANT REORDER</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Part Record 2: Continental Steelcord Conveyor Belt (OPTIMAL) -->
+<div class="p-space-md bg-surface-card hover:bg-surface-container-high/60 transition-colors relative flex flex-col gap-space-sm cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-operational"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed flex items-center justify-center p-1 shrink-0 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<span class="material-symbols-outlined text-secondary text-[26px]">conveyor_belt</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-mono-lg text-label-mono-lg text-primary font-bold">BLT-CV-EP400</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-operational font-semibold tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-operational"></span>OPTIMAL STOCK
+                    </span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-standby">BELTS &amp; DRIVES</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface mt-0.5 group-hover:text-gold-bright transition-colors">
+                    Heavy Duty EP-400 4-Ply Rubber Conveyor Belt (1200mm x 250m)
+                  </span>
+<div class="flex items-center gap-space-sm mt-1 flex-wrap">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">hub</span>
+                      LINKED ASSET: <span class="text-on-surface font-semibold">Overland Conveyor CV-104</span>
+</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">|</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                      LOC: <span class="text-secondary">Yard Staging 01 // Sector A-North</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Stock Indicator Pill & Numbers -->
+<div class="flex md:flex-col items-end justify-between md:justify-center shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-status-operational font-bold">4</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">/ MIN 2 ROLLS</span>
+</div>
+<div class="w-32 h-1.5 bg-surface-recessed rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-status-operational rounded-full" style="width: 100%"></div>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational mt-1 uppercase">HEALTHY BUFFER</span>
+</div>
+</div>
+<!-- Telemetry Details Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-space-xs mt-1 bg-surface-container-low/70 p-space-sm rounded">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">UNIT VALUATION</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">IDR 92,000,000</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">≈ $5,935 USD / Roll</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">LAST INSTALLED</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">02 Nov 2024</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">112 Days Running</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">EST. MTBF LIFETIME</span>
+<span class="font-label-mono-md text-label-mono-md text-status-operational">28,000 Running Hrs</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational">34% Wear Index (Good)</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">PRIMARY VENDOR</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface truncate">Continental ContiTech</span>
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">VEND-CODE: #CT-4011</span>
+</div>
+</div>
+<!-- Action Command Footer inside Card -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs text-body-sm text-status-standby">
+<span class="material-symbols-outlined text-[16px] text-status-operational">verified</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">Certified Tensile Strength ISO 284 Compliant</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">link</span>
+<span>LINK TO WO</span>
+</button>
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-primary font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">edit_note</span>
+<span>EDIT NODE</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Part Record 3: Rexroth Directional Hydraulic Proportional Valve (LOW ALERT) -->
+<div class="p-space-md bg-surface-card hover:bg-surface-container-high/60 transition-colors relative flex flex-col gap-space-sm cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-repair"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed flex items-center justify-center p-1 shrink-0 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<span class="material-symbols-outlined text-gold-bright text-[26px]">tune</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-mono-lg text-label-mono-lg text-primary font-bold">HYD-VAL-REX-04</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-gold-bright font-semibold tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-repair"></span>LOW SAFETY LIMIT
+                    </span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-standby">HYDRAULICS</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface mt-0.5 group-hover:text-gold-bright transition-colors">
+                    Rexroth 4WRPEH 6 Flange Proportional Directional Control Valve
+                  </span>
+<div class="flex items-center gap-space-sm mt-1 flex-wrap">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">hub</span>
+                      LINKED ASSET: <span class="text-on-surface font-semibold">Hydraulic Press HP-01 &amp; BM Feed</span>
+</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">|</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                      LOC: <span class="text-secondary">Locker C2-05 // Smelter Whse</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Stock Indicator Pill & Numbers -->
+<div class="flex md:flex-col items-end justify-between md:justify-center shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-status-repair font-bold">2</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">/ MIN 3 VALVES</span>
+</div>
+<div class="w-32 h-1.5 bg-surface-recessed rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-status-repair rounded-full" style="width: 66%"></div>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-repair mt-1 uppercase">PO-8849 IN TRANSIT</span>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-space-xs mt-1 bg-surface-container-low/70 p-space-sm rounded">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">UNIT VALUATION</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">IDR 44,700,000</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">≈ $2,880 USD</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">LAST INSTALLED</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">19 Aug 2024</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">195 Days in Run</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">EST. MTBF LIFETIME</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">18,500 Running Hrs</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational">Fluid Cleanliness ISO 17/14</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">PRIMARY VENDOR</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface truncate">Bosch Rexroth SG</span>
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">VEND-CODE: #BR-881</span>
+</div>
+</div>
+<!-- Action Command Footer inside Card -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs text-body-sm text-status-standby">
+<span class="material-symbols-outlined text-[16px] text-sync-cyan">local_shipping</span>
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">In Transit: +2 Units Expected 26 Feb</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">link</span>
+<span>LINK TO WO</span>
+</button>
+<button class="px-space-sm py-1 rounded bg-primary-container text-on-primary-container font-label-mono-sm text-label-mono-sm font-semibold flex items-center gap-1 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[14px]">add_shopping_cart</span>
+<span>SUPPLEMENT PO</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Part Record 4: Slurry Pump High Chrome Impeller (OPTIMAL) -->
+<div class="p-space-md bg-surface-card hover:bg-surface-container-high/60 transition-colors relative flex flex-col gap-space-sm cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-operational"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed flex items-center justify-center p-1 shrink-0 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<span class="material-symbols-outlined text-secondary text-[26px]">cyclone</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-mono-lg text-label-mono-lg text-primary font-bold">PMP-SLUR-IMP-12</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-operational font-semibold tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-operational"></span>OPTIMAL STOCK
+                    </span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-standby">WEAR PLATES &amp; CASTINGS</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface mt-0.5 group-hover:text-gold-bright transition-colors">
+                    Slurry Pump Impeller 27% Chrome Alloy (Warman 10/8 Equivalent)
+                  </span>
+<div class="flex items-center gap-space-sm mt-1 flex-wrap">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">hub</span>
+                      LINKED ASSET: <span class="text-on-surface font-semibold">Tailing Slurry Pump P-03</span>
+</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">|</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                      LOC: <span class="text-secondary">Pallet R-09 // Sector 4 Whse</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Stock Indicator Pill & Numbers -->
+<div class="flex md:flex-col items-end justify-between md:justify-center shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-status-operational font-bold">3</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">/ MIN 2 UNITS</span>
+</div>
+<div class="w-32 h-1.5 bg-surface-recessed rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-status-operational rounded-full" style="width: 100%"></div>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational mt-1 uppercase">RESERVE STABLE</span>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-space-xs mt-1 bg-surface-container-low/70 p-space-sm rounded">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">UNIT VALUATION</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">IDR 68,000,000</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">≈ $4,380 USD</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">LAST INSTALLED</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">05 Jan 2025</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">51 Days in Slurry</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">EST. MTBF LIFETIME</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">4,200 Running Hrs</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational">Erosion Rate: 0.12mm/mo</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">PRIMARY VENDOR</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface truncate">Weir Minerals Cast</span>
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">VEND-CODE: #WR-392</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs text-body-sm text-status-standby">
+<span class="material-symbols-outlined text-[16px] text-status-operational">military_tech</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">Hardness: 650 Brinell (HB) Tested</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">link</span>
+<span>LINK TO WO</span>
+</button>
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-primary font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">edit_note</span>
+<span>EDIT NODE</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Part Record 5: ABB Industrial Variable Frequency Drive Inverter (CRITICAL SPARE) -->
+<div class="p-space-md bg-surface-card hover:bg-surface-container-high/60 transition-colors relative flex flex-col gap-space-sm cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-emergency"></div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-recessed flex items-center justify-center p-1 shrink-0 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.7)]">
+<span class="material-symbols-outlined text-secondary text-[26px]">bolt</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-mono-lg text-label-mono-lg text-primary font-bold">ELEC-INV-600V</span>
+<span class="px-space-xs py-0.5 rounded bg-error-container text-on-error-container font-label-mono-sm text-label-mono-sm font-semibold tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-emergency animate-ping"></span>DEPLETED / 0 RESERVE
+                    </span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container font-label-mono-sm text-label-mono-sm text-status-standby">ELECTRICAL &amp; DRIVES</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface mt-0.5 group-hover:text-gold-bright transition-colors">
+                    ABB ACS880-01 Industrial Inverter Module (690V, 450kW Heavy Duty)
+                  </span>
+<div class="flex items-center gap-space-sm mt-1 flex-wrap">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">hub</span>
+                      LINKED ASSET: <span class="text-on-surface font-semibold">Crusher Primary Drive J-01</span>
+</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">|</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                      LOC: <span class="text-error">Climate Chamber 02 // Sector 4</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Stock Indicator Pill & Numbers -->
+<div class="flex md:flex-col items-end justify-between md:justify-center shrink-0">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-status-emergency font-bold">0</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">/ MIN 1 BACKUP</span>
+</div>
+<div class="w-32 h-1.5 bg-surface-recessed rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-status-emergency rounded-full" style="width: 0%"></div>
+</div>
+<span class="font-label-mono-sm text-label-mono-sm text-error mt-1 uppercase font-semibold">ZERO REDUNDANCY</span>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-space-xs mt-1 bg-surface-container-low/70 p-space-sm rounded">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">UNIT VALUATION</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">IDR 312,000,000</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">≈ $20,100 USD</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">LAST INSTALLED</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface">11 Dec 2023</span>
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">440 Days Continuously</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">EST. MTBF LIFETIME</span>
+<span class="font-label-mono-md text-label-mono-md text-status-emergency">65,000 Running Hrs</span>
+<span class="font-label-mono-sm text-label-mono-sm text-error">IGBT Degradation Alert</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">PRIMARY VENDOR</span>
+<span class="font-label-mono-md text-label-mono-md text-on-surface truncate">ABB Power Grids Pte</span>
+<span class="font-label-mono-sm text-label-mono-sm text-sync-cyan">VEND-CODE: #ABB-IND-11</span>
+</div>
+</div>
+<!-- Action Command Footer inside Card -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs text-body-sm text-status-emergency">
+<span class="material-symbols-outlined text-[16px]">report_problem</span>
+<span class="font-label-mono-sm text-label-mono-sm font-semibold">AIR FREIGHT PO #PO-8851 REQUIRED</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[14px]">link</span>
+<span>LINK TO WO</span>
+</button>
+<button class="px-space-sm py-1 rounded bg-status-emergency text-on-surface font-label-mono-sm text-label-mono-sm font-semibold flex items-center gap-1 shadow-[0_0_14px_rgba(239,68,68,0.4)] hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[14px]">priority_high</span>
+<span>EMERGENCY EXPEDITE</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Ledger Footer / Pagination Controls -->
+<div class="p-space-md bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">SHOWING 1 TO 5 OF 240 CATALOG RECORDS // SECTOR 4 WHSE</span>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded bg-surface-recessed text-status-standby hover:text-on-surface flex items-center shadow-inner">
+<span class="material-symbols-outlined text-[18px]">first_page</span>
+</button>
+<button class="p-1 rounded bg-surface-recessed text-status-standby hover:text-on-surface flex items-center shadow-inner">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<span class="px-space-sm py-0.5 rounded bg-primary-container text-on-primary-container font-label-mono-sm text-label-mono-sm font-bold">1</span>
+<span class="px-space-sm py-0.5 rounded bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm">2</span>
+<span class="px-space-sm py-0.5 rounded bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm">3</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby px-1">...</span>
+<span class="px-space-sm py-0.5 rounded bg-surface-container-high text-on-surface font-label-mono-sm text-label-mono-sm">48</span>
+<button class="p-1 rounded bg-surface-recessed text-status-standby hover:text-on-surface flex items-center shadow-inner">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+<button class="p-1 rounded bg-surface-recessed text-status-standby hover:text-on-surface flex items-center shadow-inner">
+<span class="material-symbols-outlined text-[18px]">last_page</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Quick Part Inspection Node & Shelf Diagnostics (4 Cols) -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- Sticky Diagnostic Card for Active Selection (BRG-SKF-23088) -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] flex flex-col gap-space-md relative overflow-hidden">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-secondary uppercase tracking-widest flex items-center gap-1">
+<span class="h-2 w-2 rounded-full bg-secondary animate-pulse"></span>
+              QUICK INSPECTION NODE
+            </span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold mt-0.5">BRG-SKF-23088</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-error-container text-on-error-container font-label-mono-sm text-label-mono-sm font-semibold">
+            DEFICIT LEVEL 1
+          </span>
+</div>
+<!-- Shelf QR Code & Physical Storage Tag -->
+<div class="bg-surface-recessed p-space-md rounded-lg flex items-center gap-space-md shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<!-- Vector QR Simulation -->
+<div class="w-24 h-24 bg-surface-card rounded p-1.5 flex flex-col justify-between shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.8)] border border-primary/20">
+<svg class="w-full h-full text-primary" fill="currentColor" viewbox="0 0 24 24">
+<path d="M2,2H10V10H2V2M4,4V8H8V4H4M14,2H22V10H14V2M16,4V8H20V4H16M2,14H10V22H2V14M4,16V20H8V16H4M14,14H16V16H14V14M18,14H20V16H18V14M20,16H22V18H20V16M14,18H16V20H14V18M18,18H20V20H18V18M16,16H18V18H16V16M20,20H22V22H20V20M14,20H16V22H14V20M18,20H20V22H18V20Z"></path>
+</svg>
+</div>
+<div class="flex flex-col justify-center">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">SHELF RFID / QR CODE</span>
+<span class="font-label-mono-md text-label-mono-md text-gold-bright mt-0.5">RFID: 0x992B-44A0</span>
+<span class="font-body-sm text-body-sm text-on-surface mt-1">Rack Bay: <strong class="text-secondary">B4, Level 2</strong></span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Smelter Whse North Gate</span>
+<button class="mt-2 text-left font-label-mono-sm text-label-mono-sm text-primary hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">print</span>PRINT TACTICAL LABEL
+            </button>
+</div>
+</div>
+<!-- Optical Component Spec & High-Resolution Photographic Target -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">OPTICAL SIGNATURE &amp; SPEC</span>
+<span class="font-label-mono-sm text-label-mono-sm text-secondary">CALIBRATED</span>
+</div>
+<div class="relative w-full h-40 rounded-lg overflow-hidden bg-surface-recessed shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6)]">
+<img class="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500" data-alt="Industrial heavy-duty spherical roller bearing machined from polished alloy steel, resting on an industrial dark slate inspection staging table with laser dimension crosshairs and technical caliper measurements. Tactical lighting with warm amber rim glows highlighting precision machined roller elements and brass cage." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeJhEhwfRcZrsIULQlNDKrCi-HrCME_dQjn0mUjgP7aXmAqZqenO7B-zj-GzaaDP59r_DWmJsV0GqSr0JOPKmAhUrAHCuLLNg1yDp8EPB5mXvHUm8kclTWSYTotZRjh8EZQiQcq0m38D-7s5sj5WPnS6QOGS3lq0EGXbDgs3zRFvR8bAc7S7RfjBZ1Z5nFvrlXm1aoJcKtqeD9DGzsYFAlKNNQh33lj_Zt-DyPX_KikBUZDjH8AnEO"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-card via-transparent to-transparent"></div>
+<!-- Overlay Crosshair HUD -->
+<div class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-surface-base/80 backdrop-blur font-label-mono-sm text-label-mono-sm text-gold-bright">
+              OD: 650.0mm | ID: 440.0mm
+            </div>
+<div class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-surface-base/80 backdrop-blur font-label-mono-sm text-label-mono-sm text-secondary">
+              WEIGHT: 182.4 KG
+            </div>
+</div>
+</div>
+<!-- MTBF Wear Profile & Historical Lifecycle Chart -->
+<div class="flex flex-col gap-space-xs bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">MTBF WEAR TELEMETRY</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-emergency font-bold">CRITICAL THRESHOLD</span>
+</div>
+<!-- Vector Sparkline / Wear Curve -->
+<div class="w-full h-14 mt-1">
+<svg class="w-full h-full" fill="none" viewbox="0 0 200 45">
+<defs>
+<lineargradient id="wearGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ef4444" stop-opacity="0.4"></stop>
+<stop offset="100%" stop-color="#ef4444" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Baseline Safe Limit -->
+<line opacity="0.6" stroke="#f59e0b" stroke-dasharray="3,3" stroke-width="1" x1="0" x2="200" y1="15" y2="15"></line>
+<!-- Area -->
+<path d="M0,40 Q40,38 80,32 T140,22 T180,10 L200,6 L200,45 L0,45 Z" fill="url(#wearGrad)"></path>
+<!-- Line -->
+<path d="M0,40 Q40,38 80,32 T140,22 T180,10 L200,6" stroke="#ef4444" stroke-linecap="round" stroke-width="2"></path>
+<!-- Warning Marker at latest node -->
+<circle class="animate-ping" cx="200" cy="6" fill="#ef4444" r="3.5"></circle>
+<circle cx="200" cy="6" fill="#dce3f1" r="2.5"></circle>
+</svg>
+</div>
+<div class="flex items-center justify-between text-body-sm text-body-sm mt-1">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Run Hrs: 14,200h</span>
+<span class="font-label-mono-sm text-label-mono-sm text-error">Vibration Peak: 7.2 mm/s RMS</span>
+</div>
+</div>
+<!-- Part Usage History Breakdown -->
+<div class="flex flex-col gap-1">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">COMPONENT AUDIT TRAIL</span>
+<div class="flex flex-col divide-y divide-border-subtle bg-surface-recessed rounded p-space-sm shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6)]">
+<div class="py-1.5 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface">WO-2024-1182 (Overhaul)</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Issued by Tech: R. Pratama</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-mono-sm text-label-mono-sm text-error">-1 Unit</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">14 Jan 2024</span>
+</div>
+</div>
+<div class="py-1.5 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface">PO-2023-7491 (Inward Stock)</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Vendor: SKF Indo</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational">+2 Units</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">02 Dec 2023</span>
+</div>
+</div>
+<div class="py-1.5 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono-sm text-label-mono-sm text-on-surface">WO-2023-0941 (Emergency Replace)</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">Ball Mill 01 Flange</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-mono-sm text-label-mono-sm text-error">-1 Unit</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby">18 Aug 2023</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Direct Actions for Selected Node -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<button class="w-full py-space-sm rounded bg-primary-container text-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:bg-gold-bright transition-all active:shadow-[inset_1px_1px_3px_rgba(0,0,0,0.8)] flex items-center justify-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+<span>CREATE REPLENISHMENT PO</span>
+</button>
+<div class="grid grid-cols-2 gap-space-xs">
+<button class="py-space-xs rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-mono-sm text-label-mono-sm transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[15px]">build</span>
+              STAGE FOR WO
+            </button>
+<button class="py-space-xs rounded bg-surface-container-high hover:bg-surface-bright text-secondary font-label-mono-sm text-label-mono-sm transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[15px]">inventory</span>
+              CYCLE COUNT
+            </button>
+</div>
+</div>
+</div>
+<!-- Quick Shelf Storage Visualizer -->
+<div class="rounded-xl bg-surface-card p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.02)] flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-mono-sm text-label-mono-sm text-status-standby uppercase">SECTOR 4 CAPACITY MAP</span>
+<span class="font-label-mono-sm text-label-mono-sm text-status-operational">78% OCCUPIED</span>
+</div>
+<!-- Shelf Grid Matrix Graphic -->
+<div class="grid grid-cols-6 gap-1 bg-surface-recessed p-2 rounded shadow-inner">
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">A1</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">A2</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">A3</div>
+<div class="h-6 rounded bg-surface-container-high flex items-center justify-center text-[9px] font-label-mono-sm text-status-standby">A4</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">A5</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">A6</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">B1</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">B2</div>
+<div class="h-6 rounded bg-status-repair/80 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">B3</div>
+<div class="h-6 rounded bg-status-emergency animate-pulse flex items-center justify-center text-[9px] font-label-mono-sm text-on-surface font-bold shadow-[0_0_8px_rgba(239,68,68,0.5)]">B4</div>
+<div class="h-6 rounded bg-status-operational/70 flex items-center justify-center text-[9px] font-label-mono-sm text-surface-base font-bold">B5</div>
+<div class="h-6 rounded bg-surface-container-high flex items-center justify-center text-[9px] font-label-mono-sm text-status-standby">B6</div>
+</div>
+<div class="flex items-center justify-between text-body-sm text-body-sm pt-1">
+<div class="flex items-center gap-1.5 font-label-mono-sm text-label-mono-sm text-status-standby">
+<span class="w-2 h-2 rounded-sm bg-status-emergency"></span>B4 Target
+            <span class="w-2 h-2 rounded-sm bg-status-operational ml-1"></span>Available
+            <span class="w-2 h-2 rounded-sm bg-surface-container-high ml-1"></span>Empty
+          </div>
+<span class="font-label-mono-sm text-label-mono-sm text-secondary">BAY 4 HIGH-BAY</span>
+</div>
+</div>
+</div>
+</div>
+</div></main></div><footer class="fixed bottom-0 left-0 right-0 h-10 z-50 bg-surface-container-lowest/95 backdrop-blur-md flex items-center justify-between px-gutter-desktop shadow-[0_-1px_6px_rgba(0,0,0,0.5)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="h-1.5 w-1.5 rounded-full bg-status-operational"></span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">LATENCY: 18ms (LOW)</span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px] text-sync-cyan">cloud_done</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">SYNC: AUTONOMOUS REALTIME</span></div><div class="hidden md:flex items-center gap-space-xs"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">INDEXEDDB: STORAGE OPTIMAL</span></div></div><div class="flex items-center gap-space-md"><span class="font-label-mono-sm text-label-mono-sm text-status-standby">MTC CORE v4.12.0-PROD</span><button class="flex items-center gap-1 px-space-sm py-0.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-on-surface font-label-mono-sm text-label-mono-sm text-primary transition-all active:scale-95"><span class="material-symbols-outlined text-[13px]">sync</span><span>FAST SYNC</span></button></div></footer></body></html>
