@@ -1,0 +1,230 @@
+/*
+ * Tactical Slate & Luminous Gold — utilities
+ * Sumber desain: Google Stitch project 2861085646384681595 (screen f88b02d0cb)
+ * Spec lengkap: design/DESIGN-TACTICAL.md
+ *
+ * CATATAN KEPATUHAN (aturan proyek lama, AGENT_CONTEXT):
+ *  - Dilarang full-neuromorphic. Karena itu WADAH (kartu/panel/tabel) dibuat FLAT:
+ *    background plate + 1px safety edge kontras tinggi, tanpa dual outer shadow.
+ *  - Hanya kontrol interaktif kecil (input well, rail, chip) yang boleh taktil/inset.
+ *  - Efek "specular rim" dipertahankan sebagai garis 1px (bukan shadow).
+ */
+
+:root {
+  --tac-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --tac-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --tac-base: #0b0f15;
+  --tac-canvas: #0f141c;
+  --tac-card: #161d27;
+  --tac-elevated: #1e2634;
+  --tac-recessed: #0a0e14;
+  --tac-c-low: #151c26;
+  --tac-c: #19202a;
+  --tac-c-high: #232a35;
+  --tac-c-highest: #2e3540;
+  --tac-line: #283446;
+  --tac-text: #dce3f1;
+  --tac-text-dim: #d8c3ad;
+  --tac-muted: #64748b;
+  --tac-gold: #f59e0b;
+  --tac-gold-bright: #fbbf24;
+  --tac-cyan: #06b6d4;
+  --tac-ok: #10b981;
+  --tac-emergency: #ef4444;
+}
+
+/* ── Wadah flat (bukan neumorphism) ─────────────────────────────────────── */
+.tac-plate {
+  background-color: var(--tac-card);
+  border: 1px solid var(--tac-line);
+  border-radius: 0.75rem;
+  position: relative;
+}
+
+.tac-plate-flat {
+  background-color: var(--tac-canvas);
+  border: 1px solid var(--tac-line);
+  border-radius: 0.5rem;
+}
+
+.tac-plate-inset {
+  background-color: var(--tac-c);
+  border: 1px solid var(--tac-line);
+  border-radius: 0.5rem;
+}
+
+/* Specular rim: garis 1px gradien di tepi atas (bukan shadow) */
+.tac-rim::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+/* ── Kontrol taktil kecil (diizinkan) ───────────────────────────────────── */
+.tac-well {
+  background-color: var(--tac-recessed);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.04);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tac-well:focus-within {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(245, 158, 11, 0.3);
+}
+
+.tac-rail {
+  background-color: var(--tac-recessed);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Tombol ─────────────────────────────────────────────────────────────── */
+.tac-btn-primary,
+.tac-btn-ghost,
+.tac-btn-destructive {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  font-family: var(--tac-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.625rem 1.25rem;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.tac-btn-primary {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #472a00;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.tac-btn-primary:hover {
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+}
+
+.tac-btn-primary:active {
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.tac-btn-ghost {
+  background-color: var(--tac-c);
+  border: 1px solid var(--tac-line);
+  color: var(--tac-text);
+}
+
+.tac-btn-ghost:hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  color: var(--tac-gold-bright);
+}
+
+.tac-btn-destructive {
+  background-color: var(--tac-c);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  color: #ffb4ab;
+}
+
+.tac-btn-destructive:hover {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ffffff;
+}
+
+.tac-btn-primary:disabled,
+.tac-btn-ghost:disabled,
+.tac-btn-destructive:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Label & chip ───────────────────────────────────────────────────────── */
+.tac-label {
+  font-family: var(--tac-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tac-muted);
+}
+
+.tac-label-md {
+  font-family: var(--tac-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tac-num {
+  font-family: var(--tac-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tac-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--tac-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.tac-chip-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* ── Glow indikator (dipakai sangat terbatas: alarm & sync) ─────────────── */
+.tac-glow-gold {
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+}
+
+.tac-glow-cyan {
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.3);
+}
+
+/* ── Bar progres telemetri ──────────────────────────────────────────────── */
+.tac-meter {
+  height: 4px;
+  width: 100%;
+  background-color: var(--tac-recessed);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.tac-meter > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tac-btn-primary,
+  .tac-btn-ghost,
+  .tac-btn-destructive,
+  .tac-well {
+    transition: none;
+  }
+}
