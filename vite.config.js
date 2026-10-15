@@ -97,42 +97,10 @@ export default defineConfig(({ mode }) => {
         srcDir: '.',
         filename: 'sw.js',
         includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js', 'icons/*.png'],
-        manifest: {
-          name: 'MTC.NEXUS',
-          short_name: 'NEXUS',
-          description: 'Advanced Maintenance Analytics Tracker',
-          theme_color: '#0B0F1A',
-          background_color: '#05070a',
-          display: 'standalone',
-          // Enable push notifications in PWA manifest
-          gcm_sender_id: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '400206066339',
-          icons: [
-            {
-              src: 'icons/manifest-icon-192.maskable.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any'
-            },
-            {
-              src: 'icons/manifest-icon-192.maskable.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'maskable'
-            },
-            {
-              src: 'icons/manifest-icon-512.maskable.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any'
-            },
-            {
-              src: 'icons/manifest-icon-512.maskable.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'maskable'
-            }
-          ]
-        }
+        // Manifest dimiliki oleh public/manifest.json (satu sumber kebenaran).
+        // Dinonaktifkan agar VitePWA tidak membuat <link rel="manifest"> kedua
+        // yang bertabrakan (dulu menghasilkan manifest.webmanifest dengan brand lama).
+        manifest: false
       })
     ],
     server: {

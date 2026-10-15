@@ -7,10 +7,11 @@
   "display": "standalone",
   "orientation": "any",
   "background_color": "#05070a",
-  "theme_color": "#00f2ff",
+  "theme_color": "#05070a",
   "categories": ["business", "productivity", "utilities"],
   "lang": "en",
   "dir": "ltr",
+  "gcm_sender_id": "400206066339",
   "icons": [
     {
       "src": "logo.png",
