@@ -409,6 +409,10 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
         return (a.date || '').localeCompare(b.date || '');
       });
   },
+  /** U-1: jumlah PM pending yang sudah overdue (tanggal lewat atau HM terlampaui) */
+  get pmOverdueCount() {
+    return (this.pmList || []).filter((/** @type {any} */ p) => this.isPMOverdue(p)).length;
+  },
   /** Cached per-equip HM: meter if set, else last log HM. Rebuilt when logs/equipment change. */
   _pmHMMap() {
     if (!this._pmHM || this._pmHMRef !== this.logs || this._pmHMEqRef !== this.equipment) {

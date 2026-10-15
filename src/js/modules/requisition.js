@@ -75,40 +75,45 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
                     
                     // Detect status transitions & new items
                     if (!this._reqPrevStatuses) this._reqPrevStatuses = {};
-                    if (!this._reqSeenIds) this._reqSeenIds = new Set(Object.keys(this._reqPrevStatuses));
-                    entries.forEach(req => {
-                        // --- NEW REQUEST DETECTION ---
-                        if (this._reqSeenIds.size > 0 && !this._reqSeenIds.has(req.id)) {
-                            const requester = req.requesterName || req.createdBy || 'Someone';
-                            const itemLabel = req.items && req.items.length > 1
-                                ? `${req.items[0].itemName} +${req.items.length -1} others`
-                                : (req.itemName || 'Item');
-                            sendBrowserNotification('📦 New Request Part', `${requester} requested: ${itemLabel}`);
-                            sendPushViaProxy('📦 Request Part Baru', `${requester} meminta: ${itemLabel}`);
-                            this.showNotification(`📦 ${requester} requested: ${itemLabel}`, 'info');
-                        }
-                        this._reqSeenIds.add(req.id);
-
-                        // --- STATUS TRANSITION DETECTION ---
-                        const prev = this._reqPrevStatuses[req.id];
-                        const cur = req.status;
-                        if (prev && prev !== cur) {
-                            if (prev === 'pending' && cur === 'approved') {
-                                sendBrowserNotification('✅ Request Approved', `${req.itemName} was approved`);
-                                sendPushViaProxy('✅ Request Disetujui', `${req.itemName} telah disetujui`);
-                                this.showNotification(`📋 ${req.itemName} approved!`, 'success');
-                            } else if (prev === 'approved' && cur === 'arrived') {
-                                sendBrowserNotification('📦 Request Arrived', `${req.itemName} — stock has arrived`);
-                                sendPushViaProxy('📦 Barang Tiba', `${req.itemName} sudah sampai`);
-                                this.showNotification(`📦 ${req.itemName} arrived!`, 'success');
-                            } else if (prev === 'arrived' && cur === 'closed') {
-                                sendBrowserNotification('🔒 Request Closed', `${req.itemName} — request closed`);
-                                sendPushViaProxy('🔒 Request Ditutup', `${req.itemName} selesai`);
-                                this.showNotification(`🔒 ${req.itemName} closed`, 'info');
+                    if (!this._reqSeenIds) {
+                        // Seed seen IDs on initial load to avoid notifying on existing requests
+                        this._reqSeenIds = new Set(entries.map(req => req.id));
+                        entries.forEach(req => { this._reqPrevStatuses[req.id] = req.status; });
+                    } else {
+                        entries.forEach(req => {
+                            // Only notify for new requests created after initial load
+                            if (!this._reqSeenIds.has(req.id)) {
+                                const requester = req.requesterName || req.createdBy || 'Someone';
+                                const itemLabel = req.items && req.items.length > 1
+                                    ? `${req.items[0].itemName} +${req.items.length -1} others`
+                                    : (req.itemName || 'Item');
+                                sendBrowserNotification('📦 New Request Part', `${requester} requested: ${itemLabel}`);
+                                sendPushViaProxy('📦 Request Part Baru', `${requester} meminta: ${itemLabel}`);
+                                this.showNotification(`📦 ${requester} requested: ${itemLabel}`, 'info');
+                                this._reqSeenIds.add(req.id);
                             }
-                        }
-                        this._reqPrevStatuses[req.id] = cur;
-                    });
+
+                            // Status transition detection
+                            const prev = this._reqPrevStatuses[req.id];
+                            const cur = req.status;
+                            if (prev && prev !== cur) {
+                                if (prev === 'pending' && cur === 'approved') {
+                                    sendBrowserNotification('✅ Request Approved', `${req.itemName} was approved`);
+                                    sendPushViaProxy('✅ Request Disetujui', `${req.itemName} telah disetujui`);
+                                    this.showNotification(`📋 ${req.itemName} approved!`, 'success');
+                                } else if (prev === 'approved' && cur === 'arrived') {
+                                    sendBrowserNotification('📦 Request Arrived', `${req.itemName} — stock has arrived`);
+                                    sendPushViaProxy('📦 Barang Tiba', `${req.itemName} sudah sampai`);
+                                    this.showNotification(`📦 ${req.itemName} arrived!`, 'success');
+                                } else if (prev === 'arrived' && cur === 'closed') {
+                                    sendBrowserNotification('🔒 Request Closed', `${req.itemName} — request closed`);
+                                    sendPushViaProxy('🔒 Request Ditutup', `${req.itemName} selesai`);
+                                    this.showNotification(`🔒 ${req.itemName} closed`, 'info');
+                                }
+                            }
+                            this._reqPrevStatuses[req.id] = cur;
+                        });
+                    }
                     
                     this.requisitions = entries;
                 } else {

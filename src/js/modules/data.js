@@ -122,19 +122,10 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 
                 if (pendingCount > 0) {
                     const msg = `${pendingCount} Work Order${pendingCount > 1 ? 's' : ''} waiting for approval`;
-                    this.notifications.push({
-                        id: Date.now(),
-                        type: 'Work Order',
-                        message: msg,
-                        icon: 'fa-clock',
-                        color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                        exiting: false
-                    });
-                    
-                    const globalApp = window.app || window.appState;
-                    if (globalApp) {
-                        globalApp.notifications = globalApp.notifications || [];
-                        globalApp.notifications.push({
+                    if (!this.notifications) this.notifications = [];
+                    const exists = this.notifications.some(n => n.type === 'Work Order' && n.message === msg);
+                    if (!exists) {
+                        this.notifications.push({
                             id: Date.now(),
                             type: 'Work Order',
                             message: msg,
@@ -142,6 +133,22 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                             color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
                             exiting: false
                         });
+                    }
+                    
+                    const globalApp = window.app || window.appState;
+                    if (globalApp && globalApp !== this) {
+                        globalApp.notifications = globalApp.notifications || [];
+                        const globalExists = globalApp.notifications.some(n => n.type === 'Work Order' && n.message === msg);
+                        if (!globalExists) {
+                            globalApp.notifications.push({
+                                id: Date.now(),
+                                type: 'Work Order',
+                                message: msg,
+                                icon: 'fa-clock',
+                                color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                                exiting: false
+                            });
+                        }
                     }
                 }
             }
@@ -279,6 +286,22 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         // ponytail: cap 500 — naikkan bila dataset riil > 500 logs
         const histRef = window.query(window.ref(window.db, 'HistoryLog'), window.limitToLast(500));
         let _firebaseLogsLoaded = false;
+        let _initialHistoryLoaded = false;
+
+        // Seed seen IDs from cache to avoid notifying on cached records
+        if (!this._woSeenIds) {
+            this._woSeenIds = new Set((this.logs || []).map(l => l && l.LogID).filter(Boolean));
+        }
+
+        // Firebase fires onValue after initial child_added flood completes
+        if (window.onValue) {
+            const unsubOnce = window.onValue(histRef, () => {
+                _initialHistoryLoaded = true;
+            }, { onlyOnce: true });
+            if (typeof unsubOnce === 'function') this._listeners.push(unsubOnce);
+        }
+        setTimeout(() => { _initialHistoryLoaded = true; }, 1500);
+
         this._listeners.push(window.onChildAdded(histRef, (/** @type {any} */ snapshot) => {
             try {
                 const item = snapshot.val();
@@ -288,13 +311,16 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
 
                 if (!this._woSeenIds) this._woSeenIds = new Set();
                 const isWO = Boolean(processed.woNumber || (processed.Jenis && (processed.Jenis === 'Repair' || processed.Jenis === 'Breakdown' || processed.Jenis === 'PM' || processed.Jenis === 'Service')));
+                const isUnapproved = processed.Status === 'Pending' || processed.Status === 'Draft';
+
+                // Notify only for new unapproved work orders arriving in real-time after initial load
+                if (isWO && isUnapproved && _initialHistoryLoaded && !this._woSeenIds.has(processed.LogID)) {
+                    const requester = processed.requestedBy || processed.createdBy || processed.Technician || 'Unknown';
+                    sendBrowserNotification('🔧 New Work Order', `${requester}: ${(processed.Deskripsi || processed.Jenis || 'WO').substring(0, 60)}`);
+                    sendPushViaProxy('🔧 Work Order Baru', `${requester}: ${(processed.Deskripsi || processed.Jenis || 'WO').substring(0, 80)}`);
+                    this.showNotification(`🔧 ${requester} created WO: ${(processed.Deskripsi || processed.Jenis || '').substring(0, 40)}`, 'info');
+                }
                 if (isWO) {
-                    if (this._woSeenIds.size > 0 && !this._woSeenIds.has(processed.LogID)) {
-                        const requester = processed.requestedBy || processed.createdBy || processed.Technician || 'Unknown';
-                        sendBrowserNotification('🔧 New Work Order', `${requester}: ${(processed.Deskripsi || processed.Jenis || 'WO').substring(0, 60)}`);
-                        sendPushViaProxy('🔧 Work Order Baru', `${requester}: ${(processed.Deskripsi || processed.Jenis || 'WO').substring(0, 80)}`);
-                        this.showNotification(`🔧 ${requester} created WO: ${(processed.Deskripsi || processed.Jenis || '').substring(0, 40)}`, 'info');
-                    }
                     this._woSeenIds.add(processed.LogID);
                 }
 

@@ -315,9 +315,9 @@ function checkPendingWorkOrders() {
     pushInAppNotif('Work Order', `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length-3}` : ''}`, 'fa-clipboard-exclamation', 'border-orange-500 bg-orange-500/20 text-orange-400');
   }
 
-  // C1: Aging WO — pending > 3 hari (SLA), berapa lama menunggu
+  // Aging unapproved WO — pending > 3 hari (SLA), berapa lama menunggu
   const aging = logs.filter(l => {
-    if (!(l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved')) return false;
+    if (!(l.Status === 'Pending' || l.Status === 'Draft')) return false;
     if (!l.Tanggal) return false;
     const d = new Date(l.Tanggal);
     if (isNaN(d)) return false;

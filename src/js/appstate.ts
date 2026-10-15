@@ -139,6 +139,8 @@ export interface AppState {
   logsLoadingMore: boolean;
   logsPage: number;
   menuItems: any[];
+  analyticsTabs: any[];
+  analyticsTab: string;
   modalsLoaded?: boolean;
   mpLoading?: boolean;
   mpMonth?: any;
@@ -288,6 +290,8 @@ export interface AppState {
   backlogScore: (...args: any[]) => any;
   backlogScoreColor: (...args: any[]) => any;
   badgeCount: (...args: any[]) => any;
+  badgeClass: (...args: any[]) => any;
+  badgeLabel: (...args: any[]) => any;
   blobToBase64: (...args: any[]) => any;
   buildAnalysisPrompt: (...args: any[]) => any;
   buildSmartPrompt: (...args: any[]) => any;
@@ -463,6 +467,13 @@ export interface AppState {
   get mtbfResult(): any;
   mttrByTech: (...args: any[]) => any;
   navigateTo: (...args: any[]) => any;
+  openMenuItem: (...args: any[]) => any;
+  setAnalyticsTab: (...args: any[]) => any;
+  isMenuActive: (...args: any[]) => any;
+  get legacyAnalyticsIds(): any[];
+  get isAnalyticsPage(): boolean;
+  get availableAnalyticsTabs(): any[];
+  get currentPageName(): string;
   onPerfEquipChange: (...args: any[]) => any;
   openCreateUserModal: (...args: any[]) => any;
   openEditUser: (...args: any[]) => any;
@@ -474,6 +485,9 @@ export interface AppState {
   openQR: (...args: any[]) => any;
   openRequisitionModal: (...args: any[]) => any;
   get openWOCount(): any;
+  get criticalDowntimeList(): any[];
+  get criticalDowntimeCount(): any;
+  get criticalDowntimeLabel(): any;
   get openWOs(): any[];
   paginatedEquip: (...args: any[]) => any;
   parsePartsUsed: (...args: any[]) => any;
@@ -505,6 +519,7 @@ export interface AppState {
   pmToggleSelect: (...args: any[]) => any;
   pmToggleSelectAll: (...args: any[]) => any;
   get pmUpcomingList(): any[];
+  get pmOverdueCount(): any;
   predictNextFailure: (...args: any[]) => any;
   get predictiveAlerts(): any;
   queueOfflineOperation: (...args: any[]) => any;

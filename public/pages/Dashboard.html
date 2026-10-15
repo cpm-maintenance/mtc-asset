@@ -21,6 +21,51 @@
     </div>
   </div>
 
+  <!-- 🚨 U-4: Live Breakdown / Critical Downtime Banner (auto-hide bila semua normal) -->
+  <section x-show="criticalDowntimeList.length > 0" x-cloak role="alert" aria-live="assertive"
+    aria-label="Critical downtime alert"
+    class="relative overflow-hidden rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 md:p-5">
+    <div class="absolute inset-0 pointer-events-none"
+      style="background: radial-gradient(circle at 0% 0%, rgba(244,63,94,0.20) 0%, transparent 60%)"></div>
+    <div class="relative flex flex-col lg:flex-row lg:items-center gap-3 md:gap-4">
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="relative flex w-9 h-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
+          <span class="absolute inline-flex w-full h-full rounded-xl bg-rose-500/40 animate-ping"></span>
+          <i class="fas fa-exclamation-triangle relative" aria-hidden="true"></i>
+        </span>
+        <div>
+          <p class="text-xs font-black uppercase tracking-widest text-rose-300">Live Breakdown Alert</p>
+          <p class="text-[11px] text-rose-200/80" x-text="criticalDowntimeLabel"></p>
+        </div>
+      </div>
+
+      <ul class="flex-1 min-w-0 flex flex-wrap gap-2">
+        <template x-for="item in criticalDowntimeList.slice(0, 3)" :key="item.woNumber + '-' + item.equipName">
+          <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 min-w-0">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" aria-hidden="true"
+              :class="item.isEmergency ? 'bg-rose-400' : 'bg-amber-400'"></span>
+            <span class="text-[11px] font-bold text-white/90 truncate max-w-[190px]" x-text="item.equipName"></span>
+            <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded shrink-0"
+              :class="item.isEmergency ? 'bg-rose-500/25 text-rose-300' : 'bg-amber-500/20 text-amber-300'"
+              x-text="item.priority"></span>
+            <span class="text-[10px] text-rose-200/70 font-mono shrink-0" x-text="'#' + item.woNumber"></span>
+            <span class="text-[10px] text-rose-200/70 shrink-0" x-show="item.ageDays > 0"
+              x-text="item.ageDays + 'd'" :title="'Open for ' + item.ageDays + ' day(s)'"></span>
+          </li>
+        </template>
+        <li x-show="criticalDowntimeList.length > 3"
+          class="flex items-center px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-[11px] font-bold text-rose-200"
+          x-text="'+' + (criticalDowntimeList.length - 3) + ' more'"></li>
+      </ul>
+
+      <button type="button" @click="navigateTo('wo')"
+        class="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-rose-500 text-white text-[11px] font-black uppercase tracking-wider hover:bg-rose-400 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+        :aria-label="'View ' + criticalDowntimeCount + ' critical work order' + (criticalDowntimeCount === 1 ? '' : 's')">
+        <i class="fas fa-arrow-right" aria-hidden="true"></i> View WO
+      </button>
+    </div>
+  </section>
+
   <!-- Row 1: KPI Stat Cards (5) — icon per stat, delta, glow -->
   <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
     <template x-for="stat in Object.values(calculatedStats)" :key="stat.label">

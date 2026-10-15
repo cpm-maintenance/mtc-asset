@@ -20,11 +20,39 @@ import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor
 
 /** @typedef {import("./appstate").AppState} AppState */
 /**
+ * Object spread memanggil getter, sehingga setiap getter yang dideklarasikan di dalam
+ * file modul (mis. `pmUpcomingList`, `pmOverdueCount`) ikut "membeku" menjadi nilai
+ * statis saat `app()` dipanggil — nilainya tidak pernah berubah lagi setelah data
+ * termuat (mis. `pmUpcomingList` selalu `[]`).
+ *
+ * Helper ini menyalin ulang accessor (get/set) dari modul-modul ke objek state akhir
+ * sebagai accessor hidup, supaya Alpine tetap reaktif.
+ *
+ * @param {Record<string, any>} target Objek state hasil komposisi.
+ * @param {Array<Record<string, any>>} sources Modul-modul yang di-spread.
+ */
+function reattachModuleGetters(target, sources) {
+    for (const src of sources) {
+        if (!src) continue;
+        for (const key of Object.getOwnPropertyNames(src)) {
+            const desc = Object.getOwnPropertyDescriptor(src, key);
+            if (!desc || (!desc.get && !desc.set)) continue;
+            Object.defineProperty(target, key, {
+                get: desc.get,
+                set: desc.set,
+                enumerable: true,
+                configurable: true,
+            });
+        }
+    }
+}
+
+/**
  * Root Alpine app factory.
  * @returns {AppState} The composed app state (APP_STATE members + mixins).
  */
 export function app() {
-    return /** @type {AppState} */ ({
+    const state = /** @type {AppState} */ ({
         // --- APP STATE ---
         currentPage: 'dash', sidebarCollapsed: false, activeTab: 'hist', search: '', searchPart: '', partFilterEquip: '',
         installPromptEvent: null, showInstallButton: false,
@@ -476,12 +504,15 @@ if (confirm('Are you sure you want to logout?')) {
             { id: 'parts', name: 'Spare Parts', short: 'Parts', icon: 'fas fa-box', mobile: true, group: 'Inventory' },
             { id: 'request', name: 'Request Part', short: 'Request', icon: 'fas fa-shopping-cart', mobile: true, group: 'Inventory' },
 
-            // --- ANALYTICS ---
-            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', icon: 'fas fa-chart-line', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', mobile: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', mobile: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'ai', name: 'AI Analysis', short: 'AI', icon: 'fas fa-robot', mobile: false, allowedRole: 'admin', group: 'Analytics' },
+            // --- ANALYTICS (U-3: dikonsolidasi menjadi satu entri "Analytics Hub") ---
+            { id: 'analytics', name: 'Analytics Hub', short: 'Analytics', icon: 'fas fa-chart-pie', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
+            // Sub-view lama tetap terdaftar sebagai `hidden` supaya deep-link, guard akses,
+            // dan watcher chart per-halaman (kpi/enterprise) tetap berfungsi apa adanya.
+            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', icon: 'fas fa-chart-line', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'ai', name: 'AI Analysis', short: 'AI', icon: 'fas fa-robot', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
         ],
 
         // --- MOBILE PRIMARY NAV (5 slots + More) ---
@@ -494,7 +525,7 @@ if (confirm('Are you sure you want to logout?')) {
         get menuGroups() {
             /** @type {Record<string, {name: string, items: any[]}>} */
             const groups = {};
-            this.menuItems.filter(m => this.canAccess(m)).forEach(item => {
+            this.menuItems.filter(m => !m.hidden && this.canAccess(m)).forEach(item => {
                 const g = item.group || 'Other';
                 if (!groups[g]) groups[g] = { name: g, items: [] };
                 groups[g].items.push(item);
@@ -516,9 +547,100 @@ if (confirm('Are you sure you want to logout?')) {
             this.currentPage = pageId;
         },
 
+        // ── U-3: ANALYTICS HUB (konsolidasi 5 menu analytics) ──
+        /** Sub-view Analytics Hub; `id` = id halaman lama agar watcher chart tetap jalan. */
+        analyticsTabs: [
+            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', allowedRole: 'supervisor' },
+            { id: 'mtbfmttr', name: 'MTBF / MTTR', short: 'MTBF', icon: 'fas fa-chart-line', allowedRole: 'supervisor' },
+            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', allowedRole: 'admin' },
+            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', allowedRole: 'admin' },
+            { id: 'ai', name: 'AI Advisor', short: 'AI', icon: 'fas fa-robot', allowedRole: 'admin' },
+        ],
+        /** Sub-view terakhir yang dibuka (dipakai saat klik entri "Analytics Hub"). */
+        analyticsTab: 'perf',
+        get legacyAnalyticsIds() {
+            return this.analyticsTabs.map(t => t.id);
+        },
+        /** true bila halaman aktif adalah salah satu sub-view Analytics Hub. */
+        get isAnalyticsPage() {
+            return this.legacyAnalyticsIds.includes(this.currentPage);
+        },
+        /** Sub-view yang boleh diakses role aktif (user biasa tidak dapat analytics sama sekali). */
+        get availableAnalyticsTabs() {
+            return this.analyticsTabs.filter(t => this.canAccess(t));
+        },
+        /** Pindah sub-tab Analytics Hub. */
+        setAnalyticsTab(tabId) {
+            const tab = this.availableAnalyticsTabs.find(t => t.id === tabId);
+            if (!tab) {
+                this.showNotification('Access denied', 'error');
+                return;
+            }
+            this.analyticsTab = tabId;
+            this.navigateTo(tabId);
+        },
+        /** Klik entri sidebar: "Analytics Hub" membuka sub-view terakhir yang diizinkan. */
+        openMenuItem(itemId) {
+            if (itemId !== 'analytics') return this.navigateTo(itemId);
+            const tabs = this.availableAnalyticsTabs;
+            if (!tabs.length) {
+                this.showNotification('Access denied', 'error');
+                return;
+            }
+            const last = tabs.find(t => t.id === this.analyticsTab) || tabs[0];
+            this.analyticsTab = last.id;
+            this.navigateTo(last.id);
+        },
+        /** Highlight sidebar: entri "Analytics Hub" tetap aktif di semua sub-view-nya. */
+        isMenuActive(itemId) {
+            if (itemId === 'analytics') return this.isAnalyticsPage;
+            return this.currentPage === itemId;
+        },
+        /** Judul header — semua sub-view Analytics Hub tampil sebagai "Analytics Hub". */
+        get currentPageName() {
+            if (this.isAnalyticsPage) return 'Analytics Hub';
+            const m = this.menuItems.find(i => i.id === this.currentPage);
+            return m ? m.name : '';
+        },
+
         // --- SIDEBAR BADGE COUNTS ---
         get openWOCount() {
             return (this.logs || []).filter(l => l.Status && l.Status !== 'Completed').length;
+        },
+
+        /**
+         * U-4: WO yang menandakan unit sedang stop / kritis dan belum ditutup.
+         * Dipakai banner darurat di paling atas Dashboard.
+         * Kriteria: prioritas Emergency/Urgent, atau jenis pekerjaan Breakdown.
+         */
+        get criticalDowntimeList() {
+            const CLOSED = ['Completed', 'Cancelled', 'Rejected'];
+            return (this.logs || [])
+                .filter(l => l && !CLOSED.includes(l.Status))
+                .filter(l => l.woPriority === 'Emergency' || l.woPriority === 'Urgent' || l.Jenis === 'Breakdown')
+                .map(l => {
+                    const eq = (this.equipment || []).find(e => e && e.EquipmentID === l.EquipmentID);
+                    const isEmergency = l.woPriority === 'Emergency' || l.Jenis === 'Breakdown';
+                    return {
+                        log: l,
+                        woNumber: l.woNumber || l.LogID || '-',
+                        equipName: (eq && eq.Nama) || l.externalEquipName || l.EquipmentID || 'Unknown unit',
+                        priority: l.woPriority || (l.Jenis === 'Breakdown' ? 'Emergency' : 'Urgent'),
+                        isEmergency,
+                        ageDays: this.woAgeDays(l),
+                        downtime: Number(l.Downtime) || 0,
+                    };
+                })
+                .sort((a, b) => (Number(b.isEmergency) - Number(a.isEmergency)) || (b.ageDays - a.ageDays));
+        },
+        get criticalDowntimeCount() {
+            return this.criticalDowntimeList.length;
+        },
+        /** U-4: label aksesibel, mis. "2 units need immediate attention" */
+        get criticalDowntimeLabel() {
+            const n = this.criticalDowntimeCount;
+            if (!n) return '';
+            return n + (n === 1 ? ' unit needs immediate attention' : ' units need immediate attention');
         },
 
         // ── WO Age / Backlog Aging (R1) ──
@@ -664,16 +786,50 @@ if (confirm('Are you sure you want to logout?')) {
                 .slice(0, 5);
         },
         get lowStockCount() {
-            return (this.allParts || []).filter(p => p.isLowStock).length;
+            // U-1: samakan semantik dengan alert dashboard — hitung hanya part yang
+            // punya MinStock > 0 dan stok <= MinStock; fallback ke flag tersimpan.
+            return (this.allParts || []).filter(p => {
+                if (!p) return false;
+                const min = Number(p.MinStock);
+                if (min > 0) return Number(p.Stok) <= min;
+                return p.isLowStock === true;
+            }).length;
         },
         get pendingReqCount() {
             return (this.requisitions || []).filter(r => r.status === 'pending').length;
         },
         badgeCount(itemId) {
             /** @type {Record<string, any>} */
-            const map = { wo: this.openWOCount, parts: this.lowStockCount, request: this.pendingReqCount };
-            const c = map[itemId] || 0;
+            const map = {
+                wo: this.openWOCount,
+                pms: this.pmOverdueCount,
+                parts: this.lowStockCount,
+                request: this.pendingReqCount,
+            };
+            const c = Number(map[itemId]) || 0;
             return c > 0 ? c : '';
+        },
+        /**
+         * U-1: warna badge per menu — merah/rose untuk yang benar-benar mendesak
+         * (PM overdue & stok kritis), amber untuk beban kerja biasa.
+         */
+        badgeClass(itemId) {
+            if (!this.badgeCount(itemId)) return '';
+            if (itemId === 'pms') return 'bg-red-500 text-white';
+            if (itemId === 'parts') return 'bg-rose-500 text-white';
+            return 'bg-amber-500/90 text-nexus-black';
+        },
+        /** U-1: label aksesibel, mis. "3 open work orders" */
+        badgeLabel(itemId, itemName) {
+            const c = this.badgeCount(itemId);
+            if (!c) return '';
+            const noun = /** @type {Record<string, string>} */ ({
+                wo: 'open work order',
+                pms: 'overdue PM task',
+                parts: 'low stock part',
+                request: 'pending part request',
+            })[itemId] || (itemName ? String(itemName).toLowerCase() : 'item');
+            return c + ' ' + noun + (Number(c) === 1 ? '' : 's');
         },
 
                 // --- MODULE INJECTION ---
@@ -1654,4 +1810,12 @@ if (confirm('Are you sure you want to logout?')) {
             });
         },
     });
+
+    reattachModuleGetters(state, [
+        authModule, uiModule, dataModule, equipmentModule, partsModule, logsModule,
+        performanceModule, exportModule, kpiEngineModule, aiModule, pmScheduleModule,
+        requisitionModule, chartModule, errorHandlerModule, bootstrapModule,
+    ]);
+
+    return state;
 }
