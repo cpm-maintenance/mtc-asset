@@ -881,17 +881,89 @@ if (confirm('Are you sure you want to logout?')) {
             this.applyDashboardFilter();
         },
 
+        get heroHUD() {
+            const from = this.dashboardDateFrom || '';
+            const to = this.dashboardDateTo || '';
+            const inRange = (/** @type {any} */ d) => !d || ((!from || d >= from) && (!to || d <= to));
+
+            // 1. Plant Availability (PA %) & Overall Health
+            const perf = this.performanceData || [];
+            const avgPA = perf.length > 0
+                ? Number((perf.reduce((s, p) => {
+                    const wh = Number(p.wh) || 24, bd = Number(p.bd) || 0, stb = Number(p.stb) || 0;
+                    return s + (wh > 0 ? ((wh - bd - stb) / wh) * 100 : 0);
+                }, 0) / perf.length).toFixed(1))
+                : 90.0;
+            const paTarget = 90.0;
+            const paStatus = avgPA >= paTarget ? 'Optimal' : (avgPA >= 80 ? 'Warning' : 'Critical');
+            const paColor = avgPA >= paTarget ? 'emerald' : (avgPA >= 80 ? 'amber' : 'rose');
+
+            // 2. Reliability Core: MTBF & MTTR
+            /** @type {any[]} */
+            const logs = this.logs || [];
+            const breakdowns = logs.filter(l => l && l.Jenis === 'Breakdown');
+            const totalBD = breakdowns.length;
+            const totalBDHrs = breakdowns.reduce((s, l) => s + (Number(l.Downtime) || 0), 0);
+            const equipIds = [...new Set((this.equipment || []).map(e => e.EquipmentID))];
+            const mtbfs = equipIds.map(id => Number(this.calculateMTBF?.(id))).filter(v => v > 0);
+            const mtbfVal = mtbfs.length > 0 ? (mtbfs.reduce((a, b) => a + b, 0) / mtbfs.length).toFixed(1) : '—';
+            const mttrVal = totalBD > 0 ? (totalBDHrs / totalBD).toFixed(1) : '0.0';
+
+            // 3. Work Order Health & Execution
+            const wos = (this.logs || []).filter(l => l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Approved' || l.Status === 'Completed' || l.Status === 'In Progress') && inRange(l.Tanggal));
+            const woTotal = wos.length;
+            const woDone = wos.filter(l => l.Status === 'Completed').length;
+            const woInProgress = wos.filter(l => l.Status === 'In Progress').length;
+            const woPending = wos.filter(l => l.Status !== 'Completed' && l.Status !== 'In Progress').length;
+            const woRate = woTotal > 0 ? Math.round((woDone / woTotal) * 100) : 0;
+
+            // 4. PM Compliance & Overdue Risk
+            const pmc = this.calcPMCompliance ? this.calcPMCompliance() : { pct: 100, overdue: 0, total: 0 };
+            const overduePM = this.dashAlerts?.overduePM ?? pmc.overdue;
+
+            return {
+                pa: { val: avgPA, status: paStatus, color: paColor, target: paTarget },
+                reliability: { mtbf: mtbfVal, mttr: mttrVal, breakdowns: totalBD },
+                wo: { total: woTotal, done: woDone, inProgress: woInProgress, pending: woPending, rate: woRate },
+                pm: { pct: pmc.pct, overdue: overduePM, total: pmc.total }
+            };
+        },
+
+        get actionableWOs() {
+            const CLOSED = ['Completed', 'Cancelled', 'Rejected'];
+            return (this.logs || [])
+                .filter(l => l && (l.woNumber || l.Jenis) && !CLOSED.includes(l.Status))
+                .map(l => {
+                    const eq = (this.equipment || []).find(e => e && e.EquipmentID === l.EquipmentID);
+                    const prioScore = l.woPriority === 'Emergency' ? 4 : (l.woPriority === 'Urgent' ? 3 : (l.woPriority === 'Normal' ? 2 : 1));
+                    const isBD = l.Jenis === 'Breakdown';
+                    return {
+                        log: l,
+                        woNumber: l.woNumber || l.LogID || '-',
+                        equipName: (eq && eq.Nama) || l.externalEquipName || l.EquipmentID || 'General Asset',
+                        desc: l.Deskripsi || l.Jenis || 'Maintenance Task',
+                        priority: l.woPriority || (isBD ? 'Emergency' : 'Normal'),
+                        status: l.Status || 'Pending',
+                        ageDays: this.woAgeDays(l),
+                        prioScore: isBD ? 5 : prioScore,
+                    };
+                })
+                .sort((a, b) => (b.prioScore - a.prioScore) || (b.ageDays - a.ageDays))
+                .slice(0, 5);
+        },
+
         // Dashboard alert zone (P1)
         get dashAlerts() {
             const today = new Date().toISOString().split('T')[0];
             const overduePM = (this.pmList || []).filter(pm => pm.status === 'pending' && pm.date && pm.date < today).length;
             const agingWO = (this.logs || []).filter(l => {
-                if (!(l.Status === 'Pending' || l.Status === 'Draft' || l.Status === 'Approved')) return false;
+                if (!(l.Status === 'Pending' || l.Status === 'Draft')) return false;
                 if (!l.Tanggal) return false;
                 const d = new Date(l.Tanggal);
                 return !isNaN(d.getTime()) && (new Date(today).getTime() - d.getTime()) / 86400000 > 3;
             }).length;
-            const lowStock = (this.allParts || []).filter(p => Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0).length;
+            // C-2: Single source of truth via lowStockCount
+            const lowStock = this.lowStockCount;
             return { overduePM, agingWO, lowStock };
         },
 
@@ -942,7 +1014,7 @@ if (confirm('Are you sure you want to logout?')) {
                 totalEquip: { label: 'Total Assets', value: equips.length || 0, colorHex: '#3b82f6', icon: 'fa-industry', pct: 100 },
                 woCompletionRate: { label: 'WO Completion', value: woRate + '%', colorHex: '#10b981', icon: 'fa-check-circle', pct: woRate },
                 avgHealthScore: { label: 'Avg Health', value: avgHealth + '%', colorHex: '#f59e0b', icon: 'fa-heartbeat', pct: avgHealth },
-                lowStock: { label: 'Low Stock', value: this.dashboardStats.lowStock || 0, colorHex: '#eab308', icon: 'fa-boxes', pct: 70 },
+                lowStock: { label: 'Low Stock', value: this.lowStockCount, colorHex: '#eab308', icon: 'fa-boxes', pct: 70 },
                 pmCompliance: { label: 'PM Compliance', value: (this.calcPMCompliance?.().pct ?? 0) + '%', colorHex: '#a855f7', icon: 'fa-clipboard-check', pct: this.calcPMCompliance?.().pct ?? 0 },
             };
         },

@@ -163,27 +163,6 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                 const tc = this.darkMode ? '#8b9eb7' : '#64748b';
                 const gc = this.themeGrid();
 
-                const ctxStatus = await waitForCanvas('statusChart');
-                if (this.currentPage !== 'dash') return;
-                if (ctxStatus && equipment.length > 0) {
-                    const counts = /** @type {Record<string, number>} */ ({ 'Active': 0, 'In Maintenance': 0, 'Idle': 0, 'Decommissioned': 0 });
-                    equipment.forEach(e => {
-                        if (counts[e.Status] !== undefined) counts[e.Status]++;
-                        else counts['Idle']++;
-                    });
-                    const activeLabels = Object.keys(counts).filter(k => counts[k] > 0);
-                    const activeData = activeLabels.map(k => counts[k]);
-                    window._appCharts = window._appCharts || {};
-                    if (window._appCharts.status) {
-                        try { window._appCharts.status.destroy(); } catch (e) { console.warn('Chart destroy failed', e); }
-                    }
-                    window._appCharts.status = await this.safeCreateChart(ctxStatus, {
-                        type: 'doughnut',
-                        data: { labels: activeLabels, datasets: [{ data: activeData, backgroundColor: [`${this.themeAccent()}`, '#bc13fe', '#334155', '#64748b'] }] },
-                        options: { animation: { duration: 1000, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 10 } } } } }
-                    });
-                }
-
                 const ctxRel = await waitForCanvas('reliabilityChart');
                 if (this.currentPage !== 'dash') return;
                 if (ctxRel && performanceData.length > 0) {
@@ -243,14 +222,17 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                 const ctxWo = await waitForCanvas('woCompletionChart');
                 if (this.currentPage !== 'dash') return;
                 if (ctxWo) {
-                    const wos = (this.logs || []).filter(l => l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Approved'));
+                    const from = this.dashboardDateFrom || '';
+                    const to = this.dashboardDateTo || '';
+                    const inRange = (/** @type {any} */ d) => !d || ((!from || d >= from) && (!to || d <= to));
+                    const wos = (this.logs || []).filter(l => l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Approved' || l.Status === 'Completed' || l.Status === 'In Progress') && inRange(l.Tanggal));
                     const woCompleted = wos.filter(l => l.Status === 'Completed').length;
                     const woInProgress = wos.filter(l => l.Status === 'In Progress').length;
                     const woPending = wos.filter(l => l.Status !== 'Completed' && l.Status !== 'In Progress').length;
                     if (wos.length > 0) {
                         if (window._appCharts.woCompletion) { try { window._appCharts.woCompletion.destroy(); } catch(e) {} }
                         window._appCharts.woCompletion = await this.safeCreateChart(ctxWo, {
-                            type: 'doughnut', data: { labels: ['Completed', 'In Progress', 'Pending'], datasets: [{ data: [woCompleted, woInProgress, woPending], backgroundColor: ['#22c55e', this.themeAccent(), '#f59e0b'] }] },
+                            type: 'doughnut', data: { labels: ['Completed', 'In Progress', 'Pending'], datasets: [{ data: [woCompleted, woInProgress, woPending], backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b'] }] },
                             options: { animation: { duration: 1000, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 10 } } } } }
                         });
                     }

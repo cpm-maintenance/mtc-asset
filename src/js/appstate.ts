@@ -348,6 +348,8 @@ export interface AppState {
   criticalityScore: (...args: any[]) => any;
   get dashAlerts(): any;
   get dashKPIs(): any;
+  get heroHUD(): any;
+  get actionableWOs(): any[];
   deleteItem: (...args: any[]) => any;
   deletePM: (...args: any[]) => any;
   deleteRequisition: (...args: any[]) => any;
