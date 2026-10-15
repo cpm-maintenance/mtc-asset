@@ -139,6 +139,8 @@ export interface AppState {
   logsLoadingMore: boolean;
   logsPage: number;
   manualScanId?: string;
+  dashWoFilter?: string;
+  aiDrawerOpen?: boolean;
   menuItems: any[];
   analyticsTabs: any[];
   analyticsTab: string;

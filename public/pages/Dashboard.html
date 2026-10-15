@@ -1,581 +1,638 @@
-<!-- 🏠 PAGE: DASHBOARD — Tactical Slate & Luminous Gold
-     Port desain: Google Stitch project 2861085646384681595, screen f88b02d0cb
-     Spec: design/DESIGN-TACTICAL.md · utilitas: src/css/tactical.css
-     SEMUA angka diambil dari state aplikasi (logs / equipment / allParts / pmList /
-     heroHUD / calculatedStats) — tidak ada nilai contoh yang di-hardcode. -->
-<div x-cloak class="font-tac-sans space-y-4 md:space-y-5 text-tac-text">
+<!--
+  Dashboard — port 1:1 dari design system Google Stitch
+  project 2861085646384681595 / screen f88b02d0cb
+  ("MTC ASSET — Industrial Operations & Maintenance PWA", DESKTOP 2560×3304)
 
-  <!-- ═══ ZONA 1 · COMMAND STRIP ══════════════════════════════════════════ -->
-  <section aria-label="Command strip" class="space-y-4">
-    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-tac-cyan' : 'bg-tac-emergency'"></span>
-          <span class="tac-label">Plant Operations · Overview Matrix</span>
-        </div>
-        <h1 class="font-tac-sans text-2xl md:text-[32px] font-semibold tracking-tight text-tac-text leading-tight">
-          Operations Overview
-        </h1>
-        <p class="text-xs text-tac-muted mt-1 font-tac-mono uppercase tracking-wider"
-          x-text="equipment.length + ' asset nodes · ' + logs.length + ' maintenance records · ' + (isOnline ? 'sync active' : 'offline queue')"></p>
-      </div>
+  Struktur modul mengikuti markup asli Stitch, urutannya sama:
+    1. PWA / Offline / Telemetry banner
+    2. KPI Industrial Telemetry Matrix (4 kartu)
+    3. Workspace 12 kolom → kiri 8 kolom (Maintenance Activity Protocol +
+       Neural Performance Protocol + distribusi log), kanan 4 kolom
+       (System Access, Optical Scanner, Critical Spare Parts Stock)
+    4. Drawer Ajeng AI Diagnostics
+    5. Status strip
 
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Plant status pill -->
-        <div class="tac-rail inline-flex items-center gap-2 px-3 py-2" role="status"
-          :aria-label="'Plant status: ' + (criticalDowntimeCount > 0 ? criticalDowntimeCount + ' critical work orders' : 'normal') + ', ' + equipment.length + ' assets'">
-          <span class="relative flex w-2 h-2" aria-hidden="true">
-            <span class="absolute inline-flex w-full h-full rounded-full animate-ping"
-              :class="criticalDowntimeCount > 0 ? 'bg-tac-emergency/60' : 'bg-tac-ok/60'"></span>
-            <span class="relative inline-flex w-2 h-2 rounded-full"
-              :class="criticalDowntimeCount > 0 ? 'bg-tac-emergency' : 'bg-tac-ok'"></span>
+  Semua angka diambil dari state aplikasi (equipment, logs, performanceData,
+  pmList, allParts, heroHUD) — tidak ada nilai contoh dari desain.
+  Token warna/tipe: `tac-*` (tailwind.config.js) = 1:1 design system Stitch.
+-->
+<div class="w-full flex flex-col gap-space-lg pb-12">
+
+  <!-- ═══ 1. PWA / OFFLINE / TELEMETRY BANNER ═══════════════════════════ -->
+  <section class="w-full bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 relative overflow-hidden">
+    <div class="absolute -right-16 -top-16 w-64 h-64 bg-tac-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md relative z-10">
+      <div class="flex items-center gap-space-md flex-wrap">
+        <div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-tac-surface-recessed shadow-inner border border-white/5">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  :class="isOnline ? 'bg-tac-sync-cyan' : 'bg-tac-status-emergency'"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5"
+                  :class="isOnline ? 'bg-tac-sync-cyan' : 'bg-tac-status-emergency'"></span>
           </span>
-          <span class="tac-label-md" :class="criticalDowntimeCount > 0 ? 'text-tac-emergency' : 'text-tac-ok'"
-            x-text="criticalDowntimeCount > 0 ? criticalDowntimeCount + ' Critical' : 'Plant Normal'"></span>
-          <span class="text-tac-muted/60 text-[11px]" aria-hidden="true">·</span>
-          <span class="tac-label-md text-tac-text-dim"><span x-text="equipment.length"></span> Nodes</span>
-          <template x-if="dashAlerts.overduePM > 0">
-            <span class="inline-flex items-center gap-2">
-              <span class="text-tac-muted/60 text-[11px]" aria-hidden="true">·</span>
-              <span class="tac-label-md text-tac-gold-bright"><span x-text="dashAlerts.overduePM"></span> PM Overdue</span>
-            </span>
+          <span class="font-label-mono-md text-label-mono-md text-tac-on-surface uppercase tracking-wider"
+                x-text="isOnline ? 'PWA Active / Offline Storage Enabled' : 'PWA Active / Offline Queue Mode'"></span>
+        </div>
+        <div class="flex items-center gap-space-xs text-tac-status-standby">
+          <span class="material-symbols-outlined icon-16 text-tac-sync-cyan animate-spin" style="animation-duration: 4s;">sync</span>
+          <span class="font-label-mono-sm text-label-mono-sm">Syncing with Nexus (IndexedDB Storage Level: <strong class="text-tac-on-surface" x-text="isOnline ? 'OPTIMAL' : 'PENDING SYNC'"></strong>)</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-sm flex-wrap self-end lg:self-auto">
+        <div class="flex items-center bg-tac-surface-recessed p-1 rounded-lg border border-white/5 shadow-inner">
+          <template x-for="t in [['night', 'GOLD'], ['navy', 'NAVY'], ['purple', 'PURPLE'], ['light', 'LIGHT']]" :key="t[0]">
+            <button type="button" @click="setTheme(t[0])"
+                    class="px-2.5 py-1 rounded font-label-mono-sm text-label-mono-sm transition-all"
+                    :class="themeMode === t[0] ? 'bg-tac-primary-container text-tac-on-primary-container font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface'"
+                    x-text="t[1]"></button>
           </template>
         </div>
-
-        <!-- Date presets -->
-        <div class="tac-rail inline-flex items-center gap-1 p-1" role="group" aria-label="Dashboard date range">
-          <button type="button" @click="setDashboardPreset(7)" class="px-3 py-1.5 rounded-tac-sm tac-label-md transition-colors"
-            :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 7) ? 'bg-tac-gold text-[#472a00]' : 'text-tac-muted hover:text-tac-text'">7D</button>
-          <button type="button" @click="setDashboardPreset(30)" class="px-3 py-1.5 rounded-tac-sm tac-label-md transition-colors"
-            :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 7 && Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 30) ? 'bg-tac-gold text-[#472a00]' : 'text-tac-muted hover:text-tac-text'">30D</button>
-          <button type="button" @click="setDashboardPreset(90)" class="px-3 py-1.5 rounded-tac-sm tac-label-md transition-colors"
-            :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 30) ? 'bg-tac-gold text-[#472a00]' : 'text-tac-muted hover:text-tac-text'">90D</button>
-          <button type="button" @click="setDashboardPreset(0)" class="px-3 py-1.5 rounded-tac-sm tac-label-md transition-colors"
-            :class="!dashboardDateFrom ? 'bg-tac-gold text-[#472a00]' : 'text-tac-muted hover:text-tac-text'">All</button>
-        </div>
-
-        <button type="button" @click="openQR()" class="tac-btn-ghost" aria-label="Buka scanner QR">
-          <i class="fas fa-qrcode" aria-hidden="true"></i> Scan Node
+        <button type="button" x-show="showInstallButton" @click="installApp()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tac-surface-container-high hover:bg-tac-surface-bright text-tac-on-surface font-label-mono-md text-label-mono-md transition-all shadow-md active:scale-95">
+          <span class="material-symbols-outlined icon-16 text-tac-gold-bright">download</span>
+          <span>Install App</span>
         </button>
-        <button type="button" x-show="isAdminOrSupervisor" @click="openLogModal(false)" class="tac-btn-primary">
-          <i class="fas fa-plus" aria-hidden="true"></i> New WO
+        <button type="button" @click="aiDrawerOpen = true"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tac-secondary/15 hover:bg-tac-secondary/25 text-tac-secondary font-label-mono-md text-label-mono-md transition-all shadow-[0_0_12px_rgba(76,215,246,0.15)] active:scale-95">
+          <span class="material-symbols-outlined icon-16">smart_toy</span>
+          <span>Ajeng AI Node</span>
         </button>
       </div>
     </div>
+  </section>
 
-    <!-- Live breakdown banner (real, auto-hide) -->
-    <div x-show="criticalDowntimeList.length > 0" x-cloak>
-      <div role="alert" aria-live="assertive" aria-label="Critical downtime alert"
-        class="tac-plate border-tac-emergency/50 bg-tac-error-bg/25 p-4 md:p-5">
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3 md:gap-4">
-          <div class="flex items-center gap-3 shrink-0">
-            <span class="relative flex w-9 h-9 items-center justify-center rounded-tac-sm bg-tac-emergency/20 text-tac-emergency shrink-0">
-              <span class="absolute inline-flex w-full h-full rounded-tac-sm bg-tac-emergency/30 animate-ping"></span>
-              <i class="fas fa-triangle-exclamation relative" aria-hidden="true"></i>
-            </span>
-            <div>
-              <p class="tac-label-md text-tac-emergency">Live Breakdown Alert</p>
-              <p class="text-[11px] text-tac-text-dim" x-text="criticalDowntimeLabel"></p>
-            </div>
+  <!-- ═══ 2. KPI INDUSTRIAL TELEMETRY MATRIX ═════════════════════════════ -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+
+    <!-- KPI 1 — FLEET INTEGRITY -->
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">FLEET INTEGRITY</span>
+          <h2 class="font-display-hero text-display-hero text-tac-on-surface mt-1">
+            <span x-text="Math.round((equipment.filter(e => e.Status === 'Active' || e.Status === 'Running').length / (equipment.length || 1)) * 1000) / 10"></span><span class="font-headline-md text-headline-md text-tac-status-operational ml-1">%</span>
+          </h2>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-tac-status-operational/15 text-tac-status-operational flex items-center justify-center">
+          <span class="material-symbols-outlined icon-22">precision_manufacturing</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-white/5 space-y-2">
+        <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+          <span class="text-tac-on-surface-variant">Active Assets:</span>
+          <span class="text-tac-status-operational font-bold"
+                x-text="equipment.filter(e => e.Status === 'Active' || e.Status === 'Running').length + ' / ' + equipment.length + ' Operational'"></span>
+        </div>
+        <div class="flex items-center gap-1 text-[10px] font-label-mono-sm overflow-x-auto pb-1">
+          <span class="px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface-variant"
+                x-text="'Repair: ' + equipment.filter(e => e.Status === 'Repair' || e.Status === 'Maintenance').length"></span>
+          <span class="px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface-variant"
+                x-text="'Standby: ' + equipment.filter(e => e.Status === 'Standby').length"></span>
+          <span class="px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-status-emergency"
+                x-text="'Offline: ' + equipment.filter(e => e.Status === 'Offline' || e.Status === 'Breakdown').length"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 2 — ACTUAL PA% vs TARGET (sparkline 7 hari) -->
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">ACTUAL PA% vs TARGET</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <h2 class="font-display-hero text-display-hero text-tac-gold-bright">
+              <span x-text="heroHUD.pa.val"></span><span class="text-sm text-tac-on-surface-variant font-normal">%</span>
+            </h2>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-operational bg-tac-status-operational/15 px-1.5 py-0.5 rounded"
+                  x-text="'Target: ' + heroHUD.pa.target + '%'"></span>
           </div>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-tac-primary-container/20 text-tac-gold-bright flex items-center justify-center">
+          <span class="material-symbols-outlined icon-22">monitoring</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-white/5">
+        <div class="h-8 w-full flex items-end gap-1">
+          <template x-for="i in [6, 5, 4, 3, 2, 1, 0]" :key="i">
+            <div class="flex-1 rounded-t transition-all hover:bg-tac-gold-bright"
+                 :class="i === 0 ? 'bg-tac-primary-container shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'bg-tac-surface-container-high'"
+                 :style="'height: ' + (() => { const d = new Date(Date.now() - i * 86400000).toISOString().split('T')[0]; const n = (logs || []).filter(l => l.Jenis === 'Breakdown' && l.Tanggal === d).length; return n === 0 ? 8 : Math.min(100, 30 + n * 25); })() + '%'"
+                 :title="'Breakdown ' + (i === 0 ? 'hari ini' : i + ' hari lalu')"></div>
+          </template>
+        </div>
+        <div class="flex justify-between items-center text-tac-status-standby font-label-mono-sm text-label-mono-sm mt-1">
+          <span>7-DAY BD TELEMETRY</span>
+          <span class="text-tac-gold-bright"
+                x-text="(() => { const t = Date.now(); return (logs || []).filter(l => l.Jenis === 'Breakdown' && l.Tanggal && (t - new Date(l.Tanggal).getTime()) <= 604800000).length + ' BD / 7d'; })()"></span>
+        </div>
+      </div>
+    </div>
 
-          <ul class="flex-1 min-w-0 flex flex-wrap gap-2">
-            <template x-for="item in criticalDowntimeList.slice(0, 3)" :key="item.woNumber + '-' + item.equipName">
-              <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-tac-sm bg-tac-emergency/10 border border-tac-emergency/30 min-w-0">
-                <span class="w-1.5 h-1.5 rounded-full shrink-0" aria-hidden="true"
-                  :class="item.isEmergency ? 'bg-tac-emergency' : 'bg-tac-gold'"></span>
-                <span class="text-[11px] font-semibold text-tac-text truncate max-w-[190px]" x-text="item.equipName"></span>
-                <span class="tac-chip tac-label-md shrink-0"
-                  :class="item.isEmergency ? 'bg-tac-emergency/20 text-tac-emergency border-tac-emergency/40' : 'bg-tac-gold/15 text-tac-gold-bright border-tac-gold/30'"
-                  x-text="item.priority"></span>
-                <span class="tac-num text-[10px] text-tac-text-dim shrink-0" x-text="'#' + item.woNumber"></span>
-                <span class="tac-num text-[10px] text-tac-text-dim shrink-0" x-show="item.ageDays > 0"
-                  x-text="item.ageDays + 'd'" :title="'Open ' + item.ageDays + ' day(s)'"></span>
-              </li>
-            </template>
-            <li x-show="criticalDowntimeList.length > 3"
-              class="flex items-center px-2.5 py-1.5 rounded-tac-sm bg-tac-emergency/10 border border-tac-emergency/30 tac-label-md text-tac-text-dim"
-              x-text="'+' + (criticalDowntimeList.length - 3) + ' more'"></li>
-          </ul>
+    <!-- KPI 3 — TOTAL RUNNING HM / MTBF -->
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">TOTAL RUNNING HM / MTBF</span>
+          <h2 class="font-display-hero text-display-hero text-tac-on-surface mt-1">
+            <span x-text="equipment.reduce((s, e) => s + (Number(getLastHM(e.EquipmentID)) || 0), 0).toLocaleString('id-ID')"></span>
+            <span class="font-label-mono-md text-label-mono-md text-tac-status-standby">HRS</span>
+          </h2>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-tac-surface-container-high text-tac-sync-cyan flex items-center justify-center">
+          <span class="material-symbols-outlined icon-22">timer</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <div>
+          <span class="text-tac-status-standby block">MTBF ESTIMATE</span>
+          <span class="text-tac-on-surface font-bold" x-text="heroHUD.reliability.mtbf + ' hrs'"></span>
+        </div>
+        <div class="text-right">
+          <span class="text-tac-status-standby block">BD FREQ (30D)</span>
+          <span class="text-tac-status-repair font-bold"
+                x-text="(() => { const t = Date.now(); return (logs || []).filter(l => l.Jenis === 'Breakdown' && l.Tanggal && (t - new Date(l.Tanggal).getTime()) <= 2592000000).length + ' INCIDENTS'; })()"></span>
+        </div>
+      </div>
+    </div>
 
-          <button type="button" @click="navigateTo('wo')" class="tac-btn-primary shrink-0">
-            Dispatch Queue <i class="fas fa-arrow-right" aria-hidden="true"></i>
+    <!-- KPI 4 — MISSION STATUS (WOs) -->
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">MISSION STATUS (WOs)</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <h2 class="font-display-hero text-display-hero text-tac-on-surface" x-text="heroHUD.wo.total"></h2>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-emergency bg-tac-status-emergency/15 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-tac-status-emergency animate-ping"></span>
+              <span x-text="(logs || []).filter(l => l.woPriority === 'Emergency' && l.Status !== 'Completed').length + ' Emergency'"></span>
+            </span>
+          </div>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-tac-status-emergency/15 text-tac-status-emergency flex items-center justify-center">
+          <span class="material-symbols-outlined icon-22">assignment_late</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-1 font-label-mono-sm text-label-mono-sm text-center">
+        <div class="bg-tac-surface-recessed p-1.5 rounded shadow-inner">
+          <span class="text-tac-status-standby block text-[9px]">PENDING</span>
+          <span class="text-tac-primary font-bold" x-text="heroHUD.wo.pending"></span>
+        </div>
+        <div class="bg-tac-surface-recessed p-1.5 rounded shadow-inner">
+          <span class="text-tac-status-standby block text-[9px]">IN PROG</span>
+          <span class="text-tac-sync-cyan font-bold" x-text="heroHUD.wo.inProgress"></span>
+        </div>
+        <div class="bg-tac-surface-recessed p-1.5 rounded shadow-inner">
+          <span class="text-tac-status-standby block text-[9px]">DONE</span>
+          <span class="text-tac-status-operational font-bold" x-text="heroHUD.wo.done"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 3. WORKSPACE 12 KOLOM ══════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+
+    <!-- ── KIRI: 8 kolom ── -->
+    <section class="xl:col-span-8 flex flex-col gap-space-md">
+
+      <div class="flex items-center justify-between pb-1 flex-wrap gap-2">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined icon-22 text-tac-gold-bright">assignment_turned_in</span>
+          <div>
+            <h3 class="font-headline-md text-headline-md text-tac-on-surface">Maintenance Activity Protocol</h3>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Real-Time Dispatch &amp; Field Execution Stream</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="relative hidden sm:block">
+            <span class="material-symbols-outlined icon-16 absolute left-2.5 top-1/2 -translate-y-1/2 text-tac-status-standby">filter_list</span>
+            <input type="text" x-model="dashWoFilter" placeholder="Filter WOs / Assets..."
+                   class="pl-8 pr-3 py-1 bg-tac-surface-recessed rounded text-on-surface border border-white/5 focus:outline-none focus:border-tac-primary-container text-xs w-48 shadow-inner placeholder:text-tac-status-standby">
+          </div>
+          <button type="button" @click="openLogModal(false)" x-show="isAdminOrSupervisor"
+                  class="flex items-center gap-1 px-3 py-1 bg-tac-primary-container hover:bg-tac-gold-bright text-tac-on-primary-container rounded font-label-mono-md text-label-mono-md shadow-md transition-all active:scale-95">
+            <span class="material-symbols-outlined icon-15">add</span>
+            <span>+ NEW WO</span>
           </button>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- ═══ ZONA 2 · FLEET INTEGRITY + KPI TRIO ════════════════════════════ -->
-  <section aria-label="Fleet integrity and key metrics" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="space-y-space-md">
+        <template x-for="item in actionableWOs.filter(i => !dashWoFilter || (i.woNumber + ' ' + i.equipName + ' ' + i.desc).toLowerCase().includes(dashWoFilter.toLowerCase()))" :key="item.woNumber + (item.log.LogID || '')">
+          <article class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t flex flex-col gap-space-md relative overflow-hidden transition-all"
+                   :class="item.priority === 'Emergency' ? 'border-tac-status-emergency/40' : 'border-white/10 hover:border-tac-gold-bright/30'">
+            <div class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl pointer-events-none"
+                 :class="item.priority === 'Emergency' ? 'bg-tac-status-emergency/5' : 'bg-tac-gold-glow'"></div>
 
-    <!-- Fleet integrity plate -->
-    <div class="lg:col-span-4 tac-plate tac-rim p-5">
-      <p class="tac-label mb-3">Fleet Integrity</p>
-      <div class="flex items-end gap-3">
-        <span class="font-tac-sans text-[44px] leading-none font-bold text-tac-gold-bright tac-num"
-          x-text="calculatedStats.avgHealthScore.value"></span>
-        <span class="tac-label mb-1">avg health index</span>
-      </div>
-      <div class="tac-meter mt-3" role="img"
-        :aria-label="'Average fleet health ' + calculatedStats.avgHealthScore.value">
-        <span :style="'width:' + Math.min(100, Number(calculatedStats.avgHealthScore.value) || 0) + '%'"></span>
-      </div>
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-3 mt-5">
-        <div>
-          <dt class="tac-label">Operational</dt>
-          <dd class="tac-num text-lg font-semibold text-tac-ok"
-            x-text="equipment.filter(e => e.Status === 'Active').length"></dd>
-        </div>
-        <div>
-          <dt class="tac-label">Not Active</dt>
-          <dd class="tac-num text-lg font-semibold text-tac-gold-bright"
-            x-text="equipment.filter(e => e.Status !== 'Active').length"></dd>
-        </div>
-        <div>
-          <dt class="tac-label">Critical WO</dt>
-          <dd class="tac-num text-lg font-semibold" :class="criticalDowntimeCount > 0 ? 'text-tac-emergency' : 'text-tac-text-dim'"
-            x-text="criticalDowntimeCount"></dd>
-        </div>
-        <div>
-          <dt class="tac-label">Low Stock</dt>
-          <dd class="tac-num text-lg font-semibold" :class="lowStockCount > 0 ? 'text-tac-gold-bright' : 'text-tac-text-dim'"
-            x-text="lowStockCount"></dd>
-        </div>
-      </dl>
-    </div>
-
-    <!-- KPI trio -->
-    <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- PA vs target -->
-      <div class="tac-plate tac-rim p-5 flex flex-col">
-        <p class="tac-label mb-2">Actual PA% vs Target</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-tac-sans text-[34px] leading-none font-bold tac-num"
-            :class="heroHUD.pa.val >= 90 ? 'text-tac-ok' : (heroHUD.pa.val >= 80 ? 'text-tac-gold-bright' : 'text-tac-emergency')"
-            x-text="heroHUD.pa.val"></span>
-          <span class="tac-num text-sm text-tac-muted">%</span>
-        </div>
-        <p class="tac-label mt-3" x-text="'Target ' + heroHUD.pa.target + '% · status ' + heroHUD.pa.status"></p>
-        <div class="tac-meter mt-2" role="img" :aria-label="'Plant availability ' + heroHUD.pa.val + ' percent'">
-          <span :style="'width:' + Math.min(100, Number(heroHUD.pa.val) || 0) + '%'"></span>
-        </div>
-        <button type="button" @click="navigateTo('mtbfmttr')"
-          class="tac-label-md text-tac-muted hover:text-tac-gold-bright transition-colors mt-auto pt-4 text-left">
-          Reliability detail &rarr;
-        </button>
-      </div>
-
-      <!-- Running HM + MTBF -->
-      <div class="tac-plate tac-rim p-5 flex flex-col">
-        <p class="tac-label mb-2">Total Running HM / MTBF</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-tac-sans text-[34px] leading-none font-bold text-tac-text tac-num"
-            x-text="Number(logs.reduce((s, l) => s + (Number(l.HM) || 0), 0)).toLocaleString('id-ID')"></span>
-          <span class="tac-num text-sm text-tac-muted">HRS</span>
-        </div>
-        <dl class="mt-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <dt class="tac-label">MTBF estimate</dt>
-            <dd class="tac-num text-sm text-tac-cyan-light" x-text="heroHUD.reliability.mtbf + ' hrs'"></dd>
-          </div>
-          <div class="flex items-center justify-between">
-            <dt class="tac-label">MTTR</dt>
-            <dd class="tac-num text-sm text-tac-text-dim" x-text="heroHUD.reliability.mttr + ' hrs'"></dd>
-          </div>
-          <div class="flex items-center justify-between">
-            <dt class="tac-label">BD freq (30d)</dt>
-            <dd class="tac-num text-sm text-tac-emergency" x-text="heroHUD.reliability.breakdowns + ' incidents'"></dd>
-          </div>
-        </dl>
-      </div>
-
-      <!-- Mission status WOs -->
-      <div class="tac-plate tac-rim p-5 flex flex-col">
-        <p class="tac-label mb-2">Mission Status (WOs)</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-tac-sans text-[34px] leading-none font-bold text-tac-text tac-num"
-            x-text="heroHUD.wo.total"></span>
-          <span class="tac-num text-sm text-tac-muted">TOTAL</span>
-        </div>
-        <p class="tac-label mt-3" x-text="heroHUD.wo.rate + '% completed · ' + heroHUD.wo.done + ' done'"></p>
-        <dl class="mt-2 space-y-2">
-          <div class="flex items-center justify-between">
-            <dt class="tac-label">Pending</dt>
-            <dd class="tac-num text-sm text-tac-gold-bright" x-text="heroHUD.wo.pending"></dd>
-          </div>
-          <div class="flex items-center justify-between">
-            <dt class="tac-label">In progress</dt>
-            <dd class="tac-num text-sm text-tac-cyan-light" x-text="heroHUD.wo.inProgress"></dd>
-          </div>
-          <div class="flex items-center justify-between">
-            <dt class="tac-label">Emergency</dt>
-            <dd class="tac-num text-sm" :class="criticalDowntimeCount > 0 ? 'text-tac-emergency' : 'text-tac-text-dim'"
-              x-text="criticalDowntimeCount"></dd>
-          </div>
-        </dl>
-        <button type="button" @click="navigateTo('wo')"
-          class="tac-label-md text-tac-muted hover:text-tac-gold-bright transition-colors mt-auto pt-4 text-left">
-          Work order queue &rarr;
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ ZONA 3 · MAINTENANCE ACTIVITY PROTOCOL ═════════════════════════ -->
-  <section aria-label="Maintenance activity protocol" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-    <!-- Real-time dispatch & field execution stream -->
-    <div class="lg:col-span-8 tac-plate p-5">
-      <div class="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 class="font-tac-sans text-lg font-semibold text-tac-text">Maintenance Activity Protocol</h2>
-          <p class="tac-label mt-1">Real-time dispatch &amp; field execution stream</p>
-        </div>
-        <span class="tac-chip tac-label-md bg-tac-cyan/10 text-tac-cyan-light border-tac-cyan/30">
-          <span class="tac-chip-dot bg-tac-cyan animate-pulse" aria-hidden="true"></span>
-          <span x-text="criticalDowntimeList.length + ' active'"></span>
-        </span>
-      </div>
-
-      <!-- No critical activity -->
-      <div x-show="criticalDowntimeList.length === 0" class="text-center py-10">
-        <i class="fas fa-circle-check text-3xl text-tac-ok/40" aria-hidden="true"></i>
-        <p class="tac-label-md text-tac-text-dim mt-3">No critical activity</p>
-        <p class="text-[11px] text-tac-muted mt-1">Semua work order kritis sudah tertangani</p>
-      </div>
-
-      <div class="space-y-3" x-show="criticalDowntimeList.length > 0">
-        <template x-for="item in criticalDowntimeList.slice(0, 3)" :key="'act-' + item.woNumber">
-          <article class="tac-plate-flat p-4" :class="item.isEmergency ? 'border-tac-emergency/40' : 'border-tac-line'">
-            <!-- header -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-tac-line">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="tac-num text-sm font-semibold text-tac-text" x-text="'WO #' + item.woNumber"></span>
-                <span class="tac-chip tac-label-md"
-                  :class="item.isEmergency ? 'bg-tac-emergency/15 text-tac-emergency border-tac-emergency/40' : 'bg-tac-gold/15 text-tac-gold-bright border-tac-gold/30'">
-                  <span class="tac-chip-dot" :class="item.isEmergency ? 'bg-tac-emergency' : 'bg-tac-gold'" aria-hidden="true"></span>
-                  <span x-text="item.isEmergency ? 'Emergency · production stopped' : item.priority + ' · fix today'"></span>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-white/5 pb-space-sm relative z-10">
+              <div class="flex items-center gap-space-sm flex-wrap">
+                <span class="px-2 py-0.5 rounded bg-tac-surface-recessed border border-white/5 font-label-mono-md text-label-mono-md shadow-inner"
+                      :class="item.priority === 'Emergency' ? 'text-tac-status-emergency' : 'text-tac-gold-bright'"
+                      x-text="'WO #' + item.woNumber"></span>
+                <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm uppercase font-bold flex items-center gap-1"
+                      :class="item.priority === 'Emergency' ? 'bg-tac-status-emergency/20 text-tac-status-emergency' : 'bg-tac-primary-container/20 text-tac-gold-bright'">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="item.priority === 'Emergency' ? 'bg-tac-status-emergency animate-ping' : 'bg-tac-gold-bright'"></span>
+                  <span x-text="item.priority === 'Emergency' ? 'Emergency - Production Stopped' : item.priority + ' - Fix Today'"></span>
                 </span>
-                <span class="tac-chip tac-label-md bg-tac-c-high text-tac-text-dim border-tac-line"
-                  x-text="item.log.Jenis || 'Breakdown'"></span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">Classification: <strong class="text-tac-on-surface" x-text="item.log.Jenis || 'General'"></strong></span>
               </div>
-              <div class="flex items-center gap-3 tac-label">
-                <span x-text="'Reported ' + (item.log.Tanggal || '—')"></span>
-                <span x-show="item.ageDays > 0" x-text="'· ' + item.ageDays + 'd open'"></span>
-                <span x-show="item.log.estimatedHours" x-text="'· est ' + item.log.estimatedHours + ' hrs'"></span>
+              <div class="flex items-center gap-3 flex-wrap">
+                <template x-if="item.status === 'In Progress'">
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-emergency bg-tac-status-emergency/15 px-2 py-0.5 rounded font-bold">STATUS: IN PROGRESS</span>
+                </template>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+                      x-text="item.status === 'In Progress'
+                        ? 'Elapsed: ' + (() => { const t = new Date(item.log.Tanggal).getTime(); if (isNaN(t)) return '—'; const m = Math.floor((Date.now() - t) / 60000); return Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; })()
+                        : 'Timeline: ' + (item.log.Tanggal || '—')"></span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-repair flex items-center gap-1 font-semibold">
+                  <span class="material-symbols-outlined icon-14">hourglass_top</span>
+                  <span x-text="'Est: ' + (item.log.estimatedHours || item.log.Downtime || '—') + ' hrs'"></span>
+                </span>
               </div>
             </div>
 
-            <!-- body -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-              <div>
-                <p class="tac-label">Target asset</p>
-                <p class="text-sm font-semibold text-tac-text mt-1" x-text="item.equipName"></p>
-                <p class="tac-label mt-2"
-                  x-text="(equipment.find(e => e.EquipmentID === item.log.EquipmentID)?.Lokasi || 'Sector —') + ' · HM ' + (Number(item.log.HM) ? Number(item.log.HM).toLocaleString('id-ID') : '—')"></p>
-                <p class="tac-label mt-3">Fault / activity</p>
-                <p class="text-[13px] text-tac-text-dim mt-1 leading-snug" x-text="item.log.Deskripsi || '—'"></p>
-              </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md relative z-10">
               <div class="space-y-2">
-                <div class="flex items-center justify-between gap-3">
-                  <span class="tac-label">Technician</span>
-                  <span class="tac-num text-[11px] text-tac-text" x-text="item.log.assignedTo || 'UNASSIGNED'"></span>
+                <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">TARGET ASSET</span>
+                <div class="flex items-start gap-space-sm">
+                  <div class="w-12 h-12 rounded-lg bg-tac-surface-recessed overflow-hidden relative flex-shrink-0 border border-white/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined icon-22"
+                          :class="item.priority === 'Emergency' ? 'text-tac-status-emergency' : 'text-tac-status-standby'"
+                          x-text="item.priority === 'Emergency' ? 'warning' : 'precision_manufacturing'"></span>
+                  </div>
+                  <div>
+                    <h4 class="font-headline-md text-[15px] text-tac-on-surface" x-text="item.equipName"></h4>
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant block"
+                          x-text="(equipment.find(e => e.EquipmentID === item.log.EquipmentID) || {}).Lokasi || item.log.externalEquipName || 'Lokasi belum diisi'"></span>
+                    <span class="font-label-mono-sm text-label-mono-sm"
+                          :class="item.priority === 'Emergency' ? 'text-tac-status-emergency' : 'text-tac-gold-dim'"
+                          x-text="'Meter: ' + (item.log.HM ? Number(item.log.HM).toLocaleString('id-ID') + ' HM' : '— HM')"></span>
+                  </div>
                 </div>
-                <div class="flex items-center justify-between gap-3">
-                  <span class="tac-label">Downtime logged</span>
-                  <span class="tac-num text-[11px] text-tac-emergency" x-text="(Number(item.log.Downtime) || 0) + ' hrs'"></span>
+              </div>
+
+              <div class="space-y-1">
+                <template x-if="item.log.Catatan">
+                  <div>
+                    <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">FIELD RCA (PRIMARY)</span>
+                    <div class="p-2 rounded bg-tac-surface-recessed border border-white/5">
+                      <span class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright block font-semibold" x-text="'Temuan: ' + (item.log.Kategori || item.log.Jenis || '—')"></span>
+                      <p class="font-body-sm text-[12px] text-tac-on-surface-variant mt-0.5" x-text="item.log.Catatan"></p>
+                    </div>
+                  </div>
+                </template>
+                <template x-if="!item.log.Catatan">
+                  <div>
+                    <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">ACTIVITY TYPE &amp; DISPATCH</span>
+                    <p class="font-body-sm text-body-sm text-tac-on-surface" x-text="item.desc"></p>
+                  </div>
+                </template>
+                <div class="flex items-center gap-2 pt-1">
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">Tech:</span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined icon-13 text-tac-secondary">person</span>
+                    <span x-text="item.log.assignedTo || 'Belum ditugaskan'"></span>
+                  </span>
                 </div>
-                <div class="flex items-center justify-between gap-3">
-                  <span class="tac-label">Backlog score</span>
-                  <span class="tac-num text-[11px]" :class="item.isEmergency ? 'text-tac-emergency' : 'text-tac-gold-bright'"
-                    x-text="backlogScore(item.log) + '/9'"></span>
+              </div>
+
+              <div class="bg-tac-surface-recessed p-2.5 rounded-lg border border-white/5 space-y-1.5 shadow-inner">
+                <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+                  <span class="text-tac-status-standby">LINKED SPARE:</span>
+                  <span class="text-tac-secondary font-bold"
+                        x-text="(() => { const used = item.log.PartsUsed; let ids = []; try { ids = Array.isArray(used) ? used : (used ? JSON.parse(used) : []); } catch (err) { ids = []; } if (!ids.length) return 'Belum ada'; const p = (allParts || []).find(x => x.PartID === (ids[0].id || ids[0].PartID || ids[0])); return p ? (p.PartNumber || p.NamaPart) : 'Belum terdaftar'; })()"></span>
                 </div>
-                <div class="flex items-center justify-between gap-3">
-                  <span class="tac-label">Linked spare</span>
-                  <span class="tac-num text-[11px]"
-                    :class="woShortageSummary(item.log).count > 0 ? 'text-tac-emergency' : 'text-tac-ok'"
-                    x-text="woShortageSummary(item.log).count > 0 ? woShortageSummary(item.log).total + ' part short' : 'stock ok'"></span>
+                <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+                  <span class="text-tac-status-standby">DEPT REQUEST:</span>
+                  <span class="text-tac-on-surface" x-text="item.log.requestSource || item.log.requestedBy || 'Maintenance'"></span>
                 </div>
-                <div class="flex items-center justify-between gap-3">
-                  <span class="tac-label">Requested by</span>
-                  <span class="tac-num text-[11px] text-tac-text-dim"
-                    x-text="(item.log.requestedBy || '—') + (item.log.requestSource ? ' · ' + item.log.requestSource : '')"></span>
+                <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+                  <span class="text-tac-status-standby">OP DOWN (EST):</span>
+                  <span class="font-bold"
+                        :class="item.priority === 'Emergency' ? 'text-tac-status-emergency' : 'text-tac-gold-bright'"
+                        x-text="(Number(item.log.Downtime) || Number(item.log.estimatedHours) || 0) + ' hrs'"></span>
+                </div>
+                <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+                  <span class="text-tac-status-standby">AGE:</span>
+                  <span class="text-tac-on-surface-variant" x-text="item.ageDays + ' hari'"></span>
                 </div>
               </div>
             </div>
 
-            <!-- actions (gloved touch) -->
-            <div class="flex flex-wrap gap-2 pt-4 mt-3 border-t border-tac-line">
-              <button type="button" x-show="isAdminOrSupervisor && item.log.Status === 'Pending'"
-                @click.stop="approveWO(item.log.LogID)" class="tac-btn-primary">
-                <i class="fas fa-check" aria-hidden="true"></i> Approve &amp; dispatch
-              </button>
-              <button type="button" x-show="isAdminOrSupervisor && item.log.Status === 'Pending'"
-                @click.stop="rejectReason = ''; activeRejectId = item.log.LogID; showRejectModal = true"
-                class="tac-btn-destructive">
-                <i class="fas fa-xmark" aria-hidden="true"></i> Reject WO
-              </button>
-              <button type="button" x-show="isAdminOrSupervisor && item.log.Status === 'Approved'"
-                @click.stop="startWO(item.log.LogID)" class="tac-btn-ghost">
-                <i class="fas fa-play" aria-hidden="true"></i> Start
-              </button>
-              <button type="button" x-show="isAdminOrSupervisor && (item.log.Status === 'Approved' || item.log.Status === 'In Progress')"
-                @click.stop="completeWO(item.log.LogID)" class="tac-btn-ghost">
-                <i class="fas fa-check-double" aria-hidden="true"></i> Complete
-              </button>
-              <button type="button" x-show="isAdmin" @click.stop="openLogModal(true, item.log)" class="tac-btn-ghost">
-                <i class="fas fa-link" aria-hidden="true"></i> Link part
-              </button>
-              <button type="button" @click.stop="openQR()" class="tac-btn-ghost">
-                <i class="fas fa-camera" aria-hidden="true"></i> Optical data
-              </button>
+            <div class="flex items-center justify-between pt-2 border-t border-white/5 flex-wrap gap-2 relative z-10">
+              <div class="flex items-center gap-2">
+                <button type="button" @click="openLogModal(true, item.log)"
+                        class="px-2.5 py-1 rounded bg-tac-surface-container hover:bg-tac-surface-container-high text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors">
+                  <span class="material-symbols-outlined icon-14">link</span>
+                  <span>+ Link Part</span>
+                </button>
+                <button type="button" @click="openQR()"
+                        class="px-2.5 py-1 rounded bg-tac-surface-container hover:bg-tac-surface-container-high text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors">
+                  <span class="material-symbols-outlined icon-14">photo_camera</span>
+                  <span x-text="'Optical Data (' + (Array.isArray(item.log.PhotoURLs) ? item.log.PhotoURLs.length : (item.log.PhotoURLs || item.log.PhotoURL ? 1 : 0)) + ')'"></span>
+                </button>
+              </div>
+              <div class="flex items-center gap-2">
+                <template x-if="item.status !== 'In Progress'">
+                  <button type="button" @click="openLogModal(true, item.log)"
+                          class="px-3 py-1 rounded bg-tac-surface-recessed hover:bg-tac-error-container/40 text-tac-error font-label-mono-sm text-label-mono-sm border border-tac-error/30 transition-all">
+                    Reject WO
+                  </button>
+                </template>
+                <template x-if="item.status !== 'In Progress'">
+                  <button type="button" @click="approveWO(item.log.LogID)"
+                          class="px-4 py-1 rounded bg-tac-primary-container hover:bg-tac-gold-bright text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-md transition-all active:scale-95">
+                    Approve &amp; Dispatch
+                  </button>
+                </template>
+                <template x-if="item.status === 'In Progress'">
+                  <button type="button" @click="completeWO(item.log.LogID)"
+                          class="px-3 py-1 rounded bg-tac-status-operational hover:bg-emerald-400 text-tac-surface-container-lowest font-label-mono-md text-label-mono-md font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                    Mark Mission Completed
+                  </button>
+                </template>
+              </div>
             </div>
           </article>
         </template>
-      </div>
-    </div>
 
-    <!-- Dispatch stream (actionable WOs, real priority list) -->
-    <div class="lg:col-span-4 tac-plate p-5 flex flex-col">
-      <div class="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 class="font-tac-sans text-lg font-semibold text-tac-text">Priority Dispatch</h2>
-          <p class="tac-label mt-1">Ranked by backlog score</p>
-        </div>
-        <button type="button" @click="navigateTo('wo')" class="tac-label-md text-tac-muted hover:text-tac-gold-bright transition-colors">
-          Queue &rarr;
-        </button>
-      </div>
-
-      <div x-show="!actionableWOs || actionableWOs.length === 0" class="flex-1 flex flex-col items-center justify-center py-8">
-        <i class="fas fa-check-double text-2xl text-tac-ok/40" aria-hidden="true"></i>
-        <p class="tac-label-md text-tac-text-dim mt-2">All caught up</p>
-      </div>
-
-      <ul class="flex-1 space-y-2" x-show="actionableWOs && actionableWOs.length > 0">
-        <template x-for="item in actionableWOs" :key="'act-w-' + item.woNumber">
-          <li @click="navigateTo('wo')" @keydown.enter="navigateTo('wo')" role="button" tabindex="0"
-            class="tac-plate-flat p-3 cursor-pointer hover:border-tac-gold/50 transition-colors">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[12px] font-semibold text-tac-text truncate" x-text="item.equipName"></span>
-              <span class="tac-chip tac-label-md shrink-0"
-                :class="item.priority === 'Emergency' ? 'bg-tac-emergency/15 text-tac-emergency border-tac-emergency/40' : (item.priority === 'Urgent' ? 'bg-tac-gold/15 text-tac-gold-bright border-tac-gold/30' : 'bg-tac-c-high text-tac-text-dim border-tac-line')"
-                x-text="item.priority"></span>
-            </div>
-            <p class="text-[11px] text-tac-muted truncate mt-1" x-text="item.log?.Deskripsi || '—'"></p>
-            <div class="flex items-center gap-3 mt-2 tac-num text-[10px] text-tac-text-dim">
-              <span x-text="'#' + item.woNumber"></span>
-              <span x-show="item.ageDays > 0" x-text="item.ageDays + 'd ago'"></span>
-              <span x-text="'score ' + backlogScore(item.log) + '/9'"></span>
-            </div>
-          </li>
+        <template x-if="actionableWOs.filter(i => !dashWoFilter || (i.woNumber + ' ' + i.equipName + ' ' + i.desc).toLowerCase().includes(dashWoFilter.toLowerCase())).length === 0">
+          <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 text-center">
+            <span class="material-symbols-outlined icon-36 text-tac-status-operational">task_alt</span>
+            <p class="font-headline-md text-[15px] text-tac-on-surface mt-1"
+               x-text="dashWoFilter ? 'Tidak ada WO yang cocok dengan filter' : 'Tidak ada work order terbuka'"></p>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase"
+                  x-text="dashWoFilter ? 'Ubah kata kunci filter' : 'Semua misi sudah tuntas'"></span>
+          </div>
         </template>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ═══ ZONA 4 · TELEMETRY TABLE + CRITICAL SPARES + SCANNER ═══════════ -->
-  <section aria-label="Asset telemetry and critical stock" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-    <!-- Neural performance protocol → tabel telemetri aset (data nyata) -->
-    <div class="lg:col-span-8 tac-plate p-5">
-      <div class="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 class="font-tac-sans text-lg font-semibold text-tac-text">Asset Telemetry Protocol</h2>
-          <p class="tac-label mt-1" x-text="'Running hours · breakdown · health index · ' + equipment.length + ' nodes'"></p>
-        </div>
-        <button type="button" @click="navigateTo('equipment')" class="tac-label-md text-tac-muted hover:text-tac-gold-bright transition-colors">
-          All assets &rarr;
-        </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b border-tac-line">
-              <th scope="col" class="tac-label py-2 pr-3">Asset node</th>
-              <th scope="col" class="tac-label py-2 pr-3">Status</th>
-              <th scope="col" class="tac-label py-2 pr-3 text-right">HM</th>
-              <th scope="col" class="tac-label py-2 pr-3 text-right">Down (hrs)</th>
-              <th scope="col" class="tac-label py-2 pr-3 text-right">Health</th>
-              <th scope="col" class="tac-label py-2 text-right">Backlog</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="eq in equipment.slice(0, 8)" :key="'tel-' + eq.EquipmentID">
-              <tr class="border-b border-tac-line/50 hover:bg-tac-c/50 transition-colors">
-                <td class="py-2 pr-3">
-                  <span class="text-[12px] font-semibold text-tac-text" x-text="eq.Nama || eq.EquipmentID"></span>
-                  <span class="tac-num text-[10px] text-tac-muted block" x-text="eq.EquipmentID"></span>
-                </td>
-                <td class="py-2 pr-3">
-                  <span class="tac-chip tac-label-md"
-                    :class="eq.Status === 'Active' ? 'bg-tac-ok/10 text-tac-ok border-tac-ok/30' : 'bg-tac-c-high text-tac-text-dim border-tac-line'"
-                    x-text="eq.Status || 'Unknown'"></span>
-                </td>
-                <td class="py-2 pr-3 tac-num text-[11px] text-tac-text-dim text-right"
-                  x-text="Number(getLastHM(eq.EquipmentID) === '-' ? 0 : String(getLastHM(eq.EquipmentID)).replace(/[^0-9.]/g, '')).toLocaleString('id-ID')"></td>
-                <td class="py-2 pr-3 tac-num text-[11px] text-right"
-                  :class="logs.filter(l => l.EquipmentID === eq.EquipmentID && l.Jenis === 'Breakdown').reduce((s, l) => s + (Number(l.Downtime) || 0), 0) > 0 ? 'text-tac-emergency' : 'text-tac-muted'"
-                  x-text="logs.filter(l => l.EquipmentID === eq.EquipmentID && l.Jenis === 'Breakdown').reduce((s, l) => s + (Number(l.Downtime) || 0), 0)"></td>
-                <td class="py-2 pr-3 tac-num text-[11px] text-right"
-                  :class="(calculateHealthScore(eq.EquipmentID)?.score ?? 0) < 50 ? 'text-tac-emergency' : ((calculateHealthScore(eq.EquipmentID)?.score ?? 0) < 80 ? 'text-tac-gold-bright' : 'text-tac-ok')"
-                  x-text="(calculateHealthScore(eq.EquipmentID)?.score ?? 0) + '%'"></td>
-                <td class="py-2 tac-num text-[11px] text-tac-text-dim text-right"
-                  x-text="logs.filter(l => l.EquipmentID === eq.EquipmentID && l.Status !== 'Completed').length"></td>
+      <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-md mt-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined icon-20 text-tac-secondary">troubleshoot</span>
+            <h4 class="font-headline-md text-[16px] text-tac-on-surface">Neural Performance Protocol (HM vs WH)</h4>
+          </div>
+          <div class="flex items-center gap-2 font-label-mono-sm text-label-mono-sm">
+            <span class="text-tac-status-standby">RECORDS:</span>
+            <span class="px-2 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface border border-white/5"
+                  x-text="(performanceData || []).length + ' ENTRI'"></span>
+          </div>
+        </div>
+
+        <div class="w-full overflow-x-auto">
+          <table class="w-full text-left font-label-mono-sm text-label-mono-sm">
+            <thead>
+              <tr class="bg-tac-surface-recessed text-tac-status-standby uppercase border-b border-white/5">
+                <th class="py-2.5 px-3">Asset Index</th>
+                <th class="py-2.5 px-3">Ops Area</th>
+                <th class="py-2.5 px-3">HM (Running)</th>
+                <th class="py-2.5 px-3">WH (Work)</th>
+                <th class="py-2.5 px-3">Total Down</th>
+                <th class="py-2.5 px-3">Standby</th>
+                <th class="py-2.5 px-3">BD Freq</th>
+                <th class="py-2.5 px-3 text-right">Target PA%</th>
               </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5 font-body-sm text-[13px]">
+              <template x-for="e in equipment.slice(0, 6)" :key="e.EquipmentID">
+                <tr class="hover:bg-tac-surface-container/50 transition-colors">
+                  <td class="py-2.5 px-3 font-label-mono-sm text-label-mono-sm text-tac-on-surface font-bold"
+                      x-text="e.EquipmentID + ' (' + e.Nama + ')'"></td>
+                  <td class="py-2.5 px-3 text-tac-on-surface-variant" x-text="e.Lokasi || '—'"></td>
+                  <td class="py-2.5 px-3 font-label-mono-sm" x-text="(Number(getLastHM(e.EquipmentID)) || 0).toLocaleString('id-ID') + ' hrs'"></td>
+                  <td class="py-2.5 px-3 font-label-mono-sm text-tac-status-operational"
+                      x-text="(() => { const w = (performanceData || []).filter(p => (p.EquipmentID || p.equipmentId) === e.EquipmentID); return (w.reduce((s, p) => s + (Number(p.wh) || 0), 0)).toFixed(1) + ' hrs'; })()"></td>
+                  <td class="py-2.5 px-3 font-label-mono-sm text-tac-status-emergency"
+                      x-text="(() => { const w = (performanceData || []).filter(p => (p.EquipmentID || p.equipmentId) === e.EquipmentID); return (w.reduce((s, p) => s + (Number(p.bd) || 0), 0)).toFixed(1) + ' hrs'; })()"></td>
+                  <td class="py-2.5 px-3 font-label-mono-sm text-tac-status-standby"
+                      x-text="(() => { const w = (performanceData || []).filter(p => (p.EquipmentID || p.equipmentId) === e.EquipmentID); return (w.reduce((s, p) => s + (Number(p.stb) || 0), 0)).toFixed(1) + ' hrs'; })()"></td>
+                  <td class="py-2.5 px-3 font-label-mono-sm text-tac-on-surface"
+                      x-text="(logs || []).filter(l => l.Jenis === 'Breakdown' && l.EquipmentID === e.EquipmentID).length"></td>
+                  <td class="py-2.5 px-3 font-label-mono-sm text-right font-bold"
+                      :class="(() => { const w = (performanceData || []).filter(p => (p.EquipmentID || p.equipmentId) === e.EquipmentID); const wh = w.reduce((s, p) => s + (Number(p.wh) || 0), 0); const down = w.reduce((s, p) => s + (Number(p.bd) || 0) + (Number(p.stb) || 0), 0); return wh > 0 && ((wh - down) / wh) * 100 >= heroHUD.pa.target ? 'text-tac-status-operational' : 'text-tac-status-repair'; })()"
+                      x-text="(() => { const w = (performanceData || []).filter(p => (p.EquipmentID || p.equipmentId) === e.EquipmentID); const wh = w.reduce((s, p) => s + (Number(p.wh) || 0), 0); const down = w.reduce((s, p) => s + (Number(p.bd) || 0) + (Number(p.stb) || 0), 0); return wh > 0 ? (((wh - down) / wh) * 100).toFixed(1) + '%' : '—'; })()"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-white/5">
+          <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+            <span class="text-tac-status-standby uppercase">DISTRIBUSI JENIS LOG (30 HARI)</span>
+            <span class="text-tac-on-surface-variant"
+                  x-text="'TOTAL: ' + (logs || []).filter(l => l.Tanggal && (Date.now() - new Date(l.Tanggal).getTime()) <= 2592000000).length + ' ENTRI'"></span>
+          </div>
+          <div class="h-3 w-full bg-tac-surface-recessed rounded-full flex overflow-hidden p-0.5 shadow-inner">
+            <template x-for="(t, idx) in ['Breakdown', 'Repair', 'Preventive', 'PM', 'Inspection', 'Calibration', 'Installation', 'Other'].filter(t => (logs || []).some(l => l.Tanggal && (Date.now() - new Date(l.Tanggal).getTime()) <= 2592000000 && ((l.Jenis || 'Other') === t)))" :key="t">
+              <div :class="['bg-tac-primary-container', 'bg-tac-secondary', 'bg-tac-status-repair', 'bg-tac-error', 'bg-tac-status-operational', 'bg-tac-gold-bright', 'bg-tac-status-standby', 'bg-tac-primary'][idx % 8]"
+                   :style="'width: ' + (() => { const r = (logs || []).filter(l => l.Tanggal && (Date.now() - new Date(l.Tanggal).getTime()) <= 2592000000); const n = r.filter(l => (l.Jenis || 'Other') === t).length; return r.length ? (n / r.length) * 100 : 0; })() + '%'"
+                   :title="t"></div>
             </template>
-            <tr x-show="equipment.length === 0">
-              <td colspan="6" class="py-8 text-center tac-label">No asset nodes registered</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Critical spare parts stock (real low-stock) -->
-    <div class="lg:col-span-4 tac-plate p-5">
-      <div class="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 class="font-tac-sans text-lg font-semibold text-tac-text">Critical Spare Parts</h2>
-          <p class="tac-label mt-1" x-text="lowStockCount + ' of ' + allParts.length + ' below minimum'"></p>
-        </div>
-        <button type="button" @click="navigateTo('parts')" class="tac-label-md text-tac-muted hover:text-tac-gold-bright transition-colors">
-          Stock &rarr;
-        </button>
-      </div>
-
-      <div x-show="lowStockCount === 0" class="text-center py-8">
-        <i class="fas fa-boxes-stacked text-2xl text-tac-ok/40" aria-hidden="true"></i>
-        <p class="tac-label-md text-tac-text-dim mt-2">Stock levels nominal</p>
-      </div>
-
-      <ul class="space-y-2">
-        <template x-for="part in allParts.filter(p => p && (Number(p.MinStock) > 0 ? Number(p.Stok) <= Number(p.MinStock) : p.isLowStock === true)).slice(0, 6)"
-          :key="'low-' + part.PartID">
-          <li class="tac-plate-flat p-3 flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <p class="text-[12px] font-semibold text-tac-text truncate" x-text="part.NamaSingkat || part.NamaPart || part.PartID"></p>
-              <p class="tac-num text-[10px] text-tac-muted truncate"
-                x-text="(part.PartNumber || part.PartID) + (part.Lokasi ? ' · ' + part.Lokasi : '')"></p>
-            </div>
-            <div class="text-right shrink-0">
-              <p class="tac-num text-lg font-semibold"
-                :class="Number(part.Stok) <= 0 ? 'text-tac-emergency' : 'text-tac-gold-bright'"
-                x-text="part.Stok"></p>
-              <p class="tac-label" x-text="'min ' + (part.MinStock ?? '—')"></p>
-            </div>
-          </li>
-        </template>
-      </ul>
-
-      <!-- Optical scanner module (real QR scanner) -->
-      <div class="tac-plate-flat p-4 mt-4">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <p class="tac-label">Optical scanner module</p>
-            <p class="tac-label-md mt-1" :class="isOnline ? 'text-tac-cyan-light' : 'text-tac-muted'"
-              x-text="isOnline ? 'Status: online' : 'Status: offline'"></p>
           </div>
-          <span class="tac-chip-dot" :class="isOnline ? 'bg-tac-cyan animate-pulse' : 'bg-tac-muted'" aria-hidden="true"></span>
-        </div>
-        <button type="button" @click="openQR()" class="tac-btn-primary w-full mt-3">
-          <i class="fas fa-barcode" aria-hidden="true"></i> Scan asset node
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ ZONA 5 · ANALYTICS + PM SCHEDULE ══════════════════════════════ -->
-  <section aria-label="Analytics and preventive maintenance" class="space-y-4">
-
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-      <div class="lg:col-span-3 tac-plate p-5">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="font-tac-sans text-sm font-semibold text-tac-text uppercase tracking-wide">Reliability Trend (PA Average)</h2>
-          <span class="tac-label" x-text="dashboardDateFrom ? 'Last ' + Math.round((new Date() - new Date(dashboardDateFrom))/86400000) + ' days' : 'All time'"></span>
-        </div>
-        <div class="relative min-h-[240px] md:min-h-[280px]">
-          <canvas id="reliabilityChart" role="img" aria-label="Grafik tren keandalan dan rata-rata plant availability"></canvas>
-        </div>
-      </div>
-      <div class="lg:col-span-2 tac-plate p-5">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="font-tac-sans text-sm font-semibold text-tac-text uppercase tracking-wide">Maintenance Cost</h2>
-          <span class="tac-label">Monthly</span>
-        </div>
-        <div class="relative min-h-[240px] md:min-h-[280px]">
-          <canvas id="costTrendChart" role="img" aria-label="Grafik tren biaya pemeliharaan bulanan"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-      <!-- PM schedule (real) -->
-      <div class="lg:col-span-3 tac-plate p-5">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <div>
-            <h2 class="font-tac-sans text-sm font-semibold text-tac-text uppercase tracking-wide">PM Schedule</h2>
-            <p class="tac-label mt-1" x-text="pmUpcomingList.length + ' upcoming · ' + pmList.length + ' total tasks'"></p>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-mono-sm text-label-mono-sm pt-1">
+            <template x-for="(t, idx) in ['Breakdown', 'Repair', 'Preventive', 'PM', 'Inspection', 'Calibration', 'Installation', 'Other'].filter(t => (logs || []).some(l => l.Tanggal && (Date.now() - new Date(l.Tanggal).getTime()) <= 2592000000 && ((l.Jenis || 'Other') === t)))" :key="'lg-' + t">
+              <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full" :class="['bg-tac-primary-container', 'bg-tac-secondary', 'bg-tac-status-repair', 'bg-tac-error', 'bg-tac-status-operational', 'bg-tac-gold-bright', 'bg-tac-status-standby', 'bg-tac-primary'][idx % 8]"></span>
+                <span x-text="t + ' (' + (() => { const r = (logs || []).filter(l => l.Tanggal && (Date.now() - new Date(l.Tanggal).getTime()) <= 2592000000); const n = r.filter(l => (l.Jenis || 'Other') === t).length; return r.length ? Math.round((n / r.length) * 100) : 0; })() + '%)'"></span>
+              </span>
+            </template>
+            <template x-if="(logs || []).filter(l => l.Tanggal && (Date.now() - new Date(l.Tanggal).getTime()) <= 2592000000).length === 0">
+              <span class="text-tac-status-standby">Belum ada log dalam 30 hari terakhir</span>
+            </template>
           </div>
-          <button type="button" @click="navigateTo('pms')" class="tac-label-md text-tac-muted hover:text-tac-gold-bright transition-colors">
-            View all &rarr;
+        </div>
+      </div>
+    </section>
+
+    <!-- ── KANAN: 4 kolom ── -->
+    <aside class="xl:col-span-4 flex flex-col gap-space-md">
+
+      <section class="bg-tac-surface-card rounded-2xl p-6 shadow-2xl border-t border-white/10 flex flex-col items-center text-center relative overflow-hidden">
+        <div class="w-16 h-16 rounded-2xl bg-tac-surface-recessed border border-white/5 shadow-inner flex items-center justify-center p-2 mb-3">
+          <span class="material-symbols-outlined icon-36 text-tac-gold-bright">public</span>
+        </div>
+        <h3 class="font-headline-lg text-headline-lg text-tac-on-surface">System Access</h3>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright tracking-widest uppercase mt-0.5">MTC ASSET | INTERFACE</span>
+
+        <div class="w-full space-y-3.5 mt-5 text-left">
+          <div>
+            <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase mb-1">AUTHENTICATION ID</label>
+            <div class="relative">
+              <input type="text" readonly :value="(user && user.email) || 'Belum ada sesi'"
+                     class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-white/5 focus:outline-none focus:border-tac-gold-bright shadow-inner">
+              <span class="material-symbols-outlined icon-16 absolute right-3 top-1/2 -translate-y-1/2 text-tac-status-standby">fingerprint</span>
+            </div>
+          </div>
+          <div>
+            <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase mb-1">ROLE / ACCESS LEVEL</label>
+            <div class="relative">
+              <input type="text" readonly :value="(userRole || 'user').toUpperCase()"
+                     class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-white/5 focus:outline-none focus:border-tac-gold-bright shadow-inner">
+              <span class="material-symbols-outlined icon-16 absolute right-3 top-1/2 -translate-y-1/2 text-tac-status-standby">badge</span>
+            </div>
+          </div>
+          <button type="button" @click="setDashboardPreset(0)"
+                  class="w-full py-3 px-4 rounded-xl bg-tac-surface-card hover:bg-tac-surface-elevated text-tac-gold-bright font-label-mono-md text-label-mono-md uppercase tracking-wider font-bold shadow-[12px_16px_28px_rgba(0,0,0,0.6),-4px_-4px_14px_rgba(255,255,255,0.03)] border-t border-white/10 active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)] transition-all mt-2">
+            INITIALIZE DASHBOARD
           </button>
         </div>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mt-4"
+              x-text="isOnline ? 'SESSION VERIFIED · ONLINE' : 'SESSION LOCAL · OFFLINE QUEUE'"></span>
+      </section>
 
-        <div x-show="!pmList || pmList.length === 0" class="text-center py-10">
-          <i class="fas fa-calendar text-3xl text-tac-muted/40" aria-hidden="true"></i>
-          <p class="tac-label-md text-tac-text-dim mt-2">No PM tasks yet</p>
+      <section class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined icon-18 text-tac-sync-cyan">qr_code_scanner</span>
+            <h4 class="font-headline-md text-[15px] text-tac-on-surface">Optical Scanner</h4>
+          </div>
+          <span class="font-label-mono-sm text-label-mono-sm px-2 py-0.5 rounded"
+                :class="isOnline ? 'text-tac-status-operational bg-tac-status-operational/10' : 'text-tac-status-repair bg-tac-status-repair/10'"
+                x-text="isOnline ? 'NODE READY' : 'OFFLINE MODE'"></span>
         </div>
+        <p class="font-body-sm text-body-sm text-tac-status-standby">Align terminal viewfinder with physical machine asset QR node tag for rapid HM check.</p>
+        <div @click="openQR()" class="w-full h-36 bg-tac-surface-recessed rounded-lg border border-dashed border-white/10 relative flex flex-col items-center justify-center overflow-hidden shadow-inner group cursor-pointer">
+          <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-tac-sync-cyan shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse"></div>
+          <span class="material-symbols-outlined icon-36 text-tac-sync-cyan opacity-70 group-hover:scale-110 transition-transform">center_focus_strong</span>
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant mt-2 tracking-wide">ALIGNING WITH ASSET QR NODE</span>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <button type="button" @click="stopScanner()" class="font-label-mono-sm text-label-mono-sm text-tac-status-emergency hover:underline">Abort Operation</button>
+          <button type="button" @click="openQR()"
+                  class="px-3 py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-bright text-tac-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 shadow-sm">
+            <span class="material-symbols-outlined icon-14">save</span>
+            <span>Save Optical Data</span>
+          </button>
+        </div>
+      </section>
 
-        <ul class="space-y-2" x-show="pmList && pmList.length > 0">
-          <template x-for="pm in pmUpcomingList.slice(0, 5)" :key="'pm-' + pm.pmId">
-            <li @click="navigateTo('pms'); selectedPM = pm; pmShowDetail = true"
-              @keydown.enter="navigateTo('pms'); selectedPM = pm; pmShowDetail = true"
-              role="button" tabindex="0"
-              class="tac-plate-flat p-3 cursor-pointer hover:border-tac-gold/50 transition-colors flex items-center gap-3">
-              <span class="w-2 h-2 rounded-full shrink-0" aria-hidden="true"
-                :class="isPMOverdue(pm) ? 'bg-tac-emergency' : (isPMDueSoon(pm) ? 'bg-tac-gold' : 'bg-tac-ok')"></span>
-              <div class="flex-1 min-w-0">
-                <p class="text-[12px] font-semibold text-tac-text truncate" x-text="pm.taskName"></p>
-                <p class="tac-label mt-0.5 truncate"
-                  x-text="(equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId) + ' · ' + pm.date + (pm.frequency && pm.frequency !== 'none' ? ' · ' + pm.frequency : '')"></p>
+      <section class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-sm">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined icon-18 text-tac-gold-bright">inventory_2</span>
+            <h4 class="font-headline-md text-[15px] text-tac-on-surface">Critical Spare Parts Stock</h4>
+          </div>
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+                x-text="lowStockCount + ' / ' + (allParts || []).length + ' LOW'"></span>
+        </div>
+        <div class="space-y-2 pt-1">
+          <template x-for="p in (allParts || []).filter(x => Number(x.Stok) <= Number(x.MinStock)).slice(0, 3)" :key="p.PartID">
+            <div class="p-2.5 rounded-lg bg-tac-surface-recessed border border-white/5 flex items-center justify-between shadow-inner">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-label-mono-md text-label-mono-md text-tac-on-surface font-bold" x-text="p.PartNumber || p.PartID"></span>
+                  <span class="font-label-mono-sm text-[9px] px-1 rounded bg-tac-status-emergency/10 text-tac-status-emergency">Low Stock</span>
+                </div>
+                <span class="font-body-sm text-[11px] text-tac-status-standby block truncate"
+                      x-text="(p.NamaPart || p.NamaSingkat || 'Spare part') + (p.Harga ? ' • IDR ' + Number(p.Harga).toLocaleString('id-ID') : '')"></span>
               </div>
-              <span class="tac-chip tac-label-md shrink-0"
-                :class="isPMOverdue(pm) ? 'bg-tac-emergency/15 text-tac-emergency border-tac-emergency/40' : (isPMDueSoon(pm) ? 'bg-tac-gold/15 text-tac-gold-bright border-tac-gold/30' : 'bg-tac-ok/10 text-tac-ok border-tac-ok/30')"
-                x-text="isPMOverdue(pm) ? 'Overdue' : (isPMDueSoon(pm) ? 'Due soon' : 'Scheduled')"></span>
-            </li>
+              <div class="text-right flex-shrink-0 pl-2">
+                <span class="font-label-mono-md text-label-mono-md font-bold"
+                      :class="Number(p.Stok) <= 0 ? 'text-tac-status-emergency' : 'text-tac-status-repair'"
+                      x-text="Number(p.Stok) + ' unit'"></span>
+                <span class="font-label-mono-sm text-[9px] text-tac-status-standby block" x-text="'Safety: ' + (p.MinStock ?? '—')"></span>
+              </div>
+            </div>
           </template>
-        </ul>
-      </div>
+          <template x-if="lowStockCount === 0">
+            <div class="p-2.5 rounded-lg bg-tac-surface-recessed border border-white/5 text-center">
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-status-operational uppercase">Semua stok di atas minimum</span>
+            </div>
+          </template>
+        </div>
+        <button type="button" @click="navigateTo('parts')"
+                class="w-full py-1.5 rounded bg-tac-surface-container hover:bg-tac-surface-container-high text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm transition-colors text-center block mt-2">
+          View Complete Parts Ledger (<span x-text="(allParts || []).length"></span> SKUs)
+        </button>
+      </section>
+    </aside>
+  </div>
 
-      <!-- WO completion + PM status charts -->
-      <div class="lg:col-span-2 grid grid-cols-1 gap-4">
-        <div class="tac-plate p-5">
-          <h2 class="font-tac-sans text-sm font-semibold text-tac-text uppercase tracking-wide mb-3">WO Completion</h2>
-          <div class="relative min-h-[200px]">
-            <canvas id="woCompletionChart" role="img" aria-label="Grafik tingkat penyelesaian work order"></canvas>
-          </div>
+  <!-- ═══ 4. DRAWER AJENG AI DIAGNOSTICS ═════════════════════════════════ -->
+  <div x-show="aiDrawerOpen" x-transition
+       class="fixed right-6 bottom-14 z-50 w-96 max-w-[calc(100vw-2rem)] bg-tac-surface-card rounded-2xl p-5 shadow-2xl border-t border-tac-secondary/30 flex flex-col gap-3 backdrop-blur-xl">
+    <div class="flex items-center justify-between pb-2 border-b border-white/5">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-tac-secondary/15 text-tac-secondary flex items-center justify-center shadow-[0_0_10px_rgba(76,215,246,0.3)]">
+          <span class="material-symbols-outlined icon-18">neurology</span>
         </div>
-        <div class="tac-plate p-5">
-          <h2 class="font-tac-sans text-sm font-semibold text-tac-text uppercase tracking-wide mb-3">PM Schedule Status</h2>
-          <div class="relative min-h-[200px]">
-            <canvas id="pmStatusChart" role="img" aria-label="Grafik status jadwal preventive maintenance"></canvas>
-          </div>
+        <div>
+          <h4 class="font-headline-md text-[14px] text-tac-on-surface">Ajeng AI Diagnostics</h4>
+          <span class="font-label-mono-sm text-label-mono-sm flex items-center gap-1"
+                :class="(aiApiKeys || []).length ? 'text-tac-status-operational' : 'text-tac-status-repair'">
+            <span class="w-1.5 h-1.5 rounded-full" :class="(aiApiKeys || []).length ? 'bg-tac-status-operational' : 'bg-tac-status-repair'"></span>
+            <span x-text="(aiApiKeys || []).length ? 'Multi-Provider Active' : 'Belum ada API key'"></span>
+          </span>
         </div>
+      </div>
+      <button type="button" @click="aiDrawerOpen = false" class="text-tac-status-standby hover:text-tac-on-surface">
+        <span class="material-symbols-outlined icon-18">close</span>
+      </button>
+    </div>
+
+    <div class="space-y-1">
+      <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">ACTIVE LLM PROVIDER</label>
+      <div class="grid grid-cols-3 gap-1 bg-tac-surface-recessed p-1 rounded-lg border border-white/5 text-center font-label-mono-sm text-label-mono-sm shadow-inner">
+        <template x-for="pv in [['openai', 'OpenAI'], ['claude', 'Claude'], ['openrouter', 'OpenRouter']]" :key="pv[0]">
+          <button type="button" @click="aiProvider = pv[0]"
+                  class="py-1 rounded transition-colors"
+                  :class="aiProvider === pv[0] ? 'bg-tac-secondary text-tac-on-secondary font-bold' : 'text-tac-status-standby hover:text-tac-on-surface'"
+                  x-text="pv[1]"></button>
+        </template>
+      </div>
+      <span class="font-label-mono-sm text-[10px] text-tac-status-standby block" x-text="'Model aktif: ' + (apiModel || '—')"></span>
+    </div>
+
+    <div class="p-3 rounded-lg bg-tac-surface-recessed border border-white/5 space-y-1 shadow-inner max-h-48 overflow-y-auto">
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-secondary font-bold flex items-center gap-1">
+        <span class="material-symbols-outlined icon-13">lightbulb</span> Telemetry Recommendation
+      </span>
+      <p class="font-body-sm text-[12px] text-tac-on-surface-variant leading-relaxed whitespace-pre-wrap"
+         x-text="analysisResult || 'Belum ada analisis. Jalankan Run Full RCA untuk menganalisis telemetri armada saat ini.'"></p>
+    </div>
+
+    <div class="flex items-center justify-between pt-1">
+      <span class="font-label-mono-sm text-[10px] text-tac-status-standby"
+            x-text="'API Keys Auto-Rotate (' + (aiApiKeys || []).length + ' Active)'"></span>
+      <div class="flex items-center gap-2">
+        <button type="button" @click="rotateApiKey()" x-show="(aiApiKeys || []).length > 1"
+                class="px-2 py-1 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-sm text-label-mono-sm hover:bg-tac-surface-bright transition-all">
+          Rotate Key
+        </button>
+        <button type="button" @click="analyzeKPI()" :disabled="isAnalyzing"
+                class="px-3 py-1 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-sm text-label-mono-sm font-bold shadow-md hover:bg-tac-gold-bright transition-all disabled:opacity-60"
+                x-text="isAnalyzing ? 'Menganalisis…' : 'Run Full RCA'"></button>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- ═══ FOOTER · STATUS LINE (real counts) ════════════════════════════ -->
-  <footer class="tac-plate-flat px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-2 tac-label">
-    <span x-text="equipment.length + ' asset nodes'"></span>
-    <span x-text="criticalDowntimeCount + ' critical'"></span>
-    <span x-text="lowStockCount + ' part below minimum'"></span>
-    <span x-text="pmOverdueCount + ' PM overdue'"></span>
-    <span class="ml-auto" :class="isOnline ? 'text-tac-cyan-light' : 'text-tac-emergency'"
-      x-text="isOnline ? 'Nexus sync active' : 'Offline — perubahan akan disinkronkan'"></span>
-  </footer>
-
+  <!-- ═══ 5. STATUS STRIP ════════════════════════════════════════════════ -->
+  <div class="w-full bg-tac-surface-container-lowest rounded-lg px-gutter-desktop py-2 shadow-[0_-1px_6px_rgba(0,0,0,0.5)] flex items-center justify-between flex-wrap gap-2">
+    <div class="flex items-center gap-space-lg">
+      <div class="flex items-center gap-space-xs">
+        <span class="h-1.5 w-1.5 rounded-full" :class="isOnline ? 'bg-tac-status-operational' : 'bg-tac-status-emergency'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant"
+              x-text="isOnline ? 'ONLINE (SYNCED)' : 'OFFLINE (QUEUE)'"></span>
+      </div>
+      <div class="flex items-center gap-space-xs">
+        <span class="material-symbols-outlined icon-14 text-tac-sync-cyan">cloud_done</span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">SYNC: AUTONOMOUS REALTIME</span>
+      </div>
+      <div class="hidden md:flex items-center gap-space-xs">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+              x-text="'INDEXEDDB: ' + (isOnline ? 'STORAGE OPTIMAL' : 'PENDING SYNC')"></span>
+      </div>
+    </div>
+    <div class="flex items-center gap-space-md">
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+            x-text="equipment.length + ' ASSETS · ' + (allParts || []).length + ' SKU'"></span>
+      <button type="button" @click="location.reload()"
+              class="flex items-center gap-1 px-space-sm py-0.5 rounded bg-tac-surface-container hover:bg-tac-surface-container-high text-tac-primary font-label-mono-sm text-label-mono-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined icon-13">sync</span>
+        <span>FAST SYNC</span>
+      </button>
+    </div>
+  </div>
 </div>

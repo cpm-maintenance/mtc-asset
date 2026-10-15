@@ -1,0 +1,40 @@
+/*
+ * Material Symbols Outlined — ikon resmi design system Google Stitch
+ * (project 2861085646384681595, screen f88b02d0cb).
+ * Font-nya sendiri dimuat dari Google Fonts di index.html; kelas di bawah ini
+ * adalah "wajib" agar ligature nama ikon (mis. `dashboard`) ter-render.
+ */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+}
+
+/* Ukuran ikon mengikuti design (text-[Npx] di markup Stitch) */
+.material-symbols-outlined.icon-13 { font-size: 13px; }
+.material-symbols-outlined.icon-14 { font-size: 14px; }
+.material-symbols-outlined.icon-15 { font-size: 15px; }
+.material-symbols-outlined.icon-16 { font-size: 16px; }
+.material-symbols-outlined.icon-18 { font-size: 18px; }
+.material-symbols-outlined.icon-20 { font-size: 20px; }
+.material-symbols-outlined.icon-22 { font-size: 22px; }
+.material-symbols-outlined.icon-36 { font-size: 36px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .material-symbols-outlined.animate-spin,
+  .material-symbols-outlined.animate-pulse,
+  .material-symbols-outlined.animate-ping { animation: none !important; }
+}

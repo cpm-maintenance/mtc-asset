@@ -19,6 +19,9 @@ const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOU
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
     manualScanId: '',
+    // Dashboard 'Tactical Slate': filter WO di Maintenance Activity Protocol + drawer Ajeng AI
+    dashWoFilter: '',
+    aiDrawerOpen: false,
 
     setTheme(t) {
         if (!['night', 'navy', 'purple', 'light'].includes(t)) t = 'night';
