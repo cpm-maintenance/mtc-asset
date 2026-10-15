@@ -1,336 +1,381 @@
-<!-- 🏠 PAGE: DASHBOARD — Industrial Command Center -->
+<!-- 🏠 PAGE: DASHBOARD — Industrial Command Center (3-Zone Layout · C-4) -->
 <div x-cloak class="space-y-5 md:space-y-7">
 
-  <!-- Top Bar: Overview Title + Date Presets (D-8) -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-    <div>
-      <h3 class="text-sm font-black uppercase tracking-widest text-white/90 flex items-center gap-2">
-        <i class="fas fa-chart-pie text-nexus-accent"></i> Operations Overview
-      </h3>
-      <p class="text-[11px] text-slate-400 mt-0.5">Real-time equipment performance and critical alerts</p>
-    </div>
-    <div class="inline-flex items-center gap-1 p-1 rounded-xl neu-inset-rail self-start sm:self-auto">
-      <button @click="setDashboardPreset(7)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 7) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">7D</button>
-      <button @click="setDashboardPreset(30)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 7 && Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 30) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">30D</button>
-      <button @click="setDashboardPreset(90)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 30) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">90D</button>
-      <button @click="setDashboardPreset(0)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="!dashboardDateFrom ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">All</button>
-    </div>
-  </div>
-
-  <!-- 🚨 U-4: Live Breakdown / Critical Downtime Banner (auto-hide bila semua normal) -->
-  <section x-show="criticalDowntimeList.length > 0" x-cloak role="alert" aria-live="assertive"
-    aria-label="Critical downtime alert"
-    class="relative overflow-hidden rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 md:p-5">
-    <div class="absolute inset-0 pointer-events-none"
-      style="background: radial-gradient(circle at 0% 0%, rgba(244,63,94,0.20) 0%, transparent 60%)"></div>
-    <div class="relative flex flex-col lg:flex-row lg:items-center gap-3 md:gap-4">
-      <div class="flex items-center gap-3 shrink-0">
-        <span class="relative flex w-9 h-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
-          <span class="absolute inline-flex w-full h-full rounded-xl bg-rose-500/40 animate-ping"></span>
-          <i class="fas fa-exclamation-triangle relative" aria-hidden="true"></i>
-        </span>
-        <div>
-          <p class="text-xs font-black uppercase tracking-widest text-rose-300">Live Breakdown Alert</p>
-          <p class="text-[11px] text-rose-200/80" x-text="criticalDowntimeLabel"></p>
-        </div>
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ZONA 1 · COMMAND STRIP
+       Judul operasi · Plant Status Pill (live) · Preset tanggal taktil
+       ══════════════════════════════════════════════════════════════════════ -->
+  <section aria-label="Command strip" class="space-y-3 md:space-y-4">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div>
+        <h3 class="text-sm font-black uppercase tracking-widest text-white/90 flex items-center gap-2">
+          <i class="fas fa-chart-pie text-nexus-accent" aria-hidden="true"></i> Operations Overview
+        </h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Real-time equipment performance and critical alerts</p>
       </div>
 
-      <ul class="flex-1 min-w-0 flex flex-wrap gap-2">
-        <template x-for="item in criticalDowntimeList.slice(0, 3)" :key="item.woNumber + '-' + item.equipName">
-          <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 min-w-0">
-            <span class="w-1.5 h-1.5 rounded-full shrink-0" aria-hidden="true"
-              :class="item.isEmergency ? 'bg-rose-400' : 'bg-amber-400'"></span>
-            <span class="text-[11px] font-bold text-white/90 truncate max-w-[190px]" x-text="item.equipName"></span>
-            <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded shrink-0"
-              :class="item.isEmergency ? 'bg-rose-500/25 text-rose-300' : 'bg-amber-500/20 text-amber-300'"
-              x-text="item.priority"></span>
-            <span class="text-[10px] text-rose-200/70 font-mono shrink-0" x-text="'#' + item.woNumber"></span>
-            <span class="text-[10px] text-rose-200/70 shrink-0" x-show="item.ageDays > 0"
-              x-text="item.ageDays + 'd'" :title="'Open for ' + item.ageDays + ' day(s)'"></span>
-          </li>
-        </template>
-        <li x-show="criticalDowntimeList.length > 3"
-          class="flex items-center px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-[11px] font-bold text-rose-200"
-          x-text="'+' + (criticalDowntimeList.length - 3) + ' more'"></li>
-      </ul>
+      <div class="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+        <!-- Plant Status Pill (live) -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/5 bg-white/[0.02]"
+             role="status"
+             :aria-label="'Plant status: ' + (criticalDowntimeCount > 0 ? criticalDowntimeCount + ' critical work orders' : 'normal') + ', ' + equipment.length + ' active assets'">
+          <span class="relative flex w-2 h-2" aria-hidden="true">
+            <span class="absolute inline-flex w-full h-full rounded-full animate-ping"
+                  :class="criticalDowntimeCount > 0 ? 'bg-rose-500/60' : 'bg-emerald-500/50'"></span>
+            <span class="relative inline-flex w-2 h-2 rounded-full"
+                  :class="criticalDowntimeCount > 0 ? 'bg-rose-500' : 'bg-emerald-500'"></span>
+          </span>
+          <span class="text-[11px] font-black uppercase tracking-wider"
+                :class="criticalDowntimeCount > 0 ? 'text-rose-300' : 'text-emerald-300'"
+                x-text="criticalDowntimeCount > 0 ? criticalDowntimeCount + ' Critical' : 'Plant Normal'"></span>
+          <span class="text-slate-600 text-[11px]" aria-hidden="true">·</span>
+          <span class="text-[11px] font-bold text-slate-300"><span x-text="equipment.length"></span> Active</span>
+          <template x-if="dashAlerts.overduePM > 0">
+            <span class="inline-flex items-center gap-2">
+              <span class="text-slate-600 text-[11px]" aria-hidden="true">·</span>
+              <span class="text-[11px] font-bold text-amber-300"><span x-text="dashAlerts.overduePM"></span> PM Overdue</span>
+            </span>
+          </template>
+        </div>
 
-      <button type="button" @click="navigateTo('wo')"
-        class="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-rose-500 text-white text-[11px] font-black uppercase tracking-wider hover:bg-rose-400 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
-        :aria-label="'View ' + criticalDowntimeCount + ' critical work order' + (criticalDowntimeCount === 1 ? '' : 's')">
-        <i class="fas fa-arrow-right" aria-hidden="true"></i> View WO
-      </button>
+        <!-- Date presets rail (tactile) -->
+        <div class="inline-flex items-center gap-1 p-1 rounded-xl neu-inset-rail" role="group" aria-label="Dashboard date range">
+          <button @click="setDashboardPreset(7)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+            :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 7) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">7D</button>
+          <button @click="setDashboardPreset(30)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+            :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 7 && Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 30) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">30D</button>
+          <button @click="setDashboardPreset(90)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+            :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 30) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">90D</button>
+          <button @click="setDashboardPreset(0)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+            :class="!dashboardDateFrom ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🚨 U-4: Live Breakdown / Critical Downtime Banner (auto-hide bila semua normal) -->
+    <div x-show="criticalDowntimeList.length > 0" x-cloak>
+      <section role="alert" aria-live="assertive" aria-label="Critical downtime alert"
+        class="relative overflow-hidden rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 md:p-5">
+        <div class="absolute inset-0 pointer-events-none"
+          style="background: radial-gradient(circle at 0% 0%, rgba(244,63,94,0.20) 0%, transparent 60%)"></div>
+        <div class="relative flex flex-col lg:flex-row lg:items-center gap-3 md:gap-4">
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="relative flex w-9 h-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
+              <span class="absolute inline-flex w-full h-full rounded-xl bg-rose-500/40 animate-ping"></span>
+              <i class="fas fa-exclamation-triangle relative" aria-hidden="true"></i>
+            </span>
+            <div>
+              <p class="text-xs font-black uppercase tracking-widest text-rose-300">Live Breakdown Alert</p>
+              <p class="text-[11px] text-rose-200/80" x-text="criticalDowntimeLabel"></p>
+            </div>
+          </div>
+
+          <ul class="flex-1 min-w-0 flex flex-wrap gap-2">
+            <template x-for="item in criticalDowntimeList.slice(0, 3)" :key="item.woNumber + '-' + item.equipName">
+              <li class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 min-w-0">
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" aria-hidden="true"
+                  :class="item.isEmergency ? 'bg-rose-400' : 'bg-amber-400'"></span>
+                <span class="text-[11px] font-bold text-white/90 truncate max-w-[190px]" x-text="item.equipName"></span>
+                <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded shrink-0"
+                  :class="item.isEmergency ? 'bg-rose-500/25 text-rose-300' : 'bg-amber-500/20 text-amber-300'"
+                  x-text="item.priority"></span>
+                <span class="text-[10px] text-rose-200/70 font-mono shrink-0" x-text="'#' + item.woNumber"></span>
+                <span class="text-[10px] text-rose-200/70 shrink-0" x-show="item.ageDays > 0"
+                  x-text="item.ageDays + 'd'" :title="'Open for ' + item.ageDays + ' day(s)'"></span>
+              </li>
+            </template>
+            <li x-show="criticalDowntimeList.length > 3"
+              class="flex items-center px-2.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-[11px] font-bold text-rose-200"
+              x-text="'+' + (criticalDowntimeList.length - 3) + ' more'"></li>
+          </ul>
+
+          <button type="button" @click="navigateTo('wo')"
+            class="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-rose-500 text-white text-[11px] font-black uppercase tracking-wider hover:bg-rose-400 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+            :aria-label="'View ' + criticalDowntimeCount + ' critical work order' + (criticalDowntimeCount === 1 ? '' : 's')">
+            <i class="fas fa-arrow-right" aria-hidden="true"></i> View WO
+          </button>
+        </div>
+      </section>
     </div>
   </section>
 
-  <!-- Row 1: Hero Metrics HUD (4 Condensed Strategic Cards) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-    <!-- Card 1: Plant Availability & Overall Health -->
-    <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
-      <div class="absolute top-0 left-0 right-0 h-[2px]"
-           :style="'background: linear-gradient(90deg, transparent, ' + (heroHUD.pa.val >= 90 ? '#10b981' : (heroHUD.pa.val >= 80 ? '#f59e0b' : '#f43f5e')) + ', transparent)'"></div>
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-               :class="heroHUD.pa.val >= 90 ? 'bg-emerald-500/15 text-emerald-400' : (heroHUD.pa.val >= 80 ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400')">
-            <i class="fas fa-chart-pie"></i>
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ZONA 2 · HERO METRICS HUD — 4 kartu komposit strategis
+       ══════════════════════════════════════════════════════════════════════ -->
+  <section aria-label="Hero metrics">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <!-- Card 1: Plant Availability & Overall Health -->
+      <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
+        <div class="absolute top-0 left-0 right-0 h-[2px]"
+             :style="'background: linear-gradient(90deg, transparent, ' + (heroHUD.pa.val >= 90 ? '#10b981' : (heroHUD.pa.val >= 80 ? '#f59e0b' : '#f43f5e')) + ', transparent)'"></div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                 :class="heroHUD.pa.val >= 90 ? 'bg-emerald-500/15 text-emerald-400' : (heroHUD.pa.val >= 80 ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400')">
+              <i class="fas fa-chart-pie" aria-hidden="true"></i>
+            </div>
+            <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">Plant Availability</span>
           </div>
-          <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">Plant Availability</span>
+          <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded"
+                :class="heroHUD.pa.val >= 90 ? 'bg-emerald-500/20 text-emerald-300' : (heroHUD.pa.val >= 80 ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300')"
+                x-text="heroHUD.pa.status"></span>
         </div>
-        <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded"
-              :class="heroHUD.pa.val >= 90 ? 'bg-emerald-500/20 text-emerald-300' : (heroHUD.pa.val >= 80 ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300')"
-              x-text="heroHUD.pa.status"></span>
-      </div>
-      <div class="flex items-baseline gap-2 mt-1">
-        <span class="text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="heroHUD.pa.val + '%'"></span>
-        <span class="text-[11px] text-slate-400 font-bold" x-text="'Target ' + heroHUD.pa.target + '%'"></span>
-      </div>
-      <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
-        <span>Active Assets: <strong class="text-white" x-text="equipment.length"></strong></span>
-        <span>Avg Health: <strong class="text-amber-400" x-text="calculatedStats.avgHealthScore.value"></strong></span>
-      </div>
-    </div>
-
-    <!-- Card 2: Reliability Core (MTBF & MTTR) -->
-    <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
-      <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-500 to-transparent"></div>
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center text-sm">
-            <i class="fas fa-stopwatch"></i>
-          </div>
-          <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">Reliability Core</span>
+        <div class="flex items-baseline gap-2 mt-1">
+          <span class="text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="heroHUD.pa.val + '%'"></span>
+          <span class="text-[11px] text-slate-400 font-bold" x-text="'Target ' + heroHUD.pa.target + '%'"></span>
         </div>
-        <span class="text-[10px] font-mono text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded font-black"
-              x-text="heroHUD.reliability.breakdowns + ' BD'"></span>
-      </div>
-      <div class="grid grid-cols-2 gap-2 mt-1">
-        <div>
-          <p class="text-[10px] text-slate-400 uppercase font-black tracking-wider">MTBF</p>
-          <div class="flex items-baseline gap-1">
-            <span class="text-2xl font-black text-sky-400" x-text="heroHUD.reliability.mtbf"></span>
-            <span class="text-[10px] text-slate-400 font-bold">hrs</span>
-          </div>
-        </div>
-        <div>
-          <p class="text-[10px] text-slate-400 uppercase font-black tracking-wider">MTTR</p>
-          <div class="flex items-baseline gap-1">
-            <span class="text-2xl font-black text-rose-400" x-text="heroHUD.reliability.mttr"></span>
-            <span class="text-[10px] text-slate-400 font-bold">hrs</span>
-          </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
+          <span>Active Assets: <strong class="text-white" x-text="equipment.length"></strong></span>
+          <span>Avg Health: <strong class="text-amber-400" x-text="calculatedStats.avgHealthScore.value"></strong></span>
         </div>
       </div>
-      <div class="mt-2 text-[11px] text-slate-400 border-t border-white/5 pt-2 flex justify-between">
-        <span>Downtime: <strong class="text-rose-400" x-text="logs.filter(l => l.Jenis==='Breakdown').reduce((s,l)=>s+(Number(l.Downtime)||0),0) + ' hrs'"></strong></span>
-        <button type="button" @click="navigateTo('mtbfmttr')" class="text-nexus-accent hover:underline text-[10px] font-bold uppercase">Details &rarr;</button>
-      </div>
-    </div>
 
-    <!-- Card 3: Work Order Health & Execution -->
-    <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
-      <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-sm">
-            <i class="fas fa-clipboard-check"></i>
+      <!-- Card 2: Reliability Core (MTBF & MTTR) -->
+      <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
+        <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-500 to-transparent"></div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center text-sm">
+              <i class="fas fa-stopwatch" aria-hidden="true"></i>
+            </div>
+            <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">Reliability Core</span>
           </div>
-          <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">WO Completion</span>
+          <span class="text-[10px] font-mono text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded font-black"
+                x-text="heroHUD.reliability.breakdowns + ' BD'"></span>
         </div>
-        <span class="text-[10px] font-mono text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded font-black"
-              x-text="heroHUD.wo.rate + '%'"></span>
-      </div>
-      <div class="flex items-baseline gap-2 mt-1">
-        <span class="text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="heroHUD.wo.done"></span>
-        <span class="text-[11px] text-slate-400 font-bold" x-text="'of ' + heroHUD.wo.total + ' total WOs'"></span>
-      </div>
-      <div class="mt-3 flex items-center justify-between text-[11px] border-t border-white/5 pt-2">
-        <span class="text-amber-400">In Progress: <strong x-text="heroHUD.wo.inProgress"></strong></span>
-        <span class="text-rose-400" x-show="dashAlerts.agingWO > 0">Aging >3d: <strong x-text="dashAlerts.agingWO"></strong></span>
-        <span class="text-slate-400" x-show="!dashAlerts.agingWO || dashAlerts.agingWO === 0">Pending: <strong x-text="heroHUD.wo.pending"></strong></span>
-      </div>
-    </div>
-
-    <!-- Card 4: PM Compliance & Readiness -->
-    <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
-      <div class="absolute top-0 left-0 right-0 h-[2px]"
-           :style="'background: linear-gradient(90deg, transparent, ' + (heroHUD.pm.overdue > 0 ? '#f43f5e' : '#a855f7') + ', transparent)'"></div>
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-               :class="heroHUD.pm.overdue > 0 ? 'bg-rose-500/15 text-rose-400' : 'bg-purple-500/15 text-purple-400'">
-            <i class="fas fa-calendar-check"></i>
-          </div>
-          <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">PM Compliance</span>
-        </div>
-        <span class="text-[10px] font-mono px-2 py-0.5 rounded font-black"
-              :class="heroHUD.pm.overdue > 0 ? 'bg-rose-500/20 text-rose-300 animate-pulse' : 'bg-purple-500/15 text-purple-300'"
-              x-text="heroHUD.pm.overdue > 0 ? heroHUD.pm.overdue + ' OVERDUE' : 'ON TRACK'"></span>
-      </div>
-      <div class="flex items-baseline gap-2 mt-1">
-        <span class="text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="heroHUD.pm.pct + '%'"></span>
-        <span class="text-[11px] text-slate-400 font-bold" x-text="heroHUD.pm.total + ' tasks scheduled'"></span>
-      </div>
-      <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
-        <span>Part Low Stock: <strong class="text-amber-400" x-text="lowStockCount"></strong></span>
-        <button type="button" @click="navigateTo('pms')" class="text-nexus-accent hover:underline text-[10px] font-bold uppercase">Schedule &rarr;</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Row 4: Actionable Work Orders (Top 5 Priority) + WO Completion Donut + PM Schedule Status -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
-    <!-- Top 5 Actionable Work Orders (Replaces single-value donut) -->
-    <div class="card-modern p-4 md:p-5 flex flex-col group">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
-          <i class="fas fa-fire text-rose-400"></i> Priority Actions
-        </h3>
-        <button type="button" @click="navigateTo('wo')" class="text-[10px] text-slate-400 hover:text-white uppercase font-bold tracking-wider">
-          View All &rarr;
-        </button>
-      </div>
-
-      <div x-show="!actionableWOs || actionableWOs.length === 0" class="flex-1 flex flex-col items-center justify-center py-6 text-slate-500">
-        <i class="fas fa-check-double text-2xl mb-2 text-emerald-500/40"></i>
-        <p class="text-xs font-bold">All caught up</p>
-        <p class="text-[10px] text-slate-500">No pending priority work orders</p>
-      </div>
-
-      <div x-show="actionableWOs && actionableWOs.length > 0" class="flex-1 space-y-2">
-        <template x-for="item in actionableWOs" :key="item.woNumber">
-          <div @click="navigateTo('wo')"
-               role="button" tabindex="0"
-               class="p-2.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-start gap-2.5 cursor-pointer">
-            <span class="w-2 h-2 rounded-full mt-1 shrink-0"
-                  :class="item.priority === 'Emergency' ? 'bg-rose-400' : (item.priority === 'Urgent' ? 'bg-orange-400' : 'bg-amber-400')"></span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1 mb-0.5">
-                <span class="text-[11px] font-bold text-white/90 truncate" x-text="item.equipName"></span>
-                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded shrink-0"
-                      :class="item.priority === 'Emergency' ? 'bg-rose-500/20 text-rose-300' : (item.priority === 'Urgent' ? 'bg-orange-500/20 text-orange-300' : 'bg-amber-500/20 text-amber-300')"
-                      x-text="item.priority"></span>
-              </div>
-              <p class="text-[10px] text-slate-400 truncate leading-snug" x-text="item.desc"></p>
-              <div class="flex items-center gap-2 mt-1 text-[9px] text-slate-400 font-mono">
-                <span x-text="'#' + item.woNumber"></span>
-                <span x-show="item.ageDays > 0" x-text="'· ' + item.ageDays + 'd ago'"></span>
-              </div>
+        <div class="grid grid-cols-2 gap-2 mt-1">
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-black tracking-wider">MTBF</p>
+            <div class="flex items-baseline gap-1">
+              <span class="text-2xl font-black text-sky-400" x-text="heroHUD.reliability.mtbf"></span>
+              <span class="text-[10px] text-slate-400 font-bold">hrs</span>
             </div>
           </div>
-        </template>
-      </div>
-    </div>
-
-    <!-- WO Completion Rate -->
-    <div class="card-modern p-4 md:p-5 flex flex-col group">
-      <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
-        <i class="fas fa-check-circle text-emerald-400"></i> WO Completion
-      </h3>
-      <div class="flex-1 relative min-h-[220px] flex items-center justify-center">
-        <canvas id="woCompletionChart" role="img" aria-label="Grafik Tingkat Penyelesaian Work Order"></canvas>
-      </div>
-    </div>
-
-    <!-- PM Status (Horizontal Bar) -->
-    <div class="card-modern p-4 md:p-5 flex flex-col group">
-      <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
-        <i class="fas fa-calendar-check text-emerald-400"></i> PM Schedule Status
-        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase" x-text="pmList.length + ' tasks'"></span>
-      </h3>
-      <div class="flex-1 relative min-h-[220px]">
-        <canvas id="pmStatusChart" role="img" aria-label="Grafik Status Jadwal Preventive Maintenance"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Row 5: Reliability (3) + Cost Trend (2) -->
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
-    <div class="card-modern p-4 md:p-5 lg:col-span-3 group">
-      <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
-        <i class="fas fa-chart-line text-amber-400"></i> Reliability Trend (PA Average)
-        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase" x-text="dashboardDateFrom ? 'Last ' + Math.round((new Date() - new Date(dashboardDateFrom))/86400000) + ' days' : 'All Time'"></span>
-      </h3>
-      <div class="relative min-h-[260px] md:min-h-[300px]">
-        <canvas id="reliabilityChart" role="img" aria-label="Grafik Tren Keandalan dan Rata-rata Plant Availability"></canvas>
-      </div>
-    </div>
-    <div class="card-modern p-4 md:p-5 lg:col-span-2 group">
-      <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
-        <i class="fas fa-coins text-emerald-400"></i> Maintenance Cost
-        <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase">Monthly</span>
-      </h3>
-      <div class="relative min-h-[260px] md:min-h-[300px]">
-        <canvas id="costTrendChart" role="img" aria-label="Grafik Tren Biaya Pemeliharaan Bulanan"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Row 6: PM Schedule Widget -->
-  <div class="card-modern p-5 md:p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-bold text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
-        <i class="fas fa-calendar-check text-amber-400"></i>
-        PM Schedule
-        <span x-show="pmUpcomingList.length > 0" class="text-[11px] bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded-full font-bold tracking-normal" x-text="`${pmUpcomingList.length} upcoming`"></span>
-      </h3>
-      <button @click="currentPage='pms'" class="text-[11px] text-slate-400 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors inline-flex items-center gap-1">
-        View All <i class="fas fa-arrow-right text-[10px]"></i>
-      </button>
-    </div>
-
-    <div x-show="!pmList || pmList.length === 0" class="text-center py-10 text-slate-400">
-      <i class="fas fa-calendar text-4xl text-slate-600 mb-3 block"></i>
-      <p class="text-sm font-bold text-slate-400">No PM tasks yet</p>
-      <p class="text-xs text-slate-400 mt-1">Create a task in PM Schedule to get started</p>
-    </div>
-
-    <div x-show="pmList && pmList.length > 0" class="space-y-1.5">
-      <template x-for="pm in pmUpcomingList.slice(0, 5)" :key="pm.pmId">
-        <div @click="currentPage='pms'; selectedPM=pm; pmShowDetail=true"
-          role="button" tabindex="0"
-          class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition-all group cursor-pointer border border-transparent hover:border-white/5 select-none">
-          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{
-            'bg-red-500/10': isPMOverdue(pm),
-            'bg-amber-500/10': isPMDueSoon(pm),
-            'bg-emerald-500/10': !isPMOverdue(pm) && !isPMDueSoon(pm),
-          }">
-            <i class="fas text-[10px]" :class="{
-              'fa-exclamation-triangle text-red-400': isPMOverdue(pm),
-              'fa-clock text-amber-400': isPMDueSoon(pm),
-              'fa-calendar-day text-emerald-400': !isPMOverdue(pm) && !isPMDueSoon(pm),
-            }"></i>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase font-black tracking-wider">MTTR</p>
+            <div class="flex items-baseline gap-1">
+              <span class="text-2xl font-black text-rose-400" x-text="heroHUD.reliability.mttr"></span>
+              <span class="text-[10px] text-slate-400 font-bold">hrs</span>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors" x-text="pm.taskName"></p>
-            <p class="text-[11px] text-slate-400 mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5 items-center">
-              <span class="text-amber-300/80 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
-              <span x-show="allParts.some(p => ((p.EquipmentIDs && p.EquipmentIDs.includes(pm.equipmentId)) || p.EquipmentID === pm.equipmentId) && isLowStock(p.Stok, p.MinStock))"
-                class="text-[11px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
-                title="Linked parts low in stock!">
-                <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>LOW STOCK
-              </span>
-              <span class="text-slate-500">·</span>
-              <span :class="isPMOverdue(pm) ? 'text-red-400' : 'text-slate-400'" x-text="pm.date"></span>
-              <span x-show="pm.frequency !== 'none'" class="text-slate-500">·</span>
-              <span x-show="pm.frequency !== 'none'" class="text-purple-400/80 font-bold uppercase" x-text="pm.frequency"></span>
-            </p>
-          </div>
-          <span class="text-[11px] px-2 py-0.5 rounded font-bold uppercase shrink-0" :class="{
-            'bg-red-500/10 text-red-400': pm.priority === 'High',
-            'bg-amber-500/10 text-amber-400': pm.priority === 'Medium',
-            'bg-slate-500/10 text-slate-400': !pm.priority || pm.priority === 'Low',
-          }" x-text="pm.priority || 'Medium'"></span>
-        </a>
-      </template>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-400 border-t border-white/5 pt-2 flex justify-between">
+          <span>Downtime: <strong class="text-rose-400" x-text="logs.filter(l => l.Jenis==='Breakdown').reduce((s,l)=>s+(Number(l.Downtime)||0),0) + ' hrs'"></strong></span>
+          <button type="button" @click="navigateTo('mtbfmttr')" class="text-nexus-accent hover:underline text-[10px] font-bold uppercase">Details &rarr;</button>
+        </div>
+      </div>
 
-      <div x-show="pmUpcomingList.length > 5" class="text-center pt-2">
-        <a href="#" @click.prevent="currentPage='pms'" class="text-[11px] text-slate-400 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors">
-          +<span x-text="pmUpcomingList.length - 5"></span> more tasks
-        </a>
+      <!-- Card 3: Work Order Health & Execution -->
+      <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
+        <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-sm">
+              <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+            </div>
+            <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">WO Completion</span>
+          </div>
+          <span class="text-[10px] font-mono text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded font-black"
+                x-text="heroHUD.wo.rate + '%'"></span>
+        </div>
+        <div class="flex items-baseline gap-2 mt-1">
+          <span class="text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="heroHUD.wo.done"></span>
+          <span class="text-[11px] text-slate-400 font-bold" x-text="'of ' + heroHUD.wo.total + ' total WOs'"></span>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] border-t border-white/5 pt-2">
+          <span class="text-amber-400">In Progress: <strong x-text="heroHUD.wo.inProgress"></strong></span>
+          <span class="text-rose-400" x-show="dashAlerts.agingWO > 0">Aging &gt;3d: <strong x-text="dashAlerts.agingWO"></strong></span>
+          <span class="text-slate-400" x-show="!dashAlerts.agingWO || dashAlerts.agingWO === 0">Pending: <strong x-text="heroHUD.wo.pending"></strong></span>
+        </div>
+      </div>
+
+      <!-- Card 4: PM Compliance & Readiness -->
+      <div class="card-modern p-4 md:p-5 relative overflow-hidden group">
+        <div class="absolute top-0 left-0 right-0 h-[2px]"
+             :style="'background: linear-gradient(90deg, transparent, ' + (heroHUD.pm.overdue > 0 ? '#f43f5e' : '#a855f7') + ', transparent)'"></div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                 :class="heroHUD.pm.overdue > 0 ? 'bg-rose-500/15 text-rose-400' : 'bg-purple-500/15 text-purple-400'">
+              <i class="fas fa-calendar-check" aria-hidden="true"></i>
+            </div>
+            <span class="text-slate-300 text-[11px] uppercase font-black tracking-widest">PM Compliance</span>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded font-black"
+                :class="heroHUD.pm.overdue > 0 ? 'bg-rose-500/20 text-rose-300 animate-pulse' : 'bg-purple-500/15 text-purple-300'"
+                x-text="heroHUD.pm.overdue > 0 ? heroHUD.pm.overdue + ' OVERDUE' : 'ON TRACK'"></span>
+        </div>
+        <div class="flex items-baseline gap-2 mt-1">
+          <span class="text-3xl font-black text-white nexus-glow-text tracking-tight" x-text="heroHUD.pm.pct + '%'"></span>
+          <span class="text-[11px] text-slate-400 font-bold" x-text="heroHUD.pm.total + ' tasks scheduled'"></span>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-white/5 pt-2">
+          <span>Part Low Stock: <strong class="text-amber-400" x-text="lowStockCount"></strong></span>
+          <button type="button" @click="navigateTo('pms')" class="text-nexus-accent hover:underline text-[10px] font-bold uppercase">Schedule &rarr;</button>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       ZONA 3 · VISUAL ANALYTICS & WORK SCHEDULE
+       Row A: tren analitik · Row B: jadwal & aksi · Row C: distribusi
+       ══════════════════════════════════════════════════════════════════════ -->
+  <section aria-label="Analytics and work schedule" class="space-y-4 md:space-y-5">
+
+    <!-- Row A: Reliability Trend (3) + Maintenance Cost (2) -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
+      <div class="card-modern p-4 md:p-5 lg:col-span-3 group">
+        <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+          <i class="fas fa-chart-line text-amber-400" aria-hidden="true"></i> Reliability Trend (PA Average)
+          <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase" x-text="dashboardDateFrom ? 'Last ' + Math.round((new Date() - new Date(dashboardDateFrom))/86400000) + ' days' : 'All Time'"></span>
+        </h3>
+        <div class="relative min-h-[260px] md:min-h-[300px]">
+          <canvas id="reliabilityChart" role="img" aria-label="Grafik Tren Keandalan dan Rata-rata Plant Availability"></canvas>
+        </div>
+      </div>
+      <div class="card-modern p-4 md:p-5 lg:col-span-2 group">
+        <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+          <i class="fas fa-coins text-emerald-400" aria-hidden="true"></i> Maintenance Cost
+          <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase">Monthly</span>
+        </h3>
+        <div class="relative min-h-[260px] md:min-h-[300px]">
+          <canvas id="costTrendChart" role="img" aria-label="Grafik Tren Biaya Pemeliharaan Bulanan"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row B: PM Schedule (3) + Priority Actions (2) -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
+      <!-- PM Schedule Widget -->
+      <div class="card-modern p-5 md:p-6 lg:col-span-3">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+            <i class="fas fa-calendar-check text-amber-400" aria-hidden="true"></i>
+            PM Schedule
+            <span x-show="pmUpcomingList.length > 0" class="text-[11px] bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded-full font-bold tracking-normal" x-text="`${pmUpcomingList.length} upcoming`"></span>
+          </h3>
+          <button @click="currentPage='pms'" class="text-[11px] text-slate-400 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors inline-flex items-center gap-1">
+            View All <i class="fas fa-arrow-right text-[10px]" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div x-show="!pmList || pmList.length === 0" class="text-center py-10 text-slate-400">
+          <i class="fas fa-calendar text-4xl text-slate-600 mb-3 block" aria-hidden="true"></i>
+          <p class="text-sm font-bold text-slate-400">No PM tasks yet</p>
+          <p class="text-xs text-slate-400 mt-1">Create a task in PM Schedule to get started</p>
+        </div>
+
+        <div x-show="pmList && pmList.length > 0" class="space-y-1.5">
+          <template x-for="pm in pmUpcomingList.slice(0, 5)" :key="pm.pmId">
+            <div @click="currentPage='pms'; selectedPM=pm; pmShowDetail=true"
+              role="button" tabindex="0"
+              class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition-all group cursor-pointer border border-transparent hover:border-white/5 select-none">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{
+                'bg-red-500/10': isPMOverdue(pm),
+                'bg-amber-500/10': isPMDueSoon(pm),
+                'bg-emerald-500/10': !isPMOverdue(pm) && !isPMDueSoon(pm),
+              }">
+                <i class="fas text-[10px]" :class="{
+                  'fa-exclamation-triangle text-red-400': isPMOverdue(pm),
+                  'fa-clock text-amber-400': isPMDueSoon(pm),
+                  'fa-calendar-day text-emerald-400': !isPMOverdue(pm) && !isPMDueSoon(pm),
+                }"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-white/90 truncate group-hover:text-white transition-colors" x-text="pm.taskName"></p>
+                <p class="text-[11px] text-slate-400 mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5 items-center">
+                  <span class="text-amber-300/80 font-mono" x-text="equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId"></span>
+                  <span x-show="allParts.some(p => ((p.EquipmentIDs && p.EquipmentIDs.includes(pm.equipmentId)) || p.EquipmentID === pm.equipmentId) && isLowStock(p.Stok, p.MinStock))"
+                    class="text-[11px] font-black bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+                    title="Linked parts low in stock!">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-400"></span>LOW STOCK
+                  </span>
+                  <span class="text-slate-500" aria-hidden="true">·</span>
+                  <span :class="isPMOverdue(pm) ? 'text-red-400' : 'text-slate-400'" x-text="pm.date"></span>
+                  <span x-show="pm.frequency !== 'none'" class="text-slate-500" aria-hidden="true">·</span>
+                  <span x-show="pm.frequency !== 'none'" class="text-purple-400/80 font-bold uppercase" x-text="pm.frequency"></span>
+                </p>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded font-bold uppercase shrink-0" :class="{
+                'bg-red-500/10 text-red-400': pm.priority === 'High',
+                'bg-amber-500/10 text-amber-400': pm.priority === 'Medium',
+                'bg-slate-500/10 text-slate-400': !pm.priority || pm.priority === 'Low',
+              }" x-text="pm.priority || 'Medium'"></span>
+            </div>
+          </template>
+
+          <div x-show="pmUpcomingList.length > 5" class="text-center pt-2">
+            <a href="#" @click.prevent="currentPage='pms'" class="text-[11px] text-slate-400 hover:text-amber-400 uppercase tracking-widest font-bold transition-colors">
+              +<span x-text="pmUpcomingList.length - 5"></span> more tasks
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Actions (Top 5 Actionable Work Orders) -->
+      <div class="card-modern p-4 md:p-5 lg:col-span-2 flex flex-col group">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+            <i class="fas fa-fire text-rose-400" aria-hidden="true"></i> Priority Actions
+          </h3>
+          <button type="button" @click="navigateTo('wo')" class="text-[10px] text-slate-400 hover:text-white uppercase font-bold tracking-wider">
+            View All &rarr;
+          </button>
+        </div>
+
+        <div x-show="!actionableWOs || actionableWOs.length === 0" class="flex-1 flex flex-col items-center justify-center py-6 text-slate-500">
+          <i class="fas fa-check-double text-2xl mb-2 text-emerald-500/40" aria-hidden="true"></i>
+          <p class="text-xs font-bold">All caught up</p>
+          <p class="text-[10px] text-slate-500">No pending priority work orders</p>
+        </div>
+
+        <div x-show="actionableWOs && actionableWOs.length > 0" class="flex-1 space-y-2">
+          <template x-for="item in actionableWOs" :key="item.woNumber">
+            <div @click="navigateTo('wo')"
+                 role="button" tabindex="0"
+                 class="p-2.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-start gap-2.5 cursor-pointer">
+              <span class="w-2 h-2 rounded-full mt-1 shrink-0" aria-hidden="true"
+                    :class="item.priority === 'Emergency' ? 'bg-rose-400' : (item.priority === 'Urgent' ? 'bg-orange-400' : 'bg-amber-400')"></span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-1 mb-0.5">
+                  <span class="text-[11px] font-bold text-white/90 truncate" x-text="item.equipName"></span>
+                  <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded shrink-0"
+                        :class="item.priority === 'Emergency' ? 'bg-rose-500/20 text-rose-300' : (item.priority === 'Urgent' ? 'bg-orange-500/20 text-orange-300' : 'bg-amber-500/20 text-amber-300')"
+                        x-text="item.priority"></span>
+                </div>
+                <p class="text-[10px] text-slate-400 truncate leading-snug" x-text="item.desc"></p>
+                <div class="flex items-center gap-2 mt-1 text-[9px] text-slate-400 font-mono">
+                  <span x-text="'#' + item.woNumber"></span>
+                  <span x-show="item.ageDays > 0" x-text="'· ' + item.ageDays + 'd ago'"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row C: Distribution analytics — WO Completion donut + PM Schedule Status -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
+      <div class="card-modern p-4 md:p-5 flex flex-col group">
+        <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+          <i class="fas fa-check-circle text-emerald-400" aria-hidden="true"></i> WO Completion
+        </h3>
+        <div class="flex-1 relative min-h-[220px] flex items-center justify-center">
+          <canvas id="woCompletionChart" role="img" aria-label="Grafik Tingkat Penyelesaian Work Order"></canvas>
+        </div>
+      </div>
+
+      <div class="card-modern p-4 md:p-5 flex flex-col group">
+        <h3 class="font-bold mb-3 text-white/80 flex items-center gap-2 text-xs uppercase tracking-widest">
+          <i class="fas fa-calendar-check text-emerald-400" aria-hidden="true"></i> PM Schedule Status
+          <span class="ml-auto text-[11px] text-slate-400 font-bold uppercase" x-text="pmList.length + ' tasks'"></span>
+        </h3>
+        <div class="flex-1 relative min-h-[220px]">
+          <canvas id="pmStatusChart" role="img" aria-label="Grafik Status Jadwal Preventive Maintenance"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
