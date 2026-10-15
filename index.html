@@ -806,14 +806,14 @@
 
     <!-- 🧠 U-3: ANALYTICS HUB — segmented sub-tabs (menggantikan 5 entri menu terpisah) -->
     <template x-if="isAnalyticsPage">
-      <div class="mb-4 flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/5 w-full sm:w-auto sm:inline-flex"
+      <div class="mb-4 flex flex-wrap items-center gap-1.5 p-1 rounded-2xl neu-inset-rail w-full sm:w-auto sm:inline-flex"
         role="tablist" aria-label="Analytics views">
         <template x-for="tab in availableAnalyticsTabs" :key="tab.id">
           <button type="button" role="tab"
             :aria-selected="currentPage === tab.id ? 'true' : 'false'"
             @click="setAnalyticsTab(tab.id)"
-            :class="currentPage === tab.id ? 'bg-nexus-accent text-nexus-black shadow-sm' : 'text-slate-400 hover:text-white'"
-            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-accent/60">
+            :class="currentPage === tab.id ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'"
+            class="neu-pill-btn flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-accent/60">
             <i :class="tab.icon" aria-hidden="true"></i>
             <span x-text="tab.short"></span>
           </button>

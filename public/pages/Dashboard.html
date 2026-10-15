@@ -9,15 +9,15 @@
       </h3>
       <p class="text-[11px] text-slate-400 mt-0.5">Real-time equipment performance and critical alerts</p>
     </div>
-    <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/5 self-start sm:self-auto">
-      <button @click="setDashboardPreset(7)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 7) ? 'bg-nexus-accent text-nexus-black font-black shadow-sm' : 'text-slate-400 hover:text-white'">7D</button>
-      <button @click="setDashboardPreset(30)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 7 && Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 30) ? 'bg-nexus-accent text-nexus-black font-black shadow-sm' : 'text-slate-400 hover:text-white'">30D</button>
-      <button @click="setDashboardPreset(90)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 30) ? 'bg-nexus-accent text-nexus-black font-black shadow-sm' : 'text-slate-400 hover:text-white'">90D</button>
-      <button @click="setDashboardPreset(0)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
-        :class="!dashboardDateFrom ? 'bg-nexus-accent text-nexus-black font-black shadow-sm' : 'text-slate-400 hover:text-white'">All</button>
+    <div class="inline-flex items-center gap-1 p-1 rounded-xl neu-inset-rail self-start sm:self-auto">
+      <button @click="setDashboardPreset(7)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 7) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">7D</button>
+      <button @click="setDashboardPreset(30)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 7 && Math.round((new Date() - new Date(dashboardDateFrom))/86400000) <= 30) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">30D</button>
+      <button @click="setDashboardPreset(90)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+        :class="dashboardDateFrom && (Math.round((new Date() - new Date(dashboardDateFrom))/86400000) > 30) ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">90D</button>
+      <button @click="setDashboardPreset(0)" class="neu-pill-btn px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all"
+        :class="!dashboardDateFrom ? 'neu-pill-active font-black' : 'text-slate-400 hover:text-white'">All</button>
     </div>
   </div>
 
