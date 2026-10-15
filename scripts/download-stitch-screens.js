@@ -10,6 +10,8 @@ const SCREENS = [
     { key: 'parts-desktop', id: 'c86f14958c2a4921bb09a6a48bbd5fb4' },
     { key: 'parts-mobile', id: '8d4589ea4e8142ab9e1f9d5bbedb559c' },
     { key: 'history-card', id: '92ed9d8def9d4e8c9647f18a3a550f2f' },
+    { key: 'log-maintenance', id: '6c03d888402b4489b1a1fddf8796febf' },
+    { key: 'scanner-dashboard', id: '08b84ff3fdeb40ac900c971f9b7c19f0' },
 ];
 
 async function main() {

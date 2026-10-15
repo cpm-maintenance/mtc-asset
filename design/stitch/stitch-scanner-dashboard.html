@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Subterranean Command - Scan Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#e5e2e1",
+                        "inverse-primary": "#705d00",
+                        "error": "#ffb4ab",
+                        "outline": "#999077",
+                        "surface-tint": "#e9c400",
+                        "surface-container-low": "#1c1b1b",
+                        "tertiary": "#fff5e7",
+                        "on-primary": "#3a3000",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "secondary": "#c8c6c5",
+                        "primary-fixed": "#ffe16d",
+                        "surface-bright": "#393939",
+                        "tertiary-container": "#ffd477",
+                        "on-secondary-fixed-variant": "#474746",
+                        "primary": "#fff6df",
+                        "inverse-on-surface": "#313030",
+                        "on-background": "#e5e2e1",
+                        "surface-container-highest": "#353534",
+                        "error-container": "#93000a",
+                        "surface": "#131313",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-high": "#2a2a2a",
+                        "outline-variant": "#4d4732",
+                        "on-tertiary-container": "#795a00",
+                        "background": "#131313",
+                        "tertiary-fixed": "#ffdf9e",
+                        "on-surface": "#e5e2e1",
+                        "surface-container": "#201f1f",
+                        "on-primary-container": "#705e00",
+                        "on-primary-fixed-variant": "#544600",
+                        "on-tertiary": "#3f2e00",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-fixed": "#221b00",
+                        "surface-variant": "#353534",
+                        "surface-dim": "#131313",
+                        "tertiary-fixed-dim": "#fabd00",
+                        "secondary-container": "#474746",
+                        "on-tertiary-fixed": "#261a00",
+                        "on-tertiary-fixed-variant": "#5b4300",
+                        "inverse-surface": "#e5e2e1",
+                        "on-secondary-container": "#b7b5b4",
+                        "primary-container": "#ffd700",
+                        "primary-fixed-dim": "#e9c400",
+                        "on-surface-variant": "#d0c6ab",
+                        "on-secondary": "#313030",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #131313; color: #e5e2e1; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 h-16 bg-[#131313]/80 backdrop-blur-xl z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-4">
+<button class="text-[#FFD700] hover:bg-[#2A2A2A] transition-colors p-2 active:scale-95 duration-100">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-xl font-black text-[#FFD700] tracking-widest font-headline uppercase">SUBTERRANEAN COMMAND</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-[#FFD700] hover:bg-[#2A2A2A] transition-colors p-2 active:scale-95 duration-100">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+</button>
+</div>
+</header>
+<main class="pt-20 px-6 max-w-5xl mx-auto">
+<!-- Dashboard Header Hero Section -->
+<section class="mt-8 mb-12 grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-8 flex flex-col justify-end min-h-[160px] p-8 bg-surface-container-low relative overflow-hidden">
+<div class="absolute top-0 right-0 w-1/2 h-full opacity-20 pointer-events-none">
+<img alt="Industrial machinery silhouette" class="object-cover w-full h-full grayscale" data-alt="Monochrome close-up of heavy mining equipment gear teeth with harsh industrial lighting and dark shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqC0bE-5vrg6kbBx5miHp9cLe-CLHTB28HB11vnucqq0nyDDBvONi8wXfuaI_yyWyNG6if8X4xqSs4qJaMTJyYv5uU1em01BPDAGCbXDLEGqjcyWA5qy67WsmwjGcY-Eh6Newx2NJKw6GNo6vQIaawVg7YJkHDX9HODRiM3sMcQP7Jg0UmaEYuVfR_7vTi-3eLXarBJ5bb3ICU3udkQ-s62VWkq5MtN0WR_P-Gxz4b-1IKzyAC4e07cXdna9owRVb7u-68XWgq-2JI"/>
+</div>
+<h2 class="font-headline text-5xl font-bold tracking-tighter text-on-surface mb-2">SCAN STATION 04</h2>
+<p class="font-label text-on-surface-variant tracking-widest uppercase text-sm">Operational Status: High Precision Ready</p>
+</div>
+<div class="md:col-span-4 bg-surface-container-high p-6 flex flex-col justify-between border-l-4 border-primary-container">
+<span class="font-label text-primary-container text-xs font-bold tracking-[0.2em] uppercase">Current Yield</span>
+<div class="mt-4">
+<span class="font-headline text-4xl font-bold text-on-surface">482.5<span class="text-xl ml-1 text-on-surface-variant">oz</span></span>
+<div class="h-1 w-full bg-surface-container-lowest mt-2">
+<div class="h-full bg-gradient-to-r from-primary-container to-primary-fixed-dim w-3/4"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Scanning Area (Asymmetric Bento) -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+<!-- Scanner Core -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-surface-container-low p-1 aspect-video relative group">
+<!-- Scanner Viewfinder Simulation -->
+<div class="absolute inset-0 z-10 flex items-center justify-center">
+<div class="w-64 h-64 border-2 border-primary-container/30 relative">
+<div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary-container"></div>
+<div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary-container"></div>
+<div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary-container"></div>
+<div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary-container"></div>
+</div>
+</div>
+<img alt="Scanner viewport" class="w-full h-full object-cover opacity-60 grayscale brightness-50" data-alt="First-person view of a dark industrial warehouse with blurred heavy machinery and amber utility lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbyvQDaCv665sNelhurvCQRmj5SlqqCqe0ECODvfTNcoY2hO7cmzYS2UMNvneMhAU8xIbcc5YYPhsU6i04GM7ypoNGmRrJq6jSKdntrH8lg77ag1-RL5ZEAqo2t6Y72iCHe6xMEDsZHB8n6wDqWWMbvxudCfQNmrrkWClQNgVLPopWZw58FdSpezRDKelVJqz9cVUvBEdU8C7V0kKXIrk8hDLQTp0B9XR_j2A6Ytbf3O9o8iMuBce5yW9Gy6Z2Qjk-YYaWsP91PlyX"/>
+<div class="absolute bottom-6 left-6 z-20 flex items-center gap-3">
+<div class="w-3 h-3 bg-red-600 animate-pulse"></div>
+<span class="font-label text-white text-xs font-bold tracking-widest uppercase">Live Optical Feed</span>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<button class="h-16 bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-bold font-label uppercase tracking-widest flex items-center justify-center gap-3 active:brightness-125 transition-all">
+<span class="material-symbols-outlined">barcode_scanner</span>
+                        Initiate Scan
+                    </button>
+<button class="h-16 bg-surface-container-highest text-primary-container font-bold font-label uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#2A2A2A] transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">keyboard</span>
+                        Manual ID Entry
+                    </button>
+</div>
+</div>
+<!-- Recent Scans / Sidebar -->
+<div class="space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-headline text-2xl font-bold tracking-tight text-on-surface">RECENT SCANS</h3>
+<span class="font-label text-on-surface-variant text-[10px] tracking-widest uppercase pb-1">Archive 24H</span>
+</div>
+<div class="space-y-0 flex flex-col">
+<!-- List Item 1 -->
+<div class="bg-surface-container-low p-6 flex flex-col gap-1 group hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex justify-between">
+<span class="font-label text-[10px] text-primary-container tracking-[0.2em] uppercase font-bold">Equipment Unit</span>
+<span class="font-label text-[10px] text-on-surface-variant">08:42 AM</span>
+</div>
+<span class="font-headline text-xl font-bold text-on-surface tracking-tight">Caterpillar 797F</span>
+<div class="flex gap-4 mt-2">
+<span class="font-label text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+                                CAT-797F-X9
+                            </span>
+<span class="font-label text-xs text-green-500 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Verified
+                            </span>
+</div>
+</div>
+<!-- List Item 2 (Recessed Well Style for contrast) -->
+<div class="bg-surface-container-lowest p-6 flex flex-col gap-1 group hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex justify-between">
+<span class="font-label text-[10px] text-primary-container tracking-[0.2em] uppercase font-bold">Heavy Dozer</span>
+<span class="font-label text-[10px] text-on-surface-variant">07:15 AM</span>
+</div>
+<span class="font-headline text-xl font-bold text-on-surface tracking-tight">Komatsu D375A</span>
+<div class="flex gap-4 mt-2">
+<span class="font-label text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+                                KM-375A-01
+                            </span>
+<span class="font-label text-xs text-primary-container/70 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">history</span>
+                                Pending Review
+                            </span>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="bg-surface-container-low p-6 flex flex-col gap-1 group hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex justify-between">
+<span class="font-label text-[10px] text-primary-container tracking-[0.2em] uppercase font-bold">Drill Rig</span>
+<span class="font-label text-[10px] text-on-surface-variant">05:30 AM</span>
+</div>
+<span class="font-headline text-xl font-bold text-on-surface tracking-tight">Sandvik DR412i</span>
+<div class="flex gap-4 mt-2">
+<span class="font-label text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+                                SN-DR412-M2
+                            </span>
+<span class="font-label text-xs text-green-500 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Verified
+                            </span>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-highest text-on-surface-variant font-label text-xs tracking-[0.3em] uppercase hover:text-[#FFD700] transition-colors">
+                    View Full Archive
+                </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-stretch overflow-hidden bg-[#131313]/80 backdrop-blur-xl z-50 h-20 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+<!-- SCAN Tab (Active) -->
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black h-full w-full active:brightness-125 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">barcode_scanner</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1 uppercase">SCAN</span>
+</a>
+<!-- HISTORY Tab -->
+<a class="flex flex-col items-center justify-center text-[#D0C6AB] h-full w-full hover:bg-[#2A2A2A] active:brightness-125 transition-all" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1 uppercase">HISTORY</span>
+</a>
+<!-- INVENTORY Tab -->
+<a class="flex flex-col items-center justify-center text-[#D0C6AB] h-full w-full hover:bg-[#2A2A2A] active:brightness-125 transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1 uppercase">INVENTORY</span>
+</a>
+</nav>
+</body></html>

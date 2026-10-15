@@ -79,6 +79,11 @@
       $event.preventDefault();
       openLogModal(false);
     }
+    if ($event.key.toLowerCase() === 'l' && !$event.ctrlKey && !$event.altKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName) && isLoggedIn && isAdminOrSupervisor && currentPage === 'wo') {
+      $event.preventDefault();
+      const console = document.getElementById('wo-log-console');
+      if (console) console.open = !console.open;
+    }
   "
   class="selection:bg-nexus-accent/30">
 
