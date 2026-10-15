@@ -114,6 +114,67 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         }
     },
 
+    // --- CHART EMPTY / OFFLINE / ERROR STATE ---
+    /**
+     * Tampilkan pesan status eksplisit di atas kanvas chart supaya chart tidak
+     * pernah "blank senyap" saat data kosong atau koneksi offline.
+     * @param {string} canvasId
+     * @param {'empty'|'offline'|'error'} kind
+     * @param {string} message
+     */
+    setChartState(canvasId, kind, message) {
+        const canvas = document.getElementById(canvasId);
+        const host = canvas && canvas.parentElement;
+        if (!host || !canvas) return;
+
+        host.querySelectorAll('[data-chart-state]').forEach((el) => el.remove());
+
+        const presets = /** @type {Record<string, {icon: string, tone: string}>} */ ({
+            offline: { icon: 'fa-wifi', tone: 'text-amber-400' },
+            error: { icon: 'fa-triangle-exclamation', tone: 'text-rose-400' },
+            empty: { icon: 'fa-chart-simple', tone: 'text-slate-400' },
+        });
+        const cfg = presets[kind] || presets.empty;
+
+        const box = document.createElement('div');
+        box.setAttribute('data-chart-state', kind);
+        box.setAttribute('role', 'status');
+        box.setAttribute('aria-live', 'polite');
+        box.className = 'absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 px-4 text-center pointer-events-none';
+
+        const ic = document.createElement('i');
+        ic.className = `fas ${cfg.icon} text-xl ${cfg.tone}`;
+        ic.setAttribute('aria-hidden', 'true');
+
+        const p = document.createElement('p');
+        p.className = 'text-[11px] font-bold text-slate-400 max-w-[22ch] leading-snug';
+        p.textContent = message;
+
+        box.appendChild(ic);
+        box.appendChild(p);
+        host.appendChild(box);
+
+        // Sembunyikan kanvas kosong agar pesan jadi fokus utama.
+        canvas.style.visibility = 'hidden';
+    },
+
+    /**
+     * Hapus overlay status chart & tampilkan kembali kanvas.
+     * @param {string} canvasId
+     */
+    clearChartState(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const host = canvas && canvas.parentElement;
+        if (!host || !canvas) return;
+        host.querySelectorAll('[data-chart-state]').forEach((el) => el.remove());
+        canvas.style.visibility = '';
+    },
+
+    /** @returns {'offline'|'empty'} */
+    _chartIdleKind() {
+        return (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'offline' : 'empty';
+    },
+
     // --- DASHBOARD CHARTS ---
     async renderDashboardCharts() {
         if (this.currentPage !== 'dash' || !this.isLoggedIn) return;
@@ -147,7 +208,13 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
 
             this.dashboardStats = { totalEquip, overduePM, lowStock, totalDowntime: totalDowntime.toFixed(1) };
 
-            if (!equipment || equipment.length === 0) return;
+            if (!equipment || equipment.length === 0) {
+                const kind = this._chartIdleKind();
+                const msg = kind === 'offline' ? 'Offline — no cached data' : 'No data for this range';
+                ['reliabilityChart', 'pmStatusChart', 'woCompletionChart', 'costTrendChart']
+                    .forEach((id) => this.setChartState(id, kind, msg));
+                return;
+            }
 
             const waitForCanvas = (/** @type {string} */ id) => new Promise((resolve) => {
                 let retries = 0;
@@ -163,6 +230,10 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
             const renderCharts = async () => {
                 const tc = this.darkMode ? '#8b9eb7' : '#64748b';
                 const gc = this.themeGrid();
+
+                // Bersihkan overlay status lama sebelum render ulang.
+                ['reliabilityChart', 'pmStatusChart', 'woCompletionChart', 'costTrendChart']
+                    .forEach((id) => this.clearChartState(id));
 
                 const ctxRel = await waitForCanvas('reliabilityChart');
                 if (this.currentPage !== 'dash') return;
@@ -192,6 +263,8 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                         data: { labels: sorted, datasets: [{ label: 'PA %', data: avg, borderColor: this.themeAccent(), tension: 0.3, fill: true, backgroundColor: this.themeAccentSoft() }] },
                         options: { animation: { duration: 1200, easing: 'easeOutQuart' }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc } }, y: { grid: { color: gc }, ticks: { color: tc }, min: 0, max: 100 } }, plugins: { legend: { display: false } } }
                     });
+                } else if (ctxRel) {
+                    this.setChartState('reliabilityChart', this._chartIdleKind(), 'No performance data for this range');
                 }
 
                 const ctxPM = await waitForCanvas('pmStatusChart');
@@ -216,6 +289,8 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                             data: { labels: ['Overdue', 'Pending', 'Completed', 'Cancelled'], datasets: [{ data: [overdue, pending, completed, cancelled], backgroundColor: ['rgba(239,68,68,0.7)', this.themeAccentSoft(), 'rgba(34,197,94,0.7)', 'rgba(100,116,139,0.5)'], borderColor: ['#ef4444', this.themeAccent(), '#22c55e', '#64748b'], borderWidth: 1, borderRadius: 4 }] },
                             options: { indexAxis: 'y', animation: { duration: 800, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true }, y: { grid: { display: false }, ticks: { color: tc, font: { size: 10, weight: 'bold' } } } }, plugins: { legend: { display: false } } }
                         });
+                    } else {
+                        this.setChartState('pmStatusChart', this._chartIdleKind(), 'No PM tasks for this range');
                     }
                 }
 
@@ -236,6 +311,8 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                             type: 'doughnut', data: { labels: ['Completed', 'In Progress', 'Pending'], datasets: [{ data: [woCompleted, woInProgress, woPending], backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b'] }] },
                             options: { animation: { duration: 1000, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 10 } } } } }
                         });
+                    } else {
+                        this.setChartState('woCompletionChart', this._chartIdleKind(), 'No work orders in this range');
                     }
                 }
 
@@ -244,12 +321,16 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                 if (this.currentPage !== 'dash') return;
                 if (ctxCost) {
                     const ct = /** @type {any[]} */ (this.calcCostTrend ? this.calcCostTrend() : []);
-                    if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} }
-                    window._appCharts.costTrend = await this.safeCreateChart(ctxCost, {
-                        type: 'line',
-                        data: { labels: ct.length ? ct.map(c => c.month.substring(5)) : ['-'], datasets: [{ label: 'Cost (Rp)', data: ct.length ? ct.map(c => c.cost) : [0], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 }] },
-                        options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false } } }
-                    });
+                    if (ct.length > 0) {
+                        if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} }
+                        window._appCharts.costTrend = await this.safeCreateChart(ctxCost, {
+                            type: 'line',
+                            data: { labels: ct.map(c => c.month.substring(5)), datasets: [{ label: 'Cost (Rp)', data: ct.map(c => c.cost), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 }] },
+                            options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false } } }
+                        });
+                    } else {
+                        this.setChartState('costTrendChart', this._chartIdleKind(), 'No cost data for this range');
+                    }
                 }
             };
             this.$nextTick(() => requestAnimationFrame(() => renderCharts().catch(e => console.error(e))));

@@ -541,6 +541,9 @@ export interface AppState {
   reqRemoveLineItem: (...args: any[]) => any;
   rotateApiKey: (...args: any[]) => any;
   safeCreateChart: (...args: any[]) => any;
+  setChartState: (...args: any[]) => any;
+  clearChartState: (...args: any[]) => any;
+  _chartIdleKind: (...args: any[]) => any;
   safeDeepClone: (...args: any[]) => any;
   safeParseLogParts: (...args: any[]) => any;
   saveAIToFirebase: (...args: any[]) => any;
