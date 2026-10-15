@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * History log management module
@@ -34,7 +35,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // ════════════════════════════════════════════
             // DIAGNOSTIC: Trace what data looks like
             // ════════════════════════════════════════════
-            console.log('[DIAG] openLogModal EDIT', {
+            logger.debug('[DIAG] openLogModal EDIT', {
                 isAlpineRaw: typeof window.Alpine?.raw,
                 dataType: typeof data,
                 dataIsArray: Array.isArray(data),
@@ -136,7 +137,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // ════════════════════════════════════════════
             // DIAGNOSTIC: Check logForm after assignment
             // ════════════════════════════════════════════
-            console.log('[DIAG] logForm AFTER assignment', {
+            logger.debug('[DIAG] logForm AFTER assignment', {
                 equipId: this.logForm.equipmentId,
                 partsLen: Array.isArray(this.logForm.parts) ? this.logForm.parts.length : 'NOT_ARRAY',
                 partsVal: this.logForm.parts,
@@ -311,7 +312,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             } catch(/** @type {any} */ e) {
                 console.warn('[SubmitLog] Parts extraction error:', e);
             }
-            console.log('[SubmitLog] Parts to save:', plainParts);
+            logger.debug('[SubmitLog] Parts to save:', plainParts);
             
             const logId = this.isEditingLog ? this.logForm.logId : "LOG-" + Date.now();
             
@@ -505,7 +506,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                         const fromFirebase = safeProcessFirebaseData(snapshot.val());
                         this.logs = fromFirebase.sort((a, b) => String(b.LogID).localeCompare(String(a.LogID)));
                     }
-                } catch(/** @type {any} */ e) { console.log('Refresh logs error:', e); }
+                } catch(/** @type {any} */ e) { logger.debug('Refresh logs error:', e); }
             }, 500);
             
             this.showLogModal = false;

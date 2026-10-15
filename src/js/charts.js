@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from './logger.js';
 /** @typedef {import('./appstate').AppState} AppState */
 export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // Safe deep clone helper
@@ -282,7 +283,7 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         });
         window._appKpiCharts = {}
 
-        console.log('[KPI] Starting chart render, perfData length:', this.performanceData?.length);
+        logger.debug('[KPI] Starting chart render, perfData length:', this.performanceData?.length);
         const perfData = /** @type {any[]} */ (this.safeDeepClone(this.performanceData));
 
         try {

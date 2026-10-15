@@ -5,6 +5,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
 import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification, resetNotifBlocker } from './js/modules/notification.js';
+import { logger } from './js/logger.js';
 
 // Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
@@ -28,7 +29,7 @@ if (SENTRY_DSN && import.meta.env.PROD) {
     withScope: (cb) => Sentry.withScope?.(cb),
     setContext: (k, v) => Sentry.setContext?.(k, v),
   };
-  console.log('[Sentry] Initialized, env:', import.meta.env.MODE);
+  logger.debug('[Sentry] Initialized, env:', import.meta.env.MODE);
 } else {
   window.Sentry = {
     setUser: () => {},
@@ -36,7 +37,7 @@ if (SENTRY_DSN && import.meta.env.PROD) {
     withScope: () => {},
     setContext: () => {},
   };
-  if (!SENTRY_DSN) console.log('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
+  if (!SENTRY_DSN) logger.debug('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
 }
 
 // ============================================================
@@ -139,12 +140,12 @@ window._firebaseReady = new Promise(resolve => {
 // Expose resolver so data.js can call it after first load
 window._firebaseReadyResolve = resolveFirebaseReady;
 
-console.log('Alpine App Registered');
-console.log('Component Loader Ready');
+logger.debug('Alpine App Registered');
+logger.debug('Component Loader Ready');
 
 // Start Alpine immediately (AFTER registering everything)
 Alpine.start();
-console.log('Alpine Started');
+logger.debug('Alpine Started');
 
 // ============================================================
 // Initialize FCM Push Notifications
@@ -155,12 +156,12 @@ setTimeout(() => {
   if (Notification.permission === 'granted') {
     registerFCMToken().then(token => {
       if (token) {
-        console.log('[FCM] Registered, token:', token.substring(0, 20) + '...');
+        logger.debug('[FCM] Registered, token:', token.substring(0, 20) + '...');
         setupForegroundListener();
       }
     });
   } else {
-    console.log('[FCM] Permission not granted — skipping auto-register. Will register on user click.');
+    logger.debug('[FCM] Permission not granted — skipping auto-register. Will register on user click.');
   }
 
   // Run initial check after data loads
@@ -192,7 +193,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     window.app.installPromptEvent = e;
     window.app.showInstallButton = true;
   }
-  console.log('[PWA] Install prompt available');
+  logger.debug('[PWA] Install prompt available');
 });
 
 window.addEventListener('appinstalled', () => {
@@ -200,5 +201,5 @@ window.addEventListener('appinstalled', () => {
     window.app.installPromptEvent = null;
     window.app.showInstallButton = false;
   }
-  console.log('[PWA] App installed successfully');
+  logger.debug('[PWA] App installed successfully');
 });

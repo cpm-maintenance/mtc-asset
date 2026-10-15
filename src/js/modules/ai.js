@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * AI Module for KPI Analysis and PPT Generation
@@ -37,7 +38,7 @@ export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         this.apiModel = localStorage.getItem('ai_model') || '';
         this.customPrompt = localStorage.getItem('ai_custom_prompt') || '';
         
-        console.log('[AI] Loaded config:', { 
+        logger.debug('[AI] Loaded config:', { 
             key: this.apiKey ? '***' + this.apiKey.slice(-4) : 'empty', 
             provider: this.apiProvider, 
             model: this.apiModel,
@@ -55,7 +56,7 @@ export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         localStorage.setItem('ai_provider', provider);
         localStorage.setItem('ai_model', model);
         
-        console.log('[AI] API Key saved:', { key: key ? '***' + key.slice(-4) : 'empty', provider, model });
+        logger.debug('[AI] API Key saved:', { key: key ? '***' + key.slice(-4) : 'empty', provider, model });
         
         // Also save custom prompt
         if (this.customPrompt) {
@@ -204,7 +205,7 @@ getKPIContext() {
 
         try {
             const kpiData = this.getKPIContext();
-            console.log('[AI] Provider:', this.apiProvider, 'Model:', this.apiModel);
+            logger.debug('[AI] Provider:', this.apiProvider, 'Model:', this.apiModel);
             
             // Build smart prompt
             let prompt;
@@ -222,7 +223,7 @@ getKPIContext() {
                 prompt = this.buildSmartPrompt(kpiData);
             }
             
-            console.log('[AI] Prompt length:', prompt.length);
+            logger.debug('[AI] Prompt length:', prompt.length);
             
             let result = null;
             let lastError = null;
@@ -442,12 +443,12 @@ Please provide:
             this.apiModel = localStorage.getItem('ai_model') || '';
         }
         
-        console.log('[AI] Key:', this.apiKey ? '***' + this.apiKey.slice(-4) : 'EMPTY');
-        console.log('[AI] Provider:', this.apiProvider);
+        logger.debug('[AI] Key:', this.apiKey ? '***' + this.apiKey.slice(-4) : 'EMPTY');
+        logger.debug('[AI] Provider:', this.apiProvider);
         
         const provider = this.apiProvider || 'openrouter';
         
-        console.log('[AI] Calling provider:', provider);
+        logger.debug('[AI] Calling provider:', provider);
         
         if (provider === 'openai') {
             return await this.callOpenAI(prompt);
@@ -767,7 +768,7 @@ Please provide:
                     return true;
                 }
             }
-        } catch(/** @type {any} */ e) { console.log('[AI] Firebase load error:', e.message); }
+        } catch(/** @type {any} */ e) { logger.debug('[AI] Firebase load error:', e.message); }
         return false;
     },
 
@@ -801,7 +802,7 @@ Please provide:
                 model: model || '', customPrompt: this.customPrompt || '',
                 updatedAt: new Date().toISOString(), updatedBy: this.user?.email || 'admin'
             });
-        } catch(/** @type {any} */ e) { console.log('[AI] Firebase save error:', e.message); }
+        } catch(/** @type {any} */ e) { logger.debug('[AI] Firebase save error:', e.message); }
     },
 
     get activeApiKey() {

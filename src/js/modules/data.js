@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * Data module for MTC.NEXUS - Firebase Listeners and Sync
@@ -609,7 +610,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                         const curT = new Date(cur.updatedAt || cur.createdAt || 0).getTime();
                         const opT = new Date(op.data.updatedAt || op.data.createdAt || 0).getTime();
                         if (curT > opT) {
-                            console.log('[Sync] Skip conflict (server lebih baru):', nodePath);
+                            logger.debug('[Sync] Skip conflict (server lebih baru):', nodePath);
                             await idbManager.removePendingOp(op.id);
                             continue;
                         }
@@ -675,10 +676,10 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     // Deep clone to get rid of any proxies
                     if (rawData) {
                         logToDelete = JSON.parse(JSON.stringify(rawData));
-                        console.log('[DeleteLog] Raw from Firebase - PartsUsed:', logToDelete.PartsUsed);
+                        logger.debug('[DeleteLog] Raw from Firebase - PartsUsed:', logToDelete.PartsUsed);
                     }
                 } catch(/** @type {any} */ e) {
-                    console.log('[DeleteLog] Error fetching:', e);
+                    logger.debug('[DeleteLog] Error fetching:', e);
                 }
             }
             
@@ -690,7 +691,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     try {
                         let usedParts = [];
                         const raw = logToDelete.PartsUsed;
-                        console.log('[DeleteLog] Raw PartsUsed:', raw, 'Type:', typeof raw);
+                        logger.debug('[DeleteLog] Raw PartsUsed:', raw, 'Type:', typeof raw);
                         
                         // Safe parse - handle all edge cases including double-encoded JSON
                         try {
@@ -723,11 +724,11 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                                 usedParts = raw;
                             }
                         } catch(/** @type {any} */ parseErr) {
-                            console.log('[DeleteLog] Parse error:', parseErr.message);
+                            logger.debug('[DeleteLog] Parse error:', parseErr.message);
                             usedParts = [];
                         }
                         
-                        console.log('[DeleteLog] Parsed parts:', usedParts);
+                        logger.debug('[DeleteLog] Parsed parts:', usedParts);
                         if (Array.isArray(usedParts) && usedParts.length > 0) {
                             for (const p of usedParts) {
                                 if (p.id && p.qty) {
@@ -735,7 +736,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                                         window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), 
                                         (/** @type {any} */ curr) => (curr || 0) + Number(p.qty)
                                     );
-                                    console.log('[DeleteLog] Restored stock:', p.id, '+' + p.qty);
+                                    logger.debug('[DeleteLog] Restored stock:', p.id, '+' + p.qty);
                                 }
                             }
                         }
@@ -758,7 +759,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 delay: 1000,
                 backoff: 2,
                 onRetry: (/** @type {any} */ attempt, /** @type {any} */ error, /** @type {any} */ delay) => {
-                    console.log(`Delete retry ${attempt} after ${delay}ms:`, (/** @type {any} */ error).message);
+                    logger.debug(`Delete retry ${attempt} after ${delay}ms:`, (/** @type {any} */ error).message);
                     if (isNetworkError(error)) {
                         this.showNotification("Network error, retrying...", "info");
                     }

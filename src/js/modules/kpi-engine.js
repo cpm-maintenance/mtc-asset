@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * @file KPI Engine — Neural Prediction & Analytics.
@@ -230,29 +231,29 @@ export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>
      */
     getEquipName(id) {
         if (!id) return "Unknown Asset";
-        console.log('[getEquipName] looking for id:', id);
+        logger.debug('[getEquipName] looking for id:', id);
 
         const equipment = this._raw(this.equipment);
         if (!equipment || !Array.isArray(equipment)) {
-            console.log('[getEquipName] equipment not array or empty');
+            logger.debug('[getEquipName] equipment not array or empty');
             return id;
         }
 
         // Try exact match first
         let e = equipment.find(x => x && x.EquipmentID === id);
         if (e) {
-            console.log('[getEquipName] found:', e.Nama);
+            logger.debug('[getEquipName] found:', e.Nama);
             return e.Nama;
         }
 
         // Try case-insensitive
         e = equipment.find(x => x && x.EquipmentID && x.EquipmentID.toLowerCase() === id.toLowerCase());
         if (e) {
-            console.log('[getEquipName] found (case-ins):', e.Nama);
+            logger.debug('[getEquipName] found (case-ins):', e.Nama);
             return e.Nama;
         }
 
-        console.log('[getEquipName] NOT FOUND');
+        logger.debug('[getEquipName] NOT FOUND');
         return "Unknown Asset";
     }
 });

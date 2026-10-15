@@ -18,6 +18,7 @@
  */
 
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { logger } from '../logger.js';
 
 // ============================================================
 // CONFIG
@@ -44,29 +45,29 @@ export function resetNotifBlocker() {
  */
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) {
-    console.log('[Notif] Notifications not supported');
+    logger.debug('[Notif] Notifications not supported');
     return false;
   }
 
   if (Notification.permission === 'granted') {
-    console.log('[Notif] Permission already granted');
+    logger.debug('[Notif] Permission already granted');
     return true;
   }
 
   if (Notification.permission === 'denied') {
-    console.log('[Notif] Permission denied');
+    logger.debug('[Notif] Permission denied');
     return false;
   }
 
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      console.log('[Notif] Permission granted');
+      logger.debug('[Notif] Permission granted');
       // Show a welcome notification to confirm it works
       sendBrowserNotification('✅ Notifikasi Aktif', 'MTC.NEXUS akan memberi tahu Anda jika ada alert penting.');
       return true;
     }
-    console.log('[Notif] Permission denied by user');
+    logger.debug('[Notif] Permission denied by user');
     return false;
   } catch (e) {
     console.warn('[Notif] Permission error:', e.message);
@@ -141,7 +142,7 @@ export async function registerFCMToken() {
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
 
     if (token) {
-      console.log('[FCM] Token obtained:', token.substring(0, 20) + '...');
+      logger.debug('[FCM] Token obtained:', token.substring(0, 20) + '...');
       await saveFCMToken(token);
       return token;
     }
@@ -171,7 +172,7 @@ async function saveFCMToken(token) {
       updatedAt: new Date().toISOString(),
     });
 
-    console.log('[FCM] Token saved to Firebase');
+    logger.debug('[FCM] Token saved to Firebase');
   } catch (e) {
     console.warn('[FCM] Save token error:', e.message);
   }
@@ -186,7 +187,7 @@ export async function removeFCMToken() {
     const uid = window.app.user.uid;
     await window.remove(window.ref(window.db, `Users/${uid}/fcmToken`));
     await window.remove(window.ref(window.db, `_fcmTokens/${uid}`));
-    console.log('[FCM] Token removed');
+    logger.debug('[FCM] Token removed');
   } catch (e) {
     console.warn('[FCM] Remove token error:', e.message);
   }
@@ -200,7 +201,7 @@ export function setupForegroundListener() {
   try {
     const messaging = getMessaging();
     onMessage(messaging, (payload) => {
-      console.log('[FCM] Foreground message received:', payload);
+      logger.debug('[FCM] Foreground message received:', payload);
 
       // Show as in-app notification
       const globalApp = window.app || window.appState;

@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * UI & Utility module for MTC.NEXUS
@@ -314,10 +315,10 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
 
         try {
             this.showNotification('Uploading image...', 'info');
-            console.log('Starting image upload, file:', file.name, file.size);
+            logger.debug('Starting image upload, file:', file.name, file.size);
 
             const compressed = await this.compressImage(file);
-            console.log('Compression result:', compressed ? compressed.size : 'failed');
+            logger.debug('Compression result:', compressed ? compressed.size : 'failed');
             if (!compressed) {
                 this.showNotification('Image compression failed', 'error');
                 return null;
@@ -326,7 +327,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
             const base64 = await this.blobToBase64(compressed);
             const url = await this.uploadBase64Image(base64);
             if (url) {
-                console.log('Image uploaded to Cloudinary:', url);
+                logger.debug('Image uploaded to Cloudinary:', url);
                 this.showNotification('Image uploaded successfully', 'success');
                 return url;
             }

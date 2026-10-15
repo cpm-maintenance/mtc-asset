@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * Equipment management module
@@ -52,13 +53,13 @@ export const equipmentModule = /** @type {Partial<AppState> & ThisType<AppState>
         try {
             let finalFotoURL = this.equipForm.foto || '';
             if (this.tempEquipFile) {
-                console.log('Uploading image file:', this.tempEquipFile.name, this.tempEquipFile.size);
+                logger.debug('Uploading image file:', this.tempEquipFile.name, this.tempEquipFile.size);
                 const url = await this.uploadImage(this.tempEquipFile);
-                console.log('Cloudinary URL result:', url);
+                logger.debug('Cloudinary URL result:', url);
                 // uploadImage returns a clean URL; decoding it would corrupt any %-escapes.
                 finalFotoURL = url || this.equipForm.foto || '';
             }
-            console.log('Final FotoURL:', finalFotoURL);
+            logger.debug('Final FotoURL:', finalFotoURL);
             if (!finalFotoURL || finalFotoURL === 'null') finalFotoURL = '';
             
             const dataToSave = {

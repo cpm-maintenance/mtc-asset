@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from './logger.js';
 import { authModule } from './modules/auth.js';
 import { uiModule } from './modules/ui.js';
 import { dataModule } from './modules/data.js';
@@ -62,7 +63,7 @@ export function app() {
           const result = await this.installPromptEvent.userChoice;
           this.installPromptEvent = null;
           this.showInstallButton = false;
-          console.log('[PWA] Install result:', result.outcome);
+          logger.debug('[PWA] Install result:', result.outcome);
         },
         // Work Order filters
         searchWO: '', filterWOStatus: '', filterWOPriority: '', filterDateFrom: '', filterDateTo: '', sortByScore: false,
@@ -1198,9 +1199,9 @@ if (confirm('Are you sure you want to logout?')) {
             const uploads = snap.val() || {};
             const ids = Object.keys(uploads);
             if (!ids.length) {
-                console.log('[Migrate] No ImageUploads — continuing with inline base64 (Equipment/Logs)');
+                logger.debug('[Migrate] No ImageUploads — continuing with inline base64 (Equipment/Logs)');
             } else {
-                console.log('[Migrate] Found', ids.length, 'legacy images');
+                logger.debug('[Migrate] Found', ids.length, 'legacy images');
             }
 
             // Load equipment + logs to map references
@@ -1216,7 +1217,7 @@ if (confirm('Are you sure you want to logout?')) {
                 try {
                     const url = await this.uploadBase64Image(data);
                     if (!url) throw new Error('Image upload failed');
-                    console.log('[Migrate]', id, '→', url);
+                    logger.debug('[Migrate]', id, '→', url);
 
                     /** @type {Record<string, any>} */
                     const updates = {};
@@ -1256,7 +1257,7 @@ if (confirm('Are you sure you want to logout?')) {
                     if (!url) throw new Error('Image upload failed');
                     await window.update(window.ref(window.db), { ['Equipment/' + eqId + '/FotoURL']: url });
                     results.migrated++;
-                    console.log('[Migrate] Equipment', eqId, 'FotoURL →', url);
+                    logger.debug('[Migrate] Equipment', eqId, 'FotoURL →', url);
                 } catch (/** @type {any} */ e) {
                     results.failed++;
                     console.error('[Migrate] Equipment', eqId, 'failed:', e.message);
@@ -1289,7 +1290,7 @@ if (confirm('Are you sure you want to logout?')) {
                 await window.update(window.ref(window.db), { ['HistoryLog/' + logId + '/PhotoURLs']: newUrls });
             }
 
-            console.log('[Migrate] Done:', JSON.stringify(results));
+            logger.debug('[Migrate] Done:', JSON.stringify(results));
             this.showNotification('Migrated ' + results.migrated + ' images', 'success');
             return results;
         },

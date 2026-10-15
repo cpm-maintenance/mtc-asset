@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from './logger.js';
 /** @typedef {import('./appstate').AppState} AppState */
 /**
  * Router / Bootstrap Module
@@ -157,7 +158,7 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
     loadModalsCSS() {
         if (this.modalsLoaded) return;
         this.modalsLoaded = true;
-        console.log('Modals ready');
+        logger.debug('Modals ready');
     },
 
     checkUserRole(uid) {
@@ -165,7 +166,7 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             .then((/** @type {any} */ snap) => {
                 if (snap.exists()) {
                     this.userRole = snap.val();
-                    console.log('User role from Firebase:', this.userRole);
+                    logger.debug('User role from Firebase:', this.userRole);
                 }
             })
             .catch(() => {});

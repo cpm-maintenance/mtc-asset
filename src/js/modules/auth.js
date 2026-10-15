@@ -1,4 +1,5 @@
 // @ts-check
+import { logger } from '../logger.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * Auth module for MTC.NEXUS
@@ -29,7 +30,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 };
                 await window.update(userRef, updates);
                 const merged = { ...existingData, ...updates };
-                console.log('User profile synced:', merged.role || 'user');
+                logger.debug('User profile synced:', merged.role || 'user');
                 return merged;
             }
 
@@ -42,7 +43,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 createdAt: new Date().toISOString(),
             };
             await window.set(userRef, userData);
-            console.log('User profile created (role menunggu penetapan admin)');
+            logger.debug('User profile created (role menunggu penetapan admin)');
 
             return userData;
         } catch (/** @type {any} */ error) {
@@ -135,7 +136,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             await window.set(window.ref(window.db, `Users/${cred.user.uid}`), userData);
             
             this.showNotification(`User ${email} created as ${role}`);
-            console.log('[Auth] User created:', email, role);
+            logger.debug('[Auth] User created:', email, role);
             
             return { success: true, user: cred.user };
         } catch (/** @type {any} */ error) {
@@ -259,7 +260,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             await window.remove(window.ref(window.db, `Users/${uid}`));
             this.showNotification('User deleted successfully');
             this.allUsers = this.allUsers.filter(u => u.uid !== uid);
-            console.log('[Auth] User deleted:', uid);
+            logger.debug('[Auth] User deleted:', uid);
         } catch (/** @type {any} */ error) {
             console.error('[Auth] Delete user error:', error);
             this.showNotification('Failed to delete user', 'error');
