@@ -1,3 +1,45 @@
+## 📝 Session 12 (S12, 2026-10-15) — Gelombang 9 Stitch tuntas + Dashboard 'Tactical Slate' (rebuild 1:1 dari markup)
+
+### Konteks
+- Lanjutan: menyelesaikan porting desain Google Stitch ke app, lalu Dashboard.
+- Screen target: project `2861085646384681595` screen `f88b02d0cb` (DESKTOP 2560×3304, "Tactical Slate & Luminous Gold") + project `15538611438628478374` ("The Industrial Monolith").
+
+### Selesai hari ini
+- **Gelombang 9 tuntas (S-1…S-5, The Industrial Monolith)** — S-1 token harmonisasi (`t_a3c6e344`), S-2 SpareParts (`t_1c352dc1`), S-3 HistoryCard (`t_5604054d`), S-4 WorkOrders (`t_0da5991d`, commit `129851a`), S-5 modal QR scanner (`t_40bacf60`, commit `68396f4`).
+- **Akses Stitch jalur A**: `gcloud auth login` akun `adhymlb@gmail.com` + enable `stitch.googleapis.com` di quota project `gen-lang-client-0051799821`. `scripts/stitch-bridge.js` jadi multi-project (env `STITCH_ACCOUNT` / `STITCH_QUOTA_PROJECT`, commit `97ee879`); 8 screen ditarik ke `design/stitch/`.
+- **Dashboard port pertama** (commit `41ec36c`) → dinilai user *"jauh dari kata mirip"*.
+- **Dashboard rebuild 1:1 dari markup Stitch** (commit `497969f`, live) — akar masalah: port pertama hanya meniru *bahasa visual*, bukan **komposisi modul**. Detail lengkap: `diary/2026/10/2026-10-15-MTC-Asset.md` bagian **D-1b**.
+
+### Perubahan teknis inti (commit `497969f`)
+- `tailwind.config.js`: namespace `tac` = salinan **1:1 design system Stitch** (surface/primary/secondary/tertiary/on-*/gold/status-*/sync-cyan/outline/border) + skala `fontSize` & `spacing` asli desain (`display-hero` 36/44 −0.02em, `label-mono-sm` 10/14 0.1em, `p-space-md`, `px-gutter-desktop`). Prefix `tac-` dipakai supaya tidak menimpa `primary: var(--nexus-accent)` milik app.
+- `index.html` + `src/css/tactical-icons.css` (baru): **Material Symbols Outlined** (ikon resmi desain).
+- `public/pages/Dashboard.html` ditulis ulang (~700 baris) mengikuti **urutan modul markup Stitch**: banner PWA → KPI 4 kartu → workspace 12 kolom (kiri 8: Maintenance Activity Protocol + Neural Performance Protocol + distribusi log; kanan 4: System Access + Optical Scanner + Critical Spare Parts) → drawer Ajeng AI Diagnostics → status strip.
+- State baru: `dashWoFilter` + `aiDrawerOpen` (`src/js/modules/ui.js` + `src/js/appstate.ts`).
+- **BUG diperbaiki**: KPI Fleet Integrity selalu **0%** karena memakai `Status === 'Operational'`; kosakata app sebenarnya `'Active' | 'Running'` (`enterprise-kpi.js:174`).
+
+### Verifikasi (hasil nyata, bukan klaim)
+- `npm run typecheck` 0 · `lint` 0 error / 79 warning · `test` **224/224** · `test:rules` **34/34** · `build` ok (65 precache, 3.443 KiB).
+- `node scratch/check-page.mjs public/pages/Dashboard.html` → 136 ekspresi Alpine, **0 syntax error**.
+- Harness browser `scratch/dashboard-harness.html` → **0 error konsol**, 0 `undefined`/`NaN`/`[object Object]`; filter `CV-104` → 1 kartu; klik Ajeng AI Node → drawer tampil; KPI `66.7%` / `2 / 3 Operational`; kartu WO lengkap; tabel 8 kolom terisi.
+- Live `https://mtc-asset.web.app` — bundle `assets/main-DAl9SuYS.js` + `assets/main-CqTPtLGe.css`; CSS live memuat `.bg-tac-surface-card{rgb(22 29 39)}`, `.text-tac-gold-bright{rgb(251 191 36)}`, `.material-symbols-outlined`.
+
+### Kanban
+- **Baru**: D-2 `t_4bb41514` (prio 80 — gate arah desain) · D-3 `t_3c1ab35c` (64 — palette theme-aware) · D-4 `t_1f747d46` (62 — Material Symbols offline). Semua `blocked` (kerja manual, jangan `unblock`).
+- Terbuka lama: Q-1 `t_e6dd5987`, Q-2 `t_e5b00df8`, Q-3 `t_22172e91`, H-1/H-2/H-3 `t_47ae7fe6`/`t_4fd650a6`/`t_d463afbb`.
+- D-1/D-1b (porting + rebuild Dashboard) **belum punya kartu** — belum diputuskan user.
+
+### Pelajaran
+- **Kalau markup sumber desain bisa didapat, JANGAN porting dari screenshot.** Vision atas screenshot berulang kali halusinasi (pernah "membaca" `NETGUARD`, `OEE Forecast`, `Total Cycles`, tanggal `2024-01-xx` — tidak ada di desain maupun di app). Kalau perlu teks dari gambar: **crop region kecil**, jangan gambar penuh.
+- `write_file` menolak menimpa file yang belum dibaca penuh di konteks berjalan → untuk rewrite total: backup ke `scratch/`, `rm`, lalu tulis.
+- Harness stub harus ikut ditambah setiap ada state baru; kalau tidak, `x-for`/`x-if` gagal **senyap** (tanpa error konsol) dan tampak seperti bug halaman.
+- Tailwind v3: warna berbasis `var()` tidak mendukung opacity modifier → token desain pakai **hex literal**.
+
+### Besok
+- Putuskan **D-2** (arah desain) → membuka H-1/H-2/H-3.
+- Kerjakan **D-3** (Dashboard ikut tema light) dan **D-4** (ikon offline).
+
+---
+
 ## 📝 Session 11b (S11b, 2026-08-09) — Dashboard Upgrade & Low Stock Fix
 
 ### Konteks
