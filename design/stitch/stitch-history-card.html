@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed": "#e5e2e1",
+                    "inverse-primary": "#705d00",
+                    "error": "#ffb4ab",
+                    "outline": "#999077",
+                    "surface-tint": "#e9c400",
+                    "surface-container-low": "#1c1b1b",
+                    "tertiary": "#fff5e7",
+                    "on-primary": "#3a3000",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "secondary": "#c8c6c5",
+                    "primary-fixed": "#ffe16d",
+                    "surface-bright": "#393939",
+                    "tertiary-container": "#ffd477",
+                    "on-secondary-fixed-variant": "#474746",
+                    "primary": "#fff6df",
+                    "inverse-on-surface": "#313030",
+                    "on-background": "#e5e2e1",
+                    "surface-container-highest": "#353534",
+                    "error-container": "#93000a",
+                    "surface": "#131313",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-high": "#2a2a2a",
+                    "outline-variant": "#4d4732",
+                    "on-tertiary-container": "#795a00",
+                    "background": "#131313",
+                    "tertiary-fixed": "#ffdf9e",
+                    "on-surface": "#e5e2e1",
+                    "surface-container": "#201f1f",
+                    "on-primary-container": "#705e00",
+                    "on-primary-fixed-variant": "#544600",
+                    "on-tertiary": "#3f2e00",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-primary-fixed": "#221b00",
+                    "surface-variant": "#353534",
+                    "surface-dim": "#131313",
+                    "tertiary-fixed-dim": "#fabd00",
+                    "secondary-container": "#474746",
+                    "on-tertiary-fixed": "#261a00",
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "inverse-surface": "#e5e2e1",
+                    "on-secondary-container": "#b7b5b4",
+                    "primary-container": "#ffd700",
+                    "primary-fixed-dim": "#e9c400",
+                    "on-surface-variant": "#d0c6ab",
+                    "on-secondary": "#313030",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-error": "#690005"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0px",
+                    "lg": "0px",
+                    "xl": "0px",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 h-16 bg-[#131313]/80 backdrop-blur-xl z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-4">
+<button class="hover:bg-[#2A2A2A] transition-colors p-2 active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[#FFD700]">menu</span>
+</button>
+<h1 class="text-xl font-black text-[#FFD700] tracking-widest font-['Space_Grotesk'] uppercase">SUBTERRANEAN COMMAND</h1>
+</div>
+<button class="hover:bg-[#2A2A2A] transition-colors p-2 active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[#FFD700]">qr_code_scanner</span>
+</button>
+</header>
+<main class="pt-24 px-6 max-w-5xl mx-auto">
+<!-- Equipment Header Section (Asymmetric Bento) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
+<!-- Hero Status Badge -->
+<div class="md:col-span-8 bg-surface-container-low p-8 flex flex-col justify-between min-h-[320px] relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-9xl" style="font-variation-settings: 'FILL' 1;">construction</span>
+</div>
+<div class="z-10">
+<p class="font-headline font-bold text-on-surface-variant tracking-widest text-sm mb-2 uppercase">Current Status</p>
+<div class="inline-flex bg-gradient-to-br from-[#FFD700] to-[#E9C400] px-6 py-3 items-center gap-3">
+<span class="material-symbols-outlined text-black font-bold">warning</span>
+<span class="text-black font-headline font-black text-3xl tracking-tighter">BREAKDOWN</span>
+</div>
+</div>
+<div class="z-10 mt-8">
+<h2 class="font-headline font-bold text-5xl text-on-surface tracking-tighter mb-1">CAT D11T-X3</h2>
+<p class="font-body text-on-surface-variant font-medium text-lg">Heavy Bulldozer • Sector 7G • Unit ID: 992-ALPHA</p>
+</div>
+</div>
+<!-- Precision Metrics -->
+<div class="md:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container-lowest p-6 flex-1 flex flex-col justify-center border-b-4 border-outline">
+<p class="font-label font-bold text-xs text-on-surface-variant tracking-widest uppercase mb-2">Total Hours</p>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-bold text-5xl text-primary-container">14,822</span>
+<span class="font-label font-bold text-sm text-outline">HM</span>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 flex-1 flex flex-col justify-center">
+<p class="font-label font-bold text-xs text-on-surface-variant tracking-widest uppercase mb-2">Fuel Level</p>
+<div class="w-full bg-surface-container-lowest h-4 mb-2">
+<div class="bg-primary-container h-full w-[12%]"></div>
+</div>
+<span class="font-headline font-bold text-2xl text-on-surface">12% <span class="text-sm text-error">CRITICAL</span></span>
+</div>
+</div>
+</div>
+<!-- History Section -->
+<div class="mb-12">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h3 class="font-headline font-bold text-3xl text-on-surface uppercase tracking-tight">History_Logs</h3>
+<p class="font-body text-on-surface-variant">Last 5 operational events recorded</p>
+</div>
+<div class="h-px flex-1 mx-8 bg-outline-variant/20 hidden md:block"></div>
+<span class="font-label font-bold text-primary-fixed-dim text-sm tracking-widest uppercase">Archive Access: 04</span>
+</div>
+<div class="space-y-0 flex flex-col">
+<!-- Log Item 1 -->
+<div class="bg-surface-container-low hover:bg-surface-container-high transition-colors p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-lowest w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-3xl">oil_barrel</span>
+</div>
+<div>
+<p class="font-label font-bold text-on-surface text-lg">Oil Filter Replacement</p>
+<p class="font-body text-sm text-on-surface-variant">Routine Maintenance Cycle • Full synthetic check</p>
+</div>
+</div>
+<div class="flex flex-col md:items-end">
+<span class="font-label font-bold text-on-surface uppercase">H. VANCE</span>
+<span class="font-body text-xs text-outline tracking-wider">OCT 14, 2023 • 14,800 HM</span>
+</div>
+</div>
+<!-- Log Item 2 (Recessed Zebra) -->
+<div class="bg-surface-container-lowest hover:bg-surface-container-high transition-colors p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-low w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-3xl">build</span>
+</div>
+<div>
+<p class="font-label font-bold text-on-surface text-lg">Hydraulic Hose Rerouting</p>
+<p class="font-body text-sm text-on-surface-variant">Repair • Tension adjustment in secondary arm</p>
+</div>
+</div>
+<div class="flex flex-col md:items-end">
+<span class="font-label font-bold text-on-surface uppercase">M. ROSS</span>
+<span class="font-body text-xs text-outline tracking-wider">OCT 02, 2023 • 14,712 HM</span>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="bg-surface-container-low hover:bg-surface-container-high transition-colors p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-lowest w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-3xl">ac_unit</span>
+</div>
+<div>
+<p class="font-label font-bold text-on-surface text-lg">Coolant System Flush</p>
+<p class="font-body text-sm text-on-surface-variant">Preventative • High temperature operations prep</p>
+</div>
+</div>
+<div class="flex flex-col md:items-end">
+<span class="font-label font-bold text-on-surface uppercase">S. CHEN</span>
+<span class="font-body text-xs text-outline tracking-wider">SEP 18, 2023 • 14,550 HM</span>
+</div>
+</div>
+<!-- Log Item 4 (Recessed Zebra) -->
+<div class="bg-surface-container-lowest hover:bg-surface-container-high transition-colors p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-low w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-3xl">bolt</span>
+</div>
+<div>
+<p class="font-label font-bold text-on-surface text-lg">Battery Terminal Cleaning</p>
+<p class="font-body text-sm text-on-surface-variant">Utility • Corrosion removal from main terminal</p>
+</div>
+</div>
+<div class="flex flex-col md:items-end">
+<span class="font-label font-bold text-on-surface uppercase">H. VANCE</span>
+<span class="font-body text-xs text-outline tracking-wider">SEP 04, 2023 • 14,401 HM</span>
+</div>
+</div>
+<!-- Log Item 5 -->
+<div class="bg-surface-container-low hover:bg-surface-container-high transition-colors p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-6">
+<div class="bg-surface-container-lowest w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-3xl">visibility</span>
+</div>
+<div>
+<p class="font-label font-bold text-on-surface text-lg">Annual Safety Inspection</p>
+<p class="font-body text-sm text-on-surface-variant">Audit • Compliance certificate #992-A-2023</p>
+</div>
+</div>
+<div class="flex flex-col md:items-end">
+<span class="font-label font-bold text-on-surface uppercase">INSPECTOR J.</span>
+<span class="font-body text-xs text-outline tracking-wider">AUG 28, 2023 • 14,320 HM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Call to Action -->
+<div class="mt-12 flex justify-center">
+<button class="bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black w-full md:w-auto md:min-w-[400px] h-16 flex items-center justify-center gap-4 active:scale-95 transition-all shadow-[0_20px_50px_rgba(255,215,0,0.2)] group">
+<span class="material-symbols-outlined font-bold group-hover:rotate-90 transition-transform">add</span>
+<span class="font-headline font-black text-xl tracking-tighter uppercase">LOG MAINTENANCE</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-stretch overflow-hidden bg-[#131313]/80 backdrop-blur-xl z-50 h-20 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+<a class="flex flex-col items-center justify-center text-[#D0C6AB] h-full w-full hover:bg-[#2A2A2A] active:brightness-125 transition-all" href="#">
+<span class="material-symbols-outlined">barcode_scanner</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black h-full w-full active:brightness-125 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1">HISTORY</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#D0C6AB] h-full w-full hover:bg-[#2A2A2A] active:brightness-125 transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1">INVENTORY</span>
+</a>
+</nav>
+</body></html>

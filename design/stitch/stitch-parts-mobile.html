@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed": "#e5e2e1",
+                    "inverse-primary": "#705d00",
+                    "error": "#ffb4ab",
+                    "outline": "#999077",
+                    "surface-tint": "#e9c400",
+                    "surface-container-low": "#1c1b1b",
+                    "tertiary": "#fff5e7",
+                    "on-primary": "#3a3000",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "secondary": "#c8c6c5",
+                    "primary-fixed": "#ffe16d",
+                    "surface-bright": "#393939",
+                    "tertiary-container": "#ffd477",
+                    "on-secondary-fixed-variant": "#474746",
+                    "primary": "#fff6df",
+                    "inverse-on-surface": "#313030",
+                    "on-background": "#e5e2e1",
+                    "surface-container-highest": "#353534",
+                    "error-container": "#93000a",
+                    "surface": "#131313",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-high": "#2a2a2a",
+                    "outline-variant": "#4d4732",
+                    "on-tertiary-container": "#795a00",
+                    "background": "#131313",
+                    "tertiary-fixed": "#ffdf9e",
+                    "on-surface": "#e5e2e1",
+                    "surface-container": "#201f1f",
+                    "on-primary-container": "#705e00",
+                    "on-primary-fixed-variant": "#544600",
+                    "on-tertiary": "#3f2e00",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-primary-fixed": "#221b00",
+                    "surface-variant": "#353534",
+                    "surface-dim": "#131313",
+                    "tertiary-fixed-dim": "#fabd00",
+                    "secondary-container": "#474746",
+                    "on-tertiary-fixed": "#261a00",
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "inverse-surface": "#e5e2e1",
+                    "on-secondary-container": "#b7b5b4",
+                    "primary-container": "#ffd700",
+                    "primary-fixed-dim": "#e9c400",
+                    "on-surface-variant": "#d0c6ab",
+                    "on-secondary": "#313030",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-error": "#690005"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0px",
+                    "lg": "0px",
+                    "xl": "0px",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+        .gold-gradient {
+            background: linear-gradient(45deg, #FFD700 0%, #E9C400 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased">
+<header class="fixed top-0 w-full flex justify-between items-center px-6 h-16 bg-[#131313]/80 backdrop-blur-xl z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#FFD700]">menu</span>
+<h1 class="font-['Space_Grotesk'] font-bold tracking-tighter uppercase text-xl text-[#FFD700] tracking-widest">SUBTERRANEAN COMMAND</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#FFD700]">qr_code_scanner</span>
+</div>
+</header>
+<main class="pt-24 pb-28 px-4 md:px-8 max-w-7xl mx-auto">
+<section class="mb-10">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="font-headline text-4xl font-black text-on-surface tracking-tighter uppercase mb-2">Master_Spareparts</h2>
+<p class="font-label text-on-surface-variant tracking-wider uppercase text-sm">Inventory Management System // Sector 7</p>
+</div>
+<div class="w-full md:w-96">
+<label class="block font-label text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-widest">Search Catalog</label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-lowest border-none h-14 px-4 text-primary font-mono focus:ring-0 placeholder:text-surface-container-highest" placeholder="PART NO / NAME / SERIAL" type="text"/>
+<div class="absolute right-0 h-14 w-14 flex items-center justify-center bg-surface-container-high">
+<span class="material-symbols-outlined text-primary-container">search</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-outline-variant opacity-20"></div>
+</div>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-1 gap-px bg-surface-container">
+<div class="grid grid-cols-12 px-6 py-4 bg-surface-container-high items-center mb-1">
+<div class="col-span-3 font-label text-xs font-black text-on-surface-variant uppercase tracking-widest">Part Number</div>
+<div class="col-span-5 font-label text-xs font-black text-on-surface-variant uppercase tracking-widest">Part Name</div>
+<div class="col-span-2 text-right font-label text-xs font-black text-on-surface-variant uppercase tracking-widest">Stock</div>
+<div class="col-span-2 text-right font-label text-xs font-black text-on-surface-variant uppercase tracking-widest">Status</div>
+</div>
+<div class="grid grid-cols-12 px-6 py-8 bg-surface-container-low hover:bg-surface-container-high transition-colors items-center group">
+<div class="col-span-3 font-headline font-bold text-lg text-primary tracking-tight">XC-990-HD</div>
+<div class="col-span-5 flex flex-col">
+<span class="font-bold text-on-surface uppercase tracking-tight">Heavy Duty Drill Bit (Tungsten)</span>
+<span class="text-xs text-on-surface-variant font-medium mt-1">PRIMARY EXTRACTION / SECTOR A-G</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="font-headline text-3xl font-light text-on-surface">14</span>
+</div>
+<div class="col-span-2 flex justify-end">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Optimal</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 px-6 py-8 bg-surface-container-lowest hover:bg-surface-container-high transition-colors items-center group">
+<div class="col-span-3 font-headline font-bold text-lg text-primary tracking-tight">HYD-7721-L</div>
+<div class="col-span-5 flex flex-col">
+<span class="font-bold text-on-surface uppercase tracking-tight">Hydraulic Pressure Seal (Grade 4)</span>
+<span class="text-xs text-on-surface-variant font-medium mt-1">MAIN PUMP STATION / FILTRATION</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="font-headline text-3xl font-black text-primary-container">03</span>
+</div>
+<div class="col-span-2 flex justify-end">
+<div class="gold-gradient px-3 py-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-black" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="text-[10px] font-black uppercase tracking-widest text-black">Critical Low</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 px-6 py-8 bg-surface-container-low hover:bg-surface-container-high transition-colors items-center group">
+<div class="col-span-3 font-headline font-bold text-lg text-primary tracking-tight">BRG-V-88</div>
+<div class="col-span-5 flex flex-col">
+<span class="font-bold text-on-surface uppercase tracking-tight">Vibration Dampening Bearing</span>
+<span class="text-xs text-on-surface-variant font-medium mt-1">CONVEYOR SYSTEMS / REFINERY</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="font-headline text-3xl font-light text-on-surface">42</span>
+</div>
+<div class="col-span-2 flex justify-end">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Optimal</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 px-6 py-8 bg-surface-container-lowest hover:bg-surface-container-high transition-colors items-center group">
+<div class="col-span-3 font-headline font-bold text-lg text-primary tracking-tight">ELC-MOD-S7</div>
+<div class="col-span-5 flex flex-col">
+<span class="font-bold text-on-surface uppercase tracking-tight">Command Control Module</span>
+<span class="text-xs text-on-surface-variant font-medium mt-1">ELECTRONICS / TELEMETRY</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="font-headline text-3xl font-black text-primary-container">01</span>
+</div>
+<div class="col-span-2 flex justify-end">
+<div class="gold-gradient px-3 py-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-black" style="font-variation-settings: 'FILL' 1;">priority_high</span>
+<span class="text-[10px] font-black uppercase tracking-widest text-black">Depleted</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-12 px-6 py-8 bg-surface-container-low hover:bg-surface-container-high transition-colors items-center group">
+<div class="col-span-3 font-headline font-bold text-lg text-primary tracking-tight">VAL-92-PRS</div>
+<div class="col-span-5 flex flex-col">
+<span class="font-bold text-on-surface uppercase tracking-tight">Pneumatic Relief Valve</span>
+<span class="text-xs text-on-surface-variant font-medium mt-1">VENTILATION / SAFETY SYSTEMS</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="font-headline text-3xl font-light text-on-surface">08</span>
+</div>
+<div class="col-span-2 flex justify-end">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#FFD700]"></div>
+<span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Warning</span>
+</div>
+</div>
+</div>
+</section>
+<div class="mt-8 flex justify-between items-center">
+<button class="bg-surface-container-high px-8 h-14 font-label font-bold text-xs tracking-widest text-primary uppercase active:scale-95 transition-all">
+                Export Master CSV
+            </button>
+<div class="flex items-center gap-2 font-mono text-xs text-on-surface-variant">
+<span>RECORDS 1-5 OF 1284</span>
+<div class="flex gap-1 ml-4">
+<button class="w-10 h-10 bg-surface-container-high flex items-center justify-center text-primary"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-10 h-10 bg-surface-container-high flex items-center justify-center text-primary"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-10 right-6 z-[60]">
+<button class="gold-gradient text-black h-16 px-8 flex items-center gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+<span class="font-headline font-black uppercase tracking-widest">New Entry</span>
+</button>
+</div>
+<nav class="fixed bottom-0 w-full flex justify-around items-stretch overflow-hidden bg-[#131313]/80 backdrop-blur-xl h-20 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+<a class="flex flex-col items-center justify-center text-[#D0C6AB] h-full w-full hover:bg-[#2A2A2A] transition-colors active:brightness-125" href="#">
+<span class="material-symbols-outlined" data-icon="barcode_scanner">barcode_scanner</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1 uppercase">SCAN</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#D0C6AB] h-full w-full hover:bg-[#2A2A2A] transition-colors active:brightness-125" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1 uppercase">HISTORY</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black h-full w-full transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-['Inter'] font-bold text-xs tracking-widest mt-1 uppercase">INVENTORY</span>
+</a>
+</nav>
+</body></html>
