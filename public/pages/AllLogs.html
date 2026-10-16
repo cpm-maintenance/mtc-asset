@@ -1,129 +1,323 @@
-<!-- 📜 PAGE: ALL LOGS / ACTIVITY STREAM -->
-<div x-cloak class="space-y-4">
-  <!-- Header with Title and Actions -->
-  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-    <h3 class="font-black text-xl lg:text-2xl text-nexus-text nexus-glow-text uppercase tracking-tight">Activity Stream</h3>
-    <div class="flex flex-wrap gap-2.5 items-center">
-      <button @click="downloadTemplate('logs')" class="btn-nexus-small">
-        <i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span>
+<!-- ═══ PAGE: ALL LOGS — Maintenance Activity Stream (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
+
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
+    <div>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-sync-cyan animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">MAINTENANCE ACTIVITY STREAM</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">All Logs</h1>
+        <span class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-status-standby font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="logKpi.total + ' RECORDS'"></span>
+        <span x-show="logKpi.breakdown > 0"
+          class="px-2 py-0.5 rounded-full bg-tac-status-emergency/15 text-tac-status-emergency font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="logKpi.breakdown + ' BREAKDOWN'"></span>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="downloadTemplate('logs')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Download CSV template">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">description</span>
+        <span class="hidden sm:inline">TEMPLATE</span>
       </button>
-      <button @click="exportData('logs', 'csv')" class="btn-nexus-small">
-        <i class="fas fa-download"></i><span class="hidden lg:inline ml-1">Export</span>
+
+      <button type="button" @click="exportData('logs', 'csv')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export log ke CSV">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">download</span>
+        <span class="hidden sm:inline">EXPORT</span>
       </button>
-      <label class="btn-nexus-small cursor-pointer">
-        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+
+      <label class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 cursor-pointer"
+        title="Import log dari CSV/XLSX">
+        <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
+        <span class="hidden sm:inline">IMPORT</span>
         <input type="file" @change="importCSV($event, 'logs')" class="hidden" accept=".csv, .xlsx">
       </label>
-      <button x-show="isAdminOrSupervisor" @click="openLogModal(false)" class="btn-nexus-gold">
-        <i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Input</span>
+
+      <button type="button" x-show="isAdminOrSupervisor" @click="openLogModal(false)"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        <span>+ INPUT LOG</span>
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Date Range Filter -->
-  <div class="flex flex-wrap gap-3 items-center">
-    <input type="date" x-model="filterDateFrom" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-36" title="From date">
-    <input type="date" x-model="filterDateTo" class="p-3 glass border-nexus-accent/10 text-xs font-bold w-36" title="To date">
-    <button x-show="filterDateFrom || filterDateTo" @click="filterDateFrom=''; filterDateTo=''" class="text-[11px] text-slate-500 hover:text-rose-400 font-bold uppercase tracking-widest">
-      <i class="fas fa-times"></i> Clear
+  <!-- ═══ 2. ACTIVITY TELEMETRY DECK (4 KARTU) ═════════════════════════════ -->
+  <section aria-label="KPI aktivitas" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+
+    <!-- KPI 1 — Total Records -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Total Records</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-primary">
+          <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="logKpi.total"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">LOG AKTIVITAS</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">UNIT TERDAMPAK</span>
+        <span class="text-tac-on-surface font-semibold" x-text="logKpi.units + ' UNIT'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 2 — Open Queue -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Open Queue</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-repair">
+          <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-repair" x-text="logKpi.pending"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">PENDING</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">IN PROGRESS</span>
+        <span class="text-tac-sync-cyan font-semibold" x-text="logKpi.active + ' LOG'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 3 — Closed -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Closed Logs</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-operational">
+          <span class="material-symbols-outlined text-[18px]">assignment_turned_in</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-operational" x-text="logKpi.done"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">COMPLETED</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">CLOSURE RATE</span>
+        <span class="text-tac-status-operational font-semibold" x-text="logKpi.closure + '%'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 4 — Downtime & Cost -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Downtime Impact</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-emergency">
+          <span class="material-symbols-outlined text-[18px]">trending_up</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-emergency" x-text="logKpi.downtime + ' h'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">TOTAL DOWNTIME</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">MTTR BREAKDOWN</span>
+        <span class="text-tac-on-surface font-semibold" x-text="logKpi.mttr + ' h'"></span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 3. TACTICAL SEARCH & CONTROL BAR ═════════════════════════════════ -->
+  <section aria-label="Filter log" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+    <div class="flex flex-wrap items-center justify-between gap-space-sm pt-0">
+      <div class="flex items-center gap-space-sm flex-wrap">
+
+        <!-- Date range -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">DARI:</span>
+          <input type="date" x-model="filterDateFrom" aria-label="Tanggal mulai"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SAMPAI:</span>
+          <input type="date" x-model="filterDateTo" aria-label="Tanggal akhir"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+        </div>
+
+        <!-- Jenis -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">JENIS:</span>
+          <select x-model="allLogsJenisFilter"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            <option value="">SEMUA JENIS</option>
+            <template x-for="j in logJenisOptions" :key="'jenis-' + j">
+              <option :value="j" x-text="j"></option>
+            </template>
+          </select>
+        </div>
+
+        <button type="button" x-show="filterDateFrom || filterDateTo || allLogsJenisFilter"
+          @click="filterDateFrom = ''; filterDateTo = ''; allLogsJenisFilter = ''"
+          class="font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-status-emergency/30 text-tac-status-emergency hover:bg-tac-status-emergency/10 transition-colors">
+          RESET FILTER
+        </button>
+      </div>
+
+      <!-- Counter telemetry -->
+      <div class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        MENAMPILKAN <span class="text-tac-on-surface font-bold" x-text="filteredAllLogs.length"></span> DARI <span class="text-tac-on-surface font-bold" x-text="logKpi.total"></span> LOG
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 4. LEDGER STREAM ═════════════════════════════════════════════════ -->
+  <section class="flex flex-col gap-space-sm">
+    <template x-for="log in filteredAllLogs" :key="log.LogID">
+      <article @click="goToDetail(log.EquipmentID)"
+        class="relative bg-tac-surface-card rounded-lg border border-tac-border-subtle p-3 md:p-4 hover:bg-tac-surface-elevated/60 transition-all cursor-pointer group overflow-hidden [content-visibility:auto] [contain-intrinsic-size:auto_160px]">
+
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l" :class="logMarkerTac(log.Jenis)"></div>
+
+        <div class="pl-2 flex gap-3 md:gap-4">
+          <!-- Thumbnail -->
+          <template x-if="log.PhotoURLs && log.PhotoURLs.length > 0">
+            <div class="w-14 h-14 md:w-20 md:h-20 rounded border border-tac-border-subtle bg-tac-surface-recessed overflow-hidden shrink-0">
+              <img :src="cleanUrl(log.PhotoURLs[0])" class="w-full h-full object-cover" loading="lazy" decoding="async"
+                onerror="this.style.display='none'">
+            </div>
+          </template>
+          <template x-if="!(log.PhotoURLs && log.PhotoURLs.length > 0)">
+            <div class="w-14 h-14 md:w-20 md:h-20 rounded border border-tac-border-subtle bg-tac-surface-recessed shrink-0 flex flex-col items-center justify-center gap-0.5 text-tac-status-standby">
+              <span class="material-symbols-outlined text-[20px]" x-text="logIconTac(log.Jenis)"></span>
+              <span class="font-label-mono-sm text-label-mono-sm" x-text="log.PhotoURL ? 'URL' : 'NO IMG'"></span>
+            </div>
+          </template>
+
+          <div class="flex-1 min-w-0">
+            <!-- Title row + actions -->
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider block"
+                  x-text="log.Jenis || 'LOG'"></span>
+                <h3 class="font-headline-md text-headline-md font-bold text-tac-on-surface truncate group-hover:text-tac-gold-bright transition-colors"
+                  x-text="log.Deskripsi || '-'"></h3>
+              </div>
+
+              <div class="flex gap-1 shrink-0">
+                <button type="button" x-show="isAdminOrSupervisor && (log.Status === 'Pending' || log.Status === 'In Progress')"
+                  @click.stop="openLogModal(true, log)" title="Edit log"
+                  class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-sync-cyan hover:bg-tac-sync-cyan/20 flex items-center justify-center transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">edit_note</span>
+                </button>
+                <button type="button" x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" title="Hapus log"
+                  class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-status-emergency hover:bg-tac-status-emergency/20 flex items-center justify-center transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+                <button type="button" @click.stop="exportWOToPDF(log.LogID)" title="Export Work Order PDF"
+                  class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-primary hover:bg-tac-primary/20 flex items-center justify-center transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Status / WO chips -->
+            <div class="flex flex-wrap items-center gap-2 mt-1.5">
+              <span class="px-2 py-0.5 rounded-full border font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                :class="logStatusTac(log.Status)" x-text="log.Status || 'Pending'"></span>
+              <span x-show="log.woNumber" class="px-1.5 py-0.5 rounded bg-tac-surface-recessed font-label-mono-sm text-label-mono-sm text-tac-primary font-bold"
+                x-text="'#' + log.woNumber"></span>
+              <span x-show="log.woPriority" class="px-1.5 py-0.5 rounded font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                :class="logPriorityTac(log.woPriority)" x-text="log.woPriority"></span>
+            </div>
+
+            <!-- Meta row -->
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">schedule</span>
+                <span x-text="log.Tanggal || '-'"></span>
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">person</span>
+                <span x-text="log.Technician || '-'"></span>
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">fingerprint</span>
+                <span x-text="'NODE: ' + log.EquipmentID"></span>
+              </span>
+              <span x-show="log.assignedTo" class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">engineering</span>
+                <span x-text="log.assignedTo"></span>
+              </span>
+              <span x-show="log.Downtime" class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">hourglass_bottom</span>
+                <span x-text="log.Downtime + ' h'"></span>
+              </span>
+              <span x-show="log.Cost" class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">payments</span>
+                <span x-text="rpShort(log.Cost)"></span>
+              </span>
+            </div>
+
+            <!-- Request origin -->
+            <div x-show="log.requestSource || log.requestedBy" class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
+              <span x-show="log.requestSource" class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">source_environment</span>
+                <span x-text="log.requestSource"></span>
+              </span>
+              <span x-show="log.requestedBy" class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">badge</span>
+                <span x-text="log.requestedBy"></span>
+              </span>
+            </div>
+
+            <!-- Notes -->
+            <p x-show="log.Catatan" class="mt-2 font-body-sm text-body-sm text-tac-on-surface-variant line-clamp-1 border-l-2 border-tac-primary/30 pl-3"
+              x-text="log.Catatan"></p>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <!-- P3-3: infinite scroll sentinel -->
+    <div x-show="canLoadMoreAllLogs"
+      x-init="$nextTick(() => { const el = $el; const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { obs.disconnect(); loadMoreAllLogs(); } }, { rootMargin: '300px' }); obs.observe(el); })"
+      class="text-center pt-4">
+      <div class="inline-flex items-center gap-2 px-space-md py-1.5 rounded-full bg-tac-surface-card text-tac-status-standby font-label-mono-sm text-label-mono-sm">
+        <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+        <span>MEMUAT LEBIH BANYAK LOG...</span>
+      </div>
+    </div>
+
+    <!-- Fallback manual -->
+    <div x-show="canLoadMoreAllLogs" class="text-center pt-2">
+      <button type="button" @click="loadMoreAllLogs()" :disabled="isLoading"
+        class="inline-flex items-center gap-2 px-space-md py-2 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[14px]">sync</span>
+        <span x-text="'MUAT LAGI (' + (filteredAllLogsAll.length - filteredAllLogs.length) + ' LAGI)'"></span>
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div x-show="filteredAllLogsAll.length === 0"
+      class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
+      <div class="inline-flex flex-col items-center gap-4">
+        <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+          <span class="material-symbols-outlined text-[32px] text-tac-status-standby">search_off</span>
+        </div>
+        <div>
+          <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Belum Ada Log Aktivitas</p>
+          <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Sesuaikan rentang tanggal atau filter jenis log</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 5. FLOATING MOBILE QUICK ACTION PILL ═════════════════════════════ -->
+  <div class="fixed bottom-12 right-6 lg:hidden z-40" x-show="isAdminOrSupervisor">
+    <button type="button" @click="openLogModal(false)"
+      class="flex items-center gap-2 px-space-lg py-3 rounded-full bg-tac-primary-container text-tac-on-primary-container font-headline-md shadow-[0_4px_24px_rgba(245,158,11,0.5)] active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      <span>INPUT LOG</span>
     </button>
   </div>
 
-  <!-- Logs List -->
-  <div class="space-y-3 md:space-y-4">
-    <template x-for="log in filteredAllLogs" :key="log.LogID">
-      <div @click="goToDetail(log.EquipmentID)"
-        class="card-modern p-3 md:p-5 border-l-4 relative group hover:scale-[1.01] cursor-pointer transition-all mb-2 md:mb-4 overflow-visible"
-        :style="'border-left-color: ' + getStatColor(logColor(log.Jenis))">
-        
-        <div class="flex gap-3 md:gap-6">
-          <!-- Compact Thumbnail -->
-          <div x-show="log.PhotoURLs && log.PhotoURLs.length > 0" class="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden glass border-nexus-accent/10 flex-shrink-0 self-start p-0.5 md:p-1">
-            <img :src="cleanUrl(log.PhotoURLs?.[0])" class="w-full h-full object-cover rounded-lg md:rounded-xl" loading="lazy" decoding="async"
-              @error="console.log('Image error - URL:', $el.src)"
-              onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex')">
-            <div class="w-full h-full items-center justify-center text-xs text-slate-500" style="display:none">
-              <i class="fas fa-image"></i>
-            </div>
-          </div>
-          <div x-show="!(log.PhotoURLs && log.PhotoURLs.length > 0)" class="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl glass border-nexus-accent/10 flex items-center justify-center flex-shrink-0">
-            <span class="text-xs text-slate-600" x-text="log.PhotoURL ? 'URL' : (log.PhotoURLs?.length || '0')"></span>
-          </div>
-          
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-start mb-1 md:mb-2">
-              <div class="truncate">
-                <span class="text-xs md:text-[11px] font-black text-amber-400/40 uppercase tracking-[0.2em] block mb-0.5 md:mb-1" x-text="log.Jenis"></span>
-                <h4 class="font-black text-sm md:text-base text-nexus-text truncate pr-2 md:pr-10 nexus-glow-text" x-text="log.Deskripsi"></h4>
-              </div>
-              
-              <!-- Action Buttons (Edit/Delete/PDF) -->
-              <div class="flex gap-1 md:gap-2 flex-shrink-0 ml-2">
-                <button x-show="isAdminOrSupervisor && (log.Status === 'Pending' || log.Status === 'In Progress')" @click.stop="openLogModal(true, log)"
-                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all">
-                  <i class="fas fa-edit text-[11px] md:text-xs"></i>
-                </button>
-                <button x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" title="Delete Log"
-                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
-                  <i class="fas fa-trash text-[11px] md:text-xs"></i>
-                </button>
-                <button @click.stop="exportWOToPDF(log.LogID)" title="Export Work Order PDF"
-                  class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl glass border-nexus-accent/20 text-amber-400 hover:bg-nexus-accent hover:text-nexus-black flex items-center justify-center transition-all">
-                  <i class="fas fa-file-pdf text-[11px] md:text-xs"></i>
-                </button>
-              </div>
-            </div>
-            
-            <!-- Status Badge -->
-            <div class="flex items-center gap-2">
-              <span class="px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-xs md:text-xs font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Pending'"></span>
-            </div>
-
-            <!-- WO Priority & WO Number -->
-            <div x-show="log.woPriority || log.woNumber" class="flex flex-wrap items-center gap-2 mb-2 text-xs md:text-xs">
-              <span x-show="log.woNumber" class="px-2 py-0.5 rounded glass text-amber-400 font-mono" x-text="'#'+log.woNumber"></span>
-              <span x-show="log.woPriority" class="px-2 py-0.5 rounded font-bold uppercase tracking-wider" :class="woPriorityColor(log.woPriority)" x-text="log.woPriority"></span>
-              <span x-show="log.assignedTo" class="text-slate-400"><i class="fas fa-user mr-1"></i><span x-text="log.assignedTo"></span></span>
-              <span x-show="log.requestSource" class="text-purple-400 ml-2"><i class="fas fa-building mr-1"></i><span x-text="log.requestSource"></span></span>
-              <span x-show="log.requestedBy" class="text-purple-400"><i class="fas fa-user-tag mr-1"></i><span x-text="log.requestedBy"></span></span>
-            </div>
-
-            <!-- Inline Meta Info -->
-            <div class="flex flex-wrap items-center gap-2 md:gap-6 mb-2 md:mb-4 text-xs md:text-xs text-slate-500 font-black uppercase tracking-widest">
-              <div class="flex items-center gap-1 md:gap-2">
-                <i class="far fa-calendar-alt text-amber-400"></i> <span x-text="log.Tanggal"></span>
-              </div>
-              <div class="flex items-center gap-1 md:gap-2">
-                <i class="far fa-user-astronaut text-amber-400"></i> <span x-text="log.Technician"></span>
-              </div>
-              <div class="flex items-center gap-1 md:gap-2 text-nexus-purple">
-                <i class="fas fa-atom"></i> <span x-text="'NODE: ' + log.EquipmentID"></span>
-              </div>
-            </div>
-
-            <!-- Parts used / Notes -->
-            <p x-show="log.Catatan" class="text-xs text-slate-500 italic line-clamp-1 border-l-2 border-nexus-accent/20 pl-4" x-text="log.Catatan"></p>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- P3-3: Infinite scroll sentinel — muat 30 log lagi saat mendekati viewport -->
-    <div x-show="canLoadMoreAllLogs" x-init="$nextTick(() => { const el = $el; const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { obs.disconnect(); loadMoreAllLogs(); } }, { rootMargin: '300px' }); obs.observe(el); })" class="text-center pt-4">
-      <span class="inline-flex items-center gap-3 text-slate-500 text-xs">
-        <i class="fas fa-spinner fa-spin"></i> Loading more...
-      </span>
-    </div>
-    <!-- Fallback manual (jika IntersectionObserver tak didukung) -->
-    <div x-show="canLoadMoreAllLogs" class="text-center pt-4">
-      <button @click="loadMoreAllLogs()" class="btn-nexus-small">
-        <i class="fas fa-sync-alt"></i> Muat lagi (<span x-text="filteredAllLogsAll.length - filteredAllLogs.length"></span> tersisa)
-      </button>
-    </div>
-    <!-- Empty state -->
-    <div x-show="filteredAllLogsAll.length === 0" class="text-center py-12">
-      <i class="fas fa-inbox text-3xl text-slate-600 mb-3"></i>
-      <p class="text-slate-500 font-bold">Belum ada log aktivitas.</p>
-    </div>
-  </div>
 </div>

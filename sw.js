@@ -3,7 +3,7 @@
 
 // Nama cache menyertakan brand + versi rilis. Naikkan angka versi saat rilis
 // besar supaya cache lama dibuang bersih di handler 'activate'.
-const CACHE_NAME = 'mtc-asset-v8';
+const CACHE_NAME = 'mtc-asset-v9';
 
 // vite-plugin-pwa mengganti `self.__WB_MANIFEST` dengan daftar aset hasil build
 // (HTML, components, icons, dan SELURUH bundle JS/CSS). Dulu nilai ini hanya

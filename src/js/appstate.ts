@@ -54,6 +54,14 @@ export interface AppState {
   aiModelOptions: any[];
   aiProvider?: string;
   allLogsLimit?: number;
+  allLogsJenisFilter?: string;
+  /** Halaman All Logs (Tactical Slate). */
+  get logKpi(): any;
+  get logJenisOptions(): any;
+  logStatusTac(...args: any[]): any;
+  logMarkerTac(...args: any[]): any;
+  logIconTac(...args: any[]): any;
+  logPriorityTac(...args: any[]): any;
   allParts: SparePart[];
   allUsers: any[];
   analysisResult?: any;
@@ -178,6 +186,13 @@ export interface AppState {
   planningGanttScroll: number;
   planningSearch: string;
   planningView?: string;
+  /** Halaman Planning Board (Tactical Slate). */
+  get planningKpi(): any;
+  get planningColumns(): any;
+  planningStatusTac(...args: any[]): any;
+  planningMarkerTac(...args: any[]): any;
+  planningPriorityTac(...args: any[]): any;
+  planningBarTac(...args: any[]): any;
   plantFilter?: string;
   pmFilterEquip?: string;
   pmFilterStatus?: string;

@@ -101,3 +101,70 @@ describe('All Logs pagination (P3-3)', () => {
     expect(a.filteredAllLogsAll).toHaveLength(5);
   });
 });
+
+describe('All Logs — filter jenis & telemetri Tactical Slate', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('allLogsJenisFilter menyaring sebelum pagination', async () => {
+    const a = await makeApp();
+    a.logs = [
+      ...makeLogs(5).map((l) => ({ ...l, Jenis: 'Breakdown' })),
+      ...makeLogs(5, { startId: 50 }).map((l) => ({ ...l, Jenis: 'PM' })),
+    ];
+    a.allLogsJenisFilter = 'Breakdown';
+    expect(a.filteredAllLogsAll).toHaveLength(5);
+    expect(a.filteredAllLogs.every((l) => l.Jenis === 'Breakdown')).toBe(true);
+  });
+
+  it('logJenisOptions unik & terurut dari data nyata', async () => {
+    const a = await makeApp();
+    a.logs = [
+      { LogID: '1', EquipmentID: 'E1', Jenis: 'PM' },
+      { LogID: '2', EquipmentID: 'E2', Jenis: 'Breakdown' },
+      { LogID: '3', EquipmentID: 'E3', Jenis: 'PM' },
+    ];
+    expect(a.logJenisOptions).toEqual(['Breakdown', 'PM']);
+  });
+
+  it('logKpi menghitung downtime, MTTR breakdown, closure, unit', async () => {
+    const a = await makeApp();
+    a.logs = [
+      { LogID: '1', EquipmentID: 'E1', Jenis: 'Breakdown', Status: 'Completed', Downtime: 4, Cost: 1000000 },
+      { LogID: '2', EquipmentID: 'E1', Jenis: 'Breakdown', Status: 'Pending', Downtime: 6, Cost: 500000 },
+      { LogID: '3', EquipmentID: 'E2', Jenis: 'PM', Status: 'In Progress', Downtime: 0, Cost: 0 },
+      { LogID: '4', EquipmentID: 'E2', Jenis: 'PM', Status: 'Completed' },
+    ];
+    const k = a.logKpi;
+    expect(k.total).toBe(4);
+    expect(k.pending).toBe(1);
+    expect(k.active).toBe(1);
+    expect(k.done).toBe(2);
+    expect(k.breakdown).toBe(2);
+    expect(k.downtime).toBe(10);
+    expect(k.cost).toBe(1500000);
+    expect(k.mttr).toBe(5);
+    expect(k.closure).toBe(50);
+    expect(k.units).toBe(2);
+  });
+
+  it('logKpi aman saat tidak ada log (tanpa NaN/Infinity)', async () => {
+    const a = await makeApp();
+    const k = a.logKpi;
+    expect(k.total).toBe(0);
+    expect(k.mttr).toBe(0);
+    expect(k.closure).toBe(0);
+    expect(k.units).toBe(0);
+  });
+
+  it('helper badge mengembalikan kelas tac-* untuk tiap status/jenis', async () => {
+    const a = await makeApp();
+    expect(a.logStatusTac('Completed')).toContain('tac-status-operational');
+    expect(a.logStatusTac('In Progress')).toContain('tac-sync-cyan');
+    expect(a.logMarkerTac('Breakdown')).toBe('bg-tac-status-emergency');
+    expect(a.logMarkerTac('PM')).toBe('bg-tac-status-operational');
+    expect(a.logIconTac('Repair')).toBe('engineering');
+    expect(a.logPriorityTac('Emergency')).toContain('tac-status-emergency');
+  });
+});

@@ -321,6 +321,7 @@ export function app() {
         equipPage: 1,
         equipLimit: 30,
         allLogsLimit: 30,
+        allLogsJenisFilter: '',
 
         // --- PM SCHEDULE STATE ---
         pmView: 'calendar',
@@ -1912,6 +1913,11 @@ if (confirm('Are you sure you want to logout?')) {
                 result = result.filter(l => l.Tanggal && l.Tanggal <= to);
             }
 
+            // Jenis filter (Tactical filter matrix — All Logs)
+            if (this.allLogsJenisFilter) {
+                result = result.filter(l => l.Jenis === this.allLogsJenisFilter);
+            }
+
             return result;
         },
 
@@ -1928,6 +1934,66 @@ if (confirm('Are you sure you want to logout?')) {
             if (this.canLoadMoreAllLogs) {
                 this.allLogsLimit = (this.allLogsLimit || 30) + 30;
             }
+        },
+
+        // ── Tactical Slate — All Logs telemetry & helper ────────────────────
+        get logKpi() {
+            const rows = this.filteredAllLogsAll || [];
+            const total = rows.length;
+            const pending = rows.filter((/** @type {any} */ l) => (l.Status || 'Pending') === 'Pending').length;
+            const active = rows.filter((/** @type {any} */ l) => l.Status === 'In Progress').length;
+            const done = rows.filter((/** @type {any} */ l) => l.Status === 'Completed').length;
+            const bdRows = rows.filter((/** @type {any} */ l) => l.Jenis === 'Breakdown');
+            const breakdown = bdRows.length;
+            const downtime = rows.reduce((/** @type {number} */ s, /** @type {any} */ l) => s + (Number(l.Downtime) || 0), 0);
+            const cost = rows.reduce((/** @type {number} */ s, /** @type {any} */ l) => s + (Number(l.Cost) || 0), 0);
+            const mttr = breakdown > 0
+                ? Math.round(bdRows.reduce((/** @type {number} */ s, /** @type {any} */ l) => s + (Number(l.Downtime) || 0), 0) / breakdown * 10) / 10
+                : 0;
+            const closure = total > 0 ? Math.round(done / total * 100) : 0;
+            const units = new Set(rows.map((/** @type {any} */ l) => l.EquipmentID).filter(Boolean)).size;
+            return { total, pending, active, done, breakdown, downtime, cost, mttr, closure, units };
+        },
+
+        get logJenisOptions() {
+            const set = new Set();
+            (this.logs || []).forEach(l => { if (l && l.Jenis) set.add(l.Jenis); });
+            return Array.from(set).sort();
+        },
+
+        logStatusTac(status) {
+            const s = status || 'Pending';
+            if (s === 'Completed') return 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30';
+            if (s === 'In Progress') return 'bg-tac-sync-cyan/15 text-tac-sync-cyan border-tac-sync-cyan/30';
+            if (s === 'Approved') return 'bg-tac-primary/15 text-tac-primary border-tac-primary/30';
+            if (s === 'Cancelled') return 'bg-tac-surface-container-highest text-tac-on-surface-variant border-tac-border-subtle';
+            return 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30';
+        },
+
+        logMarkerTac(jenis) {
+            const j = jenis || '';
+            if (j === 'Breakdown') return 'bg-tac-status-emergency';
+            if (j === 'Repair') return 'bg-tac-status-repair';
+            if (j === 'PM') return 'bg-tac-status-operational';
+            if (j === 'Inspection') return 'bg-tac-primary';
+            return 'bg-tac-status-standby';
+        },
+
+        logIconTac(jenis) {
+            const j = jenis || '';
+            if (j === 'Breakdown') return 'warning';
+            if (j === 'Repair') return 'engineering';
+            if (j === 'PM') return 'event_busy';
+            if (j === 'Inspection') return 'fact_check';
+            return 'history';
+        },
+
+        logPriorityTac(priority) {
+            const p = priority || '';
+            if (p === 'Emergency') return 'bg-tac-status-emergency/20 text-tac-status-emergency';
+            if (p === 'Urgent') return 'bg-tac-status-repair/20 text-tac-status-repair';
+            if (p === 'Planned') return 'bg-tac-status-operational/20 text-tac-status-operational';
+            return 'bg-tac-primary/15 text-tac-primary';
         },
 
         get filteredParts() {
@@ -2025,6 +2091,73 @@ if (confirm('Are you sure you want to logout?')) {
             }
         },
         planningShowDetail(wo) { this.planningDetailWO = wo; },
+
+        // ── Tactical Slate — Planning Board telemetry & helper ──────────────
+        get planningKpi() {
+            const wos = (this.planningWOs || []).filter(Boolean);
+            const today = new Date().toISOString().split('T')[0];
+            const open = wos.filter((/** @type {any} */ w) => w.Status === 'Pending' || w.Status === 'Draft').length;
+            const approved = wos.filter((/** @type {any} */ w) => w.Status === 'Approved').length;
+            const inProgress = wos.filter((/** @type {any} */ w) => w.Status === 'In Progress').length;
+            const completed = wos.filter((/** @type {any} */ w) => w.Status === 'Completed').length;
+            const overdue = wos.filter((/** @type {any} */ w) => w.dueDate && w.dueDate < today && w.Status !== 'Completed' && w.Status !== 'Cancelled').length;
+            const unassigned = wos.filter((/** @type {any} */ w) => !w.assignedTo && w.Status !== 'Completed' && w.Status !== 'Cancelled').length;
+            const hours = wos
+                .filter((/** @type {any} */ w) => w.Status !== 'Completed' && w.Status !== 'Cancelled')
+                .reduce((/** @type {number} */ s, /** @type {any} */ w) => s + (Number(w.estimatedHours) || 0), 0);
+            const total = wos.length;
+            const doneRate = total > 0 ? Math.round(completed / total * 100) : 0;
+            return { total, open, approved, inProgress, completed, overdue, unassigned, hours, doneRate };
+        },
+
+        get planningColumns() {
+            const meta = [
+                { key: 'open', label: 'OPEN', statuses: ['Pending', 'Draft'], drop: 'Pending', icon: 'assignment_late', dot: 'bg-tac-status-repair', text: 'text-tac-status-repair' },
+                { key: 'approved', label: 'APPROVED', statuses: ['Approved'], drop: 'Approved', icon: 'verified_user', dot: 'bg-tac-primary', text: 'text-tac-primary' },
+                { key: 'progress', label: 'IN PROGRESS', statuses: ['In Progress'], drop: 'In Progress', icon: 'engineering', dot: 'bg-tac-sync-cyan', text: 'text-tac-sync-cyan' },
+                { key: 'completed', label: 'COMPLETED', statuses: ['Completed'], drop: 'Completed', icon: 'task_alt', dot: 'bg-tac-status-operational', text: 'text-tac-status-operational' },
+            ];
+            const rows = this.planningFilteredWOs || [];
+            return meta.map(c => Object.assign({}, c, {
+                items: rows.filter((/** @type {any} */ w) => c.statuses.includes(w.Status)),
+            }));
+        },
+
+        planningStatusTac(status) {
+            const s = status || 'Pending';
+            if (s === 'Completed') return 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30';
+            if (s === 'In Progress') return 'bg-tac-sync-cyan/15 text-tac-sync-cyan border-tac-sync-cyan/30';
+            if (s === 'Approved') return 'bg-tac-primary/15 text-tac-primary border-tac-primary/30';
+            if (s === 'Cancelled') return 'bg-tac-surface-container-highest text-tac-on-surface-variant border-tac-border-subtle';
+            return 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30';
+        },
+
+        planningMarkerTac(status) {
+            const s = status || 'Pending';
+            if (s === 'Completed') return 'bg-tac-status-operational';
+            if (s === 'In Progress') return 'bg-tac-sync-cyan';
+            if (s === 'Approved') return 'bg-tac-primary';
+            if (s === 'Cancelled') return 'bg-tac-status-standby';
+            return 'bg-tac-status-repair';
+        },
+
+        planningPriorityTac(priority) {
+            const p = priority || 'Normal';
+            if (p === 'Emergency') return 'bg-tac-status-emergency/20 text-tac-status-emergency border-tac-status-emergency/30';
+            if (p === 'Urgent') return 'bg-tac-status-repair/20 text-tac-status-repair border-tac-status-repair/30';
+            if (p === 'Planned') return 'bg-tac-status-operational/20 text-tac-status-operational border-tac-status-operational/30';
+            return 'bg-tac-primary/15 text-tac-primary border-tac-primary/30';
+        },
+
+        planningBarTac(status) {
+            const s = status || 'Pending';
+            if (s === 'Completed') return 'bg-tac-status-operational/40 border-tac-status-operational/60';
+            if (s === 'In Progress') return 'bg-tac-sync-cyan/40 border-tac-sync-cyan/60';
+            if (s === 'Approved') return 'bg-tac-primary/40 border-tac-primary/60';
+            if (s === 'Cancelled') return 'bg-tac-status-standby/40 border-tac-status-standby/60';
+            return 'bg-tac-status-repair/40 border-tac-status-repair/60';
+        },
+
         get planningMonths() {
             const months = [];
             const now = new Date();
