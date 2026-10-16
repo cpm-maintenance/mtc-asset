@@ -1,238 +1,409 @@
-<!-- 🔧 PAGE: SPARE PARTS INVENTORY (Stitch: The Industrial Monolith Port) -->
-<div x-cloak class="space-y-6">
+<!-- ═══ PAGE: SPARE PARTS INVENTORY & STOCK LEDGER (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
 
-  <!-- Header Area: Industrial Monolith Title & Actions -->
-  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 border-b border-stitch-ghost-border pb-6">
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
     <div>
-      <div class="flex items-center gap-2 mb-1">
-        <span class="w-2.5 h-2.5 bg-stitch-gold"></span>
-        <span class="text-[10px] uppercase font-mono tracking-widest text-stitch-on-surface-variant font-bold">DATABASE: CPM-AU-SEC07</span>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">MTC-INV // STOCK REGISTRY</span>
       </div>
-      <h1 class="text-3xl lg:text-4xl font-black text-stitch-on-surface font-display tracking-tight uppercase">Master_Spareparts</h1>
-      <p class="text-[11px] text-slate-400 mt-1">High-density warehouse inventory, telemetry allocation, and stock reserves</p>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Spare Parts Stock Ledger</h1>
+        <span x-show="partKpi.lowCount > 0"
+          class="px-2 py-0.5 rounded-full bg-tac-status-emergency/15 text-tac-status-emergency font-label-mono-sm text-label-mono-sm font-semibold animate-pulse"
+          x-text="partKpi.lowCount + ' LOW STOCK ALERTS'"></span>
+      </div>
     </div>
 
-    <!-- Actions Area -->
-    <div class="flex flex-wrap items-center gap-2.5">
-      <button @click="downloadTemplate('parts')" class="stitch-btn-secondary text-[11px] uppercase tracking-wider">
-        <i class="fas fa-file-csv mr-1.5 text-xs text-amber-400"></i> Template
+    <!-- Action Bar -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="downloadTemplate('parts')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Download CSV Template">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">description</span>
+        <span class="hidden sm:inline">TEMPLATE</span>
       </button>
-      <button @click="exportData('parts', 'csv')" class="stitch-btn-secondary text-[11px] uppercase tracking-wider">
-        <i class="fas fa-download mr-1.5 text-xs text-emerald-400"></i> Export CSV
+
+      <button type="button" @click="exportData('parts', 'csv')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export Parts CSV">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">download</span>
+        <span class="hidden sm:inline">EXPORT</span>
       </button>
-      <label class="stitch-btn-secondary text-[11px] uppercase tracking-wider cursor-pointer">
-        <i class="fas fa-upload mr-1.5 text-xs text-sky-400"></i> Import
+
+      <label class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 cursor-pointer"
+        title="Import Parts CSV">
+        <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
+        <span class="hidden sm:inline">IMPORT</span>
         <input type="file" @change="importCSV($event, 'parts')" class="hidden" accept=".csv, .xlsx">
       </label>
-      <button x-show="isAdmin" @click="openPartModal(false)" class="stitch-btn-primary text-[11px] font-black tracking-widest shadow-[0_10px_25px_rgba(255,215,0,0.15)]">
-        <i class="fas fa-plus mr-1.5"></i> Register Part
+
+      <button type="button" x-show="isAdmin" @click="openPartModal(false)"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        <span>+ REGISTER PART</span>
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Filter & Utility Bar (Stitch Tectonic Plate) -->
-  <div class="grid grid-cols-1 md:grid-cols-12 gap-0 bg-stitch-surface-low border border-stitch-ghost-border shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-    <!-- Search Input -->
-    <div class="md:col-span-7 relative flex items-center px-4 border-b md:border-b-0 md:border-r border-stitch-ghost-border">
-      <i class="fas fa-search text-stitch-on-surface-variant/60 mr-3 text-sm"></i>
-      <input type="text" x-model.debounce.150ms="searchPart"
-        placeholder="SEARCH DATABASE BY SERIAL, PART NUMBER, OR NAME..."
-        class="bg-transparent border-none text-stitch-on-surface w-full h-14 uppercase tracking-wider text-xs focus:ring-0 focus:outline-none placeholder:text-stitch-on-surface-variant/30">
-    </div>
+  <!-- ═══ 2. STOCK TELEMETRY DECK (4 KARTU) ════════════════════════════════ -->
+  <section aria-label="KPI spare parts" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
 
-    <!-- Filter Node -->
-    <div class="md:col-span-5 relative flex items-center px-4">
-      <i class="fas fa-industry text-stitch-on-surface-variant/60 mr-3 text-sm"></i>
-      <select x-model="partFilterEquip"
-        class="bg-transparent border-none text-stitch-on-surface w-full h-14 uppercase tracking-wider text-xs font-bold appearance-none cursor-pointer focus:ring-0 focus:outline-none">
-        <option value="" class="bg-stitch-surface-high">All Asset Nodes (Global Inventory)</option>
-        <template x-for="e in equipment" :key="e.EquipmentID">
-          <option :value="e.EquipmentID" class="bg-stitch-surface-high" x-text="e.EquipmentID + ' — ' + e.Nama"></option>
-        </template>
-      </select>
-      <span class="text-xs font-mono text-stitch-gold px-2 py-1 bg-stitch-surface-lowest border border-stitch-ghost-border shrink-0 ml-2"
-            x-text="filteredAllParts.length + ' Items'"></span>
-    </div>
-  </div>
-
-  <!-- Empty State -->
-  <div x-show="filteredAllParts.length === 0" class="text-center py-16 bg-stitch-surface-low border border-stitch-ghost-border p-8">
-    <div class="inline-flex flex-col items-center gap-4">
-      <div class="w-16 h-16 bg-stitch-surface-lowest flex items-center justify-center border border-stitch-ghost-border">
-        <i class="fas fa-box-open text-3xl text-stitch-on-surface-variant/60"></i>
+    <!-- KPI 1 — Total Valuation -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Total Stock Valuation</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-gold-bright">
+          <span class="material-symbols-outlined text-[18px]">payments</span>
+        </span>
       </div>
-      <div>
-        <p class="text-stitch-on-surface text-base font-black uppercase font-display tracking-tight"
-           x-text="(!searchPart && !partFilterEquip && allParts.length > 20) ? 'Silakan gunakan kotak pencarian atau filter' : 'Tidak Ada Data Sparepart'"></p>
-        <p class="text-slate-400 text-xs mt-1">
-          <span x-show="allParts.length === 0">Belum ada katalog sparepart tersimpan di database.</span>
-          <span x-show="allParts.length > 0 && searchPart">Kata kunci pencarian tidak cocok dengan item mana pun.</span>
-          <span x-show="allParts.length > 0 && !searchPart">Ubah filter node aset di atas.</span>
-        </p>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-gold-bright"
+          x-text="'Rp ' + (partKpi.totalValuation >= 1e9 ? (partKpi.totalValuation/1e9).toFixed(2) + ' M' : (partKpi.totalValuation >= 1e6 ? (partKpi.totalValuation/1e6).toFixed(1) + ' Jt' : (partKpi.totalValuation || 0).toLocaleString('id-ID')))"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">IDR ESTIMATED</span>
       </div>
-      <div class="flex gap-3 mt-2">
-        <button x-show="allParts.length === 0" @click="refreshData()" class="stitch-btn-secondary text-xs">
-          <i class="fas fa-sync-alt mr-1.5"></i> Refresh Data
-        </button>
-        <button x-show="isAdmin && allParts.length === 0" @click="openPartModal(false)" class="stitch-btn-primary text-xs">
-          <i class="fas fa-plus mr-1.5"></i> Add First Part
-        </button>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">CAPITAL ASSET</span>
+        <span class="text-tac-status-operational font-semibold">RESERVE RECORDED</span>
       </div>
     </div>
-  </div>
 
-  <!-- High-Density Data Table (Desktop View) -->
-  <div x-show="filteredAllParts.length > 0" class="hidden md:block bg-stitch-surface-low border border-stitch-ghost-border overflow-x-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr class="bg-stitch-surface-lowest border-b border-stitch-ghost-border">
-          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-stitch-on-surface-variant font-display">Part ID / Number</th>
-          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-stitch-on-surface-variant font-display">Part Name</th>
-          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-stitch-on-surface-variant font-display">Storage Zone</th>
-          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-stitch-on-surface-variant font-display">Inventory Status</th>
-          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-stitch-on-surface-variant font-display text-right">Available Stock</th>
-          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-stitch-on-surface-variant font-display text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-white/5 font-sans">
-        <template x-for="p in filteredAllParts" :key="p.PartID">
-          <tr class="hover:bg-stitch-surface-high transition-colors group">
-            <!-- Part Number & ID -->
-            <td class="px-6 py-4">
-              <p class="font-display font-bold text-stitch-gold text-xs tracking-wider" x-text="p.PartNumber || p.PartID"></p>
-              <p class="text-[10px] text-slate-500 font-mono" x-show="p.PartNumber && p.PartID !== p.PartNumber" x-text="'ID: ' + p.PartID"></p>
-            </td>
+    <!-- KPI 2 — Catalog SKUs -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Catalog SKUs</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-primary">
+          <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="partKpi.total"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">TOTAL ITEMS</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">OPTIMAL STOCK</span>
+        <span class="text-tac-status-operational font-semibold" x-text="partKpi.optimalCount + ' Items'"></span>
+      </div>
+    </div>
 
-            <!-- Part Name -->
-            <td class="px-6 py-4">
-              <p class="font-bold text-stitch-on-surface text-sm truncate max-w-xs" x-text="p.NamaPart" :title="p.NamaPart"></p>
-              <span class="text-[10px] text-slate-400 font-mono uppercase" x-show="p.NamaSingkat" x-text="p.NamaSingkat"></span>
-            </td>
+    <!-- KPI 3 — Urgent Stock Alerts -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Urgent Stock Alerts</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-emergency">
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-emergency" x-text="partKpi.lowCount"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">BELOW SAFETY</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">ZERO RESERVE (OUT)</span>
+        <span class="text-tac-status-emergency font-semibold" x-text="partKpi.criticalCount + ' SKUs'"></span>
+      </div>
+    </div>
 
-            <!-- Zone / Location -->
-            <td class="px-6 py-4">
-              <span class="text-xs font-mono text-stitch-on-surface-variant" x-text="p.Lokasi || '—'"></span>
-            </td>
+    <!-- KPI 4 — Stock Health Rate -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Stock Health Ratio</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+          <span class="material-symbols-outlined text-[18px]">troubleshoot</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="partKpi.healthRate + '%'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">AVAILABILITY INDEX</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">STATUS</span>
+        <span :class="partKpi.healthRate >= 90 ? 'text-tac-status-operational' : (partKpi.healthRate >= 75 ? 'text-tac-gold-bright' : 'text-tac-status-emergency')" class="font-semibold"
+          x-text="partKpi.healthRate >= 90 ? 'HEALTHY' : (partKpi.healthRate >= 75 ? 'WARNING' : 'CRITICAL')"></span>
+      </div>
+    </div>
 
-            <!-- Stock Status Block Indicator -->
-            <td class="px-6 py-4">
-              <span x-show="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0"
-                    class="bg-rose-500/20 text-rose-300 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-l-2 border-rose-500 inline-flex items-center gap-1.5 animate-pulse">
-                <i class="fas fa-exclamation-triangle text-[9px]"></i> Critical Low
-              </span>
-              <span x-show="Number(p.Stok) > Number(p.MinStock) || !Number(p.MinStock)"
-                    class="bg-emerald-500/15 text-emerald-300 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-l-2 border-emerald-500">
-                Optimal
-              </span>
-            </td>
+  </section>
 
-            <!-- Available Stock Quantity -->
-            <td class="px-6 py-4 text-right">
-              <div class="flex items-baseline justify-end gap-1">
-                <span class="font-display font-black text-xl"
-                      :class="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'text-rose-400' : 'text-stitch-gold'"
-                      x-text="p.Stok"></span>
-                <span class="text-[10px] text-slate-500 font-bold" x-show="p.MinStock" x-text="'/ min ' + p.MinStock"></span>
-              </div>
-            </td>
+  <!-- ═══ 3. TACTICAL SEARCH & CONTROL BAR ═════════════════════════════════ -->
+  <section aria-label="Filter spare parts" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-sm">
 
-            <!-- Actions -->
-            <td class="px-6 py-4 text-right">
-              <div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                <button type="button" @click="showPartUsageHistory(p.PartID, p.NamaPart)"
-                  class="p-2 text-slate-400 hover:text-stitch-gold hover:bg-stitch-surface-highest transition-colors"
-                  title="Usage History">
-                  <i class="fas fa-history text-xs"></i>
-                </button>
-                <button type="button" x-show="isAdmin" @click="openPartModal(true, p)"
-                  class="p-2 text-slate-400 hover:text-sky-400 hover:bg-stitch-surface-highest transition-colors"
-                  title="Edit Part">
-                  <i class="fas fa-edit text-xs"></i>
-                </button>
-                <button type="button" x-show="isAdminOrSupervisor" @click="deleteItem('SpareParts', p.PartID)"
-                  class="p-2 text-slate-400 hover:text-rose-400 hover:bg-stitch-surface-highest transition-colors"
-                  title="Delete Part">
-                  <i class="fas fa-trash text-xs"></i>
-                </button>
-              </div>
-            </td>
+      <!-- Fast Search Bar -->
+      <div class="flex-1 max-w-xl relative flex items-center bg-tac-surface-recessed rounded px-space-sm py-2 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]">
+        <span class="material-symbols-outlined text-tac-status-standby text-[18px] mr-2">search</span>
+        <label for="part-search" class="sr-only">Cari sparepart</label>
+        <input id="part-search" type="text" x-model.debounce.150ms="searchPart"
+          placeholder="Cari part number, nama part, ID, atau lokasi rak…"
+          class="w-full bg-transparent text-tac-on-surface font-body-sm text-body-sm outline-none placeholder:text-tac-status-standby">
+        <button type="button" x-show="searchPart" @click="searchPart = ''"
+          class="font-label-mono-sm text-label-mono-sm px-1.5 py-0.5 rounded bg-tac-surface-container-high text-tac-status-standby hover:text-tac-on-surface">ESC</button>
+      </div>
+
+      <!-- Quick Counter -->
+      <div class="flex items-center justify-between sm:justify-end gap-space-sm font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span>MENAMPILKAN <strong class="text-tac-on-surface" x-text="filteredAllParts.length"></strong> DARI <strong class="text-tac-on-surface" x-text="filteredAllPartsCount"></strong> ITEMS</span>
+      </div>
+    </div>
+
+    <!-- Tactical Filter Pill Matrix -->
+    <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle">
+      <div class="flex items-center gap-space-sm flex-wrap">
+
+        <!-- Asset Node Linked Filter -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">LINKED ASSET:</span>
+          <select x-model="partFilterEquip"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-xs">
+            <option value="">SEMUA ASSET (GLOBAL)</option>
+            <template x-for="e in equipment" :key="e.EquipmentID">
+              <option :value="e.EquipmentID" x-text="e.EquipmentID + ' — ' + e.Nama"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Stock Status Filter -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STOCK STATUS:</span>
+          <select x-model="partStatusFilter"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            <option value="">SEMUA KONDISI</option>
+            <option value="low">LOW STOCK (&le; MIN)</option>
+            <option value="zero">OUT OF STOCK (0)</option>
+            <option value="optimal">OPTIMAL RESERVE</option>
+          </select>
+        </div>
+
+        <!-- Sorting -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
+          <select x-model="partSortBy"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            <option value="name">NAMA PART (A-Z)</option>
+            <option value="stock_asc">STOK TERENDAH DULU</option>
+            <option value="stock_desc">STOK TERTINGGI DULU</option>
+            <option value="value">NILAI VALUASI (HIGHEST)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Reset -->
+      <button type="button" x-show="searchPart || partFilterEquip || partStatusFilter || partSortBy !== 'name'"
+        @click="searchPart = ''; partFilterEquip = ''; partStatusFilter = ''; partSortBy = 'name'"
+        class="font-label-mono-sm text-label-mono-sm text-tac-primary hover:underline">
+        RESET FILTER
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══ 4. HIGH-DENSITY DATA TABLE (DESKTOP) ═════════════════════════════ -->
+  <section aria-label="Tabel spare parts" class="hidden md:block bg-tac-surface-card rounded-lg shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] border border-tac-border-subtle overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse font-body-sm text-body-sm">
+        <thead>
+          <tr class="bg-tac-surface-container border-b border-tac-border-subtle font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider">
+            <th class="px-space-md py-3">PART NUMBER / ID</th>
+            <th class="px-space-md py-3">NAMA PART &amp; SPESIFIKASI</th>
+            <th class="px-space-md py-3">STORAGE ZONE</th>
+            <th class="px-space-md py-3">STATUS CADANGAN</th>
+            <th class="px-space-md py-3 text-right">AVAILABLE STOCK</th>
+            <th class="px-space-md py-3 text-right">ACTIONS</th>
           </tr>
-        </template>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody class="divide-y divide-tac-border-subtle font-sans">
+          <template x-for="p in filteredAllParts" :key="p.PartID">
+            <tr class="hover:bg-tac-surface-elevated/70 transition-colors group">
+              <!-- Part Number & ID -->
+              <td class="px-space-md py-3.5">
+                <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary group-hover:text-tac-gold-bright transition-colors"
+                  x-text="p.PartNumber || p.PartID"></p>
+                <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby mt-0.5"
+                  x-show="p.PartNumber && p.PartID !== p.PartNumber"
+                  x-text="'ID: ' + p.PartID"></p>
+              </td>
 
-  <!-- Responsive Cards View (Mobile View) -->
-  <div x-show="filteredAllParts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+              <!-- Part Name -->
+              <td class="px-space-md py-3.5">
+                <p class="font-headline-md text-headline-md font-semibold text-tac-on-surface truncate max-w-sm"
+                  x-text="p.NamaPart" :title="p.NamaPart"></p>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase"
+                  x-show="p.NamaSingkat" x-text="p.NamaSingkat"></span>
+              </td>
+
+              <!-- Zone / Location -->
+              <td class="px-space-md py-3.5">
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface"
+                  x-text="p.Lokasi || 'UNASSIGNED'"></span>
+              </td>
+
+              <!-- Stock Status Pill -->
+              <td class="px-space-md py-3.5">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border"
+                  :class="partStatusTac(p)">
+                  <span class="h-1.5 w-1.5 rounded-full"
+                    :class="partMarkerTac(p)"></span>
+                  <span x-text="Number(p.Stok) === 0 ? 'OUT OF STOCK' : (Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'CRITICAL LOW' : 'OPTIMAL')"></span>
+                </span>
+              </td>
+
+              <!-- Stock Quantity -->
+              <td class="px-space-md py-3.5 text-right">
+                <div class="flex items-baseline justify-end gap-1">
+                  <span class="font-label-mono-lg text-label-mono-lg font-bold"
+                    :class="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'text-tac-status-emergency' : 'text-tac-on-surface'"
+                    x-text="p.Stok"></span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+                    x-show="p.MinStock" x-text="'/ min ' + p.MinStock"></span>
+                </div>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-space-md py-3.5 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <button type="button" @click="showPartUsageHistory(p.PartID, p.NamaPart)"
+                    class="p-1.5 rounded hover:bg-tac-surface-container-high text-tac-status-standby hover:text-tac-primary transition-colors"
+                    title="Usage History">
+                    <span class="material-symbols-outlined text-[18px]">history</span>
+                  </button>
+                  <button type="button" x-show="isAdmin" @click="openPartModal(true, p)"
+                    class="p-1.5 rounded hover:bg-tac-surface-container-high text-tac-status-standby hover:text-tac-secondary transition-colors"
+                    title="Edit Part">
+                    <span class="material-symbols-outlined text-[18px]">edit_note</span>
+                  </button>
+                  <button type="button" x-show="isAdminOrSupervisor" @click="deleteItem('SpareParts', p.PartID)"
+                    class="p-1.5 rounded hover:bg-tac-surface-container-high text-tac-status-standby hover:text-tac-status-emergency transition-colors"
+                    title="Delete Part">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 5. RESPONSIVE CARDS VIEW (MOBILE STREAM) ═════════════════════════ -->
+  <section aria-label="Daftar mobile spare parts" class="grid grid-cols-1 sm:grid-cols-2 gap-space-md md:hidden">
     <template x-for="p in filteredAllParts" :key="p.PartID">
-      <div class="bg-stitch-surface-low border border-stitch-ghost-border p-4 relative group">
+      <article class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] border border-tac-border-subtle relative overflow-hidden flex flex-col justify-between">
         <!-- Status indicator bar -->
-        <div class="absolute top-0 left-0 bottom-0 w-1"
-             :class="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'bg-rose-500' : 'bg-stitch-gold'"></div>
+        <div class="absolute top-0 left-0 bottom-0 w-1.5" :class="partMarkerTac(p)"></div>
 
-        <div class="pl-2">
-          <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="pl-2 flex flex-col gap-space-sm">
+          <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="font-display font-bold text-stitch-gold text-xs tracking-wider" x-text="p.PartNumber || p.PartID"></p>
-              <h4 class="font-bold text-stitch-on-surface text-sm truncate" x-text="p.NamaPart" :title="p.NamaPart"></h4>
+              <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="p.PartNumber || p.PartID"></p>
+              <h2 class="font-headline-md text-headline-md font-semibold text-tac-on-surface truncate" x-text="p.NamaPart" :title="p.NamaPart"></h2>
             </div>
-            <span x-show="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0"
-                  class="text-[9px] font-black uppercase bg-rose-500/20 text-rose-300 px-1.5 py-0.5 shrink-0">Low</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border shrink-0"
+              :class="partStatusTac(p)">
+              <span x-text="Number(p.Stok) === 0 ? 'OUT' : (Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'LOW' : 'OK')"></span>
+            </span>
           </div>
 
-          <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-stitch-ghost-border pt-2 mt-3">
-            <span>Zone: <strong class="text-white" x-text="p.Lokasi || '—'"></strong></span>
+          <div class="grid grid-cols-2 gap-2 p-2 rounded bg-tac-surface-recessed shadow-inner font-label-mono-sm text-label-mono-sm">
             <div>
-              Stock: <strong class="text-base font-display font-bold"
-                :class="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'text-rose-400' : 'text-stitch-gold'"
-                x-text="p.Stok"></strong>
+              <span class="text-tac-status-standby uppercase text-[10px]">ZONE / LOKASI</span>
+              <p class="text-tac-on-surface font-semibold truncate" x-text="p.Lokasi || '—'"></p>
+            </div>
+            <div class="text-right">
+              <span class="text-tac-status-standby uppercase text-[10px]">STOK / MIN</span>
+              <p class="font-bold" :class="Number(p.Stok) <= Number(p.MinStock) && Number(p.MinStock) > 0 ? 'text-tac-status-emergency' : 'text-tac-on-surface'">
+                <span x-text="p.Stok"></span>
+                <span class="text-tac-status-standby font-normal" x-show="p.MinStock" x-text="' / ' + p.MinStock"></span>
+              </p>
             </div>
           </div>
 
           <!-- Mobile Actions -->
-          <div class="flex justify-end gap-2 mt-3 pt-2 border-t border-white/5">
+          <div class="flex items-center justify-end gap-space-xs pt-2 border-t border-tac-border-subtle">
             <button type="button" @click="showPartUsageHistory(p.PartID, p.NamaPart)"
-              class="px-2.5 py-1 text-[10px] font-bold text-slate-300 bg-stitch-surface-high hover:bg-stitch-surface-highest uppercase">History</button>
+              class="px-2.5 py-1 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-sm text-label-mono-sm hover:bg-tac-surface-elevated">
+              HISTORY
+            </button>
             <button type="button" x-show="isAdmin" @click="openPartModal(true, p)"
-              class="px-2.5 py-1 text-[10px] font-bold text-sky-300 bg-stitch-surface-high hover:bg-stitch-surface-highest uppercase">Edit</button>
+              class="px-2.5 py-1 rounded bg-tac-surface-container-high text-tac-secondary font-label-mono-sm text-label-mono-sm hover:bg-tac-surface-elevated">
+              EDIT
+            </button>
             <button type="button" x-show="isAdminOrSupervisor" @click="deleteItem('SpareParts', p.PartID)"
-              class="px-2.5 py-1 text-[10px] font-bold text-rose-300 bg-stitch-surface-high hover:bg-stitch-surface-highest uppercase">Delete</button>
+              class="px-2.5 py-1 rounded bg-tac-surface-container-high text-tac-status-emergency font-label-mono-sm text-label-mono-sm hover:bg-tac-surface-elevated">
+              DELETE
+            </button>
           </div>
         </div>
-      </div>
+      </article>
     </template>
+  </section>
+
+  <!-- ═══ 6. LOAD MORE BUTTON ══════════════════════════════════════════════ -->
+  <div x-show="canLoadMoreParts" class="text-center pt-4">
+    <button type="button" @click="loadMoreParts()" :disabled="isLoading"
+      class="px-space-lg py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+      <span class="material-symbols-outlined text-[16px] align-middle mr-1">sync</span>
+      <span>LOAD MORE (+30 ITEMS)</span>
+    </button>
   </div>
 
-  <!-- 📊 Usage History Modal -->
+  <!-- ═══ 7. EMPTY STATE ══════════════════════════════════════════════════ -->
+  <div x-show="filteredAllParts.length === 0"
+    class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
+    <div class="inline-flex flex-col items-center gap-4">
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-status-standby">inventory_2</span>
+      </div>
+      <div>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Tidak Ada Data Sparepart</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Coba sesuaikan kata kunci pencarian atau filter status/aset</p>
+      </div>
+      <div class="flex gap-2 mt-2">
+        <button type="button" x-show="allParts.length === 0" @click="refreshData()"
+          class="px-space-md py-2 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-sm text-label-mono-sm">
+          REFRESH DATA
+        </button>
+        <button type="button" x-show="isAdmin && allParts.length === 0" @click="openPartModal(false)"
+          class="px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-sm text-label-mono-sm font-bold">
+          REGISTER FIRST PART
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 8. USAGE HISTORY MODAL (Tactical Slate) ══════════════════════════ -->
   <div x-cloak x-show="showUsageHistory"
-       class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#05070a]/80 backdrop-blur-md transition-opacity">
-    <div class="bg-stitch-surface-low border border-stitch-ghost-border w-full max-w-2xl p-6 lg:p-8 max-h-[85vh] overflow-y-auto shadow-2xl">
-      <div class="flex justify-between items-center mb-6 border-b border-stitch-ghost-border pb-4">
-        <h3 class="text-lg font-black text-stitch-on-surface font-display flex items-center gap-2.5 uppercase tracking-tight">
-          <i class="fas fa-history text-stitch-gold"></i>
-          <span x-text="'Usage: ' + (usageHistoryPartName || usageHistoryPartId)"></span>
-        </h3>
-        <button @click="closeUsageHistory()"
-                class="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center bg-stitch-surface-high hover:bg-stitch-surface-highest transition-colors">
-          <i class="fas fa-times"></i>
+    class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity"
+    role="dialog" aria-modal="true" aria-labelledby="usage-history-title">
+    <div class="bg-tac-surface-card border border-tac-border-subtle rounded-lg w-full max-w-2xl p-space-md max-h-[85vh] overflow-y-auto shadow-2xl flex flex-col gap-space-md">
+      <div class="flex justify-between items-center border-b border-tac-border-subtle pb-space-sm">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-tac-primary text-[20px]">history</span>
+          <h2 id="usage-history-title" class="font-headline-md text-headline-md text-tac-on-surface uppercase tracking-tight"
+            x-text="'Usage: ' + (usageHistoryPartName || usageHistoryPartId)"></h2>
+        </div>
+        <button type="button" @click="closeUsageHistory()" aria-label="Tutup riwayat pemakaian"
+          class="p-1 rounded text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
         </button>
       </div>
 
       <div x-show="usageHistoryLogs.length === 0" class="text-center py-12">
-        <i class="fas fa-calendar-times text-4xl text-slate-600 mb-3 block"></i>
-        <p class="text-slate-400 text-sm font-bold uppercase">Belum ada riwayat pemakaian</p>
-        <p class="text-slate-500 text-xs mt-1">Part ini belum pernah tercatat digunakan pada Work Order mana pun</p>
+        <span class="material-symbols-outlined text-4xl text-tac-status-standby mb-2 block">event_busy</span>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase">Belum ada riwayat pemakaian</p>
+        <p class="text-tac-status-standby font-body-sm text-body-sm mt-1">Part ini belum pernah tercatat digunakan pada Work Order mana pun</p>
       </div>
 
       <div x-show="usageHistoryLogs.length > 0" class="space-y-2">
         <template x-for="log in usageHistoryLogs" :key="log.LogID + '-' + (log.partIdx || 0)">
-          <div class="p-3 bg-stitch-surface-lowest border border-stitch-ghost-border flex justify-between items-center">
+          <div class="p-3 bg-tac-surface-recessed rounded border border-tac-border-subtle flex justify-between items-center">
             <div>
-              <p class="text-xs font-bold text-white" x-text="log.Deskripsi || 'Work Order Task'"></p>
-              <p class="text-[10px] text-slate-400 font-mono mt-0.5" x-text="(log.woNumber ? '#' + log.woNumber + ' · ' : '') + log.Tanggal + ' · Unit: ' + (log.EquipmentID || '-')"></p>
+              <p class="font-body-sm text-body-sm font-semibold text-tac-on-surface" x-text="log.Deskripsi || 'Work Order Task'"></p>
+              <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby mt-0.5"
+                x-text="(log.woNumber ? '#' + log.woNumber + ' · ' : '') + log.Tanggal + ' · Unit: ' + (log.EquipmentID || '-')"></p>
             </div>
-            <span class="text-xs font-mono font-bold text-stitch-gold bg-stitch-surface-high px-2 py-1"
-                  x-text="'-' + (log.qty || 1) + ' ' + (log.satuan || 'pcs')"></span>
+            <span class="font-label-mono-sm text-label-mono-sm font-bold text-tac-primary bg-tac-surface-container px-2 py-1 rounded"
+              x-text="'-' + (log.qty || 1) + ' ' + (log.satuan || 'pcs')"></span>
           </div>
         </template>
       </div>

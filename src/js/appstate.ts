@@ -155,6 +155,15 @@ export interface AppState {
   notifications: any[];
   oldLogParts: any[];
   partFilterEquip?: string;
+  partStatusFilter?: string;
+  partSortBy?: string;
+  partLimit?: number;
+  get partKpi(): any;
+  partStatusTac(part: any): string;
+  partMarkerTac(part: any): string;
+  get canLoadMoreParts(): boolean;
+  get filteredAllPartsCount(): number;
+  loadMoreParts(): void;
   partForm: Record<string, any>;
   perfFilterArea?: string;
   perfFilterEquip?: string;
@@ -172,6 +181,10 @@ export interface AppState {
   plantFilter?: string;
   pmFilterEquip?: string;
   pmFilterStatus?: string;
+  pmSearch?: string;
+  pmFilterPriority?: string;
+  pmStatusTac?: (pm: any) => { label: string; badge: string; marker: string; icon: string };
+  pmPriorityTac?: (priority: string) => { label: string; badge: string };
   pmForm: Record<string, any>;
   pmGanttScroll?: number;
   pmList: PMTask[];
@@ -206,6 +219,15 @@ export interface AppState {
   /** Halaman Work Orders (design Stitch 'Work Orders Ledger'). */
   woView?: string;
   woSectorFilter?: string;
+  /** Halaman Equipment (Tactical Slate). */
+  equipSectorFilter?: string;
+  equipTypeFilter?: string;
+  equipStatusFilter?: string;
+  equipSortBy?: string;
+  get equipCounts(): any;
+  get equipKpi(): any;
+  equipStatusTac?: (...args: any[]) => any;
+  equipMarkerTac?: (...args: any[]) => any;
   /** Batas jumlah kartu WO yang dirender (P1) — pola sama `allLogsLimit`. */
   woLimit?: number;
   /** Versi rilis (inject vite `define` dari package.json) untuk footer status strip. */

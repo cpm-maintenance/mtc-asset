@@ -71,6 +71,10 @@ export function app() {
         // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate):
         // mode tampilan ledger/kanban + filter sektor (Lokasi unit).
         woView: 'ledger', woSectorFilter: '', woLimit: 30,
+        // Halaman Equipment (Tactical Slate): filter tipe, status, sektor, pagination & kpi
+        equipSectorFilter: '', equipTypeFilter: '', equipStatusFilter: '', equipSortBy: 'name',
+        // Halaman Spare Parts (Tactical Slate): filter status stock, sorting, limit pagination
+        partStatusFilter: '', partSortBy: 'name', partLimit: 30,
         // Versi rilis untuk footer status strip. Di-inject vite.config `define`
         // (sumber: package.json); fallback 'dev' kalau dijalankan di luar Vite (vitest).
         appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',
@@ -322,6 +326,9 @@ export function app() {
         pmView: 'calendar',
         pmMonthOffset: 0,
         pmFilterEquip: '',
+        pmFilterStatus: '',
+        pmSearch: '',
+        pmFilterPriority: '',
         pmShowDetail: false,
         selectedPM: null,
         pmGanttScroll: 0,
@@ -1307,25 +1314,95 @@ if (confirm('Are you sure you want to logout?')) {
         
         get filteredEquip() {
             if (!this.equipment || !Array.isArray(this.equipment)) return [];
-            let result = this.equipment.filter(e =>
-                (e.Nama || '').toLowerCase().includes(this.search.toLowerCase()) ||
-                (e.EquipmentID || '').toLowerCase().includes(this.search.toLowerCase())
-            );
-            
+            const q = (this.search || '').trim().toLowerCase();
+            const sector = this.equipSectorFilter || '';
+            const type = this.equipTypeFilter || '';
+            const status = this.equipStatusFilter || '';
+
+            let result = this.equipment.filter(e => {
+                if (!e) return false;
+                if (q && !(e.Nama || '').toLowerCase().includes(q) && !(e.EquipmentID || '').toLowerCase().includes(q)) {
+                    return false;
+                }
+                if (sector && (e.Lokasi || 'UNASSIGNED') !== sector) return false;
+                if (type && (e.Tipe || 'Other') !== type) return false;
+                if (status && (e.Status || 'Active') !== status) return false;
+                return true;
+            });
+
+            // Sorting
+            if (this.equipSortBy === 'critical') {
+                const critOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+                result = [...result].sort((a, b) => (critOrder[/** @type {keyof typeof critOrder} */ (b.Kritikalitas)] || 0) - (critOrder[/** @type {keyof typeof critOrder} */ (a.Kritikalitas)] || 0));
+            } else if (this.equipSortBy === 'health') {
+                result = [...result].sort((a, b) => {
+                    const sa = this.calculateHealthScore ? (this.calculateHealthScore(a.EquipmentID)?.score ?? 100) : 100;
+                    const sb = this.calculateHealthScore ? (this.calculateHealthScore(b.EquipmentID)?.score ?? 100) : 100;
+                    return sa - sb; // lowest health first
+                });
+            } else if (this.equipSortBy === 'date') {
+                result = [...result].sort((a, b) => new Date(a.NextPMDate || 0).getTime() - new Date(b.NextPMDate || 0).getTime());
+            } else {
+                result = [...result].sort((a, b) => (a.Nama || '').localeCompare(b.Nama || ''));
+            }
+
             // Apply pagination when not searching
             if (!this.search && result.length > 0) {
-                result = result.slice(0, this.equipPage * this.equipLimit);
+                result = result.slice(0, this.equipPage * (this.equipLimit || 30));
             }
-            
+
             return result;
         },
-        
+
         get canLoadMoreEquip() {
             if (!this.equipment || !Array.isArray(this.equipment)) return false;
             if (!this.search) {
-                return this.equipment.length > (this.equipPage * this.equipLimit);
+                return this.equipment.length > (this.equipPage * (this.equipLimit || 30));
             }
             return false; // Disable pagination during search
+        },
+
+        // Tactical Slate Equipment Helpers & Telemetry
+        get equipCounts() {
+            /** @type {Record<string, number>} */
+            const out = { total: 0, Active: 0, 'In Maintenance': 0, Decommissioned: 0, Idle: 0 };
+            (this.equipment || []).forEach(e => {
+                if (!e) return;
+                out.total++;
+                const s = e.Status || 'Active';
+                if (s in out) out[s]++;
+            });
+            return out;
+        },
+
+        get equipKpi() {
+            const eq = this.equipment || [];
+            const total = eq.length;
+            const active = eq.filter(e => e.Status === 'Active').length;
+            const maint = eq.filter(e => e.Status === 'In Maintenance').length;
+            const highCrit = eq.filter(e => e.Kritikalitas === 'High').length;
+            const healthSum = eq.reduce((acc, e) => {
+                const s = this.calculateHealthScore ? (this.calculateHealthScore(e.EquipmentID)?.score ?? 100) : 100;
+                return acc + s;
+            }, 0);
+            const avgHealth = total > 0 ? Math.round(healthSum / total) : 100;
+            return { total, active, maint, highCrit, avgHealth };
+        },
+
+        equipStatusTac(status) {
+            const s = status || 'Active';
+            if (s === 'Active') return 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30';
+            if (s === 'In Maintenance') return 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30';
+            if (s === 'Decommissioned') return 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30';
+            return 'bg-tac-surface-container-highest text-tac-on-surface-variant border-tac-border-subtle';
+        },
+
+        equipMarkerTac(item) {
+            const s = (item && item.Status) || 'Active';
+            if (s === 'Active') return 'bg-tac-status-operational';
+            if (s === 'In Maintenance') return 'bg-tac-status-repair';
+            if (s === 'Decommissioned') return 'bg-tac-status-emergency';
+            return 'bg-tac-status-standby';
         },
 
         // D4: Equipment hierarchy — group by Lokasi (area) → Tipe
@@ -1540,49 +1617,202 @@ if (confirm('Are you sure you want to logout?')) {
             return results;
         },
 
+                // Tactical Slate Spare Parts Helpers & Telemetry
+                get partKpi() {
+                    const parts = this.allParts || [];
+                    const total = parts.length;
+                    let totalValuation = 0;
+                    let lowCount = 0;
+                    let optimalCount = 0;
+                    let criticalCount = 0;
+
+                    parts.forEach(p => {
+                        if (!p) return;
+                        const stok = Number(p.Stok) || 0;
+                        const min = Number(p.MinStock) || 0;
+                        const harga = Number(p.Harga) || 0;
+                        totalValuation += stok * harga;
+
+                        if (min > 0 && stok <= min) {
+                            lowCount++;
+                            if (stok === 0) criticalCount++;
+                        } else {
+                            optimalCount++;
+                        }
+                    });
+
+                    return {
+                        total,
+                        totalValuation,
+                        lowCount,
+                        criticalCount,
+                        optimalCount,
+                        healthRate: total > 0 ? Math.round((optimalCount / total) * 100) : 100
+                    };
+                },
+
+                partStatusTac(p) {
+                    if (!p) return 'border-tac-border-subtle text-tac-status-standby bg-tac-surface-recessed';
+                    const stok = Number(p.Stok) || 0;
+                    const min = Number(p.MinStock) || 0;
+                    if (min > 0 && stok === 0) {
+                        return 'border-tac-status-emergency/40 text-tac-status-emergency bg-tac-status-emergency/10';
+                    }
+                    if (min > 0 && stok <= min) {
+                        return 'border-tac-status-repair/40 text-tac-status-repair bg-tac-status-repair/10';
+                    }
+                    return 'border-tac-status-operational/40 text-tac-status-operational bg-tac-status-operational/10';
+                },
+
+                partMarkerTac(p) {
+                    if (!p) return 'bg-tac-status-standby';
+                    const stok = Number(p.Stok) || 0;
+                    const min = Number(p.MinStock) || 0;
+                    if (min > 0 && stok === 0) return 'bg-tac-status-emergency';
+                    if (min > 0 && stok <= min) return 'bg-tac-status-repair';
+                    return 'bg-tac-status-operational';
+                },
+
+                // Tactical Slate Helpers for PM Schedule
+                pmStatusTac(pm) {
+                    if (!pm) return { label: 'UNKNOWN', badge: 'bg-tac-surface-recessed text-tac-text-dim border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'help_outline' };
+                    const today = new Date().toISOString().split('T')[0];
+                    if (pm.status === 'pending' && pm.date < today) {
+                        return { label: 'OVERDUE', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40', marker: 'bg-tac-status-emergency', icon: 'warning' };
+                    }
+                    if (pm.status === 'pending') {
+                        return { label: 'PENDING', badge: 'bg-tac-amber-muted text-tac-amber border-tac-border-subtle', marker: 'bg-tac-amber', icon: 'schedule' };
+                    }
+                    if (pm.status === 'completed') {
+                        return { label: 'COMPLETED', badge: 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/40', marker: 'bg-tac-status-operational', icon: 'check_circle' };
+                    }
+                    return { label: 'CANCELLED', badge: 'bg-tac-surface-recessed text-tac-text-dim border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'cancel' };
+                },
+
+                pmPriorityTac(priority) {
+                    const p = (priority || 'Medium').toLowerCase();
+                    if (p === 'high') return { label: 'HIGH', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40' };
+                    if (p === 'low') return { label: 'LOW', badge: 'bg-tac-surface-recessed text-tac-text-dim border-tac-border-subtle' };
+                    return { label: 'MED', badge: 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/40' };
+                },
+
                 get filteredAllParts() {
-            if (!this.allParts || !Array.isArray(this.allParts)) {
-                return [];
-            }
+                    if (!this.allParts || !Array.isArray(this.allParts)) {
+                        return [];
+                    }
             
-            const searchLower = (this.searchPart || '').toLowerCase().trim();
-            const filterEquip = this.partFilterEquip;
+                    const searchLower = (this.searchPart || '').toLowerCase().trim();
+                    const filterEquip = this.partFilterEquip;
+                    const filterStatus = this.partStatusFilter;
             
-            const hasFilter = searchLower || filterEquip;
-            
-            if (!hasFilter && this.allParts.length > 20) {
-                return [];
-            }
-            
-            const filtered = this.allParts.filter(p => {
-                if (!p) return false;
+                    let result = this.allParts.filter(p => {
+                        if (!p) return false;
                 
-                const name = (p.NamaPart || '').toString().toLowerCase();
-                const id = (p.PartID || '').toString().toLowerCase();
-                const shortName = (p.NamaSingkat || '').toString().toLowerCase();
-                const partNum = (p.PartNumber || '').toString().toLowerCase();
+                        const name = (p.NamaPart || '').toString().toLowerCase();
+                        const id = (p.PartID || '').toString().toLowerCase();
+                        const shortName = (p.NamaSingkat || '').toString().toLowerCase();
+                        const partNum = (p.PartNumber || '').toString().toLowerCase();
+                        const lokasi = (p.Lokasi || '').toString().toLowerCase();
 
-                const matchesSearch = !searchLower || 
-                    name.includes(searchLower) ||
-                    id.includes(searchLower) ||
-                    shortName.includes(searchLower) ||
-                    partNum.includes(searchLower);
+                        const matchesSearch = !searchLower || 
+                            name.includes(searchLower) ||
+                            id.includes(searchLower) ||
+                            shortName.includes(searchLower) ||
+                            partNum.includes(searchLower) ||
+                            lokasi.includes(searchLower);
                 
-                let linkedIds = [];
-                if (Array.isArray(p.EquipmentIDs)) {
-                    linkedIds = p.EquipmentIDs;
-                } else if (p.EquipmentIDs && typeof p.EquipmentIDs === 'string') {
-                    linkedIds = [p.EquipmentIDs];
-                } else if (p.EquipmentID) {
-                    linkedIds = [p.EquipmentID];
-                }
+                        let linkedIds = [];
+                        if (Array.isArray(p.EquipmentIDs)) {
+                            linkedIds = p.EquipmentIDs;
+                        } else if (p.EquipmentIDs && typeof p.EquipmentIDs === 'string') {
+                            linkedIds = [p.EquipmentIDs];
+                        } else if (p.EquipmentID) {
+                            linkedIds = [p.EquipmentID];
+                        }
 
-                const matchesEquip = !filterEquip || linkedIds.includes(filterEquip);
-                return matchesSearch && matchesEquip;
-            });
+                        const matchesEquip = !filterEquip || linkedIds.includes(filterEquip);
+                        if (!matchesSearch || !matchesEquip) return false;
 
-            return filtered;
-        },
+                        const stok = Number(p.Stok) || 0;
+                        const min = Number(p.MinStock) || 0;
+                        if (filterStatus === 'low') {
+                            return min > 0 && stok <= min;
+                        }
+                        if (filterStatus === 'zero') {
+                            return stok === 0;
+                        }
+                        if (filterStatus === 'optimal') {
+                            return min === 0 || stok > min;
+                        }
+                        return true;
+                    });
+
+                    // Sorting
+                    if (this.partSortBy === 'stock_asc') {
+                        result = [...result].sort((a, b) => (Number(a.Stok) || 0) - (Number(b.Stok) || 0));
+                    } else if (this.partSortBy === 'stock_desc') {
+                        result = [...result].sort((a, b) => (Number(b.Stok) || 0) - (Number(a.Stok) || 0));
+                    } else if (this.partSortBy === 'value') {
+                        result = [...result].sort((a, b) => ((Number(b.Stok) || 0) * (Number(b.Harga) || 0)) - ((Number(a.Stok) || 0) * (Number(a.Harga) || 0)));
+                    } else {
+                        result = [...result].sort((a, b) => (a.NamaPart || '').localeCompare(b.NamaPart || ''));
+                    }
+
+                    // Pagination slice
+                    const limit = this.partLimit || 30;
+                    return result.slice(0, limit);
+                },
+
+                get canLoadMoreParts() {
+                    if (!this.allParts || !Array.isArray(this.allParts)) return false;
+                    return (this.filteredAllPartsCount || 0) > (this.partLimit || 30);
+                },
+
+                get filteredAllPartsCount() {
+                    if (!this.allParts || !Array.isArray(this.allParts)) return 0;
+                    const searchLower = (this.searchPart || '').toLowerCase().trim();
+                    const filterEquip = this.partFilterEquip;
+                    const filterStatus = this.partStatusFilter;
+            
+                    return this.allParts.filter(p => {
+                        if (!p) return false;
+                        const name = (p.NamaPart || '').toString().toLowerCase();
+                        const id = (p.PartID || '').toString().toLowerCase();
+                        const shortName = (p.NamaSingkat || '').toString().toLowerCase();
+                        const partNum = (p.PartNumber || '').toString().toLowerCase();
+                        const lokasi = (p.Lokasi || '').toString().toLowerCase();
+
+                        const matchesSearch = !searchLower || 
+                            name.includes(searchLower) ||
+                            id.includes(searchLower) ||
+                            shortName.includes(searchLower) ||
+                            partNum.includes(searchLower) ||
+                            lokasi.includes(searchLower);
+                
+                        let linkedIds = [];
+                        if (Array.isArray(p.EquipmentIDs)) {
+                            linkedIds = p.EquipmentIDs;
+                        } else if (p.EquipmentIDs && typeof p.EquipmentIDs === 'string') {
+                            linkedIds = [p.EquipmentIDs];
+                        } else if (p.EquipmentID) {
+                            linkedIds = [p.EquipmentID];
+                        }
+
+                        const matchesEquip = !filterEquip || linkedIds.includes(filterEquip);
+                        if (!matchesSearch || !matchesEquip) return false;
+
+                        const stok = Number(p.Stok) || 0;
+                        const min = Number(p.MinStock) || 0;
+                        if (filterStatus === 'low') return min > 0 && stok <= min;
+                        if (filterStatus === 'zero') return stok === 0;
+                        if (filterStatus === 'optimal') return min === 0 || stok > min;
+                        return true;
+                    }).length;
+                },
+
+                loadMoreParts() {
+                    this.partLimit = (this.partLimit || 30) + 30;
+                },
 
         get filteredPerformanceData() {
             return this.getFilteredPerfData ? this.getFilteredPerfData() : this.performanceData;

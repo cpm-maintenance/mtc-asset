@@ -1,142 +1,393 @@
-<!-- 🔧 PAGE: EQUIPMENT -->
-<div x-cloak class="space-y-4">
-  <!-- Header with Search and Actions -->
-  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-2">
-    <!-- Search Bar -->
-    <div class="relative flex-1 min-w-[200px]">
-      <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-amber-400/40"></i>
-      <input type="text" x-model.debounce.150ms="search" placeholder="Search..."
-        class="w-full pl-12 p-3 glass">
+<!-- ═══ PAGE: EQUIPMENT & TELEMETRY LEDGER (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
+
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
+    <div>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">ASSET REGISTER &amp; TELEMETRY</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Equipment Fleet Ledger</h1>
+        <span x-show="equipKpi.maint > 0"
+          class="px-2 py-0.5 rounded-full bg-tac-status-repair/15 text-tac-status-repair font-label-mono-sm text-label-mono-sm font-semibold animate-pulse"
+          x-text="equipKpi.maint + ' IN MAINTENANCE'"></span>
+      </div>
     </div>
-    
-    <!-- Action Buttons -->
-    <div class="flex flex-wrap gap-2.5 items-center">
-      <button @click="showEquipTree = !showEquipTree" class="btn-nexus-small" :class="showEquipTree ? '!border-amber-400/60 !text-amber-300' : ''">
-        <i class="fas" :class="showEquipTree ? 'fa-th-large' : 'fa-sitemap'"></i><span class="hidden lg:inline ml-1" x-text="showEquipTree ? 'Grid' : 'Tree'"></span>
+
+    <!-- Action Bar -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="downloadTemplate('equip')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Download CSV Template">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">description</span>
+        <span class="hidden sm:inline">TEMPLATE</span>
       </button>
-      <button @click="downloadTemplate('equip')" class="btn-nexus-small">
-        <i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span>
+
+      <button type="button" @click="exportData('equip', 'csv')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export Equipment CSV">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">download</span>
+        <span class="hidden sm:inline">EXPORT</span>
       </button>
-      <button @click="exportData('equip', 'csv')" class="btn-nexus-small">
-        <i class="fas fa-download"></i><span class="hidden lg:inline ml-1">Export</span>
+
+      <button type="button" @click="downloadAllQRs()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Download QR sheet (PDF) for all assets">
+        <span class="material-symbols-outlined text-[16px] text-tac-sync-cyan">qr_code_scanner</span>
+        <span class="hidden sm:inline">QR SHEET</span>
       </button>
-      <button @click="downloadAllQRs()" class="btn-nexus-small" title="Download QR sheet (PDF) for all assets">
-        <i class="fas fa-qrcode"></i><span class="hidden lg:inline ml-1">QR All</span>
-      </button>
-      <label class="btn-nexus-small cursor-pointer">
-        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+
+      <label class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 cursor-pointer"
+        title="Import Equipment CSV">
+        <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
+        <span class="hidden sm:inline">IMPORT</span>
         <input type="file" @change="importCSV($event, 'equip')" class="hidden" accept=".csv, .xlsx">
       </label>
-      <button x-show="isAdmin" @click="openEquipModal(false)" class="btn-nexus-gold">
-        <i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">New Asset</span>
+
+      <button type="button" x-show="isAdmin" @click="openEquipModal(false)"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        <span>+ NEW ASSET</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ 2. INDUSTRIAL TELEMETRY DECK (4 KARTU) ═══════════════════════════ -->
+  <section aria-label="KPI fleet" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+
+    <!-- KPI 1 — Total Assets -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Total Plant Fleet</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-primary">
+          <span class="material-symbols-outlined text-[18px]">precision_manufacturing</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="equipKpi.total"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">REGISTERED UNITS</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">ACTIVE OPERATIONAL</span>
+        <span class="text-tac-status-operational font-semibold" x-text="equipKpi.active + ' Units (' + (equipKpi.total ? Math.round(equipKpi.active/equipKpi.total*100) : 0) + '%)'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 2 — Maintenance / Idle -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Maintenance &amp; Down</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-repair">
+          <span class="material-symbols-outlined text-[18px]">build</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-repair" x-text="equipKpi.maint"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">UNITS OFFLINE</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">DECOMMISSIONED</span>
+        <span class="text-tac-status-emergency font-semibold" x-text="equipCounts['Decommissioned'] || 0"></span>
+      </div>
+    </div>
+
+    <!-- KPI 3 — Criticality Level -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">High Criticality Units</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-gold-bright">
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-gold-bright" x-text="equipKpi.highCrit"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">TIER-1 BOTTLENECKS</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">IMPACT RISK</span>
+        <span class="text-tac-gold-bright font-semibold">PRIORITY PM PROTOCOL</span>
+      </div>
+    </div>
+
+    <!-- KPI 4 — Fleet Health Average -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Fleet Health Score</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+          <span class="material-symbols-outlined text-[18px]">troubleshoot</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="equipKpi.avgHealth + '%'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">RELIABILITY INDEX</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">HEALTH METRIC</span>
+        <span :class="equipKpi.avgHealth >= 85 ? 'text-tac-status-operational' : (equipKpi.avgHealth >= 70 ? 'text-tac-gold-bright' : 'text-tac-status-emergency')" class="font-semibold"
+          x-text="equipKpi.avgHealth >= 85 ? 'OPTIMAL' : (equipKpi.avgHealth >= 70 ? 'DEGRADED' : 'CRITICAL')"></span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 3. TACTICAL SEARCH & CONTROL BAR ═════════════════════════════════ -->
+  <section aria-label="Filter peralatan" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-sm">
+
+      <!-- Fast Search Bar -->
+      <div class="flex-1 max-w-xl relative flex items-center bg-tac-surface-recessed rounded px-space-sm py-2 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]">
+        <span class="material-symbols-outlined text-tac-status-standby text-[18px] mr-2">search</span>
+        <label for="equip-search" class="sr-only">Cari equipment</label>
+        <input id="equip-search" type="text" x-model.debounce.150ms="search"
+          placeholder="Cari ID unit (CV-104), nama, tipe, lokasi…"
+          class="w-full bg-transparent text-tac-on-surface font-body-sm text-body-sm outline-none placeholder:text-tac-status-standby">
+        <button type="button" x-show="search" @click="search = ''"
+          class="font-label-mono-sm text-label-mono-sm px-1.5 py-0.5 rounded bg-tac-surface-container-high text-tac-status-standby hover:text-tac-on-surface">ESC</button>
+      </div>
+
+      <!-- View Switcher (Cards vs Hierarchy Tree) -->
+      <div class="flex items-center justify-between sm:justify-end gap-space-sm">
+        <div class="inline-flex p-0.5 rounded bg-tac-surface-recessed shadow-inner" role="group" aria-label="Mode tampilan">
+          <button type="button" @click="showEquipTree = false" :aria-pressed="!showEquipTree ? 'true' : 'false'"
+            class="px-space-md py-1 rounded font-label-mono-md text-label-mono-md flex items-center gap-1 transition-colors"
+            :class="!showEquipTree ? 'bg-tac-primary-container text-tac-on-primary-container font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'text-tac-status-standby hover:text-tac-on-surface'">
+            <span class="material-symbols-outlined text-[16px]">table_rows</span>
+            <span>GRID / STREAM</span>
+          </button>
+          <button type="button" @click="showEquipTree = true" :aria-pressed="showEquipTree ? 'true' : 'false'"
+            class="px-space-md py-1 rounded font-label-mono-md text-label-mono-md flex items-center gap-1 transition-colors"
+            :class="showEquipTree ? 'bg-tac-primary-container text-tac-on-primary-container font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'text-tac-status-standby hover:text-tac-on-surface'">
+            <span class="material-symbols-outlined text-[16px]">factory</span>
+            <span>HIERARCHY TREE</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tactical Filter Pill Matrix -->
+    <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle">
+      <div class="flex items-center gap-space-sm flex-wrap">
+
+        <!-- Sektor / Area Filter -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SEKTOR:</span>
+          <select x-model="equipSectorFilter"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            <option value="">SEMUA AREA</option>
+            <template x-for="sec in woSectorOptions" :key="sec">
+              <option :value="sec" x-text="sec"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STATUS:</span>
+          <select x-model="equipStatusFilter"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            <option value="">SEMUA STATUS</option>
+            <option value="Active">Active</option>
+            <option value="In Maintenance">In Maintenance</option>
+            <option value="Idle">Idle</option>
+            <option value="Decommissioned">Decommissioned</option>
+          </select>
+        </div>
+
+        <!-- Sorting -->
+        <div class="flex items-center gap-1">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
+          <select x-model="equipSortBy"
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            <option value="name">NAMA UNIT (A-Z)</option>
+            <option value="critical">KRITIKALITAS (HIGH FIRST)</option>
+            <option value="health">HEALTH (LOWEST FIRST)</option>
+            <option value="date">JADWAL PM TERDEKAT</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Counter telemetry -->
+      <div class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        MENAMPILKAN <span class="text-tac-on-surface font-bold" x-text="filteredEquip.length"></span> DARI <span class="text-tac-on-surface font-bold" x-text="equipment.length"></span> ASSETS
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 4. MAIN CONTENT VIEW: GRID STREAM ════════════════════════════════ -->
+  <div x-show="!showEquipTree">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+      <template x-for="e in filteredEquip" :key="e.EquipmentID">
+        <article @click="goToDetail(e.EquipmentID)"
+          class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] hover:bg-tac-surface-elevated/80 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between border border-tac-border-subtle group [content-visibility:auto] [contain-intrinsic-size:auto_220px]">
+
+          <!-- Left indicator bar -->
+          <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="equipMarkerTac(e)"></div>
+
+          <div class="pl-2 flex flex-col gap-space-sm">
+            <!-- Header: Foto/Thumbnail + Status Pill + ID -->
+            <div class="flex items-center justify-between gap-space-xs">
+              <div class="flex items-center gap-space-sm min-w-0">
+                <!-- Foto preview kalau ada -->
+                <template x-if="e.FotoURL && e.FotoURL.length > 0">
+                  <div class="w-10 h-10 rounded border border-tac-border-subtle bg-tac-surface-recessed overflow-hidden shrink-0">
+                    <img :src="cleanUrl(e.FotoURL)" class="w-full h-full object-cover" loading="lazy" decoding="async" onerror="this.style.display='none'">
+                  </div>
+                </template>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-label-mono-lg text-label-mono-lg font-bold text-tac-primary group-hover:text-tac-gold-bright transition-colors truncate"
+                    x-text="e.EquipmentID"></span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase truncate"
+                    x-text="e.Tipe || 'GENERAL ASSET'"></span>
+                </div>
+              </div>
+
+              <!-- Status Badge -->
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border"
+                :class="equipStatusTac(e.Status)">
+                <span class="h-1.5 w-1.5 rounded-full"
+                  :class="e.Status === 'Active' ? 'bg-tac-status-operational' : (e.Status === 'In Maintenance' ? 'bg-tac-status-repair animate-ping' : 'bg-tac-status-emergency')"></span>
+                <span x-text="(e.Status || 'Active').toUpperCase()"></span>
+              </span>
+            </div>
+
+            <!-- Asset Name -->
+            <h2 class="font-headline-md text-headline-md text-tac-on-surface font-semibold group-hover:text-tac-on-surface transition-colors line-clamp-1"
+              x-text="e.Nama"></h2>
+
+            <!-- Metadata specs matrix -->
+            <div class="grid grid-cols-2 gap-2 p-2 rounded bg-tac-surface-recessed shadow-inner font-label-mono-sm text-label-mono-sm">
+              <div class="flex flex-col">
+                <span class="text-tac-status-standby uppercase text-[10px]">LOKASI / SEKTOR</span>
+                <span class="text-tac-on-surface font-bold truncate" x-text="e.Lokasi || 'UNASSIGNED'"></span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-tac-status-standby uppercase text-[10px]">KRITIKALITAS</span>
+                <span :class="e.Kritikalitas === 'High' ? 'text-tac-gold-bright font-bold' : 'text-tac-on-surface'"
+                  x-text="(e.Kritikalitas || 'Normal').toUpperCase()"></span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-tac-status-standby uppercase text-[10px]">NEXT PM</span>
+                <span class="text-tac-on-surface truncate" x-text="e.NextPMDate || '-'"></span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-tac-status-standby uppercase text-[10px]">SERIAL NO</span>
+                <span class="text-tac-on-surface truncate" x-text="e.SerialNo || '-'"></span>
+              </div>
+            </div>
+
+            <!-- Health Score Telemetry Bar -->
+            <div class="pt-2 border-t border-tac-border-subtle flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">HEALTH SCORE</span>
+                <span class="font-label-mono-sm text-label-mono-sm font-bold"
+                  :class="calculateHealthScore(e.EquipmentID).color"
+                  x-text="calculateHealthScore(e.EquipmentID).score + '%'"></span>
+              </div>
+              <div class="w-24 h-1.5 bg-tac-surface-recessed rounded-full overflow-hidden shadow-inner">
+                <div class="h-full transition-all duration-700"
+                  :style="'width: ' + calculateHealthScore(e.EquipmentID).score + '%'"
+                  :class="calculateHealthScore(e.EquipmentID).color.replace('text-', 'bg-')"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </template>
+    </div>
+
+    <!-- Infinite Scroll Sentinel -->
+    <div x-show="canLoadMoreEquip"
+      x-init="$nextTick(() => { const el = $el; const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { obs.disconnect(); loadMoreEquipment(); } }, { rootMargin: '200px' }); obs.observe(el); })"
+      class="text-center pt-6">
+      <div class="inline-flex items-center gap-2 px-space-md py-1.5 rounded-full bg-tac-surface-card text-tac-status-standby font-label-mono-sm text-label-mono-sm">
+        <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+        <span>MEMUAT LEBIH BANYAK ASSET...</span>
+      </div>
+    </div>
+
+    <!-- Manual Fallback Load More -->
+    <div x-show="canLoadMoreEquip" class="text-center pt-4 lg:hidden">
+      <button type="button" @click="loadMoreEquipment()" :disabled="isLoading"
+        class="px-space-md py-2 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm">
+        <span class="material-symbols-outlined text-[14px] align-middle mr-1">sync</span>
+        <span>LOAD MORE</span>
       </button>
     </div>
   </div>
 
-  <!-- Hierarchy Tree View (D4) -->
-  <div x-show="showEquipTree" x-cloak class="space-y-6">
+  <!-- ═══ 5. HIERARCHY TREE VIEW ═══════════════════════════════════════════ -->
+  <div x-show="showEquipTree" class="flex flex-col gap-space-md">
     <template x-for="(types, area) in equipmentTree" :key="area">
-      <div class="card-modern p-5 md:p-6">
-        <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
-          <i class="fas fa-industry text-amber-400"></i>
-          <h5 class="font-black text-amber-400 uppercase tracking-widest text-sm" x-text="area"></h5>
-          <span class="ml-auto text-[10px] text-slate-500 font-bold" x-text="Object.values(types).reduce((s, arr) => s + arr.length, 0) + ' assets'"></span>
-        </div>
-        <template x-for="(items, tipe) in types" :key="tipe">
-          <div class="mb-3">
-            <div class="flex items-center gap-2 mb-2">
-              <i class="fas fa-cogs text-xs text-nexus-accent/50"></i>
-              <span class="text-xs font-black text-nexus-accent/70 uppercase tracking-wider" x-text="tipe"></span>
-              <span class="text-[9px] text-slate-600 font-bold" x-text="items.length + ' unit'"></span>
-            </div>
-            <div class="flex flex-wrap gap-2 pl-5">
-              <template x-for="e in items" :key="e.EquipmentID">
-                <button @click="goToDetail(e.EquipmentID)"
-                  class="px-3 py-1.5 rounded-xl glass text-[11px] font-bold text-slate-300 hover:text-amber-300 hover:border-amber-400/40 border border-white/5 transition-all"
-                  x-text="e.Nama"></button>
-              </template>
-            </div>
+      <section class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] border border-tac-border-subtle">
+        <div class="flex items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm mb-space-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-tac-primary text-[20px]">factory</span>
+            <h3 class="font-headline-md text-headline-md text-tac-on-surface font-bold uppercase tracking-wider" x-text="area"></h3>
           </div>
-        </template>
-      </div>
-    </template>
-  </div>
+          <span class="font-label-mono-sm text-label-mono-sm px-2 py-0.5 rounded bg-tac-surface-recessed text-tac-status-standby"
+            x-text="Object.values(types).reduce((s, arr) => s + arr.length, 0) + ' TOTAL UNITS'"></span>
+        </div>
 
-  <!-- Equipment Cards Grid -->
-  <div x-show="!showEquipTree" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-    <template x-for="e in filteredEquip" :key="e.EquipmentID">
-      <div @click="goToDetail(e.EquipmentID)" class="card-modern p-4 md:p-6 cursor-pointer relative group overflow-hidden">
-        <!-- Decorative Background -->
-        <div class="absolute top-0 right-0 w-20 md:w-32 h-20 md:h-32 bg-nexus-accent/5 rounded-full -mr-10 md:-mr-16 -mt-10 md:-mt-16 blur-2xl"></div>
-        
-        <!-- Card Header -->
-        <div class="flex justify-between items-start mb-3 md:mb-6">
-          <!-- Equipment Photo -->
-          <template x-if="e.FotoURL && e.FotoURL.length > 0">
-            <div class="w-10 h-10 rounded-lg overflow-hidden mr-2 shrink-0 border border-nexus-accent/20">
-              <img :src="cleanUrl(e.FotoURL)" class="w-full h-full object-cover" loading="lazy" decoding="async" onerror="this.style.display='none'">
+        <div class="space-y-4">
+          <template x-for="(items, tipe) in types" :key="tipe">
+            <div class="p-3 rounded bg-tac-surface-recessed shadow-inner border border-tac-border-subtle">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-1.5 font-label-mono-sm text-label-mono-sm text-tac-primary font-bold uppercase tracking-wider">
+                  <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
+                  <span x-text="tipe"></span>
+                </div>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="items.length + ' UNIT'"></span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="e in items" :key="e.EquipmentID">
+                  <button type="button" @click="goToDetail(e.EquipmentID)"
+                    class="px-space-md py-1.5 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm font-semibold transition-all flex items-center gap-2 group">
+                    <span class="w-1.5 h-1.5 rounded-full" :class="equipMarkerTac(e)"></span>
+                    <span x-text="e.Nama"></span>
+                    <span class="text-tac-status-standby group-hover:text-tac-primary font-normal" x-text="'[' + e.EquipmentID + ']'"></span>
+                  </button>
+                </template>
+              </div>
             </div>
           </template>
-          
-          <!-- Status Badge -->
-          <span :class="statusColor(e.Status)"
-            class="text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-full font-black uppercase tracking-[0.1em] border border-current bg-transparent"
-            x-text="e.Status"></span>
-          
-          <!-- Equipment ID -->
-          <span class="text-sm md:text-xs text-amber-400/40 font-mono font-bold" x-text="'ID: ' + e.EquipmentID"></span>
         </div>
-        
-        <!-- Equipment Name -->
-        <h4 class="font-black text-base md:text-xl text-nexus-text group-hover:text-amber-400 transition-colors mb-1 md:mb-2 nexus-glow-text" x-text="e.Nama"></h4>
-        
-        <!-- Equipment Type -->
-        <p class="text-sm md:text-xs font-black text-nexus-purple uppercase tracking-[0.2em] mb-3 md:mb-6" x-text="e.Tipe"></p>
-        
-        <!-- Metadata Row -->
-        <div class="text-sm md:text-xs border-t border-nexus-accent/10 pt-3 md:pt-5 text-slate-400 flex justify-between font-bold uppercase tracking-widest mb-2 md:mb-4">
-          <span class="flex items-center gap-1 md:gap-2">
-            <i class="fas fa-calendar-check text-amber-400"></i> 
-            <span x-text="e.NextPMDate || '-'"></span>
-          </span>
-          <span class="flex items-center gap-1 md:gap-2">
-            <i class="fas fa-map-marker-alt text-amber-400"></i> 
-            <span x-text="e.Lokasi || '-'"></span>
-          </span>
-        </div>
-        
-        <!-- Health Score Badge -->
-        <div class="flex items-center justify-between glass p-2 md:p-3 rounded-xl border-nexus-accent/10">
-          <div class="flex flex-col">
-            <span class="text-xs md:text-xs text-slate-500 uppercase font-black tracking-widest mb-0.5 md:mb-1">Health Score</span>
-            <span :class="calculateHealthScore(e.EquipmentID).color" class="text-xs md:text-xs font-black" x-text="calculateHealthScore(e.EquipmentID).score + '%'"></span>
-          </div>
-          <div class="w-16 md:w-24 h-1 bg-white/5 rounded-full overflow-hidden">
-            <div class="h-full transition-all duration-1000" :style="'width: ' + calculateHealthScore(e.EquipmentID).score + '%'" :class="calculateHealthScore(e.EquipmentID).color.replace('text-', 'bg-')"></div>
-          </div>
-        </div>
+      </section>
+    </template>
+  </div>
+
+  <!-- ═══ 6. LOADING STATE (SKELETON) ═════════════════════════════════════ -->
+  <div x-show="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md" role="status" aria-label="Memuat asset">
+    <template x-for="i in 6" :key="i">
+      <div class="bg-tac-surface-card rounded-lg p-space-md space-y-3">
+        <div class="skeleton skeleton-line skeleton-sm" style="width:40%"></div>
+        <div class="skeleton skeleton-line skeleton-md" style="width:75%"></div>
+        <div class="skeleton skeleton-line skeleton-sm" style="width:50%"></div>
       </div>
     </template>
   </div>
 
-  <!-- Infinite Scroll Sentinel (auto-loads on viewport intersect) -->
-  <div x-show="canLoadMoreEquip" x-init="$nextTick(() => { const el = $el; const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { obs.disconnect(); loadMoreEquipment(); } }, { rootMargin: '200px' }); obs.observe(el); })" class="text-center pt-4">
-    <div class="inline-flex items-center gap-3 text-slate-500 text-xs">
-      <i class="fas fa-spinner fa-spin"></i> Loading more...
+  <!-- ═══ 7. EMPTY STATE ══════════════════════════════════════════════════ -->
+  <div x-show="!isLoading && filteredEquip.length === 0"
+    class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
+    <div class="inline-flex flex-col items-center gap-4">
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-status-standby">search_off</span>
+      </div>
+      <div>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Tidak Ada Asset Ditemukan</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Coba sesuaikan kata kunci pencarian atau filter sektor/status</p>
+      </div>
     </div>
   </div>
-  <!-- Fallback manual button (if IntersectionObserver not supported) -->
-  <div x-show="canLoadMoreEquip" class="text-center pt-4 lg:hidden">
-    <button @click="loadMoreEquipment()" :disabled="isLoading"
-      class="btn-nexus-small">
-      <i class="fas fa-sync-alt" :class="isLoading ? 'animate-spin' : ''"></i>
-      Load More <span x-text="'(' + (equipment.length - filteredEquip.length) + ' remaining)'"></span>
+
+  <!-- ═══ 8. FLOATING MOBILE QUICK ACTION PILL ════════════════════════════ -->
+  <div class="fixed bottom-12 right-6 lg:hidden z-40" x-show="isAdmin">
+    <button type="button" @click="openEquipModal(false)"
+      class="flex items-center gap-2 px-space-lg py-3 rounded-full bg-tac-primary-container text-tac-on-primary-container font-headline-md shadow-[0_4px_24px_rgba(245,158,11,0.5)] active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      <span>NEW ASSET</span>
     </button>
   </div>
 
-  <!-- Empty State -->
-  <div x-show="filteredEquip.length === 0" class="text-center py-12">
-    <i class="fas fa-tools text-6xl text-slate-600 mb-4"></i>
-    <p class="text-slate-500 font-bold">No assets found</p>
-  </div>
 </div>

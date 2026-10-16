@@ -376,14 +376,31 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   },
 
   // --- FILTERS ---
+  pmSearch: '',
+  pmFilterPriority: '',
+
   pmGetFilteredList() {
     let list = this.pmList || [];
 
+    if (this.pmSearch) {
+      const q = this.pmSearch.toLowerCase().trim();
+      list = list.filter(p => {
+        if (!p) return false;
+        const task = (p.taskName || '').toLowerCase();
+        const eqId = (p.equipmentId || '').toLowerCase();
+        const desc = (p.description || '').toLowerCase();
+        const assign = (p.assignedTo || '').toLowerCase();
+        return task.includes(q) || eqId.includes(q) || desc.includes(q) || assign.includes(q);
+      });
+    }
     if (this.pmFilterEquip) {
       list = list.filter(p => p.equipmentId === this.pmFilterEquip);
     }
     if (this.pmFilterStatus) {
       list = list.filter(p => p.status === this.pmFilterStatus);
+    }
+    if (this.pmFilterPriority) {
+      list = list.filter(p => (p.priority || 'Medium') === this.pmFilterPriority);
     }
 
     // Sort: overdue first, then by date

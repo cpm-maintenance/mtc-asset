@@ -1,3 +1,14 @@
+## 📝 Session 14 (S14, 2026-10-16) — Porting M-1, M-2, M-3 ke Tactical Slate
+
+### Ringkasan Eksekusi
+- **M-1 (Equipment)**: `public/pages/Equipment.html` dirombak total ke Tactical Slate. Telemetry deck 4 kartu (`equipCounts`, `equipKpi`), filter search/status/kategori, table & mobile cards, pagination `equipLimit: 30`, dan form modal diselaraskan. (`t_6d932c5b` Done).
+- **M-2 (Spare Parts)**: `public/pages/SpareParts.html` dirombak total ke Tactical Slate. KPI deck riil (`partKpi`: valuasi Rp, total SKU, low stock, rasio kesehatan stok), filter multi-kriteria, stock badges, pagination `partLimit: 30`, dan modal transaksi. (`t_78639db4` Done).
+- **M-3 (PM Schedule)**: `public/pages/PMSchedule.html` dirombak total ke Tactical Slate. Header command bar, view toggle switcher (List, Calendar, Gantt), KPI deck 4 kartu (`pmGetStats`), filter search + priority, desktop table & mobile cards, responsive calendar view + day popovers, directive CRUD modal, dan detail modal + live BOM stock check. (`t_d5c31343` Done).
+- **PWA Font Offline (D-4)**: Ligatur Material Symbols Outlined dibundel lokal di `public/fonts/material-symbols-outlined.woff2` (336 KB) dan diprecache Service Worker. Cache bump `mtc-asset-v8`.
+- **Verifikasi**: `tsc --noEmit` bersih 0 error, 224 unit tests pass, Vite production build sukses 0 error.
+
+---
+
 ## 📝 Session 13 (S13, 2026-10-16) — Menu Work Orders diporting ke 'Work Orders Ledger' (Tactical Slate)
 
 ### Konteks
