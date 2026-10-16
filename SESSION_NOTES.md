@@ -27,6 +27,23 @@
 - **`AuditTrail.html`** memakai interpolasi Vue `{{ auditShowAll ? 'Admin only' : 'Show all' }}` — Alpine tidak memproses itu, jadi teks mentah muncul di UI. Diganti `x-text`.
 - **`EnterpriseDashboard.html`** punya panel "Shutdown Progress" dengan angka hardcoded 85/70/90/60% (bukan dari data) → dibuang.
 
+### Pembersihan sisa design system (commit `e1fe6dd`) — diminta user setelah H-3 tuntas
+H-3 menyisakan dua hal yang sudah tidak dipakai siapa pun tapi masih ikut ke bundle. Keduanya dibuang, **net -876 baris** (283 insert / 1159 delete):
+
+- **FontAwesome hilang total.** 76 ikon `<i class="fas fa-*">` di `index.html`, `public/offline.html`, dan 5 modal → Material Symbols lokal. Menu sidebar & tab Analytics Hub sekarang pakai field `ms` (`menuItems[].icon` dan `analyticsTabs[].icon` yang berisi nama FA dihapus); nilai ikon FA di `ui.js`, `logs.js`, `data.js`, `charts.js`, `notification.js`, `enterprise-kpi.js` dikonversi ke ligatur Material. Dependensi `@fortawesome/fontawesome-free` + impor CSS-nya di `src/main.js` + `<link>` CDN di `offline.html` + entri CDN di `sw.js` — semua dicabut. **Precache 3309 → 3226 KiB (-83 KiB).**
+- **Mapper FA→Lucide yang mati.** `src/js/icons.js` (89 baris) + `src/js/lucide-icons.js` (706 baris) ternyata **tidak pernah diimpor** di mana pun — sisa dari percobaan sebelumnya. Dihapus.
+- **Namespace `stitch` dibuang.** `tailwind.config.js` kehilangan namespace `stitch` + `backgroundImage.stitch-gold`; `src/css/style.css` kehilangan 34 token `--stitch-*` dan 8 utility `.stitch-*` (`.stitch-plate-*`, `.stitch-recessed-well`, `.stitch-btn-*`, `.stitch-ghost-border`) — semuanya 0 pemakai sejak H-3. 34+34 pemakaian kelas `stitch-*` di `index.html` dan `QRScannerModal.html` dipetakan ke token `tac-*`.
+
+**Dua hal yang diperbaiki di alatnya sekalian:**
+- `scripts/download-material-symbols.mjs` punya **daftar berkas manual** (hanya 8 berkas) → banyak halaman tidak pernah ikut di-scan, jadi ligatur baru bisa lolos tanpa glyph di font subset dan tampil sebagai teks. Sekarang: scan semua `public/pages/*.html` + semua modal + `index.html` + `offline.html` + `app.js`, lalu **gagal dengan pesan jelas** kalau ada ligatur yang belum ada di allowlist.
+- Allowlist ligatur dipindah dari `scratch/icons.txt` (gitignored) ke **`src/css/icon-subset.txt`** yang ikut di-commit — supaya kontraknya bisa ditegakkan tes.
+
+**Tes penjaga baru:** `tests/icon-contract.test.js` (12 tes) — setiap `menuItems`/`analyticsTabs` wajib punya `ms` yang ada di subset, setiap ligatur di halaman/modal wajib ada di subset, fallback `.ms || '…'` wajib ligatur subset, 0 tag FA, 0 binding `'fas ' + …`, 0 nilai `fa-*` di JS, 0 dependensi `@fortawesome`, 0 token/kelas `stitch-*`. Suite naik **244 → 256**.
+
+**Bug yang ketemu saat pembersihan ini (dan dibetulkan):**
+- Regex pembersih sempat menghapus `icon` dari `analyticsTabs` **dan** menyisipkan `ms` ke entri `menuItems` yang sudah punya `ms` → 5 properti `ms` ganda (`TS1117`, 5 error eslint). Efeknya nyata: **tab Analytics Hub kehilangan ikon** karena `tab.ms` = `undefined`. Ketemu bukan dari tes (objek dengan kunci ganda tetap legal saat runtime) tapi dari verifikasi browser — `x-text="tab.ms"` tidak pernah terisi. Setelah dibetulkan: 5 tab render `trending_up / show_chart / psychology / factory / neurology` di 18px.
+- Fallback `item.ms || 'circle'` (3 tempat) memakai ligatur `circle` yang **tidak ada** di subset → diganti `menu`.
+
 ### Pemetaan desain → data nyata (tidak ada angka karangan)
 | Modul | Sumber nyata |
 |---|---|
