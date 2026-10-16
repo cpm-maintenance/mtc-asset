@@ -3,7 +3,7 @@
 
 // Nama cache menyertakan brand + versi rilis. Naikkan angka versi saat rilis
 // besar supaya cache lama dibuang bersih di handler 'activate'.
-const CACHE_NAME = 'mtc-asset-v3';
+const CACHE_NAME = 'mtc-asset-v4';
 
 // vite-plugin-pwa mengganti `self.__WB_MANIFEST` dengan daftar aset hasil build
 // (HTML, components, icons, dan SELURUH bundle JS/CSS). Dulu nilai ini hanya
@@ -23,10 +23,12 @@ const PRECACHE_ASSETS = Array.from(new Set([
 
 // Install — precache tahan-banting: satu aset gagal (mis. 404) tidak
 // membatalkan seluruh instalasi service worker.
+// `cache: 'reload'` WAJIB: tanpa itu `cache.add()` boleh dilayani HTTP cache
+// browser sehingga fragment basi (mis. /pages/*.html) ikut ter-precache.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      Promise.allSettled(PRECACHE_ASSETS.map((url) => cache.add(url)))
+      Promise.allSettled(PRECACHE_ASSETS.map((url) => cache.add(new Request(url, { cache: 'reload' }))))
     )
   );
   self.skipWaiting();
@@ -64,12 +66,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Page fragments (component-loader /pages/**) — stale-while-revalidate
+  // Page fragments (component-loader /pages/**) — network-first, cache fallback.
+  // `cache: 'no-store'` wajib: fragment tidak punya hash di nama file, jadi
+  // respons HTTP cache (max-age) bisa mengembalikan versi basi → UI tidak
+  // berubah walau sudah deploy. Header /pages/** di firebase.json juga no-cache.
   if (url.includes('/pages/') && url.endsWith('.html')) {
     const OFFLINE = new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
     event.respondWith(
       caches.match(event.request).then((cached) => {
-        return fetch(event.request).then((response) => {
+        return fetch(event.request, { cache: 'no-store' }).then((response) => {
           if (response && response.ok) {
             caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
           }
