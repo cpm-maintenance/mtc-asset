@@ -6,7 +6,6 @@
   <title>Offline — MTC.ASSET</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -138,7 +137,7 @@
 <body>
   <div class="card">
     <div class="glow-icon">
-      <i class="fas fa-wifi-slash"></i>
+      <span class="material-symbols-outlined text-[16px]">wifi_off</span>
     </div>
     <div class="status-dot">Offline</div>
     <h1>You're Offline</h1>
@@ -148,14 +147,14 @@
     </p>
     <div class="actions">
       <button class="btn" onclick="window.location.reload()">
-        <i class="fas fa-sync-alt"></i> Retry Connection
+        <span class="material-symbols-outlined text-[16px]">refresh</span> Retry Connection
       </button>
       <button class="btn btn-secondary" onclick="history.back()">
-        <i class="fas fa-arrow-left"></i> Go Back
+        <span class="material-symbols-outlined text-[16px]">chevron_left</span> Go Back
       </button>
     </div>
     <div class="footer-note">
-      <i class="fas fa-database mr-1"></i> MTC.Asset Industrial Suite
+      <span class="material-symbols-outlined text-[16px] mr-1">warehouse</span> MTC.Asset Industrial Suite
     </div>
   </div>
 </body>

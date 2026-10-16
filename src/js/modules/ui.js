@@ -41,10 +41,10 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     showNotification(message, type = 'success', duration = 4500) {
         const id = Date.now() + Math.random();
         const config = /** @type {Record<string, any>} */ ({
-            success: { icon: 'fa-check-circle', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400', glow: 'shadow-emerald-500/20', bar: 'bg-emerald-400' },
-            error: { icon: 'fa-times-circle', color: 'border-rose-500/40 bg-rose-500/10 text-rose-400', glow: 'shadow-rose-500/20', bar: 'bg-rose-400' },
-            warning: { icon: 'fa-exclamation-triangle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
-            info: { icon: 'fa-info-circle', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
+            success: { icon: 'check_circle', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400', glow: 'shadow-emerald-500/20', bar: 'bg-emerald-400' },
+            error: { icon: 'cancel', color: 'border-rose-500/40 bg-rose-500/10 text-rose-400', glow: 'shadow-rose-500/20', bar: 'bg-rose-400' },
+            warning: { icon: 'warning', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
+            info: { icon: 'info', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
         });
         const c = config[type] || config.info;
         this.notifications.push({

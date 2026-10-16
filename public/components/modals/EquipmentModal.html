@@ -5,10 +5,10 @@
   <div class="card-modern w-full max-w-2xl p-10 rounded-[2.5rem] max-h-[90vh] overflow-y-auto border-nexus-accent/20">
     <div class="flex justify-between items-center mb-10">
       <h3 class="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tighter">
-        <i class="fas fa-microchip text-nexus-accent"></i>
+        <span class="material-symbols-outlined text-[16px] text-nexus-accent">monitoring</span>
         <span x-text="isEditingEquip ? 'Reconfigure Asset' : 'Initialize Asset'"></span>
       </h3>
-      <button @click="showEquipModal = false" class="btn-nexus-close"><i class="fas fa-times"></i></button>
+      <button @click="showEquipModal = false" class="btn-nexus-close"><span class="material-symbols-outlined text-[16px]">close</span></button>
     </div>
     <form @submit.prevent="submitEquipment()" class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
@@ -69,10 +69,10 @@
               <img :src="equipForm.foto" class="w-full h-full object-cover">
             </template>
             <template x-if="!equipForm.foto">
-              <i class="fas fa-camera text-nexus-accent/20 text-3xl"></i>
+              <span class="material-symbols-outlined text-nexus-accent/20 text-3xl">photo_camera</span>
             </template>
             <label class="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 bg-nexus-accent/20 flex items-center justify-center transition-opacity">
-              <i class="fas fa-upload text-white"></i>
+              <span class="material-symbols-outlined text-[16px] text-white">cloud_done</span>
               <input type="file" @change="handleEquipPhoto($event)" class="hidden" accept="image/*">
             </label>
           </div>
@@ -81,7 +81,7 @@
             <p class="text-[9px] text-slate-600 mt-1">JPEG/PNG high-resolution formats supported.</p>
             <button type="button" x-show="equipForm.foto" @click="equipForm.foto = ''"
                    class="text-rose-400 text-[9px] font-black uppercase mt-3 tracking-widest flex items-center gap-2">
-              <i class="fas fa-trash-alt"></i> Purge Image
+              <span class="material-symbols-outlined text-[16px]">close</span> Purge Image
             </button>
           </div>
         </div>
@@ -92,7 +92,8 @@
       </button>
     </form>
   </div>
-</div>        <div>
+</div>
+        <div>
           <label class="text-[9px] text-nexus-accent/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Current HM (Meter)</label>
           <input type="number" x-model="equipForm.current" min="0" step="0.1" class="w-full p-4 glass">
         </div>

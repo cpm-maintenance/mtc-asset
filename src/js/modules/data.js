@@ -130,7 +130,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                             id: Date.now(),
                             type: 'Work Order',
                             message: msg,
-                            icon: 'fa-clock',
+                            icon: 'schedule',
                             color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
                             exiting: false
                         });
@@ -145,7 +145,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                                 id: Date.now(),
                                 type: 'Work Order',
                                 message: msg,
-                                icon: 'fa-clock',
+                                icon: 'schedule',
                                 color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
                                 exiting: false
                             });

@@ -305,15 +305,15 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     const ins = [];
     const summary = this.calcSummary();
     if (summary.pmc.pct < 90) {
-      ins.push({ type: 'warning', icon: 'fa-calendar-check', msg: `PM Compliance ${summary.pmc.pct}% — turun vs target 90%. ${summary.overduePM} PM tasks overdue.` });
+      ins.push({ type: 'warning', ms: 'event', msg: `PM Compliance ${summary.pmc.pct}% — turun vs target 90%. ${summary.overduePM} PM tasks overdue.` });
     } else {
-      ins.push({ type: 'success', icon: 'fa-calendar-check', msg: `PM Compliance ${summary.pmc.pct}% — on track.` });
+      ins.push({ type: 'success', ms: 'event', msg: `PM Compliance ${summary.pmc.pct}% — on track.` });
     }
     if (summary.backlogWO > 10) {
-      ins.push({ type: 'critical', icon: 'fa-wrench', msg: `${summary.backlogWO} Work Orders in backlog. Prioritaskan review.` });
+      ins.push({ type: 'critical', ms: 'troubleshoot', msg: `${summary.backlogWO} Work Orders in backlog. Prioritaskan review.` });
     }
     if (summary.lowStock > 0) {
-      ins.push({ type: 'warning', icon: 'fa-boxes', msg: `${summary.lowStock} spare parts below minimum stock. Risk of stockout.` });
+      ins.push({ type: 'warning', ms: 'inventory_2', msg: `${summary.lowStock} spare parts below minimum stock. Risk of stockout.` });
     }
     const critical = /** @type {any[]} */ (this.calcCriticalEquip(5));
     critical.forEach(e => {
@@ -321,12 +321,12 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
         const logs = this._raw(this.logs) || [];
         const breakdowns = logs.filter(l => l.EquipmentID === e.EquipmentID && l.Jenis === 'Breakdown');
         if (breakdowns.length >= 3) {
-          ins.push({ type: 'critical', icon: 'fa-biohazard', msg: `${e.Nama || e.EquipmentID} — ${breakdowns.length} breakdowns. Disarankan RCA.` });
+          ins.push({ type: 'critical', ms: 'warning', msg: `${e.Nama || e.EquipmentID} — ${breakdowns.length} breakdowns. Disarankan RCA.` });
         }
       }
     });
     if (summary.avgMTBF > 0 && summary.avgMTBF < 200) {
-      ins.push({ type: 'warning', icon: 'fa-chart-line', msg: `Avg MTBF ${summary.avgMTBF}h — di bawah threshold 200h. Review maintenance strategy.` });
+      ins.push({ type: 'warning', ms: 'show_chart', msg: `Avg MTBF ${summary.avgMTBF}h — di bawah threshold 200h. Review maintenance strategy.` });
     }
     if (summary.avgAvail < 90) {
       ins.push({ type: 'critical', icon: 'fa-heartbeat', msg: `Availability ${summary.avgAvail}% — di bawah target 90%. Immediate action required.` });
@@ -362,7 +362,7 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
       { key: 'running', label: 'Running', value: s.running, icon: 'fa-play-circle', color: '#22c55e', trend: 0 },
       { key: 'breakdown', label: 'Breakdown', value: s.breakdown, icon: 'fa-exclamation-triangle', color: '#ef4444', trend: 0 },
       { key: 'pmc', label: 'PM Compliance', value: s.pmc.pct + '%', icon: 'fa-clipboard-check', color: s.pmc.color === 'green' ? '#22c55e' : '#f59e0b', trend: s.pmc.pct },
-      { key: 'openWO', label: 'Open WO', value: s.openWO, icon: 'fa-wrench', color: '#f59e0b', trend: 0 },
+      { key: 'openWO', label: 'Open WO', value: s.openWO, ms: 'troubleshoot', color: '#f59e0b', trend: 0 },
       { key: 'completedWO', label: 'Completed WO', value: s.completedWO, icon: 'fa-check-circle', color: '#22c55e', trend: 0 },
       { key: 'avgAvail', label: 'Availability', value: s.avgAvail + '%', icon: 'fa-heartbeat', color: s.avgAvail >= 95 ? '#22c55e' : '#f59e0b', trend: s.avgAvail },
       { key: 'avgHealth', label: 'Health Index', value: s.avgHealth + '%', icon: 'fa-shield-alt', color: s.avgHealth >= 80 ? '#22c55e' : '#f59e0b', trend: s.avgHealth },

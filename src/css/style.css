@@ -24,18 +24,6 @@
   --font-display: 'Space Grotesk', sans-serif;
 
   /* Google Stitch: The Industrial Monolith Tokens */
-  --stitch-surface: #131313;
-  --stitch-surface-low: #1c1b1b;
-  --stitch-surface-high: #2a2a2a;
-  --stitch-surface-highest: #353534;
-  --stitch-surface-lowest: #0e0e0e;
-  --stitch-primary: #fff6df;
-  --stitch-primary-container: #ffd700;
-  --stitch-primary-dim: #e9c400;
-  --stitch-on-surface: #e5e2e1;
-  --stitch-on-surface-variant: #d0c6ab;
-  --stitch-ghost-border: rgba(77, 71, 50, 0.2);
-  --stitch-gold-gradient: linear-gradient(45deg, #ffd700 0%, #e9c400 100%);
 }
 
 [data-theme='dark'] {
@@ -149,65 +137,14 @@ body {
   }
 
   /* Google Stitch: The Industrial Monolith Utilities */
-  .stitch-plate-base {
-    background-color: var(--stitch-surface);
-    color: var(--stitch-on-surface);
-  }
 
-  .stitch-plate-low {
-    background-color: var(--stitch-surface-low);
-    border: 1px solid var(--stitch-ghost-border);
-  }
 
-  .stitch-plate-high {
-    background-color: var(--stitch-surface-high);
-  }
 
-  .stitch-recessed-well {
-    background-color: var(--stitch-surface-lowest);
-    border: 1px solid var(--stitch-ghost-border);
-  }
 
-  .stitch-btn-primary {
-    min-height: 48px;
-    background: var(--stitch-gold-gradient);
-    color: #131313;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 1.5rem;
-  }
 
-  .stitch-btn-primary:active {
-    transform: translateY(1px) scale(0.99);
-    filter: brightness(0.95);
-  }
 
-  .stitch-btn-secondary {
-    min-height: 48px;
-    background-color: var(--stitch-surface-high);
-    color: var(--stitch-primary-container);
-    border: 1px solid var(--stitch-ghost-border);
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 1.25rem;
-    transition: all 0.2s ease;
-  }
 
-  .stitch-btn-secondary:hover {
-    background-color: var(--stitch-surface-highest);
-    color: #ffffff;
-  }
 
-  .stitch-ghost-border {
-    border: 1px solid var(--stitch-ghost-border);
-  }
 
   /* 💠 Nexus UI Components */
   .btn-nexus-small {

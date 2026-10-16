@@ -235,7 +235,7 @@ function pushInAppNotif(type, message, icon, color = 'border-amber-500 bg-amber-
     id,
     type,
     message,
-    icon: icon || 'fa-bell',
+    icon: icon || 'notifications',
     color,
     exiting: false,
   });

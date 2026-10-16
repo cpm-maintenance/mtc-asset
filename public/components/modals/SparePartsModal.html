@@ -4,12 +4,12 @@
   <div class="card-modern w-full max-w-lg p-10 rounded-[3rem] shadow-2xl border-nexus-accent/20">
     <div class="flex justify-between items-center mb-10">
       <h3 class="text-2xl font-black text-white flex items-center gap-4 uppercase tracking-tighter">
-        <i class="fas fa-box-open text-nexus-accent"></i>
+        <span class="material-symbols-outlined text-[16px] text-nexus-accent">inventory</span>
         <span x-text="isEditingPart ? 'Sync Component' : 'Register Component'"></span>
       </h3>
       <button @click="showPartModal = false"
               class="text-slate-500 hover:text-nexus-accent w-12 h-12 rounded-2xl glass flex items-center justify-center transition-all">
-        <i class="fas fa-times"></i>
+        <span class="material-symbols-outlined text-[16px]">close</span>
       </button>
     </div>
     <form @submit.prevent="submitSparePart()" class="space-y-6">

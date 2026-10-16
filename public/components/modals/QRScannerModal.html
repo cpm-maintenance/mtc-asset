@@ -11,34 +11,34 @@
   <div class="min-h-full w-full max-w-3xl mx-auto p-4 sm:p-6 flex flex-col gap-5">
 
     <!-- Command strip -->
-    <header class="flex items-start justify-between gap-4 bg-stitch-surface-low border border-stitch-ghost-border p-5">
+    <header class="flex items-start justify-between gap-4 bg-tac-surface-container-low border border-tac-border-subtle p-5">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <span class="w-2.5 h-2.5 bg-stitch-gold"></span>
-          <span class="font-mono text-[10px] font-bold uppercase tracking-widest text-stitch-on-surface-variant">SCAN STATION · OPTICAL INTAKE</span>
+          <span class="w-2.5 h-2.5 bg-tac-gold-bright"></span>
+          <span class="font-mono text-[10px] font-bold uppercase tracking-widest text-tac-on-surface-variant">SCAN STATION · OPTICAL INTAKE</span>
         </div>
-        <h3 class="font-display font-black text-3xl lg:text-4xl uppercase tracking-tight text-stitch-on-surface">Optical_Scanner</h3>
-        <p class="font-mono text-[11px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mt-1"
+        <h3 class="font-display font-black text-3xl lg:text-4xl uppercase tracking-tight text-tac-on-surface">Optical_Scanner</h3>
+        <p class="font-mono text-[11px] text-tac-on-surface-variant uppercase tracking-[0.2em] mt-1"
           x-text="html5QrCode ? 'Operational Status: Live Feed Active' : 'Operational Status: Standby'"></p>
       </div>
       <button type="button" @click="stopScanner()" aria-label="Close scanner"
-        class="min-w-[64px] min-h-[64px] bg-stitch-surface-high border border-stitch-ghost-border text-stitch-on-surface-variant hover:text-white hover:bg-stitch-surface-highest transition-colors flex items-center justify-center">
-        <i class="fas fa-times text-xl"></i>
+        class="min-w-[64px] min-h-[64px] bg-tac-surface-container-high border border-tac-border-subtle text-tac-on-surface-variant hover:text-white hover:bg-tac-surface-container-highest transition-colors flex items-center justify-center">
+        <span class="material-symbols-outlined text-xl">close</span>
       </button>
     </header>
 
     <!-- Viewfinder (html5-qrcode injects the <video> into #reader) -->
-    <div class="bg-stitch-surface-low border border-stitch-ghost-border p-1">
+    <div class="bg-tac-surface-container-low border border-tac-border-subtle p-1">
       <div class="relative w-full aspect-square max-h-[62vh] mx-auto overflow-hidden bg-black">
         <div id="reader" class="w-full h-full"></div>
 
         <!-- Reticle -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div class="w-64 h-64 border-2 border-stitch-gold/30 relative">
-            <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-stitch-gold"></div>
-            <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-stitch-gold"></div>
-            <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-stitch-gold"></div>
-            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-stitch-gold"></div>
+          <div class="w-64 h-64 border-2 border-tac-primary/30 relative">
+            <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-tac-primary"></div>
+            <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-tac-primary"></div>
+            <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-tac-primary"></div>
+            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-tac-primary"></div>
           </div>
         </div>
 
@@ -50,8 +50,8 @@
 
         <!-- HUD: mode readout -->
         <div class="absolute top-4 right-4 text-right pointer-events-none">
-          <p class="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-stitch-on-surface-variant">Mode</p>
-          <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-stitch-gold">QR · 250×250</p>
+          <p class="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-tac-on-surface-variant">Mode</p>
+          <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-tac-gold-bright">QR · 250×250</p>
         </div>
       </div>
     </div>
@@ -61,26 +61,26 @@
       <button type="button" @click="stopScanner().then(() => openQR())"
         title="Restart the camera feed"
         class="min-h-[64px] bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-display font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 active:scale-[0.99] transition-all">
-        <i class="fas fa-barcode"></i> Initiate Scan
+        <span class="material-symbols-outlined text-[16px]">qr_code_scanner</span> Initiate Scan
       </button>
       <button type="button" @click="stopScanner()"
-        class="min-h-[64px] bg-stitch-surface-highest text-stitch-gold font-display font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:bg-[#93000A] hover:text-white transition-colors active:scale-[0.99]">
-        <i class="fas fa-power-off"></i> Abort Operation
+        class="min-h-[64px] bg-tac-surface-container-highest text-tac-gold-bright font-display font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:bg-[#93000A] hover:text-white transition-colors active:scale-[0.99]">
+        <span class="material-symbols-outlined text-[16px]">logout</span> Abort Operation
       </button>
     </div>
 
     <!-- Manual ID entry (fallback tanpa kamera) -->
-    <div class="bg-stitch-surface-low border border-stitch-ghost-border p-5">
-      <label for="qr-manual-id" class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-stitch-on-surface-variant block mb-2">Manual ID Entry</label>
+    <div class="bg-tac-surface-container-low border border-tac-border-subtle p-5">
+      <label for="qr-manual-id" class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-tac-on-surface-variant block mb-2">Manual ID Entry</label>
       <div class="flex flex-col sm:flex-row gap-1">
-        <div class="flex-1 bg-stitch-surface-lowest border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors flex items-center">
-          <i class="fas fa-keyboard text-stitch-on-surface-variant/60 ml-3 text-sm"></i>
+        <div class="flex-1 bg-tac-surface-container-lowest border-b-4 border-tac-border-subtle focus-within:border-tac-primary transition-colors flex items-center">
+          <span class="material-symbols-outlined text-tac-on-surface-variant/60 ml-3 text-sm">fingerprint</span>
           <input id="qr-manual-id" type="text" x-model="manualScanId" @keydown.enter.prevent="submitManualScan()"
             placeholder="EQUIPMENT ID, MIS. EX-001" autocomplete="off"
-            class="bg-transparent w-full p-4 text-stitch-on-surface text-sm font-bold uppercase tracking-wider border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+            class="bg-transparent w-full p-4 text-tac-on-surface text-sm font-bold uppercase tracking-wider border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
         </div>
         <button type="button" @click="submitManualScan()"
-          class="min-h-[64px] px-6 bg-stitch-surface-high border border-stitch-ghost-border text-stitch-gold font-black uppercase tracking-widest text-[11px] hover:bg-stitch-surface-highest transition-colors">
+          class="min-h-[64px] px-6 bg-tac-surface-container-high border border-tac-border-subtle text-tac-gold-bright font-black uppercase tracking-widest text-[11px] hover:bg-tac-surface-container-highest transition-colors">
           Resolve ID
         </button>
       </div>

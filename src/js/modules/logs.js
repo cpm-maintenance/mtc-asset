@@ -593,7 +593,7 @@ async approveWO(logId) {
                 id: Date.now(),
                 type: 'Work Order',
                 message: notifyMsg,
-                icon: 'fa-check-circle',
+                icon: 'check_circle',
                 color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                 exiting: false
             });
@@ -606,7 +606,7 @@ async approveWO(logId) {
                     id: Date.now(),
                     type: 'Work Order',
                     message: notifyMsg,
-                    icon: 'fa-check-circle',
+                    icon: 'check_circle',
                     color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                     exiting: false
                 });
@@ -669,7 +669,7 @@ async approveWO(logId) {
                 id: Date.now(),
                 type: 'Work Order',
                 message: notifyMsg,
-                icon: 'fa-times-circle',
+                icon: 'cancel',
                 color: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
                 exiting: false
             });
@@ -709,7 +709,7 @@ async approveWO(logId) {
                 id: Date.now(),
                 type: 'Work Order',
                 message: notifyMsg,
-                icon: 'fa-play',
+                icon: 'play_arrow',
                 color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                 exiting: false
             });
@@ -721,7 +721,7 @@ async approveWO(logId) {
                     id: Date.now(),
                     type: 'Work Order',
                     message: notifyMsg,
-                    icon: 'fa-play',
+                    icon: 'play_arrow',
                     color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                     exiting: false
                 });

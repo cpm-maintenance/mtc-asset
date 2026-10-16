@@ -598,36 +598,36 @@ if (confirm('Are you sure you want to logout?')) {
             // (ikon design system Stitch, dipakai sidebar desktop). Nama `ms` harus
             // sama persis dengan nama ikon di fonts.google.com/icons.
             // --- MONITORING ---
-            { id: 'dash', name: 'Dashboard', short: 'Home', icon: 'fas fa-chart-pie', ms: 'dashboard', mobile: true, group: 'Monitoring' },
+            { id: 'dash', name: 'Dashboard', short: 'Home', ms: 'dashboard', mobile: true, group: 'Monitoring' },
 
             // --- MAINTENANCE ---
-            { id: 'wo', name: 'Work Orders', short: 'WO', icon: 'fas fa-clipboard-list', ms: 'engineering', mobile: true, group: 'Maintenance' },
-            { id: 'pms', name: 'PM Schedule', short: 'PM', icon: 'fas fa-calendar-alt', ms: 'calendar_month', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
-            { id: 'equip', name: 'Equipment', short: 'Assets', icon: 'fas fa-tools', ms: 'precision_manufacturing', mobile: true, group: 'Maintenance' },
+            { id: 'wo', name: 'Work Orders', short: 'WO', ms: 'engineering', mobile: true, group: 'Maintenance' },
+            { id: 'pms', name: 'PM Schedule', short: 'PM', ms: 'calendar_month', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
+            { id: 'equip', name: 'Equipment', short: 'Assets', ms: 'precision_manufacturing', mobile: true, group: 'Maintenance' },
 
             // --- PLANNING ---
-            { id: 'planning', name: 'Planning Board', short: 'Plan', icon: 'fas fa-columns', ms: 'view_kanban', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
-            { id: 'monthlyplan', name: 'Monthly Plan', short: 'Monthly', icon: 'fas fa-file-alt', ms: 'description', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
-            { id: 'workload', name: 'Workload', short: 'Load', icon: 'fas fa-user-hard-hat', ms: 'group_work', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'planning', name: 'Planning Board', short: 'Plan', ms: 'view_kanban', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'monthlyplan', name: 'Monthly Plan', short: 'Monthly', ms: 'description', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'workload', name: 'Workload', short: 'Load', ms: 'group_work', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
 
             // --- LOGS & REPORTS ---
-            { id: 'hist', name: 'All Logs', short: 'Logs', icon: 'fas fa-history', ms: 'history', mobile: true, group: 'Logs & Reports' },
-            { id: 'history', name: 'History Card', short: 'History', icon: 'fas fa-clipboard-check', ms: 'fact_check', mobile: true, group: 'Logs & Reports' },
-            { id: 'audit', name: 'Audit Trail', short: 'Audit', icon: 'fas fa-scroll', ms: 'receipt_long', mobile: false, allowedRole: 'admin', group: 'Logs & Reports' },
+            { id: 'hist', name: 'All Logs', short: 'Logs', ms: 'history', mobile: true, group: 'Logs & Reports' },
+            { id: 'history', name: 'History Card', short: 'History', ms: 'fact_check', mobile: true, group: 'Logs & Reports' },
+            { id: 'audit', name: 'Audit Trail', short: 'Audit', ms: 'receipt_long', mobile: false, allowedRole: 'admin', group: 'Logs & Reports' },
 
             // --- INVENTORY ---
-            { id: 'parts', name: 'Spare Parts', short: 'Parts', icon: 'fas fa-box', ms: 'inventory_2', mobile: true, group: 'Inventory' },
-            { id: 'request', name: 'Request Part', short: 'Request', icon: 'fas fa-shopping-cart', ms: 'shopping_cart', mobile: true, group: 'Inventory' },
+            { id: 'parts', name: 'Spare Parts', short: 'Parts', ms: 'inventory_2', mobile: true, group: 'Inventory' },
+            { id: 'request', name: 'Request Part', short: 'Request', ms: 'shopping_cart', mobile: true, group: 'Inventory' },
 
             // --- ANALYTICS (U-3: dikonsolidasi menjadi satu entri "Analytics Hub") ---
-            { id: 'analytics', name: 'Analytics Hub', short: 'Analytics', icon: 'fas fa-chart-pie', ms: 'monitoring', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'analytics', name: 'Analytics Hub', short: 'Analytics', ms: 'monitoring', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
             // Sub-view lama tetap terdaftar sebagai `hidden` supaya deep-link, guard akses,
             // dan watcher chart per-halaman (kpi/enterprise) tetap berfungsi apa adanya.
-            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', ms: 'trending_up', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', icon: 'fas fa-chart-line', ms: 'show_chart', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', ms: 'factory', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', ms: 'psychology', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'ai', name: 'AI Analysis', short: 'AI', icon: 'fas fa-robot', ms: 'neurology', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'perf', name: 'Performance', short: 'Perf', ms: 'trending_up', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', ms: 'show_chart', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', ms: 'factory', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', ms: 'psychology', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'ai', name: 'AI Analysis', short: 'AI', ms: 'neurology', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
         ],
 
         // Pencarian menu di header (design Stitch) — memfilter daftar menu sidebar.
@@ -678,11 +678,11 @@ if (confirm('Are you sure you want to logout?')) {
         // ── U-3: ANALYTICS HUB (konsolidasi 5 menu analytics) ──
         /** Sub-view Analytics Hub; `id` = id halaman lama agar watcher chart tetap jalan. */
         analyticsTabs: [
-            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', allowedRole: 'supervisor' },
-            { id: 'mtbfmttr', name: 'MTBF / MTTR', short: 'MTBF', icon: 'fas fa-chart-line', allowedRole: 'supervisor' },
-            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', allowedRole: 'admin' },
-            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', allowedRole: 'admin' },
-            { id: 'ai', name: 'AI Advisor', short: 'AI', icon: 'fas fa-robot', allowedRole: 'admin' },
+            { id: 'perf', name: 'Performance', short: 'Perf', ms: 'trending_up', allowedRole: 'supervisor' },
+            { id: 'mtbfmttr', name: 'MTBF / MTTR', short: 'MTBF', ms: 'show_chart', allowedRole: 'supervisor' },
+            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', ms: 'psychology', allowedRole: 'admin' },
+            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', ms: 'factory', allowedRole: 'admin' },
+            { id: 'ai', name: 'AI Advisor', short: 'AI', ms: 'neurology', allowedRole: 'admin' },
         ],
         /** Sub-view terakhir yang dibuka (dipakai saat klik entri "Analytics Hub"). */
         analyticsTab: 'perf',
@@ -1362,11 +1362,11 @@ if (confirm('Are you sure you want to logout?')) {
             });
             const avgHealth = healthCount > 0 ? Math.round(healthSum / healthCount) : 0;
             return {
-                totalEquip: { label: 'Total Assets', value: equips.length || 0, colorHex: '#3b82f6', icon: 'fa-industry', pct: 100 },
-                woCompletionRate: { label: 'WO Completion', value: woRate + '%', colorHex: '#10b981', icon: 'fa-check-circle', pct: woRate },
-                avgHealthScore: { label: 'Avg Health', value: avgHealth + '%', colorHex: '#f59e0b', icon: 'fa-heartbeat', pct: avgHealth },
-                lowStock: { label: 'Low Stock', value: this.lowStockCount, colorHex: '#eab308', icon: 'fa-boxes', pct: 70 },
-                pmCompliance: { label: 'PM Compliance', value: (this.calcPMCompliance?.().pct ?? 0) + '%', colorHex: '#a855f7', icon: 'fa-clipboard-check', pct: this.calcPMCompliance?.().pct ?? 0 },
+                totalEquip: { label: 'Total Assets', value: equips.length || 0, colorHex: '#3b82f6', ms: 'factory', pct: 100 },
+                woCompletionRate: { label: 'WO Completion', value: woRate + '%', colorHex: '#10b981', ms: 'check_circle', pct: woRate },
+                avgHealthScore: { label: 'Avg Health', value: avgHealth + '%', colorHex: '#f59e0b', ms: 'monitoring', pct: avgHealth },
+                lowStock: { label: 'Low Stock', value: this.lowStockCount, colorHex: '#eab308', ms: 'inventory_2', pct: 70 },
+                pmCompliance: { label: 'PM Compliance', value: (this.calcPMCompliance?.().pct ?? 0) + '%', colorHex: '#a855f7', ms: 'fact_check', pct: this.calcPMCompliance?.().pct ?? 0 },
             };
         },
 

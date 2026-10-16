@@ -130,9 +130,9 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         host.querySelectorAll('[data-chart-state]').forEach((el) => el.remove());
 
         const presets = /** @type {Record<string, {icon: string, tone: string}>} */ ({
-            offline: { icon: 'fa-wifi', tone: 'text-amber-400' },
-            error: { icon: 'fa-triangle-exclamation', tone: 'text-rose-400' },
-            empty: { icon: 'fa-chart-simple', tone: 'text-slate-400' },
+            offline: { icon: 'wifi_off', tone: 'text-amber-400' },
+            error: { icon: 'warning', tone: 'text-rose-400' },
+            empty: { icon: 'show_chart', tone: 'text-slate-400' },
         });
         const cfg = presets[kind] || presets.empty;
 

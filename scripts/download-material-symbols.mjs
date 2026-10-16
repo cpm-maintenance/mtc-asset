@@ -8,16 +8,11 @@ const patterns = [
 
 const filesToScan = [
   'index.html',
+  'public/offline.html',
+  ...fs.readdirSync('public/pages').filter(f => f.endsWith('.html')).map(f => `public/pages/${f}`),
+  ...fs.readdirSync('public/components/modals').filter(f => f.endsWith('.html')).map(f => `public/components/modals/${f}`),
   'src/js/app.js',
-  'public/pages/Dashboard.html',
-  'public/pages/WorkOrders.html',
-  'public/pages/SpareParts.html',
-  'public/pages/HistoryCard.html',
-  'public/pages/Equipment.html',
-  'public/pages/EquipmentDetail.html',
-  'public/components/modals/QRScannerModal.html'
 ];
-
 const icons = new Set();
 for (const file of filesToScan) {
   if (!fs.existsSync(file)) continue;
@@ -31,14 +26,23 @@ for (const file of filesToScan) {
   }
 }
 
-// Tambah icon umum agar tidak ada yang terlewat
-[
-  'chevron_left', 'chevron_right', 'check_circle', 'error', 'info', 'warning',
-  'schedule', 'check', 'close', 'menu', 'more_vert', 'refresh', 'sync',
-  'account_circle', 'settings', 'help', 'search', 'home'
-].forEach(i => icons.add(i));
+// Allowlist ligatur di-commit di src/css/icon-subset.txt — sumber kebenaran
+// subset font lokal. Kalau ada ikon baru dipakai, skrip ini GAGAL dan menyebut
+// namanya, supaya tidak ada ikon yang diam-diam tampil sebagai teks.
+const allowPath = 'src/css/icon-subset.txt';
+const allow = new Set(
+  fs.readFileSync(allowPath, 'utf-8').split('\n').map(s => s.trim()).filter(Boolean)
+);
 
-const sortedIcons = Array.from(icons).sort();
+const unknown = [...icons].filter(i => !allow.has(i)).sort();
+if (unknown.length) {
+  console.error(`Ikon ini belum terdaftar di ${allowPath}:`);
+  console.error('  ' + unknown.join('\n  '));
+  console.error('Tambahkan ke allowlist, lalu jalankan ulang skrip ini.');
+  process.exit(1);
+}
+
+const sortedIcons = [...icons].sort();
 const textChars = Array.from(new Set(sortedIcons.join(''))).sort().join('');
 const textParam = encodeURIComponent(sortedIcons.join(' '));
 const cssUrl = `https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&text=${textParam}`;
