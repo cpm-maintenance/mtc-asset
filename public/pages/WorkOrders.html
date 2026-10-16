@@ -1,129 +1,311 @@
-<!-- 📋 PAGE: WORK ORDERS (Stitch: The Industrial Monolith Port — 'Log Maintenance') -->
-<div x-cloak class="space-y-6">
+<!--
+  📋 PAGE: WORK ORDERS — port 1:1 dari design system Google Stitch
+  project 2861085646384681595 ("PWA Webapp Design"), screen "Work Orders Ledger"
+  ("Work Order Orchestration & Dispatch", DESKTOP)
 
-  <!-- ── ZONA 1 · Command Strip: Header, Live Sync, Counters, Filters ──── -->
-  <section aria-label="Work Order Command Strip"
-    class="bg-stitch-surface-low border border-stitch-ghost-border shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+  Urutan modul mengikuti markup Stitch, sama persis:
+    1. PWA / Offline Sync strip
+    2. Breadcrumb + Control sub-bar (aksi global)
+    3. KPI & SLA Industrial Telemetry Deck (4 kartu)
+    4. Search / Filter Matrix + view switcher + status tabs + sektor/prioritas
+    5. Maintenance Log Console (form input — collapsible)
+    6. Workspace 12 kolom → kiri 8 kolom (Work Order Ledger Stream),
+       kanan 4 kolom (Tactical Inspector HUD + NEXT IN QUEUE)
+    7. Floating mobile quick action pill
 
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 p-5 border-b border-stitch-ghost-border">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="w-2.5 h-2.5 bg-stitch-gold"></span>
-          <span class="text-[10px] uppercase font-mono tracking-widest text-stitch-on-surface-variant font-bold">MAINTENANCE LOG CONTROL</span>
-        </div>
-        <h1 class="text-3xl lg:text-4xl font-black text-stitch-on-surface font-display tracking-tight uppercase">Work_Orders</h1>
-        <p class="text-[11px] text-stitch-on-surface-variant mt-1">Maintenance log intake, approval pipeline, and backlog priority ledger</p>
+  Semua angka diambil dari state aplikasi (logs, equipment, allParts,
+  performanceData, woKpi) — tidak ada nilai contoh dari desain.
+  Token warna/tipe: `tac-*` (tailwind.config.js) = 1:1 design system Stitch.
+
+  Catatan pemetaan (design → data nyata):
+    * "SEKTOR"      → `equipment.Lokasi` (woSectorOf / woSectorOptions)
+    * "PRIORITY"    → WO_PRIORITY (Emergency/Urgent/Normal/Planned)
+    * "Status tab"  → WO_STATUS (Draft/Pending/Approved/In Progress/Completed/Cancelled)
+    * "LOTO #…"     → tidak ada di app → diganti badge umur/overdue yang nyata
+    * "BATCH DISPATCH" → tidak ada fitur → diganti aksi nyata (EXPORT CSV / NEW WO)
+    * view "GANTT / TIMELINE" → dihapus (butuh jadwal bar yang tidak ada di data;
+      Planning Board sudah jadi tampilan timeline-nya)
+-->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
+
+  <!-- ═══ 1. PWA / OFFLINE SYNC STRIP ═══════════════════════════════════ -->
+  <section aria-label="Status sinkronisasi"
+    class="w-full bg-tac-surface-container-low rounded-lg px-space-md py-1.5 flex flex-wrap items-center justify-between gap-space-sm shadow-sm">
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <div class="flex items-center gap-1.5 px-2 py-0.5 rounded"
+        :class="isOnline ? 'bg-tac-status-operational/10' : 'bg-tac-status-emergency/10'">
+        <span class="h-2 w-2 rounded-full animate-pulse"
+          :class="isOnline ? 'bg-tac-status-operational' : 'bg-tac-status-emergency'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm uppercase font-semibold"
+          :class="isOnline ? 'text-tac-status-operational' : 'text-tac-status-emergency'"
+          x-text="isOnline ? 'PWA LOCAL CACHE IN SYNC' : 'OFFLINE — ANTRIAN LOKAL'"></span>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2 px-3 py-2 bg-stitch-surface-lowest border border-stitch-ghost-border" role="status"
-          :aria-label="isOnline ? 'Live sync active' : 'Offline'">
-          <span class="w-2.5 h-2.5 animate-pulse" :class="isOnline ? 'bg-emerald-400' : 'bg-rose-500'"></span>
-          <span class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-stitch-on-surface-variant"
-            x-text="isOnline ? 'LIVE SYNC' : 'OFFLINE'"></span>
-        </div>
-        <button type="button" @click="exportData('logs', 'csv')"
-          class="stitch-btn-secondary min-h-[64px] text-[11px] uppercase tracking-wider">
-          <i class="fas fa-download mr-2 text-xs text-sky-400"></i> CSV
-        </button>
-        <button type="button" x-show="isAdminOrSupervisor" @click="openLogModal(false)"
-          class="stitch-btn-primary min-h-[64px] text-[11px] tracking-wider">
-          <i class="fas fa-plus mr-2 text-xs"></i> Input Log
-        </button>
+      <span class="text-tac-status-standby font-label-mono-sm">/</span>
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant tracking-wider uppercase"
+        x-text="woKpi.total + ' WORK ORDER TERCATAT'"></span>
+    </div>
+    <div class="flex items-center gap-space-md flex-wrap">
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-sync-cyan flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">offline_pin</span>
+        <span x-text="'SEC-ZONE: ' + (woSectorFilter || 'FLEET-WIDE')"></span>
+      </span>
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase"
+        x-text="'ROLE: ' + (userRole || 'USER')"></span>
+    </div>
+  </section>
+
+  <!-- ═══ 2. BREADCRUMB + CONTROL SUB-BAR ═══════════════════════════════ -->
+  <div class="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-sm">
+    <div class="flex flex-col">
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby tracking-widest uppercase flex-wrap">
+        <span class="text-tac-primary font-semibold">MTC-ASSET</span>
+        <span>//</span>
+        <span>MAINTENANCE</span>
+        <span>//</span>
+        <span class="text-tac-on-surface font-semibold">WORK ORDER ORCHESTRATION &amp; DISPATCH</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Work Orders Ledger</h1>
+        <span x-show="woKpi.emergency > 0"
+          class="px-2 py-0.5 rounded-full bg-tac-status-emergency/15 text-tac-status-emergency font-label-mono-sm text-label-mono-sm font-semibold animate-pulse"
+          x-text="woKpi.emergency + ' EMERGENCIES PENDING'"></span>
       </div>
     </div>
 
-    <!-- Pipeline counters (status blocks, not badges) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0 border-b border-stitch-ghost-border">
-      <div class="p-5 bg-stitch-surface-lowest border-l-4 border-l-orange-500">
-        <p class="font-mono text-[9px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-2">Open / Draft</p>
-        <span class="font-display font-black text-4xl text-orange-400"
-          x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && (l.Status === 'Pending' || l.Status === 'Draft')).length || '0'"></span>
-      </div>
-      <div class="p-5 bg-stitch-surface-lowest border-l-4 border-l-blue-500">
-        <p class="font-mono text-[9px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-2">In Progress</p>
-        <span class="font-display font-black text-4xl text-blue-400"
-          x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'In Progress').length || '0'"></span>
-      </div>
-      <div class="p-5 bg-stitch-surface-lowest border-l-4 border-l-emerald-500">
-        <p class="font-mono text-[9px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-2">Completed</p>
-        <span class="font-display font-black text-4xl text-emerald-400"
-          x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'Completed').length || '0'"></span>
-      </div>
-      <div class="p-5 bg-stitch-surface-lowest border-l-4 border-l-rose-500">
-        <p class="font-mono text-[9px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-2">Cancelled</p>
-        <span class="font-display font-black text-4xl text-rose-400"
-          x-text="logs.filter(l => (l.woNumber || l.Jenis === 'Repair' || l.Jenis === 'Breakdown' || l.Jenis === 'PM' || l.Jenis === 'Service') && l.Status === 'Cancelled').length || '0'"></span>
-      </div>
-    </div>
-
-    <!-- Filter deck -->
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-0">
-      <div class="md:col-span-5 p-4 border-b md:border-b-0 md:border-r border-stitch-ghost-border">
-        <label for="wo-search" class="text-[9px] text-stitch-on-surface-variant uppercase font-black tracking-[0.2em] mb-2 block">Search Ledger</label>
-        <div class="relative flex items-center bg-stitch-surface-lowest border border-stitch-ghost-border focus-within:border-stitch-gold">
-          <i class="fas fa-search text-stitch-on-surface-variant/60 ml-3 text-sm"></i>
-          <input id="wo-search" type="text" x-model.debounce.150ms="searchWO" placeholder="WO#, UNIT, DESCRIPTION..."
-            class="bg-transparent border-none text-stitch-on-surface w-full p-3 text-sm uppercase tracking-wider focus:outline-none placeholder:text-stitch-on-surface-variant/40">
-        </div>
-      </div>
-
-      <div class="md:col-span-3 p-4 border-b md:border-b-0 md:border-r border-stitch-ghost-border">
-        <label for="wo-status" class="text-[9px] text-stitch-on-surface-variant uppercase font-black tracking-[0.2em] mb-2 block">Status Filter</label>
-        <select id="wo-status" x-model="filterWOStatus"
-          class="w-full bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface p-3 text-xs font-bold uppercase tracking-wider cursor-pointer focus:outline-none focus:border-stitch-gold">
-          <option value="" class="bg-stitch-surface-high">All Status</option>
-          <option value="Pending" class="bg-stitch-surface-high">Pending</option>
-          <option value="In Progress" class="bg-stitch-surface-high">In Progress</option>
-          <option value="Completed" class="bg-stitch-surface-high">Completed</option>
-        </select>
-      </div>
-
-      <div class="md:col-span-4 p-4">
-        <label for="wo-priority" class="text-[9px] text-stitch-on-surface-variant uppercase font-black tracking-[0.2em] mb-2 block">Priority Filter</label>
-        <select id="wo-priority" x-model="filterWOPriority"
-          class="w-full bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface p-3 text-xs font-bold uppercase tracking-wider cursor-pointer focus:outline-none focus:border-stitch-gold">
-          <option value="" class="bg-stitch-surface-high">All Priority</option>
-          <option value="Emergency" class="bg-stitch-surface-high">Emergency</option>
-          <option value="Urgent" class="bg-stitch-surface-high">Urgent</option>
-          <option value="Normal" class="bg-stitch-surface-high">Normal</option>
-          <option value="Planned" class="bg-stitch-surface-high">Planned</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="flex flex-wrap gap-3 items-center p-4 border-t border-stitch-ghost-border">
-      <label for="wo-date-from" class="sr-only">From date</label>
-      <input id="wo-date-from" type="date" x-model="filterDateFrom" title="From date"
-        class="p-3 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-xs font-bold w-36 focus:outline-none focus:border-stitch-gold">
-      <span class="text-stitch-on-surface-variant text-xs">→</span>
-      <label for="wo-date-to" class="sr-only">To date</label>
-      <input id="wo-date-to" type="date" x-model="filterDateTo" title="To date"
-        class="p-3 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-xs font-bold w-36 focus:outline-none focus:border-stitch-gold">
-      <button type="button" x-show="filterDateFrom || filterDateTo" @click="filterDateFrom=''; filterDateTo=''"
-        class="stitch-btn-secondary min-h-[64px] text-[10px] tracking-widest">
-        <i class="fas fa-times mr-2"></i> Clear Dates
+    <!-- Global Work Order Action Matrix -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="exportData('logs', 'csv')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">download</span>
+        <span>EXPORT AUDIT CSV</span>
       </button>
-      <label class="flex items-center gap-2 cursor-pointer select-none min-h-[64px] px-4 bg-stitch-surface-lowest border border-stitch-ghost-border">
-        <input type="checkbox" x-model="sortByScore" class="accent-amber-500 w-4 h-4">
-        <span class="text-[10px] font-black uppercase tracking-widest text-stitch-on-surface-variant">Sort by priority score</span>
+      <button type="button" x-show="isAdminOrSupervisor" @click="openLogModal(false)"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        <span>+ CREATE NEW WO</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ 3. KPI & SLA INDUSTRIAL TELEMETRY DECK (4 kartu) ══════════════ -->
+  <section aria-label="KPI work order" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+
+    <!-- KPI 1 — Work order aktif -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Active Fleet Work Orders</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-emergency">
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+        </span>
+      </div>
+      <div class="my-space-xs flex items-baseline gap-space-sm">
+        <span class="font-display-hero text-display-hero text-tac-on-surface font-bold" x-text="woKpi.open"></span>
+        <span class="font-label-mono-md text-label-mono-md text-tac-status-emergency font-semibold uppercase">ACTIVE TASKS</span>
+      </div>
+      <div class="w-full bg-tac-surface-recessed rounded-full h-1.5 overflow-hidden my-1 shadow-inner">
+        <div class="bg-tac-status-emergency h-full transition-all"
+          :style="'width:' + (woKpi.total ? Math.round(woKpi.open / woKpi.total * 100) : 0) + '%'"></div>
+      </div>
+      <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant pt-1">
+        <span class="text-tac-status-emergency font-semibold" x-text="woKpi.emergency + ' Stop'"></span>
+        <span x-text="woKpi.inProgress + ' In Progress'"></span>
+        <span x-text="woKpi.pending + ' Sched'"></span>
+        <span class="text-tac-status-operational font-semibold" x-text="woKpi.completed + ' Done'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 2 — MTTR -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Mean Time To Repair (MTTR)</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+          <span class="material-symbols-outlined text-[18px]">timer</span>
+        </span>
+      </div>
+      <div class="my-space-xs flex items-baseline gap-space-sm">
+        <span class="font-display-hero text-display-hero text-tac-on-surface font-bold" x-text="woKpi.mttr"></span>
+        <span class="font-label-mono-md text-label-mono-md text-tac-sync-cyan font-semibold">HOURS / AVG</span>
+      </div>
+      <div class="flex items-center gap-1.5 py-0.5">
+        <span class="material-symbols-outlined text-tac-sync-cyan text-[16px]">hourglass_bottom</span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant font-bold"
+          x-text="woKpi.downtimeOpen + ' H DOWNTIME WO TERBUKA'"></span>
+      </div>
+      <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant pt-1">
+        <span x-text="woKpi.aging + ' Aging &gt;3d'"></span>
+        <span class="text-tac-status-repair font-semibold" x-text="woKpi.overdue + ' Overdue'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 3 — Downtime & biaya pemeliharaan tercatat -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Downtime Cost Impact</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-gold-bright">
+          <span class="material-symbols-outlined text-[18px]">payments</span>
+        </span>
+      </div>
+      <div class="my-space-xs flex items-baseline gap-space-sm">
+        <span class="font-display-hero text-display-hero text-tac-primary font-bold" x-text="rpShort(woKpi.cost)"></span>
+      </div>
+      <div class="w-full flex items-center justify-between h-5 my-0.5" x-show="woDowntimeSpark">
+        <svg class="w-full h-full overflow-visible text-tac-primary" fill="none" viewBox="0 0 160 20" preserveAspectRatio="none" aria-hidden="true">
+          <path :d="woDowntimeSpark" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+      </div>
+      <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant pt-1">
+        <span class="text-tac-status-standby" x-text="rp(woKpi.cost)"></span>
+        <span class="text-tac-status-standby">14 CATATAN TERAKHIR</span>
+      </div>
+    </div>
+
+    <!-- KPI 4 — Spares yang sudah dialokasikan ke WO terbuka -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Staged Spares &amp; Kits</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-secondary">
+          <span class="material-symbols-outlined text-[18px]">inventory</span>
+        </span>
+      </div>
+      <div class="my-space-xs flex items-baseline gap-space-sm">
+        <span class="font-display-hero text-display-hero text-tac-on-surface font-bold" x-text="woKpi.partsQty"></span>
+        <span class="font-label-mono-md text-label-mono-md text-tac-secondary font-semibold uppercase">PARTS COMMITTED</span>
+      </div>
+      <div class="flex items-center gap-1.5 py-0.5">
+        <span class="material-symbols-outlined text-tac-secondary text-[16px]">warehouse</span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-medium"
+          x-text="rp(woKpi.partsValue) + ' NILAI TERPAKAI'"></span>
+      </div>
+      <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant pt-1">
+        <span x-text="woKpi.partsCount + ' item unik'"></span>
+        <span class="text-tac-status-emergency font-semibold" x-text="lowStockCount + ' Low Stock'"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 4. SEARCH / FILTER MATRIX + VIEW SWITCHER ═════════════════════ -->
+  <section aria-label="Filter work order"
+    class="bg-tac-surface-container-low rounded-lg p-space-sm shadow-md flex flex-col gap-space-sm">
+
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-sm">
+      <!-- Fast filter search console -->
+      <div class="flex-1 max-w-xl relative flex items-center bg-tac-surface-recessed rounded px-space-sm py-2 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]">
+        <span class="material-symbols-outlined text-tac-status-standby text-[18px] mr-2">search</span>
+        <label for="wo-search" class="sr-only">Cari work order</label>
+        <input id="wo-search" type="text" x-model.debounce.150ms="searchWO"
+          placeholder="Cari WO #, unit (CV-104), deskripsi, teknisi…"
+          class="w-full bg-transparent text-tac-on-surface font-body-sm text-body-sm outline-none placeholder:text-tac-status-standby">
+        <button type="button" x-show="searchWO" @click="searchWO = ''"
+          class="font-label-mono-sm text-label-mono-sm px-1.5 py-0.5 rounded bg-tac-surface-container-high text-tac-status-standby hover:text-tac-on-surface">ESC</button>
+      </div>
+
+      <!-- View switcher -->
+      <div class="flex items-center justify-between sm:justify-end gap-space-sm">
+        <div class="inline-flex p-0.5 rounded bg-tac-surface-recessed shadow-inner" role="group" aria-label="Mode tampilan">
+          <button type="button" @click="woView = 'ledger'" :aria-pressed="woView === 'ledger' ? 'true' : 'false'"
+            class="px-space-md py-1 rounded font-label-mono-md text-label-mono-md flex items-center gap-1 transition-colors"
+            :class="woView === 'ledger' ? 'bg-tac-primary-container text-tac-on-primary-container font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'text-tac-status-standby hover:text-tac-on-surface'">
+            <span class="material-symbols-outlined text-[16px]">table_rows</span>
+            <span>LEDGER STREAM</span>
+          </button>
+          <button type="button" @click="woView = 'kanban'" :aria-pressed="woView === 'kanban' ? 'true' : 'false'"
+            class="px-space-md py-1 rounded font-label-mono-md text-label-mono-md flex items-center gap-1 transition-colors"
+            :class="woView === 'kanban' ? 'bg-tac-primary-container text-tac-on-primary-container font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'text-tac-status-standby hover:text-tac-on-surface'">
+            <span class="material-symbols-outlined text-[16px]">view_kanban</span>
+            <span>KANBAN STACK</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status tabs + sektor/prioritas + rentang tanggal -->
+    <div class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-space-sm pt-1">
+      <div class="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0" role="group" aria-label="Filter status">
+        <button type="button" @click="filterWOStatus = ''"
+          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+          :class="filterWOStatus === '' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
+          x-text="'ALL (' + woCounts.all + ')'"></button>
+        <button type="button" @click="filterWOStatus = filterWOStatus === 'Pending' ? '' : 'Pending'"
+          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+          :class="filterWOStatus === 'Pending' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
+          x-text="'PENDING (' + woCounts.Pending + ')'"></button>
+        <button type="button" @click="filterWOStatus = filterWOStatus === 'Approved' ? '' : 'Approved'"
+          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+          :class="filterWOStatus === 'Approved' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
+          x-text="'APPROVED (' + woCounts.Approved + ')'"></button>
+        <button type="button" @click="filterWOStatus = filterWOStatus === 'In Progress' ? '' : 'In Progress'"
+          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors"
+          :class="filterWOStatus === 'In Progress' ? 'bg-tac-sync-cyan/15 text-tac-sync-cyan font-semibold' : 'text-tac-sync-cyan hover:bg-tac-surface-container'">
+          <span class="h-1.5 w-1.5 rounded-full bg-tac-sync-cyan"></span>
+          <span x-text="'IN PROGRESS (' + woCounts['In Progress'] + ')'"></span>
+        </button>
+        <button type="button" @click="filterWOStatus = filterWOStatus === 'Completed' ? '' : 'Completed'"
+          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+          :class="filterWOStatus === 'Completed' ? 'bg-tac-status-operational/15 text-tac-status-operational font-semibold' : 'text-tac-status-operational hover:bg-tac-surface-container'"
+          x-text="'COMPLETED (' + woCounts.Completed + ')'"></button>
+        <button type="button" @click="filterWOStatus = filterWOStatus === 'Cancelled' ? '' : 'Cancelled'"
+          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+          :class="filterWOStatus === 'Cancelled' ? 'bg-tac-status-emergency/15 text-tac-status-emergency font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
+          x-text="'CANCELLED (' + woCounts.Cancelled + ')'"></button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="uppercase">SEKTOR:</span>
+        <label for="wo-sector" class="sr-only">Filter sektor</label>
+        <select id="wo-sector" x-model="woSectorFilter"
+          class="bg-tac-surface-recessed text-tac-on-surface px-2 py-1 rounded outline-none font-label-mono-sm text-label-mono-sm shadow-inner cursor-pointer">
+          <option value="">ALL SECTORS (FLEET-WIDE)</option>
+          <template x-for="sec in woSectorOptions" :key="sec">
+            <option :value="sec" x-text="sec"></option>
+          </template>
+        </select>
+
+        <label for="wo-priority" class="sr-only">Filter prioritas</label>
+        <select id="wo-priority" x-model="filterWOPriority"
+          class="bg-tac-surface-recessed text-tac-on-surface px-2 py-1 rounded outline-none font-label-mono-sm text-label-mono-sm shadow-inner cursor-pointer">
+          <option value="">PRIORITY: ALL</option>
+          <option value="Emergency">ALPHA (EMERGENCY)</option>
+          <option value="Urgent">BRAVO (URGENT)</option>
+          <option value="Normal">CHARLIE (NORMAL)</option>
+          <option value="Planned">PLANNED / PM</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Rentang tanggal + urutan + jumlah record -->
+    <div class="flex flex-wrap gap-space-sm items-center pt-1 border-t border-tac-border-subtle">
+      <label for="wo-date-from" class="sr-only">Tanggal dari</label>
+      <input id="wo-date-from" type="date" x-model="filterDateFrom" title="Tanggal dari"
+        class="px-2 py-1 bg-tac-surface-recessed rounded text-tac-on-surface font-label-mono-sm text-label-mono-sm w-36 outline-none">
+      <span class="text-tac-status-standby font-label-mono-sm">→</span>
+      <label for="wo-date-to" class="sr-only">Tanggal sampai</label>
+      <input id="wo-date-to" type="date" x-model="filterDateTo" title="Tanggal sampai"
+        class="px-2 py-1 bg-tac-surface-recessed rounded text-tac-on-surface font-label-mono-sm text-label-mono-sm w-36 outline-none">
+      <button type="button" x-show="filterDateFrom || filterDateTo" @click="filterDateFrom=''; filterDateTo=''"
+        class="px-2 py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors">
+        CLEAR DATES
+      </button>
+      <label class="flex items-center gap-2 cursor-pointer select-none px-2 py-1 rounded bg-tac-surface-recessed">
+        <input type="checkbox" x-model="sortByScore" class="accent-tac-primary-container w-4 h-4">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">SORT BY PRIORITY SCORE</span>
       </label>
-      <span class="font-mono text-[10px] text-stitch-on-surface-variant uppercase tracking-widest ml-auto"
-        x-text="(sortByScore ? sortedByPriority : filteredWorkOrders).length + ' RECORDS'"></span>
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase ml-auto"
+        x-text="woFiltered.length + ' RECORDS'"></span>
     </div>
   </section>
 
   <!-- ── ZONA 2 · Log Maintenance Console (Stitch 'Log Maintenance' port) ─ -->
   <details id="wo-log-console" x-show="isAdminOrSupervisor"
-    class="group bg-stitch-surface-low border border-stitch-ghost-border shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+    class="group bg-tac-surface-container-low border border-tac-border-subtle shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
     <summary
-      class="list-none [&::-webkit-details-marker]:hidden cursor-pointer min-h-[64px] px-5 py-4 flex items-center justify-between gap-4 bg-stitch-surface-high hover:bg-stitch-surface-highest transition-colors">
+      class="list-none [&::-webkit-details-marker]:hidden cursor-pointer min-h-[64px] px-5 py-4 flex items-center justify-between gap-4 bg-tac-surface-container-high hover:bg-tac-surface-container-highest transition-colors">
       <span class="flex items-center gap-3">
-        <span class="w-2.5 h-2.5 bg-stitch-gold"></span>
-        <span class="font-display font-black text-lg lg:text-xl text-stitch-on-surface uppercase tracking-tight">Maintenance Log Console</span>
+        <span class="w-2.5 h-2.5 bg-tac-gold-bright"></span>
+        <span class="font-headline-md text-tac-on-surface uppercase tracking-tight">Maintenance Log Console</span>
       </span>
       <span class="flex items-center gap-3">
-        <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-stitch-on-surface-variant hidden sm:inline">Hotkey L</span>
-        <i class="fas fa-chevron-down text-stitch-on-surface-variant transition-transform group-open:rotate-180"></i>
+        <span class="font-label-mono-sm text-[10px] uppercase tracking-[0.2em] text-tac-on-surface-variant hidden sm:inline">Hotkey L</span>
+        <i class="fas fa-chevron-down text-tac-on-surface-variant transition-transform group-open:rotate-180"></i>
       </span>
     </summary>
 
@@ -132,52 +314,52 @@
       <!-- Unit + date identity -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
         <div class="md:col-span-6 flex flex-col gap-2">
-          <label for="woc-unit" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Equipment Node *</label>
-          <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+          <label for="woc-unit" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Equipment Node *</label>
+          <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
             <select id="woc-unit" x-model="logForm.equipmentId" required
-              class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-bold uppercase tracking-wider border-none cursor-pointer focus:outline-none">
-              <option value="" class="bg-stitch-surface-high">-- SELECT UNIT --</option>
+              class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-bold uppercase tracking-wider border-none cursor-pointer focus:outline-none">
+              <option value="" class="bg-tac-surface-container-high">-- SELECT UNIT --</option>
               <template x-for="e in equipment" :key="e.EquipmentID">
-                <option :value="e.EquipmentID" class="bg-stitch-surface-high" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+                <option :value="e.EquipmentID" class="bg-tac-surface-container-high" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
               </template>
             </select>
           </div>
         </div>
 
         <div class="md:col-span-3 flex flex-col gap-2">
-          <label for="woc-date" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Log Date *</label>
-          <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+          <label for="woc-date" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Log Date *</label>
+          <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
             <input id="woc-date" type="date" x-model="logForm.date" required
-              class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-bold border-none focus:outline-none">
+              class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-bold border-none focus:outline-none">
           </div>
         </div>
 
         <div class="md:col-span-3 flex flex-col gap-2">
-          <label for="woc-tech" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Technician Name</label>
-          <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+          <label for="woc-tech" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Technician Name</label>
+          <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
             <input id="woc-tech" type="text" x-model="logForm.tech" placeholder="ENTER ID OR NAME"
-              class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-medium uppercase tracking-wider border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+              class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-medium uppercase tracking-wider border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
           </div>
         </div>
       </div>
 
       <!-- Unit operational status (gloved-touch toggle) -->
       <div class="flex flex-col gap-2">
-        <span class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Unit Operational Status</span>
+        <span class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Unit Operational Status</span>
         <div class="grid grid-cols-2 gap-1" role="group" aria-label="Unit operational status">
           <button type="button" @click="logForm.type = 'PM'"
             :aria-pressed="logForm.type !== 'Breakdown' ? 'true' : 'false'"
             class="min-h-[96px] flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98]"
-            :class="logForm.type !== 'Breakdown' ? 'bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black' : 'bg-stitch-surface-high text-stitch-on-surface-variant hover:bg-stitch-surface-highest'">
+            :class="logForm.type !== 'Breakdown' ? 'bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">
             <i class="fas fa-circle-check text-2xl"></i>
-            <span class="font-display font-black text-lg tracking-widest uppercase">Ready</span>
+            <span class="font-headline-md tracking-widest uppercase">Ready</span>
           </button>
           <button type="button" @click="logForm.type = 'Breakdown'"
             :aria-pressed="logForm.type === 'Breakdown' ? 'true' : 'false'"
             class="min-h-[96px] flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98]"
-            :class="logForm.type === 'Breakdown' ? 'bg-[#93000A] text-white' : 'bg-stitch-surface-high text-stitch-on-surface-variant hover:bg-[#93000A]/70 hover:text-white'">
+            :class="logForm.type === 'Breakdown' ? 'bg-[#93000A] text-white' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-[#93000A]/70 hover:text-white'">
             <i class="fas fa-triangle-exclamation text-2xl"></i>
-            <span class="font-display font-black text-lg tracking-widest uppercase">Breakdown</span>
+            <span class="font-headline-md tracking-widest uppercase">Breakdown</span>
           </button>
         </div>
       </div>
@@ -187,7 +369,7 @@
         <div class="bg-[#93000A] p-5" role="alert">
           <div class="flex items-center gap-3 mb-2">
             <i class="fas fa-bolt text-white text-lg"></i>
-            <p class="font-display font-black text-white text-lg uppercase tracking-tight">Failure Report Active</p>
+            <p class="font-headline-md text-white uppercase tracking-tight">Failure Report Active</p>
           </div>
           <p class="text-[#ffdad6] text-xs leading-relaxed">
             This entry is logged as a <strong class="text-white">Breakdown</strong> — it feeds unit health, MTBF, and backlog priority scoring.
@@ -198,43 +380,43 @@
 
       <!-- Work order priority (status blocks) -->
       <div class="flex flex-col gap-2">
-        <span class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Work Order Priority</span>
+        <span class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Work Order Priority</span>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-1" role="group" aria-label="Work order priority">
           <button type="button" @click="logForm.woPriority = 'Emergency'"
             :aria-pressed="logForm.woPriority === 'Emergency' ? 'true' : 'false'"
-            class="min-h-[64px] font-display font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Emergency' ? 'bg-[#93000A] text-white' : 'bg-stitch-surface-high text-stitch-on-surface-variant hover:bg-stitch-surface-highest'">Emergency</button>
+            class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
+            :class="logForm.woPriority === 'Emergency' ? 'bg-[#93000A] text-white' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Emergency</button>
           <button type="button" @click="logForm.woPriority = 'Urgent'"
             :aria-pressed="logForm.woPriority === 'Urgent' ? 'true' : 'false'"
-            class="min-h-[64px] font-display font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Urgent' ? 'bg-amber-500 text-black' : 'bg-stitch-surface-high text-stitch-on-surface-variant hover:bg-stitch-surface-highest'">Urgent</button>
+            class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
+            :class="logForm.woPriority === 'Urgent' ? 'bg-amber-500 text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Urgent</button>
           <button type="button" @click="logForm.woPriority = 'Normal'"
             :aria-pressed="logForm.woPriority === 'Normal' ? 'true' : 'false'"
-            class="min-h-[64px] font-display font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Normal' ? 'bg-stitch-on-surface text-black' : 'bg-stitch-surface-high text-stitch-on-surface-variant hover:bg-stitch-surface-highest'">Normal</button>
+            class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
+            :class="logForm.woPriority === 'Normal' ? 'bg-tac-on-surface text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Normal</button>
           <button type="button" @click="logForm.woPriority = 'Planned'"
             :aria-pressed="logForm.woPriority === 'Planned' ? 'true' : 'false'"
-            class="min-h-[64px] font-display font-black uppercase tracking-widest text-sm transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Planned' ? 'bg-sky-500 text-black' : 'bg-stitch-surface-high text-stitch-on-surface-variant hover:bg-stitch-surface-highest'">Planned</button>
+            class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
+            :class="logForm.woPriority === 'Planned' ? 'bg-sky-500 text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Planned</button>
         </div>
       </div>
 
       <!-- Work description -->
       <div class="flex flex-col gap-2">
-        <label for="woc-desc" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Work Description / Failure Symptom *</label>
-        <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+        <label for="woc-desc" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Work Description / Failure Symptom *</label>
+        <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
           <input id="woc-desc" type="text" x-model="logForm.desc" required maxlength="500" placeholder="DESCRIBE WORK PERFORMED OR FAILURE SYMPTOM"
-            class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-medium border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+            class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-medium border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
         </div>
       </div>
 
       <!-- HM entry + downtime/cost -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div class="flex flex-col gap-2">
-          <label for="woc-hm" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">HM Entry (Hours)</label>
-          <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+          <label for="woc-hm" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">HM Entry (Hours)</label>
+          <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
             <input id="woc-hm" type="number" step="0.1" min="0" x-model="logForm.hm" placeholder="00000.0"
-              class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+              class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
           </div>
           <div x-show="logForm.equipmentId && getLastHM(logForm.equipmentId) !== '-'"
             class="flex items-center gap-2 px-2 py-1 bg-[#93000A]/20 text-[#ffb4ab] text-[10px] font-bold uppercase tracking-tight">
@@ -249,70 +431,70 @@
         </div>
 
         <div class="flex flex-col gap-2">
-          <label for="woc-downtime" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Downtime (Hours)</label>
-          <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+          <label for="woc-downtime" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Downtime (Hours)</label>
+          <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
             <input id="woc-downtime" type="number" step="0.1" min="0" x-model="logForm.downtime" placeholder="0.0"
-              class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+              class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
           </div>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label for="woc-cost" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em]">Cost (IDR)</label>
-          <div class="bg-stitch-surface-lowest p-1 border-b-4 border-stitch-ghost-border focus-within:border-stitch-gold transition-colors">
+          <label for="woc-cost" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em]">Cost (IDR)</label>
+          <div class="bg-tac-surface-container-lowest p-1 border-b-4 border-tac-border-subtle focus-within:border-tac-gold-bright transition-colors">
             <input id="woc-cost" type="number" step="1000" min="0" x-model="logForm.cost" placeholder="0"
-              class="bg-transparent w-full p-3 text-stitch-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-stitch-on-surface-variant/40">
+              class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
           </div>
         </div>
       </div>
 
       <!-- Sparepart utilization -->
-      <div class="bg-stitch-surface-low border border-stitch-ghost-border p-5 space-y-4">
+      <div class="bg-tac-surface-container-low border border-tac-border-subtle p-5 space-y-4">
         <div class="flex justify-between items-end gap-4">
-          <h3 class="font-display font-black text-lg text-stitch-gold tracking-tight uppercase">Sparepart Utilization</h3>
+          <h3 class="font-headline-md text-tac-gold-bright tracking-tight uppercase">Sparepart Utilization</h3>
           <button type="button" @click="addPartToLog()"
-            class="stitch-btn-secondary min-h-[64px] text-[10px] tracking-widest">
+            class="bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface rounded-lg font-label-mono-md transition-colors min-h-[64px] text-[10px] tracking-widest">
             <i class="fas fa-plus mr-2 text-xs"></i> Add Sparepart
           </button>
         </div>
 
-        <p x-show="logForm.parts.length === 0" class="text-[11px] text-stitch-on-surface-variant uppercase tracking-widest py-3">
+        <p x-show="logForm.parts.length === 0" class="text-[11px] text-tac-on-surface-variant uppercase tracking-widest py-3">
           No components linked to this log.
         </p>
 
         <template x-for="(part, index) in logForm.parts" :key="index">
           <div class="grid grid-cols-12 gap-1 items-stretch">
-            <div class="col-span-7 lg:col-span-8 bg-stitch-surface-lowest p-3">
-              <label class="block font-mono text-[9px] text-stitch-on-surface-variant mb-1 font-bold uppercase tracking-[0.2em]">Component</label>
+            <div class="col-span-7 lg:col-span-8 bg-tac-surface-container-lowest p-3">
+              <label class="block font-label-mono-sm text-[9px] text-tac-on-surface-variant mb-1 font-bold uppercase tracking-[0.2em]">Component</label>
               <select x-model="part.id"
-                class="bg-transparent w-full text-stitch-on-surface text-xs font-bold uppercase tracking-wider border-none cursor-pointer focus:outline-none">
-                <option value="" class="bg-stitch-surface-high">-- SELECT COMPONENT --</option>
+                class="bg-transparent w-full text-tac-on-surface text-xs font-bold uppercase tracking-wider border-none cursor-pointer focus:outline-none">
+                <option value="" class="bg-tac-surface-container-high">-- SELECT COMPONENT --</option>
                 <template x-for="p in filteredPartsForLog" :key="p.PartID">
-                  <option :value="p.PartID" class="bg-stitch-surface-high"
+                  <option :value="p.PartID" class="bg-tac-surface-container-high"
                     x-text="(p.NamaSingkat || p.NamaPart) + (p.PartNumber ? ' (' + p.PartNumber + ')' : '')"></option>
                 </template>
               </select>
             </div>
 
-            <div class="col-span-4 lg:col-span-3 bg-stitch-surface-lowest p-3 flex flex-col justify-center">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant mb-1 font-bold uppercase tracking-[0.2em] text-center">Qty</span>
+            <div class="col-span-4 lg:col-span-3 bg-tac-surface-container-lowest p-3 flex flex-col justify-center">
+              <span class="block font-label-mono-sm text-[9px] text-tac-on-surface-variant mb-1 font-bold uppercase tracking-[0.2em] text-center">Qty</span>
               <div class="flex items-center justify-center gap-2">
                 <button type="button" @click="part.qty = Math.max(1, (Number(part.qty) || 1) - 1)"
                   aria-label="Decrease quantity"
-                  class="min-w-[64px] min-h-[64px] bg-stitch-surface-high text-stitch-on-surface-variant hover:text-stitch-gold transition-colors flex items-center justify-center">
+                  class="min-w-[64px] min-h-[64px] bg-tac-surface-container-high text-tac-on-surface-variant hover:text-tac-gold-bright transition-colors flex items-center justify-center">
                   <i class="fas fa-minus"></i>
                 </button>
                 <input type="number" min="1" x-model="part.qty" aria-label="Quantity"
-                  class="w-16 min-h-[64px] bg-transparent text-center font-display font-black text-lg text-stitch-on-surface border-none focus:outline-none">
+                  class="w-16 min-h-[64px] bg-transparent text-center font-headline-md text-tac-on-surface border-none focus:outline-none">
                 <button type="button" @click="part.qty = (Number(part.qty) || 0) + 1"
                   aria-label="Increase quantity"
-                  class="min-w-[64px] min-h-[64px] bg-stitch-surface-high text-stitch-on-surface-variant hover:text-stitch-gold transition-colors flex items-center justify-center">
+                  class="min-w-[64px] min-h-[64px] bg-tac-surface-container-high text-tac-on-surface-variant hover:text-tac-gold-bright transition-colors flex items-center justify-center">
                   <i class="fas fa-plus"></i>
                 </button>
               </div>
             </div>
 
             <button type="button" @click="removePartFromLog(index)" aria-label="Remove component"
-              class="col-span-1 min-h-[64px] bg-stitch-surface-high text-rose-400/70 hover:text-rose-300 hover:bg-[#93000A]/30 transition-colors flex items-center justify-center">
+              class="col-span-1 min-h-[64px] bg-tac-surface-container-high text-rose-400/70 hover:text-rose-300 hover:bg-[#93000A]/30 transition-colors flex items-center justify-center">
               <i class="fas fa-trash-alt"></i>
             </button>
           </div>
@@ -322,12 +504,12 @@
       <!-- Photo evidence + remarks -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
         <div class="md:col-span-4">
-          <span class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-2 block">
-            Photo Evidence <span x-text="logForm.photos.length + ' / 4'" class="text-stitch-gold"></span>
+          <span class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em] mb-2 block">
+            Photo Evidence <span x-text="logForm.photos.length + ' / 4'" class="text-tac-gold-bright"></span>
           </span>
           <div class="grid grid-cols-2 gap-1">
             <template x-for="(p, idx) in logForm.photos" :key="idx">
-              <div class="relative aspect-square bg-stitch-surface-lowest border border-stitch-ghost-border overflow-hidden">
+              <div class="relative aspect-square bg-tac-surface-container-lowest border border-tac-border-subtle overflow-hidden">
                 <img :src="p.preview" loading="lazy" alt="Photo evidence" class="w-full h-full object-cover">
                 <button type="button" @click="removeLogPhoto(idx)" aria-label="Remove photo"
                   class="absolute top-0 right-0 min-w-[44px] min-h-[44px] bg-[#93000A] text-white flex items-center justify-center">
@@ -336,34 +518,403 @@
               </div>
             </template>
             <label x-show="logForm.photos.length < 4"
-              class="aspect-square bg-stitch-surface-high border-2 border-dashed border-stitch-ghost-border hover:border-stitch-gold/60 hover:bg-stitch-surface-highest transition-all cursor-pointer flex flex-col items-center justify-center gap-2 min-h-[64px]">
-              <i class="fas fa-camera text-2xl text-stitch-on-surface-variant"></i>
-              <span class="font-mono text-[9px] font-bold uppercase tracking-widest text-stitch-on-surface-variant px-2 text-center">Attach Photo</span>
+              class="aspect-square bg-tac-surface-container-high border-2 border-dashed border-tac-border-subtle hover:border-tac-gold-bright/60 hover:bg-tac-surface-container-highest transition-all cursor-pointer flex flex-col items-center justify-center gap-2 min-h-[64px]">
+              <i class="fas fa-camera text-2xl text-tac-on-surface-variant"></i>
+              <span class="font-label-mono-sm text-[9px] font-bold uppercase tracking-widest text-tac-on-surface-variant px-2 text-center">Attach Photo</span>
               <input type="file" @change="handleLogPhoto($event)" class="hidden" accept="image/*" multiple>
             </label>
           </div>
         </div>
 
         <div class="md:col-span-8">
-          <label for="woc-remarks" class="font-mono text-[10px] font-bold text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-2 block">Maintenance Remarks / Root Cause</label>
+          <label for="woc-remarks" class="font-label-mono-sm text-[10px] font-bold text-tac-on-surface-variant uppercase tracking-[0.2em] mb-2 block">Maintenance Remarks / Root Cause</label>
           <textarea id="woc-remarks" x-model="logForm.catatan" rows="5" placeholder="DESCRIBE WORK PERFORMED, ROOT CAUSE, CORRECTIVE ACTION..."
-            class="bg-stitch-surface-lowest w-full p-4 text-stitch-on-surface text-sm border border-stitch-ghost-border resize-none focus:outline-none focus:border-stitch-gold placeholder:text-stitch-on-surface-variant/40"></textarea>
+            class="bg-tac-surface-container-lowest w-full p-4 text-tac-on-surface text-sm border border-tac-border-subtle resize-none focus:outline-none focus:border-tac-gold-bright placeholder:text-tac-on-surface-variant/40"></textarea>
         </div>
       </div>
 
       <!-- Final action -->
       <button type="submit"
-        class="w-full min-h-[80px] bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-display font-black text-lg lg:text-xl tracking-[0.2em] uppercase active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_10px_30px_rgba(255,215,0,0.2)]">
+        class="w-full min-h-[80px] bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-headline-md tracking-[0.2em] uppercase active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_10px_30px_rgba(255,215,0,0.2)]">
         <i class="fas fa-cloud-arrow-up"></i>
         <span x-text="isEditingLog ? 'Execute Update' : 'Submit Log to Command'"></span>
       </button>
     </form>
   </details>
 
-  <!-- ── ZONA 3 · Loading State (Skeleton) ─────────────────────────────── -->
-  <div x-show="isLoading" class="space-y-4" role="status" aria-label="Loading work orders">
+  <!-- ═══ 6. WORKSPACE 12 KOLOM: LEDGER (8) + INSPECTOR (4) ═════════════ -->
+  <div x-show="!isLoading && woFiltered.length > 0"
+    class="grid grid-cols-1 xl:grid-cols-12 gap-space-md items-start">
+
+    <!-- ── KIRI 8 kolom: Work Order Ledger Stream ── -->
+    <div class="xl:col-span-8 flex flex-col gap-space-sm">
+
+      <!-- View: LEDGER STREAM -->
+      <template x-if="woView === 'ledger'">
+        <div class="flex flex-col gap-space-sm">
+          <template x-for="log in woFiltered" :key="log.LogID">
+            <article class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] transition-all hover:bg-tac-surface-elevated/80 relative overflow-hidden"
+              :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : ''">
+              <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="woMarkerTac(log)"></div>
+
+              <div class="flex flex-col gap-space-sm pl-2">
+                <!-- Header: nomor WO + prioritas + sektor | umur + tanggal -->
+                <div class="flex flex-wrap items-center justify-between gap-space-xs">
+                  <div class="flex items-center gap-space-sm flex-wrap">
+                    <span class="font-label-mono-lg text-label-mono-lg text-tac-primary font-bold"
+                      x-text="'WO #' + (log.woNumber || log.LogID)"></span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold"
+                      :class="woPriorityTac(log.woPriority)">
+                      <span class="h-2 w-2 rounded-full"
+                        :class="(log.woPriority === 'Emergency' || log.Jenis === 'Breakdown') ? 'bg-tac-status-emergency animate-ping' : 'bg-current opacity-70'"></span>
+                      <span x-text="(log.woPriority || 'Normal').toUpperCase() + (log.Jenis === 'Breakdown' ? ' - BREAKDOWN' : '')"></span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded bg-tac-surface-container font-label-mono-sm text-label-mono-sm text-tac-sync-cyan font-medium"
+                      x-text="woSectorOf(log.EquipmentID)"></span>
+                    <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm font-bold"
+                      :class="woStatusTac(log.Status)" x-text="(log.Status || 'Pending').toUpperCase()"></span>
+                  </div>
+                  <div class="flex items-center gap-space-sm font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+                    <span class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[14px]">timer</span>
+                      <span x-text="'UMUR: ' + woElapsed(log)"></span>
+                    </span>
+                    <span>•</span>
+                    <span x-text="'LOG: ' + (log.Tanggal || '-')"></span>
+                  </div>
+                </div>
+
+                <!-- Tengah: aset + lingkup pekerjaan | kotak dampak -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-space-sm items-center pt-1">
+                  <div class="md:col-span-7 flex flex-col">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-headline-md text-headline-md text-tac-on-surface font-semibold tracking-tight"
+                        x-text="log.EquipmentID === 'EXTERNAL' ? (log.externalEquipName || 'Unit Eksternal') : getEquipName(log.EquipmentID)"></span>
+                      <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+                        x-text="log.EquipmentID === 'EXTERNAL' ? 'EXT' : log.EquipmentID"></span>
+                    </div>
+                    <p class="font-body-md text-body-md text-tac-on-surface-variant mt-0.5 line-clamp-2"
+                      x-text="log.Deskripsi || '-'"></p>
+
+                    <div class="flex flex-wrap items-center gap-space-md mt-2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+                      <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px] text-tac-on-surface">person</span>
+                        <span>Tech: </span><strong class="text-tac-on-surface ml-0.5" x-text="log.assignedTo || 'UNASSIGNED'"></strong>
+                      </span>
+                      <span class="flex items-center gap-1" x-show="woParts(log).length > 0">
+                        <span class="material-symbols-outlined text-[14px] text-tac-secondary">inventory_2</span>
+                        <span>Spares: </span><strong class="text-tac-secondary ml-0.5"
+                          x-text="woParts(log).map(p => p.name + ' (' + p.qty + ')').join(', ')"></strong>
+                      </span>
+                      <span x-show="log.dueDate && log.Status !== 'Completed' && log.dueDate < new Date().toISOString().split('T')[0]"
+                        class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-status-emergency font-bold">
+                        <span class="material-symbols-outlined text-[14px]">event_busy</span>
+                        <span x-text="'OVERDUE: ' + log.dueDate"></span>
+                      </span>
+                      <span x-show="log.dueDate && log.Status !== 'Completed' && log.dueDate >= new Date().toISOString().split('T')[0]"
+                        class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-status-repair">
+                        <span class="material-symbols-outlined text-[14px]">event</span>
+                        <span x-text="'DUE: ' + log.dueDate"></span>
+                      </span>
+                      <span x-show="log.Status && log.Status !== 'Completed' && woAgeDays(log) >= 1"
+                        class="px-1.5 py-0.5 rounded font-bold" :class="woAgeColor(woAgeDays(log))"
+                        x-text="'AGING ' + woAgeDays(log) + 'd'"></span>
+                      <span x-show="woShortageSummary(log).count > 0"
+                        class="px-1.5 py-0.5 rounded bg-tac-status-emergency/20 text-tac-status-emergency font-bold"
+                        :title="woAvailability(log).filter(a => !a.ok).map(a => a.partId + ' short ' + a.shortage).join(', ')"
+                        x-text="'⚠ -' + woShortageSummary(log).total + ' PARTS'"></span>
+                    </div>
+                  </div>
+
+                  <!-- Kotak telemetri -->
+                  <div class="md:col-span-5 flex flex-col items-start md:items-end justify-center bg-tac-surface-recessed/60 p-space-sm rounded">
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">DOWNTIME TERCATAT</span>
+                    <span class="font-label-mono-lg text-label-mono-lg text-tac-on-surface font-bold tracking-wider"
+                      x-text="(Number(log.Downtime) || 0) + ' H'"></span>
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant mt-0.5"
+                      x-text="'EST: ' + (Number(log.estimatedHours) || 0) + ' H • SCORE ' + backlogScore(log) + '/9'"></span>
+                  </div>
+                </div>
+
+                <!-- Action deck -->
+                <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 bg-tac-surface-container-lowest/40 -mx-space-md -mb-space-md p-space-sm px-space-md rounded-b-lg">
+                  <span class="font-label-mono-sm text-label-mono-sm flex items-center gap-1"
+                    :class="log.Status === 'In Progress' ? 'text-tac-sync-cyan' : 'text-tac-status-standby'">
+                    <span class="material-symbols-outlined text-[14px]">source_environment</span>
+                    <span x-text="woSectorOf(log.EquipmentID) + ' • ' + (log.Jenis || 'PM')"></span>
+                  </span>
+
+                  <div class="flex items-center gap-space-xs flex-wrap">
+                    <button type="button" @click="selectedWODetail = log.LogID"
+                      class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-on-surface-variant hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors">
+                      <span class="material-symbols-outlined text-[14px]">photo_camera</span>
+                      <span x-text="'PROOF (' + woPhotos(log).length + ')'"></span>
+                    </button>
+                    <button type="button" x-show="isAdminOrSupervisor && (log.Status === 'Pending' || log.Status === 'Draft' || !log.Status)"
+                      @click="approveWO(log.LogID)"
+                      class="px-space-md py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-primary font-label-mono-sm text-label-mono-sm font-bold transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[14px]">verified_user</span>
+                      <span>APPROVE &amp; DISPATCH</span>
+                    </button>
+                    <button type="button" x-show="isAdminOrSupervisor && (log.Status === 'Pending' || log.Status === 'Draft' || !log.Status)"
+                      @click.stop="rejectReason = ''; activeRejectId = log.LogID; showRejectModal = true"
+                      class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-error hover:bg-tac-error-container hover:text-tac-on-error-container font-label-mono-sm text-label-mono-sm transition-colors">
+                      REJECT WO
+                    </button>
+                    <button type="button" x-show="isAdminOrSupervisor && log.Status === 'Approved'" @click="startWO(log.LogID)"
+                      class="px-space-md py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-sync-cyan font-label-mono-sm text-label-mono-sm font-bold transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[14px]">play_arrow</span>
+                      <span>START WORK</span>
+                    </button>
+                    <button type="button" x-show="isAdminOrSupervisor && log.Status === 'In Progress'" @click="openLogModal(true, log)"
+                      class="px-space-md py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-sync-cyan font-label-mono-sm text-label-mono-sm font-bold transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[14px]">edit_note</span>
+                      <span>UPDATE FIELD LOG</span>
+                    </button>
+                    <button type="button" x-show="isAdminOrSupervisor && (log.Status === 'Approved' || log.Status === 'In Progress')"
+                      @click="completeWO(log.LogID)"
+                      class="px-space-md py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-status-operational font-label-mono-sm text-label-mono-sm font-bold transition-all flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[14px]">task_alt</span>
+                      <span>COMPLETE</span>
+                    </button>
+                    <button type="button" x-show="isAdmin" @click="exportWOToPDF(log.LogID)"
+                      class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-on-surface-variant hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors">PDF</button>
+                    <button type="button" x-show="isAdmin" @click="deleteItem('HistoryLog', log.LogID)"
+                      class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-error hover:bg-tac-error-container hover:text-tac-on-error-container font-label-mono-sm text-label-mono-sm transition-colors">DELETE</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </template>
+        </div>
+      </template>
+
+      <!-- View: KANBAN STACK -->
+      <template x-if="woView === 'kanban'">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-sm">
+          <template x-for="col in woKanbanColumns" :key="col.status">
+            <section class="bg-tac-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-xs min-h-[120px]">
+              <header class="flex items-center justify-between">
+                <span class="font-label-mono-md text-label-mono-md uppercase font-bold px-2 py-0.5 rounded"
+                  :class="woStatusTac(col.status)" x-text="col.status"></span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="col.items.length"></span>
+              </header>
+              <template x-for="log in col.items" :key="log.LogID">
+                <button type="button" @click="selectedWODetail = log.LogID"
+                  class="text-left bg-tac-surface-card rounded p-2 relative overflow-hidden hover:bg-tac-surface-elevated transition-colors"
+                  :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : ''">
+                  <span class="absolute left-0 top-0 bottom-0 w-1" :class="woMarkerTac(log)"></span>
+                  <span class="block pl-2">
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-primary font-bold"
+                      x-text="'#' + (log.woNumber || log.LogID)"></span>
+                    <span class="block font-body-sm text-body-sm text-tac-on-surface font-semibold line-clamp-2 mt-0.5"
+                      x-text="log.EquipmentID === 'EXTERNAL' ? (log.externalEquipName || 'Eksternal') : getEquipName(log.EquipmentID)"></span>
+                    <span class="flex items-center justify-between mt-1">
+                      <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="woElapsed(log)"></span>
+                      <span class="font-label-mono-sm text-label-mono-sm px-1.5 rounded"
+                        :class="woPriorityTac(log.woPriority)" x-text="(log.woPriority || 'Normal').toUpperCase()"></span>
+                    </span>
+                  </span>
+                </button>
+              </template>
+              <p x-show="col.items.length === 0" class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase py-2">— kosong —</p>
+            </section>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <!-- ── KANAN 4 kolom: Tactical Inspector HUD ── -->
+    <aside class="xl:col-span-4 flex flex-col gap-space-sm xl:sticky xl:top-20" aria-label="Inspector work order">
+      <template x-if="!woSelected">
+        <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5)] flex flex-col items-center gap-2 py-space-lg">
+          <span class="material-symbols-outlined text-[32px] text-tac-status-standby">troubleshoot</span>
+          <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase text-center">
+            Pilih satu kartu work order untuk membuka inspector
+          </p>
+        </div>
+      </template>
+
+      <template x-if="woSelected">
+        <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-md">
+          <!-- Header -->
+          <div class="flex items-center justify-between border-b border-tac-border-subtle pb-space-sm gap-2">
+            <div class="flex flex-col">
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-primary uppercase font-bold tracking-wider">INSPECTOR: TARGET ACTIVE</span>
+              <span class="font-headline-md text-headline-md text-tac-on-surface font-bold" x-text="'WO #' + (woSelected.woNumber || woSelected.LogID)"></span>
+            </div>
+            <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm font-bold flex items-center gap-1 shrink-0"
+              :class="woStatusTac(woSelected.Status)">
+              <span class="h-2 w-2 rounded-full bg-current opacity-70"></span>
+              <span x-text="(woSelected.Status || 'Pending').toUpperCase()"></span>
+            </span>
+          </div>
+
+          <!-- Identitas aset -->
+          <div class="flex flex-col gap-1">
+            <span class="font-headline-md text-headline-md text-tac-on-surface font-semibold tracking-tight"
+              x-text="woSelected.EquipmentID === 'EXTERNAL' ? (woSelected.externalEquipName || 'Unit Eksternal') : getEquipName(woSelected.EquipmentID)"></span>
+            <div class="flex flex-wrap items-center gap-space-xs">
+              <span class="px-2 py-0.5 rounded bg-tac-surface-recessed font-label-mono-sm text-label-mono-sm text-tac-sync-cyan"
+                x-text="woSectorOf(woSelected.EquipmentID)"></span>
+              <span class="px-2 py-0.5 rounded bg-tac-surface-recessed font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant"
+                x-text="woSelected.EquipmentID || '-'"></span>
+              <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm font-bold"
+                :class="woPriorityTac(woSelected.woPriority)" x-text="(woSelected.woPriority || 'Normal').toUpperCase()"></span>
+            </div>
+          </div>
+
+          <!-- Bukti foto lapangan -->
+          <div class="flex flex-col gap-1" x-show="woPhotos(woSelected).length > 0">
+            <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+              <span x-text="'FIELD PROOF PHOTOS (' + woPhotos(woSelected).length + ')'"></span>
+            </div>
+            <div class="grid grid-cols-3 gap-space-xs">
+              <template x-for="(photo, idx) in woPhotos(woSelected)" :key="idx">
+                <div class="relative h-16 rounded overflow-hidden bg-tac-surface-recessed">
+                  <img :src="photo" alt="Bukti lapangan" class="w-full h-full object-cover">
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Telemetri ringkas -->
+          <div class="grid grid-cols-2 gap-space-xs font-label-mono-sm text-label-mono-sm">
+            <div class="bg-tac-surface-recessed rounded p-2">
+              <span class="block text-tac-status-standby uppercase">Downtime</span>
+              <span class="text-tac-on-surface font-bold" x-text="(Number(woSelected.Downtime) || 0) + ' H'"></span>
+            </div>
+            <div class="bg-tac-surface-recessed rounded p-2">
+              <span class="block text-tac-status-standby uppercase">Est. Hours</span>
+              <span class="text-tac-on-surface font-bold" x-text="(Number(woSelected.estimatedHours) || 0) + ' H'"></span>
+            </div>
+            <div class="bg-tac-surface-recessed rounded p-2">
+              <span class="block text-tac-status-standby uppercase">Umur</span>
+              <span class="text-tac-on-surface font-bold" x-text="woElapsed(woSelected)"></span>
+            </div>
+            <div class="bg-tac-surface-recessed rounded p-2">
+              <span class="block text-tac-status-standby uppercase">Priority Score</span>
+              <span class="font-bold" :class="backlogScoreColor(backlogScore(woSelected))"
+                x-text="backlogScore(woSelected) + '/9'"></span>
+            </div>
+          </div>
+
+          <!-- Deskripsi + catatan + RCA -->
+          <div class="bg-tac-surface-recessed rounded p-space-sm shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)] flex flex-col gap-1">
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Lingkup pekerjaan</span>
+            <p class="font-body-sm text-body-sm text-tac-on-surface-variant leading-relaxed" x-text="woSelected.Deskripsi || '-'"></p>
+            <p x-show="woSelected.Catatan" class="font-body-sm text-body-sm text-tac-on-surface-variant leading-relaxed mt-1"
+              x-text="'Catatan: ' + woSelected.Catatan"></p>
+            <div class="flex items-center justify-between mt-1">
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-primary font-bold uppercase"
+                x-text="'RCA: ' + (woSelected.rca || 'PM')"></span>
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+                x-text="'DEPT: ' + (woSelected.requestSource || '-')"></span>
+            </div>
+          </div>
+
+          <!-- Spares yang dipakai -->
+          <div class="flex flex-col gap-1" x-show="woParts(woSelected).length > 0">
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Spares terpakai</span>
+            <template x-for="part in woParts(woSelected)" :key="part.id">
+              <div class="flex items-center justify-between p-2 rounded bg-tac-surface-recessed shadow-inner">
+                <div class="flex flex-col">
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-semibold" x-text="part.name"></span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="part.id + ' • stok ' + part.stok"></span>
+                </div>
+                <span class="font-label-mono-sm text-label-mono-sm font-bold" :class="part.ok ? 'text-tac-status-operational' : 'text-tac-status-emergency'"
+                  x-text="'×' + part.qty"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Teknisi -->
+          <div class="flex flex-col gap-1">
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Teknisi ditugaskan</span>
+            <div class="flex items-center justify-between p-2 rounded bg-tac-surface-recessed shadow-inner">
+              <div class="flex items-center gap-space-sm">
+                <div class="w-7 h-7 rounded-full bg-tac-primary flex items-center justify-center font-bold text-tac-on-primary font-label-mono-sm"
+                  x-text="(woSelected.assignedTo || '??').slice(0, 2).toUpperCase()"></div>
+                <div class="flex flex-col">
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-semibold" x-text="woSelected.assignedTo || 'UNASSIGNED'"></span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+                    x-text="'Diminta oleh: ' + (woSelected.requestedBy || '-')"></span>
+                </div>
+              </div>
+              <span class="h-2 w-2 rounded-full bg-tac-status-operational" title="Terdaftar"></span>
+            </div>
+          </div>
+
+          <!-- Aksi inspector -->
+          <div class="flex flex-col gap-space-xs pt-1">
+            <div class="grid grid-cols-2 gap-space-xs">
+              <button type="button" x-show="isAdminOrSupervisor && (woSelected.Status === 'Pending' || woSelected.Status === 'Draft' || !woSelected.Status)"
+                @click="approveWO(woSelected.LogID)"
+                class="py-1.5 px-space-sm rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-sm text-label-mono-sm font-bold flex items-center justify-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">verified_user</span>
+                <span>APPROVE</span>
+              </button>
+              <button type="button" x-show="isAdminOrSupervisor && woSelected.Status === 'Approved'" @click="startWO(woSelected.LogID)"
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-sync-cyan font-label-mono-sm text-label-mono-sm font-bold flex items-center justify-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                <span>START</span>
+              </button>
+              <button type="button" x-show="isAdminOrSupervisor && (woSelected.Status === 'Approved' || woSelected.Status === 'In Progress')"
+                @click="completeWO(woSelected.LogID)"
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-status-operational font-label-mono-sm text-label-mono-sm font-bold flex items-center justify-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">task_alt</span>
+                <span>COMPLETE</span>
+              </button>
+              <button type="button" x-show="isAdminOrSupervisor" @click="openLogModal(true, woSelected)"
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-[16px] text-tac-sync-cyan">edit_note</span>
+                <span>EDIT</span>
+              </button>
+              <button type="button" x-show="isAdmin" @click="exportWOToPDF(woSelected.LogID)"
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-[16px] text-tac-primary">picture_as_pdf</span>
+                <span>PDF</span>
+              </button>
+              <button type="button" x-show="isAdminOrSupervisor && (woSelected.Status === 'Pending' || woSelected.Status === 'Draft' || !woSelected.Status)"
+                @click.stop="rejectReason = ''; activeRejectId = woSelected.LogID; showRejectModal = true"
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-error-container hover:text-tac-on-error-container text-tac-error font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">block</span>
+                <span>REJECT</span>
+              </button>
+            </div>
+            <button type="button" @click="selectedWODetail = null"
+              class="w-full py-1.5 px-space-md rounded bg-tac-surface-container text-tac-on-surface-variant hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors">
+              TUTUP INSPECTOR
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- NEXT IN QUEUE -->
+      <template x-if="woNextInQueue">
+        <button type="button" @click="selectedWODetail = woNextInQueue.LogID"
+          class="bg-tac-surface-card rounded-lg p-space-sm shadow-[12px_16px_28px_rgba(0,0,0,0.5)] flex items-center justify-between group hover:bg-tac-surface-elevated transition-colors text-left">
+          <div class="flex items-center gap-space-sm">
+            <div class="w-10 h-10 rounded bg-tac-surface-recessed flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-tac-primary text-[20px]">skip_next</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-primary font-bold"
+                x-text="'NEXT IN QUEUE: WO #' + (woNextInQueue.woNumber || woNextInQueue.LogID)"></span>
+              <span class="font-body-sm text-body-sm text-tac-on-surface font-semibold"
+                x-text="woNextInQueue.EquipmentID === 'EXTERNAL' ? (woNextInQueue.externalEquipName || 'Eksternal') : getEquipName(woNextInQueue.EquipmentID)"></span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-tac-status-standby group-hover:text-tac-primary transition-colors text-[20px]">chevron_right</span>
+        </button>
+      </template>
+    </aside>
+  </div>
+
+  <!-- ═══ 7. LOADING STATE (SKELETON) ═══════════════════════════════════ -->
+  <div x-show="isLoading" class="flex flex-col gap-space-sm" role="status" aria-label="Memuat work order">
     <template x-for="i in 4" :key="i">
-      <div class="bg-stitch-surface-low border border-stitch-ghost-border border-l-4 border-l-stitch-ghost-border p-4 space-y-3">
+      <div class="bg-tac-surface-card rounded-lg p-space-md space-y-3">
         <div class="skeleton skeleton-line skeleton-sm" style="width:40%"></div>
         <div class="skeleton skeleton-line skeleton-md" style="width:70%"></div>
         <div class="skeleton skeleton-line skeleton-sm" style="width:25%"></div>
@@ -371,161 +922,27 @@
     </template>
   </div>
 
-  <!-- ── ZONA 4 · Empty State ──────────────────────────────────────────── -->
-  <div x-show="!isLoading && filteredWorkOrders.length === 0"
-    class="text-center py-16 bg-stitch-surface-low border border-stitch-ghost-border">
+  <!-- ═══ 8. EMPTY STATE ════════════════════════════════════════════════ -->
+  <div x-show="!isLoading && woFiltered.length === 0"
+    class="text-center py-16 bg-tac-surface-card rounded-lg">
     <div class="inline-flex flex-col items-center gap-4">
-      <div class="w-16 h-16 bg-stitch-surface-lowest flex items-center justify-center border border-stitch-ghost-border">
-        <i class="fas fa-clipboard-list text-3xl text-stitch-on-surface-variant/60"></i>
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-status-standby">assignment</span>
       </div>
       <div>
-        <p class="text-stitch-on-surface font-display font-black text-lg uppercase tracking-tight">No Work Orders Found</p>
-        <p class="text-stitch-on-surface-variant text-sm mt-1">Work orders appear here once a maintenance log is submitted</p>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Tidak Ada Work Order</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Work order muncul setelah log maintenance disubmit</p>
       </div>
     </div>
   </div>
 
-  <!-- ── ZONA 5 · Work Order Ledger ────────────────────────────────────── -->
-  <div x-show="!isLoading && filteredWorkOrders.length > 0" class="flex flex-col gap-4">
-    <template x-for="log in (sortByScore ? sortedByPriority : filteredWorkOrders)" :key="log.LogID">
-      <article class="bg-stitch-surface-low border border-stitch-ghost-border border-l-4 overflow-hidden"
-        :style="log.Status && log.Status !== 'Completed' ? 'border-left-color:' + getStatColor(logColor(log.Jenis)) : 'border-left-color:' + (log.EquipmentID === 'EXTERNAL' ? 'orange' : getStatColor(logColor(log.Jenis)))"
-        :class="log.Status && log.Status !== 'Completed' && woAgeDays(log) > 3 ? 'shadow-[0_0_0_1px_rgba(251,113,133,0.25)]' : ''">
-
-        <!-- Header — click to expand -->
-        <button type="button"
-          @click="selectedWODetail = selectedWODetail === log.LogID ? null : log.LogID"
-          :aria-expanded="selectedWODetail === log.LogID ? 'true' : 'false'"
-          class="w-full text-left min-h-[64px] p-4 hover:bg-stitch-surface-high transition-colors">
-          <div class="flex justify-between items-start gap-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <span x-show="log.woNumber" class="px-3 py-1 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-gold font-mono font-bold text-sm" x-text="'#' + log.woNumber"></span>
-              <span x-show="!log.woNumber && log.Jenis" class="px-3 py-1 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface font-mono font-bold text-xs" x-text="log.Jenis"></span>
-              <span class="px-3 py-1 font-black uppercase tracking-wider text-[10px]"
-                :class="{
-                  'bg-[#93000A] text-white': (log.woPriority || 'Normal') === 'Emergency',
-                  'bg-amber-500 text-black': (log.woPriority || 'Normal') === 'Urgent',
-                  'bg-stitch-surface-highest text-stitch-on-surface-variant': (log.woPriority || 'Normal') === 'Normal',
-                  'bg-sky-500/20 text-sky-300': (log.woPriority || 'Normal') === 'Planned'
-                }" x-text="log.woPriority || 'Normal'"></span>
-              <span x-show="log.Status && log.Status !== 'Completed' && woAgeDays(log) >= 1"
-                class="px-2 py-1 border font-bold uppercase text-[9px] tracking-wider"
-                :class="woAgeColor(woAgeDays(log))"
-                x-text="woAgeDays(log) + 'd'"></span>
-              <span x-show="log.Status && log.Status !== 'Completed'"
-                class="px-2 py-1 border font-black text-[9px]"
-                :class="backlogScoreColor(backlogScore(log))"
-                :title="'Priority score: ' + backlogScore(log) + '/9'"
-                x-text="backlogScore(log)"></span>
-              <span x-show="log.EquipmentID === 'EXTERNAL'" class="px-2 py-1 bg-orange-500/20 text-orange-300 font-bold uppercase text-[10px]">EXT</span>
-              <span x-show="woShortageSummary(log).count > 0"
-                class="px-2 py-1 bg-[#93000A]/30 text-rose-300 border border-rose-500/40 font-bold uppercase text-[9px] tracking-wider"
-                :title="woAvailability(log).filter(a => !a.ok).map(a => a.partId + ' short ' + a.shortage).join(', ')">
-                &#9888; -<span x-text="woShortageSummary(log).total"></span> PARTS
-              </span>
-              <span x-show="woShortageSummary(log).ok && log.PartsUsed"
-                class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold uppercase text-[9px] tracking-wider">
-                &#10003; STOCK OK
-              </span>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="px-3 py-1 font-black uppercase tracking-widest text-[10px]"
-                :class="{
-                  'bg-emerald-500/20 text-emerald-300': log.Status === 'Completed' || log.Status === 'Approved',
-                  'bg-blue-500/20 text-blue-300': log.Status === 'In Progress',
-                  'bg-amber-500/20 text-amber-300': log.Status === 'Pending' || log.Status === 'Draft' || !log.Status,
-                  'bg-[#93000A] text-white': log.Status === 'Rejected' || log.Status === 'Cancelled'
-                }" x-text="log.Status || 'Pending'"></span>
-              <i :class="selectedWODetail === log.LogID ? 'fa-chevron-up' : 'fa-chevron-down'" class="fas text-stitch-on-surface-variant"></i>
-            </div>
-          </div>
-
-          <h4 class="font-display font-black text-base lg:text-lg text-stitch-on-surface uppercase tracking-tight mt-3" x-text="log.Deskripsi"></h4>
-
-          <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-2 font-mono text-[10px] text-stitch-on-surface-variant font-bold uppercase tracking-widest">
-            <span class="flex items-center gap-1.5"><i class="far fa-calendar-alt text-stitch-gold"></i> <span x-text="log.Tanggal"></span></span>
-            <span class="flex items-center gap-1.5"><i class="far fa-user text-stitch-gold"></i> <span x-text="log.assignedTo || 'UNASSIGNED'"></span></span>
-            <span x-show="log.dueDate && log.Status !== 'Completed' && log.dueDate < new Date().toISOString().split('T')[0]" class="flex items-center gap-1.5 text-rose-300">
-              <i class="fas fa-exclamation-triangle"></i> <span x-text="'OVERDUE: ' + log.dueDate"></span>
-            </span>
-            <span x-show="log.dueDate && (log.Status === 'Completed' || log.dueDate >= new Date().toISOString().split('T')[0])" class="flex items-center gap-1.5 text-amber-300">
-              <i class="far fa-clock"></i> <span x-text="'DUE: ' + log.dueDate"></span>
-            </span>
-          </div>
-        </button>
-
-        <!-- Detail view (recessed wells, no dividers) -->
-        <div x-show="selectedWODetail === log.LogID" class="bg-stitch-surface-lowest p-4 space-y-4">
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div class="bg-stitch-surface-high p-3">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Asset</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="log.EquipmentID === 'EXTERNAL' ? (log.externalEquipName || 'External') : getEquipName(log.EquipmentID)"></p>
-            </div>
-            <div class="bg-stitch-surface-high p-3">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Requester</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="log.requestedBy || '-'"></p>
-            </div>
-            <div class="bg-stitch-surface-high p-3">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Department</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="log.requestSource || '-'"></p>
-            </div>
-            <div class="bg-stitch-surface-high p-3">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Type</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="log.Jenis || '-'"></p>
-            </div>
-            <div class="bg-stitch-surface-high p-3">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Est. Hours</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="log.estimatedHours || 0"></p>
-            </div>
-            <div class="bg-stitch-surface-high p-3">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Downtime</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="log.Downtime + ' hrs'"></p>
-            </div>
-            <div class="bg-stitch-surface-high p-3" x-show="(log.reqIds || []).length > 0">
-              <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Linked Requests</span>
-              <p class="text-stitch-on-surface font-bold text-xs" x-text="(log.reqIds || []).length + ' requisition(s)'"></p>
-            </div>
-          </div>
-
-          <div x-show="log.Catatan" class="bg-stitch-surface-high p-3">
-            <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-[0.2em] mb-1">Notes</span>
-            <p class="text-stitch-on-surface text-sm" x-text="log.Catatan"></p>
-          </div>
-
-          <!-- Approval pipeline — gloved-touch actions -->
-          <div class="flex flex-wrap gap-2">
-            <button type="button" x-show="isAdminOrSupervisor && log.Status === 'Pending'" @click.stop="approveWO(log.LogID)"
-              class="min-h-[64px] px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 transition-colors">
-              <i class="fas fa-check"></i> Approve
-            </button>
-            <button type="button" x-show="isAdminOrSupervisor && log.Status === 'Pending'" @click.stop="rejectReason = ''; activeRejectId = log.LogID; showRejectModal = true"
-              class="min-h-[64px] px-5 bg-[#93000A] hover:bg-rose-700 text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 transition-colors">
-              <i class="fas fa-times"></i> Reject
-            </button>
-            <button type="button" x-show="isAdminOrSupervisor && log.Status === 'Approved'" @click.stop="startWO(log.LogID)"
-              class="min-h-[64px] px-5 bg-blue-600 hover:bg-blue-500 text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 transition-colors">
-              <i class="fas fa-play"></i> Start
-            </button>
-            <button type="button" x-show="isAdminOrSupervisor && (log.Status === 'Approved' || log.Status === 'In Progress')" @click.stop="completeWO(log.LogID)"
-              class="min-h-[64px] px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 transition-colors">
-              <i class="fas fa-check-double"></i> Complete
-            </button>
-            <button type="button" x-show="isAdmin" @click.stop="exportWOToPDF(log.LogID)"
-              class="stitch-btn-secondary min-h-[64px] text-[11px] tracking-widest">
-              <i class="fas fa-file-pdf mr-2 text-rose-400"></i> PDF
-            </button>
-            <button type="button" x-show="isAdmin" @click.stop="openLogModal(true, log)"
-              class="stitch-btn-secondary min-h-[64px] text-[11px] tracking-widest">
-              <i class="fas fa-edit mr-2 text-amber-400"></i> Edit
-            </button>
-            <button type="button" x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)"
-              class="min-h-[64px] px-5 bg-stitch-surface-high hover:bg-[#93000A] text-rose-300 hover:text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2 transition-colors">
-              <i class="fas fa-trash"></i> Delete
-            </button>
-          </div>
-        </div>
-      </article>
-    </template>
+  <!-- ═══ 9. FLOATING MOBILE QUICK ACTION PILL ══════════════════════════ -->
+  <div class="fixed bottom-12 right-6 lg:hidden z-40" x-show="isAdminOrSupervisor">
+    <button type="button" @click="openLogModal(false)"
+      class="flex items-center gap-2 px-space-lg py-3 rounded-full bg-tac-primary-container text-tac-on-primary-container font-headline-md shadow-[0_4px_24px_rgba(245,158,11,0.5)] active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      <span>CREATE WO</span>
+    </button>
   </div>
 
 </div>

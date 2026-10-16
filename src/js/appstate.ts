@@ -203,6 +203,9 @@ export interface AppState {
   selectedPMDate?: string;
   selectedRequisition?: any;
   selectedWODetail?: any;
+  /** Halaman Work Orders (design Stitch 'Work Orders Ledger'). */
+  woView?: string;
+  woSectorFilter?: string;
   showAPISettings?: boolean;
   showCreateUserModal?: boolean;
   showCropModalOpen?: boolean;
@@ -241,6 +244,8 @@ export interface AppState {
   // ---------------------------------------- runtime-only (assigned in code, never declared)
   _critMap?: any;
   _critMapRef?: any;
+  _sectorMap?: any;
+  _sectorMapRef?: any;
   _cropper?: any;
   _dashTimeout?: any;
   _kpiCache?: any;
@@ -610,4 +615,22 @@ export interface AppState {
   woPrioScore: (...args: any[]) => any;
   woPriorityColor: (...args: any[]) => any;
   woShortageSummary: (...args: any[]) => any;
+  // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate)
+  woSectorOf: (...args: any[]) => any;
+  get woSectorOptions(): any;
+  get woFiltered(): any;
+  get woKanbanColumns(): any;
+  get woSelected(): any;
+  get woNextInQueue(): any;
+  get woCounts(): any;
+  get woKpi(): any;
+  woParts: (...args: any[]) => any;
+  woPhotos: (...args: any[]) => any;
+  woStatusTac: (...args: any[]) => any;
+  woPriorityTac: (...args: any[]) => any;
+  woMarkerTac: (...args: any[]) => any;
+  woElapsed: (...args: any[]) => any;
+  get woDowntimeSpark(): any;
+  rp: (...args: any[]) => any;
+  rpShort: (...args: any[]) => any;
 }

@@ -1,3 +1,52 @@
+## 📝 Session 13 (S13, 2026-10-16) — Menu Work Orders diporting ke 'Work Orders Ledger' (Tactical Slate)
+
+### Konteks
+- Lanjutan S12. User mengirim **markup asli** screen Stitch "Work Orders Ledger" (project `2861085646384681595`, "Work Order Orchestration & Dispatch") dan minta menu Work Orders mengikuti desain itu.
+- Screen ini **belum ada** di `design/stitch/` — `stitch-work-order-protocol.html` yang ada di sana adalah screen **lain** ("PROTOCOL V3"). Jadi markup dari user = satu-satunya sumber, dan porting dari screenshot tidak diperlukan sama sekali.
+
+### Yang dikerjakan
+- `public/pages/WorkOrders.html` ditulis ulang **531 → 947 baris**, komposisi 1:1 dengan markup desain:
+  1. PWA / Offline Sync strip → 2. breadcrumb + control sub-bar (EXPORT AUDIT CSV, + CREATE NEW WO) → 3. KPI deck 4 kartu → 4. search/filter matrix + view switcher + status tabs + sektor/prioritas + rentang tanggal → 5. Maintenance Log Console (collapsible, form lama) → 6. workspace 12 kolom (kiri 8: **Ledger Stream** / **Kanban Stack**; kanan 4: **Inspector HUD** + NEXT IN QUEUE) → 7. loading/empty → 8. floating create pill (mobile).
+- Form **Maintenance Log Console** (hasil porting Monolith S-4) dipertahankan utuh secara fungsi — hanya token kelasnya dimigrasikan `stitch-*` → `tac-*` lewat skrip `scratch/stitch2tac.sed` (diikuti pembersihan bentrok `text-lg`/`text-xl` vs `font-headline-*`).
+- State & getter baru (`src/js/app.js`, `src/js/appstate.ts`): `woView`, `woSectorFilter`; `woFiltered`, `woKanbanColumns`, `woSelected`, `woNextInQueue`, `woCounts`, `woKpi`, `woSectorOptions`, `woDowntimeSpark`; helper `woSectorOf`, `woParts`, `woPhotos`, `woStatusTac`, `woPriorityTac`, `woMarkerTac`, `woElapsed`, `rp`, `rpShort`.
+- `sw.js` `CACHE_NAME` → **`mtc-asset-v5`** (aturan tetap: fragment `/pages/*.html` berubah ⇒ bump cache).
+
+### Pemetaan desain → data nyata (tidak ada angka karangan)
+| Modul desain | Sumber nyata di app |
+|---|---|
+| `SEKTOR: COMMINUTION SECTOR B` | `equipment.Lokasi` (`woSectorOf` / `woSectorOptions`) |
+| `Mean Time To Repair` | rata-rata `Downtime` log `Jenis === 'Breakdown' \|\| 'Repair'` |
+| `Downtime Loss Impact $14,250` | Σ `Cost` (label `Rp`, format padat `jt/M/T`) + sparkline `performanceData.bd + stb` |
+| `Staged Spares 18 / IDR 342,000,000` | Σ qty `PartsUsed` WO terbuka × `parts.Harga` |
+| `LOTO #882 ENGAGED` | **tidak ada di app** → diganti badge AGING / OVERDUE yang nyata |
+| `BATCH DISPATCH` | **tidak ada fitur** → dibuang, diganti aksi nyata (EXPORT CSV, + CREATE NEW WO) |
+| view `GANTT / TIMELINE` | **dibuang** — butuh jadwal bar yang tidak ada di data; Planning Board sudah jadi timeline-nya |
+| `PROOF PHOTOS (3)` | `PhotoURLs` / `PhotoURL` log |
+| `Ajeng AI Neural Root Cause 96.4%` | field `rca` log + `Catatan` (persentase keyakinan = angka desain, tidak dipakai) |
+
+### Verifikasi (hasil nyata, bukan klaim)
+- `node scratch/check-page.mjs public/pages/WorkOrders.html` → **240 ekspresi Alpine, 0 syntax error**.
+- `npm run typecheck` **0** · `npm run lint` **0 error / 79 warning** (baseline) · `npm run test:run` **224/224** · `npm run test:rules` **34/34** · `npm run build` ok (65 entri precache, 3.482 KiB).
+- Harness `scratch/harness.html` (stub state diperbarui: `make-harness.mjs` kini memakai token `tac-*`) → **0 error konsol**; klik PROOF membuka inspector, KANBAN STACK menampilkan 4 kolom, tab PENDING menyaring kartu.
+- **Build nyata di browser** (`python -m http.server` di `dist/` + paksa `isLoggedIn`, data stub): `main` `rgb(13,20,29)` · kartu `rgb(22,29,39)` · h1 `26px/600` (headline-lg) · pill emergency `rgb(239,68,68)` · teks emas `rgb(255,193,116)` · `document.fonts.check('18px "Material Symbols Outlined"')` = true · **0 overflow** (`main.scrollWidth === main.clientWidth`) · 0 token rusak (`undefined`/`NaN`/`[object Object]`).
+- Nilai KPI dihitung kode nyata, bukan stub: 4 WO → 3 aktif · MTTR 4,0 jam · spares 6 pcs / Rp 7.500.000 (3 WO terbuka × qty 2 × Rp 1.250.000).
+
+### Pelajaran
+- **`write_file` menolak menimpa file yang belum dibaca penuh** — solusinya `rm` dulu (kasus `scratch/make-harness.mjs`).
+- Menyisipkan blok HTML besar hasil migrasi token: pecah jadi `head` + `blok-lama-migrasi` + `tail` di `scratch/`, lalu `cat` → file final. Jauh lebih hemat daripada menulis 950 baris sekaligus.
+- `tsc` **memang memeriksa `src/js/app.js`** meski `checkJs: false`; callback di atas nilai bertipe `any` (mis. `this.woFiltered`) memicu `TS7006` dan wajib diberi `/** @type {any} */` pada parameternya.
+- Angka rupiah di kartu KPI hero (36px) bisa meluber — pakai format padat (`Rp 77,8 jt`) dengan nilai penuh di baris bawah.
+
+### Kanban
+- Kartu tetap seperti S12: D-2 `t_4bb41514` (gate, masih `blocked`) · D-3 `t_3c1ab35c` · D-4 `t_1f747d46` · Q-1 `t_e6dd5987` · Q-2 `t_e5b00df8` · Q-3 `t_22172e91` · H-1/H-2/H-3 `t_47ae7fe6`/`t_4fd650a6`/`t_d463afbb`.
+- Pekerjaan WO-1 ini **belum punya kartu** (sama seperti D-1/D-1b) — belum diputuskan user. Catatan detail ada di `TASK-REVIEW.md` bagian **Gelombang 12**.
+
+### Sisa / berikutnya
+- **WO-2**: footer status strip global (`h-10`) dari markup desain belum dipasang di `index.html` (sidebar desain memakai `top-16 bottom-10`).
+- D-2 masih gate: halaman Work Orders kini **sudah** Tactical, jadi tinggal 3 halaman Monolith + 13 halaman lama.
+
+---
+
 ## 📝 Session 12 (S12, 2026-10-15) — Gelombang 9 Stitch tuntas + Dashboard 'Tactical Slate' (rebuild 1:1 dari markup)
 
 ### Konteks

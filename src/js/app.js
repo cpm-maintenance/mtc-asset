@@ -68,6 +68,9 @@ export function app() {
         // Work Order filters
         searchWO: '', filterWOStatus: '', filterWOPriority: '', filterDateFrom: '', filterDateTo: '', sortByScore: false,
         selectedWODetail: null,
+        // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate):
+        // mode tampilan ledger/kanban + filter sektor (Lokasi unit).
+        woView: 'ledger', woSectorFilter: '',
 
         // Dashboard date range filter
         dashboardDateFrom: new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0],
@@ -692,6 +695,181 @@ if (confirm('Are you sure you want to logout?')) {
             wos.forEach(l => { const d = this.woAgeDays(l); if (d >= 0) buckets[this.woAgeBucket(d)]++; });
             return buckets;
         },
+        // ══ Work Orders Ledger (design Stitch 'Work Orders Ledger', Tactical Slate) ══
+        // Semua angka di halaman Work Orders diambil dari sini — tidak ada nilai contoh.
+        /** Sektor unit = `Lokasi` equipment; dipakai filter sektor + badge kartu. */
+        woSectorOf(equipId) {
+            if (!equipId) return 'UNASSIGNED';
+            if (equipId === 'EXTERNAL') return 'EXTERNAL';
+            if (!this._sectorMap || this._sectorMapRef !== this.equipment) {
+                this._sectorMap = new Map((this.equipment || []).map(e => [e.EquipmentID, e.Lokasi || 'UNASSIGNED']));
+                this._sectorMapRef = this.equipment;
+            }
+            return this._sectorMap.get(equipId) || 'UNASSIGNED';
+        },
+        get woSectorOptions() {
+            const set = new Set();
+            (this.equipment || []).forEach(e => { if (e && e.Lokasi) set.add(e.Lokasi); });
+            return [...set].sort();
+        },
+        /** WO setelah semua filter (search/status/prioritas/tanggal + sektor). */
+        get woFiltered() {
+            const list = this.sortByScore ? this.sortedByPriority : this.filteredWorkOrders;
+            if (!this.woSectorFilter) return list;
+            return list.filter((/** @type {any} */ l) => this.woSectorOf(l.EquipmentID) === this.woSectorFilter);
+        },
+        /** Kanban Stack: WO dikelompokkan per status workflow. */
+        get woKanbanColumns() {
+            return ['Pending', 'Approved', 'In Progress', 'Completed'].map(status => ({
+                status,
+                items: this.woFiltered.filter((/** @type {any} */ l) => (l.Status || 'Pending') === status),
+            }));
+        },
+        /** WO yang sedang dibuka di inspector kanan. */
+        get woSelected() {
+            const id = this.selectedWODetail;
+            if (!id) return null;
+            return this.woFiltered.find((/** @type {any} */ l) => l.LogID === id)
+                || (this.logs || []).find((/** @type {any} */ l) => l.LogID === id)
+                || null;
+        },
+        /** Antrian berikutnya (kartu 'NEXT IN QUEUE'). */
+        get woNextInQueue() {
+            const id = this.selectedWODetail;
+            const list = this.woFiltered.filter((/** @type {any} */ l) => l.LogID !== id && l.Status !== 'Completed' && l.Status !== 'Cancelled');
+            return list.length ? list[0] : null;
+        },
+        /** Jumlah WO per status (seluruh ledger, bukan hasil filter). */
+        get woCounts() {
+            const out = { all: 0, Draft: 0, Pending: 0, Approved: 0, 'In Progress': 0, Completed: 0, Cancelled: 0 };
+            (this.logs || []).forEach(l => {
+                if (!l || !l.woNumber) return;
+                out.all++;
+                const s = l.Status || 'Pending';
+                if (s in out) (/** @type {Record<string, number>} */ (out))[s]++;
+            });
+            return out;
+        },
+        /** KPI deck Work Orders. MTTR/biaya/downtime/spares — semua dari data nyata. */
+        get woKpi() {
+            const logs = (this.logs || []).filter(l => l && l.woNumber);
+            const open = logs.filter(l => l.Status !== 'Completed' && l.Status !== 'Cancelled');
+            const byStatus = (/** @type {string} */ s) => logs.filter(l => (l.Status || 'Pending') === s).length;
+            const repairs = (this.logs || []).filter(l => l && (l.Jenis === 'Breakdown' || l.Jenis === 'Repair'));
+            const downSum = repairs.reduce((s, l) => s + (Number(l.Downtime) || 0), 0);
+            const partMap = new Map((this.allParts || []).map(p => [p.PartID, p]));
+            const partIds = new Set();
+            let partsQty = 0, partsValue = 0;
+            open.forEach(l => this.parsePartsUsed(l.PartsUsed).forEach((/** @type {any} */ p) => {
+                const q = Number(p.qty) || 0;
+                partsQty += q;
+                partIds.add(p.id);
+                const pr = partMap.get(p.id);
+                if (pr) partsValue += q * (Number(pr.Harga) || 0);
+            }));
+            const today = new Date().toISOString().split('T')[0];
+            return {
+                total: logs.length,
+                open: open.length,
+                inProgress: byStatus('In Progress'),
+                pending: byStatus('Pending') + byStatus('Draft'),
+                completed: byStatus('Completed'),
+                emergency: open.filter(l => l.woPriority === 'Emergency' || l.Jenis === 'Breakdown').length,
+                overdue: open.filter(l => l.dueDate && l.dueDate < today).length,
+                aging: open.filter(l => this.woAgeDays(l) > 3).length,
+                mttr: repairs.length ? Math.round((downSum / repairs.length) * 10) / 10 : 0,
+                downtimeOpen: open.reduce((s, l) => s + (Number(l.Downtime) || 0), 0),
+                cost: logs.reduce((s, l) => s + (Number(l.Cost) || 0), 0),
+                partsQty, partsValue, partsCount: partIds.size,
+            };
+        },
+        /** Parts yang dipakai satu WO + status stoknya (inspector). */
+        woParts(log) {
+            const map = new Map((this.allParts || []).map(p => [p.PartID, p]));
+            return this.parsePartsUsed(log && log.PartsUsed).map((/** @type {any} */ p) => {
+                const pr = map.get(p.id);
+                const stok = pr ? Number(pr.Stok) || 0 : 0;
+                return {
+                    id: p.id,
+                    qty: p.qty,
+                    name: (pr && (pr.NamaSingkat || pr.NamaPart)) || p.id,
+                    stok,
+                    ok: stok >= p.qty,
+                };
+            });
+        },
+        /** Foto bukti lapangan satu WO (maks 4). */
+        woPhotos(log) {
+            if (!log) return [];
+            let raw = log.PhotoURLs;
+            if (typeof raw === 'string' && raw.trim()) {
+                try { raw = JSON.parse(raw); } catch { raw = [raw]; }
+            }
+            if (!Array.isArray(raw)) raw = log.PhotoURL ? [log.PhotoURL] : [];
+            return raw.filter(Boolean).slice(0, 4);
+        },
+        /** Kelas token `tac` untuk pill status WO. */
+        woStatusTac(status) {
+            const s = status || 'Pending';
+            if (s === 'Completed') return 'bg-tac-status-operational/15 text-tac-status-operational';
+            if (s === 'In Progress') return 'bg-tac-sync-cyan/15 text-tac-sync-cyan';
+            if (s === 'Approved') return 'bg-tac-secondary/15 text-tac-secondary';
+            if (s === 'Cancelled' || s === 'Rejected') return 'bg-tac-status-emergency/15 text-tac-status-emergency';
+            return 'bg-tac-status-repair/15 text-tac-status-repair';
+        },
+        /** Kelas token `tac` untuk pill prioritas WO. */
+        woPriorityTac(prio) {
+            const p = prio || 'Normal';
+            if (p === 'Emergency') return 'bg-tac-status-emergency/20 text-tac-status-emergency';
+            if (p === 'Urgent') return 'bg-tac-status-repair/20 text-tac-status-repair';
+            if (p === 'Planned') return 'bg-tac-secondary/15 text-tac-secondary';
+            return 'bg-tac-surface-container-highest text-tac-on-surface-variant';
+        },
+        /** Bar penanda kiri kartu ledger. */
+        woMarkerTac(log) {
+            const s = (log && log.Status) || 'Pending';
+            const p = (log && log.woPriority) || 'Normal';
+            if (s === 'Completed') return 'bg-tac-status-operational';
+            if (s === 'Cancelled' || s === 'Rejected') return 'bg-tac-status-standby';
+            if (p === 'Emergency' || (log && log.Jenis === 'Breakdown')) return 'bg-tac-status-emergency';
+            if (s === 'In Progress') return 'bg-tac-sync-cyan';
+            if (p === 'Urgent') return 'bg-tac-status-repair';
+            return 'bg-tac-status-standby';
+        },
+        /** Umur WO sejak `Tanggal` → "3d 4h" / "5h 20m". */
+        woElapsed(log) {
+            if (!log || !log.Tanggal) return '-';
+            const t = new Date(log.Tanggal);
+            if (isNaN(t.getTime())) return '-';
+            const mins = Math.max(0, Math.floor((Date.now() - t.getTime()) / 60000));
+            const d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60);
+            return d > 0 ? d + 'd ' + h + 'h' : h + 'h ' + (mins % 60) + 'm';
+        },
+        /** Sparkline downtime (path SVG 160×20) dari 14 catatan performance terakhir. */
+        get woDowntimeSpark() {
+            const perf = (this.performanceData || []).slice(-14);
+            if (perf.length < 2) return '';
+            const vals = perf.map(p => (Number(p.bd) || 0) + (Number(p.stb) || 0));
+            const max = Math.max(...vals, 1);
+            const step = 160 / (vals.length - 1);
+            return vals
+                .map((v, i) => `${i === 0 ? 'M' : 'L'}${Math.round(i * step)} ${Math.round(18 - (v / max) * 16)}`)
+                .join(' ');
+        },
+        /** Format rupiah ringkas. */
+        rp(n) {
+            return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+        },
+        /** Format rupiah padat (jt/M/T) supaya angka besar tidak meluber dari kartu KPI. */
+        rpShort(n) {
+            const v = Math.abs(Number(n) || 0);
+            if (v >= 1e12) return 'Rp ' + (v / 1e12).toFixed(1).replace('.', ',') + ' T';
+            if (v >= 1e9) return 'Rp ' + (v / 1e9).toFixed(1).replace('.', ',') + ' M';
+            if (v >= 1e6) return 'Rp ' + (v / 1e6).toFixed(1).replace('.', ',') + ' jt';
+            if (v >= 1e3) return 'Rp ' + Math.round(v / 1e3) + ' rb';
+            return 'Rp ' + Math.round(v);
+        },
+
         // ── Priority Scoring Matrix (R2) ──
         // Score = WO priority (0-3) + asset criticality (0-3) + health risk (0-3) → 0-9
         woPrioScore(wo) {
