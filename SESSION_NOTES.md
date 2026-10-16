@@ -45,6 +45,20 @@ User lapor **"belum berubah"** setelah rename — padahal `curl` ke live sudah m
 **Diverifikasi live:** `/sw.js` = `mtc-asset-v4` + `no-store` · `/pages/Dashboard.html` → `Cache-Control: no-cache` · `/assets/*` tetap `immutable`.
 **Pelajaran:** setiap kali menambah/mengubah fragment `/pages/*.html`, **naikkan `CACHE_NAME` di `sw.js`** — kalau tidak, user lama tetap melihat versi basi walau live sudah benar.
 
+### Chrome app disamakan dengan desain Stitch (commit `a19362e`)
+User: *"sidebar menu, header bar belum sama. backgroundnya juga tidak sama."* → chrome global (`index.html`) disetel ke design system Stitch.
+
+| Bagian | Sebelum | Sesudah |
+|---|---|---|
+| Sidebar | `bg-nexus-black/40` + `backdrop-blur-2xl`, lebar w-72/w-24, ikon FontAwesome, item aktif = teks emas + border kanan | `bg-tac-surface-container-lowest` **#080f18**, lebar **w-64/w-20**, ikon **Material Symbols**, label grup uppercase mono, item aktif = **pill emas #f59e0b** + teks `on-primary-container` |
+| Header | `glass` tinggi bebas, judul halaman, dropdown tema, ikon bulat | **h-16** `bg-tac-surface-base/90` backdrop-blur: brand **MTC ASSET + "Industrial Telemetry Core"**, chip `ONLINE - SYNCED` + `PWA READY / PAGE: X`, kotak cari menu + `Ctrl+K`, `+ NEW WO`, **pills GOLD/NAVY/PURPLE/LIGHT**, bell, ikon util, identitas role |
+| Background | `--nexus-bg: #05070a` (night) | `--nexus-bg: **#0d141d**` (surface Stitch) + `<main>` `bg-tac-surface` |
+| Ikon | FontAwesome saja | `menuItems` dapat properti **`ms`** (nama ikon Material Symbols); FontAwesome tetap untuk nav mobile & drawer |
+
+State baru: **`menuSearch`** + getter **`filteredMenuGroups`** (kotak cari di header memfilter menu sidebar; Ctrl+K fokus ke sana). Bell notifikasi pindah dari sidebar ke header (sesuai desain).
+
+**Verifikasi (dist build di browser nyata, `python -m http.server` + paksa `isLoggedIn`):** sidebar `rgb(8,15,24)` 256px · header `rgba(11,15,21,.9)` 64px · main `rgb(13,20,29)` margin-left 256px · item aktif `rgb(245,158,11)` / teks `rgb(97,59,0)` · font Material Symbols ter-load (`document.fonts.check` = true) · 7 menu tampil untuk role `user`. Lalu: `typecheck` 0 · `lint` 0 error · `test` 224/224 · `build` ok. Live dicek: `/index.html` memuat `Industrial Telemetry Core`, `Cari menu / halaman`, `filteredMenuGroups`, `PWA CACHE`; CSS live `--nexus-bg:#0d141d`.
+
 ### Pelajaran
 - **Kalau markup sumber desain bisa didapat, JANGAN porting dari screenshot.** Vision atas screenshot berulang kali halusinasi (pernah "membaca" `NETGUARD`, `OEE Forecast`, `Total Cycles`, tanggal `2024-01-xx` — tidak ada di desain maupun di app). Kalau perlu teks dari gambar: **crop region kecil**, jangan gambar penuh.
 - `write_file` menolak menimpa file yang belum dibaca penuh di konteks berjalan → untuk rewrite total: backup ke `scratch/`, `rm`, lalu tulis.
