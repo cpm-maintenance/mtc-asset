@@ -9,37 +9,61 @@ import { componentLoader } from './js/utils/component-loader.js';
 import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification, resetNotifBlocker } from './js/modules/notification.js';
 import { logger } from './js/logger.js';
 
-// Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong
+// Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong.
+//
+// PENTING: dulu blok ini memakai `await import('@sentry/browser')` di TOP-LEVEL,
+// jadi boot seluruh app tertahan sampai chunk Sentry (119 KB terkompresi)
+// selesai diunduh — dan app tidak bisa boot sama sekali kalau chunk itu gagal.
+// Sekarang: stub sinkron dipasang lebih dulu (error awal di-buffer), lalu Sentry
+// dimuat setelah paint pertama supaya keluar dari jalur kritis.
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+/** @type {any[][]} */
+const sentryBacklog = [];
+window.Sentry = {
+  setUser: (u) => { sentryBacklog.push(['user', u]); },
+  captureException: (e, c) => { sentryBacklog.push(['error', e, c]); },
+  withScope: () => {},
+  setContext: (k, v) => { sentryBacklog.push(['ctx', k, v]); },
+  captureMessage: (msg, opts) => { sentryBacklog.push(['msg', msg, opts]); },
+};
+
 if (SENTRY_DSN && import.meta.env.PROD) {
-  const Sentry = await import('@sentry/browser').then(m => {
-    m.init({
-      dsn: SENTRY_DSN,
-      environment: import.meta.env.MODE,
-      tracesSampleRate: 0.0,
-      defaultIntegrations: false,
-      autoSessionTracking: false,
-      integrations: [],
-      replaysSessionSampleRate: 0.0,
-      replaysOnErrorSampleRate: 0.0,
-    });
-    return m;
-  });
-  window.Sentry = {
-    setUser: (u) => Sentry.setUser?.(u),
-    captureException: (e, c) => Sentry.captureException?.(e, c),
-    withScope: (cb) => Sentry.withScope?.(cb),
-    setContext: (k, v) => Sentry.setContext?.(k, v),
+  const initSentry = () => {
+    import('@sentry/browser').then((m) => {
+      m.init({
+        dsn: SENTRY_DSN,
+        environment: import.meta.env.MODE,
+        tracesSampleRate: 0.0,
+        defaultIntegrations: false,
+        autoSessionTracking: false,
+        integrations: [],
+        replaysSessionSampleRate: 0.0,
+        replaysOnErrorSampleRate: 0.0,
+      });
+      window.Sentry = {
+        setUser: (u) => m.setUser?.(u),
+        captureException: (e, c) => m.captureException?.(e, c),
+        withScope: (cb) => m.withScope?.(cb),
+        setContext: (k, v) => m.setContext?.(k, v),
+        captureMessage: (msg, opts) => m.captureMessage?.(msg, opts),
+      };
+      // Kirim ulang yang sempat tertampung saat Sentry belum siap.
+      sentryBacklog.forEach(([kind, a, b]) => {
+        try {
+          if (kind === 'user') m.setUser?.(a);
+          else if (kind === 'error') m.captureException?.(a, b);
+          else if (kind === 'ctx') m.setContext?.(a, b);
+          else if (kind === 'msg') m.captureMessage?.(a, b);
+        } catch { /* telemetry tidak boleh menjatuhkan app */ }
+      });
+      sentryBacklog.length = 0;
+      logger.debug('[Sentry] Initialized, env:', import.meta.env.MODE);
+    }).catch((e) => logger.warn('[Sentry] Gagal dimuat:', e));
   };
-  logger.debug('[Sentry] Initialized, env:', import.meta.env.MODE);
-} else {
-  window.Sentry = {
-    setUser: () => {},
-    captureException: (e) => console.warn('[Sentry] Not available:', e),
-    withScope: () => {},
-    setContext: () => {},
-  };
-  if (!SENTRY_DSN) logger.debug('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(initSentry, { timeout: 3000 });
+  else setTimeout(initSentry, 1500);
+} else if (!SENTRY_DSN) {
+  logger.debug('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
 }
 
 // ============================================================

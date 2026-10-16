@@ -208,6 +208,8 @@ export interface AppState {
   woSectorFilter?: string;
   /** Batas jumlah kartu WO yang dirender (P1) — pola sama `allLogsLimit`. */
   woLimit?: number;
+  /** Versi rilis (inject vite `define` dari package.json) untuk footer status strip. */
+  appVersion?: string;
   showAPISettings?: boolean;
   showCreateUserModal?: boolean;
   showCropModalOpen?: boolean;

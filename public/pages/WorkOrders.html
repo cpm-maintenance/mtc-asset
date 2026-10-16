@@ -553,7 +553,7 @@
       <template x-if="woView === 'ledger'">
         <div class="flex flex-col gap-space-sm">
           <template x-for="log in woVisible" :key="log.LogID">
-            <article class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] transition-all hover:bg-tac-surface-elevated/80 relative overflow-hidden"
+            <article class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] transition-all hover:bg-tac-surface-elevated/80 relative overflow-hidden [content-visibility:auto] [contain-intrinsic-size:auto_260px]"
               :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : ''">
               <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="woMarkerTac(log)"></div>
 

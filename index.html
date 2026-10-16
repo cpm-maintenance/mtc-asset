@@ -490,7 +490,7 @@
   <!-- Sidebar (Desktop) — gaya design system Stitch (bg #080f18, item aktif = pill emas) -->
   <nav x-show="isLoggedIn" x-cloak
     :class="sidebarCollapsed ? 'w-20' : 'w-64'"
-    class="fixed left-0 top-0 h-full bg-tac-surface-container-lowest hidden lg:flex flex-col py-space-md z-50 shadow-[4px_0_16px_rgba(0,0,0,0.4)] transition-all duration-300">
+    class="fixed left-0 top-0 bottom-10 bg-tac-surface-container-lowest hidden lg:flex flex-col py-space-md z-50 shadow-[4px_0_16px_rgba(0,0,0,0.4)] transition-all duration-300">
 
     <!-- Sidebar Toggle (Floating) -->
     <button @click="sidebarCollapsed = !sidebarCollapsed" aria-label="Toggle sidebar"
@@ -578,7 +578,7 @@
   <!-- 📱 MAIN INTERFACE -->
   <main x-show="isLoggedIn" x-cloak 
     :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
-    class="pb-16 lg:pb-0 transition-all duration-500 bg-tac-surface min-h-screen">
+    class="pb-16 lg:pb-10 transition-all duration-500 bg-tac-surface min-h-screen">
     <!-- ⚡ HEADER / STATUS BAR — gaya design system Stitch -->
     <header class="sticky top-0 z-40 h-16 flex items-center justify-between gap-space-md px-space-md lg:px-gutter-desktop bg-tac-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
 
@@ -1104,6 +1104,36 @@
     </div>
     </template>
   </main>
+
+  <!-- 📊 FOOTER STATUS STRIP (desktop) — dari markup Stitch screen 'Work Orders Ledger'.
+       Mobile tidak dipakai: di sana sudah ada bottom navigation. -->
+  <footer x-show="isLoggedIn" x-cloak
+    class="hidden lg:flex fixed bottom-0 left-0 right-0 h-10 z-50 bg-tac-surface-container-lowest/95 backdrop-blur-md items-center justify-between px-gutter-desktop shadow-[0_-1px_6px_rgba(0,0,0,0.5)]">
+    <div class="flex items-center gap-space-lg">
+      <div class="flex items-center gap-space-xs">
+        <span class="h-1.5 w-1.5 rounded-full" :class="isOnline ? 'bg-tac-status-operational' : 'bg-tac-status-emergency'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant"
+          x-text="isOnline ? 'SYNC: REALTIME' : 'SYNC: ANTRIAN LOKAL'"></span>
+      </div>
+      <div class="flex items-center gap-space-xs">
+        <span class="material-symbols-outlined text-[14px] text-tac-sync-cyan">cloud_done</span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant"
+          x-text="'PAGE: ' + (currentPageName || '-')"></span>
+      </div>
+      <div class="hidden md:flex items-center gap-space-xs">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
+          x-text="'USER: ' + (user?.email || user?.username || '-')"></span>
+      </div>
+    </div>
+    <div class="flex items-center gap-space-md">
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="'MTC CORE v' + appVersion"></span>
+      <button type="button" @click="syncPendingOperations()"
+        class="flex items-center gap-1 px-space-sm py-0.5 rounded bg-tac-surface-container hover:bg-tac-surface-container-high hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm text-tac-primary transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[13px]">sync</span>
+        <span>FAST SYNC</span>
+      </button>
+    </div>
+  </footer>
 
   <!-- Mobile Bottom Navigation (5 slots + More) -->
   <nav x-show="isLoggedIn" x-cloak

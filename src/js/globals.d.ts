@@ -12,6 +12,8 @@ export {};
 
 declare global {
   const Cropper: any;
+  /** Versi rilis, di-inject Vite `define` dari package.json. */
+  const __APP_VERSION__: string;
   interface Window {
     /** API notifikasi (di-set notification module). */
     notificationAPI?: any;

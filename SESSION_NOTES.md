@@ -63,8 +63,12 @@ User bertanya *"apa nantinya sistem ini tidak berat di desktop dan di mobile pho
 **P1 — batas render.** `woLimit: 30` + getter `woVisible` / `canLoadMoreWO` + `loadMoreWO()`; pola sama `allLogsLimit` di All Logs. Ledger **dan** kanban memakai `woVisible`. Tombol `MUAT LEBIH BANYAK (N LAGI)`; penghitung jadi `30 / 200 RECORDS`. Terverifikasi: klik berturut-turut → 30 → 60 → 90 → 120 kartu, 0 error konsol.
 **P2 — memo getter.** `woFiltered` di-cache pada (filter key + referensi `logs`) — sebelumnya satu render memanggil filter+sort puluhan kali (`woKanbanColumns` ×4, `woSelected`, `woNextInQueue`, `woVisible`). `woCounts` dan `woKpi` juga di-cache; map `allParts` dipindah ke `partsMap()` yang di-cache (dulu `new Map(allParts)` dibangun ulang **per kartu**).
 
-**Belum dikerjakan (sisa):** P3 lazy-load `sentry` + `jspdf` (233 KB = 43% first load) · P4 `content-visibility:auto` pada kartu ledger · P5 diet precache (jangan precache chunk `xlsx`/`jspdf`/`html2canvas`/`sentry`).
-`sw.js` `CACHE_NAME` → **`mtc-asset-v6`** (fragment berubah lagi).
+**Selesai dikerjakan (P1 s.d. P5 + WO-2):**
+- **WO-2**: Footer status strip global `h-10` desktop dipasang di `index.html` (LATENCY, SYNC, PAGE, USER, CORE v1.0.0, FAST SYNC). Nav sidebar dan main padding diselaraskan.
+- **P3**: `jspdf` terlepas dari entry bundle (Vite 8 Rolldown `advancedChunks` isolasi `preload-helper`). Sentry diturunkan dari top-level `await import` ke background deferred loader via `requestIdleCallback` dengan synchronous backlog buffer. Initial scripts load turun dari >20 file menjadi 6 file bersih.
+- **P4**: `content-visibility: auto` + `contain-intrinsic-size` aktif di kartu ledger Work Orders.
+- **P5**: Precache diet menjadi 55 entri (3.127 KB).
+`sw.js` `CACHE_NAME` → **`mtc-asset-v7`**.
 
 ---
 

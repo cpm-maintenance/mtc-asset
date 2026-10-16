@@ -71,6 +71,9 @@ export function app() {
         // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate):
         // mode tampilan ledger/kanban + filter sektor (Lokasi unit).
         woView: 'ledger', woSectorFilter: '', woLimit: 30,
+        // Versi rilis untuk footer status strip. Di-inject vite.config `define`
+        // (sumber: package.json); fallback 'dev' kalau dijalankan di luar Vite (vitest).
+        appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',
 
         // Dashboard date range filter
         dashboardDateFrom: new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0],

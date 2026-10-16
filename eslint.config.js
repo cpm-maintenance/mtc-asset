@@ -48,6 +48,7 @@ export default [
         QRCode: 'readonly',
         Cropper: 'readonly',
         process: 'readonly',
+        __APP_VERSION__: 'readonly',
       },
     },
     rules: {

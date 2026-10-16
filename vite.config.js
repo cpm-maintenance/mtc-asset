@@ -56,9 +56,12 @@ function firebaseMessagingSwPlugin(env) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf-8'));
 
   return {
     root: './',
+    // Versi app untuk footer status strip (index.html) — satu sumber: package.json.
+    define: { __APP_VERSION__: JSON.stringify(pkg.version) },
     build: {
       outDir: 'dist',
       // Modern browsers only: skip ES5 transpile & heavy core-js polyfills (keeps vendor slim)
@@ -71,7 +74,19 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: { main: './index.html' },
         output: {
+          // Rolldown (Vite 8) mengabaikan `manualChunks` untuk modul virtual
+          // `\0vite/preload-helper`, sehingga helper itu menempel di chunk jspdf —
+          // dan entry jadi `import{D as M}from"./jspdf-*.js"`, menarik 114 KB ke
+          // jalur kritis. `advancedChunks` memisahkannya jadi chunk kecil sendiri.
+          advancedChunks: {
+            groups: [{ name: 'vite-preload-helper', test: /preload-helper/ }],
+          },
           manualChunks(id) {
+            // Helper preload milik Vite (`\0vite/preload-helper`) TIDAK boleh ikut
+            // nempel di chunk besar mana pun: kalau nempel, chunk itu jadi statically
+            // imported oleh entry dan seluruh isinya (mis. jspdf 114 KB) ikut ke
+            // jalur kritis. Pernah kejadian: `import{D as M}from"./jspdf-*.js"`.
+            if (id.includes('preload-helper')) return 'preload-helper';
             if (id.includes('node_modules/xlsx')) return 'xlsx';
             if (id.includes('node_modules/jspdf')) return 'jspdf';
             // jspdf's SVG chain (canvg + dompurify) — only used inside jspdf lazy chunk
