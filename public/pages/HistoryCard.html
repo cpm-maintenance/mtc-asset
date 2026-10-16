@@ -1,264 +1,442 @@
-<!-- 📋 PAGE: HISTORY CARD (Stitch: The Industrial Monolith Port) -->
-<div x-cloak class="space-y-6">
+<!-- ═══ PAGE: HISTORY CARD — Unit Maintenance Ledger (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
 
-  <!-- ── ZONA 1 · Command Strip: Filter & Export ───────────────────────── -->
-  <section aria-label="History Filter Command Strip"
-    class="bg-stitch-surface-low border border-stitch-ghost-border shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 p-5 border-b border-stitch-ghost-border">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="w-2.5 h-2.5 bg-stitch-gold"></span>
-          <span class="text-[10px] uppercase font-mono tracking-widest text-stitch-on-surface-variant font-bold">UNIT MAINTENANCE ARCHIVE</span>
-        </div>
-        <h1 class="text-3xl lg:text-4xl font-black text-stitch-on-surface font-display tracking-tight uppercase">History_Logs</h1>
-        <p class="text-[11px] text-slate-400 mt-1">Operational events, work orders, and parts consumption ledger</p>
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
+    <div>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">UNIT MAINTENANCE ARCHIVE</span>
       </div>
-      <div class="flex flex-wrap gap-2.5">
-        <button @click="historyExportPDF()" class="stitch-btn-secondary text-[11px] uppercase tracking-wider">
-          <i class="fas fa-file-pdf mr-1.5 text-xs text-rose-400"></i> PDF
-        </button>
-        <button @click="historyExportExcel()" class="stitch-btn-secondary text-[11px] uppercase tracking-wider">
-          <i class="fas fa-file-excel mr-1.5 text-xs text-emerald-400"></i> Excel
-        </button>
-        <button @click="historyPrint()" class="stitch-btn-secondary text-[11px] uppercase tracking-wider">
-          <i class="fas fa-print mr-1.5 text-xs text-sky-400"></i> Print
-        </button>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">History Ledger</h1>
+        <span x-show="historyEquipId && historyEquipId !== 'all'"
+          class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="historyFilteredLogs.length + ' RECORD'"></span>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-0">
-      <div class="md:col-span-6 p-4 border-b md:border-b-0 md:border-r border-stitch-ghost-border">
-        <label class="text-[9px] text-stitch-on-surface-variant uppercase font-black tracking-[0.2em] mb-2 block">Equipment Node</label>
-        <select x-model="historyEquipId" @change="historyPage=1"
-          class="w-full bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface p-3 text-sm font-bold uppercase tracking-wider cursor-pointer focus:outline-none focus:border-stitch-gold">
-          <option value="all" class="bg-stitch-surface-high">-- Select Equipment --</option>
+    <!-- Action Bar -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="historyExportPDF()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export riwayat ke PDF">
+        <span class="material-symbols-outlined text-[16px] text-tac-status-emergency">picture_as_pdf</span>
+        <span class="hidden sm:inline">PDF</span>
+      </button>
+
+      <button type="button" @click="historyExportExcel()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export riwayat ke Excel">
+        <span class="material-symbols-outlined text-[16px] text-tac-status-operational">table_view</span>
+        <span class="hidden sm:inline">EXCEL</span>
+      </button>
+
+      <button type="button" @click="historyPrint()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Cetak riwayat">
+        <span class="material-symbols-outlined text-[16px] text-tac-sync-cyan">receipt_long</span>
+        <span class="hidden sm:inline">PRINT</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ 2. FILTER MATRIX ═════════════════════════════════════════════════ -->
+  <section aria-label="History Filter Command Strip"
+    class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+      <div class="flex flex-col gap-1">
+        <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">Equipment</label>
+        <select x-model="historyEquipId" @change="historyPage=1" aria-label="Pilih equipment"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-md text-label-mono-md px-2 py-1.5 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+          <option value="all">SEMUA EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
-            <option :value="e.EquipmentID" class="bg-stitch-surface-high" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
+            <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
           </template>
         </select>
       </div>
 
-      <div class="md:col-span-6 p-4">
-        <label class="text-[9px] text-stitch-on-surface-variant uppercase font-black tracking-[0.2em] mb-2 block">Search Ledger</label>
-        <div class="relative flex items-center bg-stitch-surface-lowest border border-stitch-ghost-border focus-within:border-stitch-gold">
-          <i class="fas fa-search text-stitch-on-surface-variant/60 ml-3 text-sm"></i>
-          <input type="text" x-model="historySearch" placeholder="WO#, PART, TECHNICIAN..."
-            class="bg-transparent border-none text-stitch-on-surface w-full p-3 text-sm uppercase tracking-wider focus:outline-none placeholder:text-stitch-on-surface-variant/30">
+      <div class="flex flex-col gap-1">
+        <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">Cari Log</label>
+        <div class="relative flex items-center bg-tac-surface-recessed rounded border border-tac-border-subtle focus-within:border-tac-primary">
+          <span class="material-symbols-outlined text-[16px] text-tac-on-surface-variant ml-2 pointer-events-none">search</span>
+          <input type="text" x-model="historySearch" placeholder="WO#, PART, TEKNISI..." aria-label="Cari riwayat"
+            class="bg-transparent border-none text-tac-on-surface w-full px-2 py-1.5 font-label-mono-md text-label-mono-md uppercase outline-none placeholder:text-tac-on-surface-variant/50">
         </div>
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-3 items-center p-4 border-t border-stitch-ghost-border">
-      <div class="flex gap-2">
-        <input type="date" x-model="historyDateFrom"
-          class="p-2 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-xs font-bold w-36 focus:outline-none focus:border-stitch-gold">
-        <span class="text-stitch-on-surface-variant text-xs self-center">→</span>
-        <input type="date" x-model="historyDateTo"
-          class="p-2 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-xs font-bold w-36 focus:outline-none focus:border-stitch-gold">
+    <div class="flex flex-wrap items-center gap-space-sm pt-2 border-t border-tac-border-subtle">
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">PERIODE:</span>
+        <input type="date" x-model="historyDateFrom" aria-label="Tanggal mulai"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary">
+        <span class="text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm">s/d</span>
+        <input type="date" x-model="historyDateTo" aria-label="Tanggal akhir"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary">
       </div>
-      <select x-model="historyFilterType"
-        class="p-2 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-xs font-bold w-32 uppercase tracking-wider cursor-pointer focus:outline-none focus:border-stitch-gold">
-        <option value="" class="bg-stitch-surface-high">All Types</option>
-        <option value="PM" class="bg-stitch-surface-high">PM</option>
-        <option value="Repair" class="bg-stitch-surface-high">Repair</option>
-        <option value="Breakdown" class="bg-stitch-surface-high">Breakdown</option>
-        <option value="Inspection" class="bg-stitch-surface-high">Inspection</option>
-        <option value="Calibration" class="bg-stitch-surface-high">Calibration</option>
-        <option value="Installation" class="bg-stitch-surface-high">Installation</option>
-        <option value="Other" class="bg-stitch-surface-high">Other</option>
-      </select>
-      <select x-model="historyFilterStatus"
-        class="p-2 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-xs font-bold w-32 uppercase tracking-wider cursor-pointer focus:outline-none focus:border-stitch-gold">
-        <option value="" class="bg-stitch-surface-high">All Status</option>
-        <option value="Pending" class="bg-stitch-surface-high">Pending</option>
-        <option value="In Progress" class="bg-stitch-surface-high">In Progress</option>
-        <option value="Completed" class="bg-stitch-surface-high">Completed</option>
-        <option value="Approved" class="bg-stitch-surface-high">Approved</option>
-        <option value="Rejected" class="bg-stitch-surface-high">Rejected</option>
-        <option value="Cancelled" class="bg-stitch-surface-high">Cancelled</option>
-      </select>
+
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">JENIS:</span>
+        <select x-model="historyFilterType" aria-label="Filter jenis pekerjaan"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+          <option value="">SEMUA JENIS</option>
+          <option value="PM">PM</option>
+          <option value="Repair">Repair</option>
+          <option value="Breakdown">Breakdown</option>
+          <option value="Inspection">Inspection</option>
+          <option value="Calibration">Calibration</option>
+          <option value="Installation">Installation</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">STATUS:</span>
+        <select x-model="historyFilterStatus" aria-label="Filter status pekerjaan"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+          <option value="">SEMUA STATUS</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">filter_list</span>
+        <span>LEDGER RIWAYAT MAINTENANCE</span>
+      </span>
+      <span>MENAMPILKAN <span class="text-tac-on-surface font-bold" x-text="historyFilteredLogs.length"></span> LOG</span>
     </div>
   </section>
 
-  <!-- ── ZONA 2 · Equipment Identity Bento ─────────────────────────────── -->
+  <!-- ═══ 3. TELEMETRY DECK + EQUIPMENT IDENTITY ═══════════════════════════ -->
   <template x-if="historySelectedEquip">
-    <section aria-label="Equipment Identity" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+    <div class="flex flex-col gap-space-md">
 
-      <!-- Hero Status Plate -->
-      <div class="md:col-span-8 relative overflow-hidden bg-stitch-surface-low border border-stitch-ghost-border p-6 lg:p-8 flex flex-col justify-between min-h-[230px]">
-        <i class="fas fa-helmet-safety absolute -top-3 right-2 text-[7rem] text-stitch-on-surface-variant/5 pointer-events-none"></i>
-        <div class="relative z-10">
-          <p class="font-mono text-[10px] font-bold text-stitch-on-surface-variant tracking-[0.25em] uppercase mb-3">Current Status</p>
-          <div class="inline-flex items-center gap-3 px-5 py-2.5"
-            :class="historySelectedEquip.Status === 'Active' ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-gradient-to-br from-[#FFD700] to-[#E9C400]'">
-            <i class="fas text-black text-lg" :class="historySelectedEquip.Status === 'Active' ? 'fa-circle-check' : 'fa-triangle-exclamation'"></i>
-            <span class="text-black font-display font-black text-2xl tracking-tighter uppercase" x-text="historySelectedEquip.Status || 'UNKNOWN'"></span>
+      <section aria-label="KPI riwayat" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+
+        <!-- KPI 1 — Total Records -->
+        <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-on-surface-variant">Total Records</span>
+            <span class="p-1 rounded bg-tac-surface-container text-tac-primary">
+              <span class="material-symbols-outlined text-[18px]">table_rows</span>
+            </span>
           </div>
-        </div>
-        <div class="relative z-10 mt-6">
-          <h2 class="font-display font-black text-3xl lg:text-4xl text-stitch-on-surface tracking-tight uppercase break-words" x-text="historySelectedEquip.Nama"></h2>
-          <p class="font-mono text-stitch-on-surface-variant text-xs lg:text-sm mt-1"
-            x-text="'UNIT ID: ' + historySelectedEquip.EquipmentID + ' · SECTOR: ' + (historySelectedEquip.Lokasi || '—')"></p>
-        </div>
-      </div>
-
-      <!-- Precision Metrics Column -->
-      <div class="md:col-span-4 flex flex-col gap-4">
-        <div class="bg-stitch-surface-lowest border border-stitch-ghost-border border-b-4 border-b-stitch-gold p-5 flex-1 flex flex-col justify-center">
-          <p class="font-mono text-[10px] font-bold text-stitch-on-surface-variant tracking-[0.2em] uppercase mb-2">Total Records</p>
-          <div class="flex items-baseline gap-2">
-            <span class="font-display font-black text-4xl text-stitch-gold" x-text="historyFilteredLogs.length"></span>
-            <span class="font-mono text-xs text-stitch-on-surface-variant">LOGS</span>
+          <div class="mt-space-sm flex items-baseline gap-2">
+            <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="historyFilteredLogs.length"></span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">LOG</span>
+          </div>
+          <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+            <span class="text-tac-on-surface-variant">HALAMAN AKTIF</span>
+            <span class="text-tac-on-surface font-semibold" x-text="historyPage + '/' + historyTotalPages"></span>
           </div>
         </div>
 
-        <div class="bg-stitch-surface-high border border-stitch-ghost-border p-5 flex-1 grid grid-cols-2 gap-x-3 gap-y-3 content-center">
-          <div>
-            <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-widest mb-0.5">Brand</span>
-            <span class="text-stitch-on-surface font-bold text-xs" x-text="historySelectedEquip.Merk || '—'"></span>
+        <!-- KPI 2 — Parts Consumed -->
+        <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-on-surface-variant">Parts Terpakai</span>
+            <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+              <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+            </span>
           </div>
-          <div>
-            <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-widest mb-0.5">Model</span>
-            <span class="text-stitch-on-surface font-bold text-xs" x-text="historySelectedEquip.Model || '—'"></span>
+          <div class="mt-space-sm flex items-baseline gap-2">
+            <span class="font-headline-lg text-headline-lg font-bold text-tac-sync-cyan" x-text="historyPartRows.filter(r => r.part).length"></span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">BARIS PART</span>
           </div>
-          <div>
-            <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-widest mb-0.5">Serial</span>
-            <span class="text-stitch-on-surface font-bold text-xs font-mono" x-text="historySelectedEquip.SerialNumber || '—'"></span>
-          </div>
-          <div>
-            <span class="block font-mono text-[9px] text-stitch-on-surface-variant uppercase tracking-widest mb-0.5">Sector</span>
-            <span class="text-stitch-on-surface font-bold text-xs" x-text="historySelectedEquip.Lokasi || '—'"></span>
+          <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+            <span class="text-tac-on-surface-variant">BARIS / HALAMAN</span>
+            <span class="text-tac-on-surface font-semibold" x-text="historyPerPage"></span>
           </div>
         </div>
-      </div>
-    </section>
+
+        <!-- KPI 3 — Downtime -->
+        <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-on-surface-variant">Total Downtime</span>
+            <span class="p-1 rounded bg-tac-surface-container text-tac-status-emergency">
+              <span class="material-symbols-outlined text-[18px]">hourglass_bottom</span>
+            </span>
+          </div>
+          <div class="mt-space-sm flex items-baseline gap-2">
+            <span class="font-headline-lg text-headline-lg font-bold text-tac-status-emergency"
+              x-text="historyFilteredLogs.reduce((sum, l) => sum + (Number(l.Downtime) || 0), 0) + 'h'"></span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">JAM UNIT DOWN</span>
+          </div>
+          <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+            <span class="text-tac-on-surface-variant">BARIS DI HALAMAN</span>
+            <span class="text-tac-on-surface font-semibold" x-text="historyCurrentPageLogs.length"></span>
+          </div>
+        </div>
+
+        <!-- KPI 4 — Unit ID -->
+        <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-on-surface-variant">Unit ID</span>
+            <span class="p-1 rounded bg-tac-surface-container text-tac-gold-bright">
+              <span class="material-symbols-outlined text-[18px]">fingerprint</span>
+            </span>
+          </div>
+          <div class="mt-space-sm flex items-baseline gap-2">
+            <span class="font-headline-md text-headline-md font-bold text-tac-gold-bright break-all" x-text="historySelectedEquip.EquipmentID || '—'"></span>
+          </div>
+          <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+            <span class="text-tac-on-surface-variant">SECTOR</span>
+            <span class="text-tac-on-surface font-semibold uppercase truncate max-w-[9rem]" x-text="historySelectedEquip.Lokasi || '—'"></span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Equipment Identity -->
+      <section aria-label="Equipment Identity" class="grid grid-cols-1 md:grid-cols-12 gap-space-md">
+
+        <!-- Hero Status Plate -->
+        <div class="md:col-span-8 relative overflow-hidden bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col justify-between min-h-[200px] shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)]">
+          <span class="material-symbols-outlined absolute -top-6 right-2 text-[7rem] text-tac-on-surface-variant/5 pointer-events-none select-none">engineering</span>
+          <div class="relative z-10">
+            <p class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase tracking-widest mb-3">Current Status</p>
+            <div class="inline-flex items-center gap-space-sm px-space-md py-2 rounded-full border"
+              :class="historySelectedEquip.Status === 'Active' ? 'bg-tac-status-operational/15 border-tac-status-operational/40 text-tac-status-operational' : 'bg-tac-primary/15 border-tac-primary/40 text-tac-primary'">
+              <span class="material-symbols-outlined text-[20px]" x-show="historySelectedEquip.Status === 'Active'">check_circle</span>
+              <span class="material-symbols-outlined text-[20px]" x-show="historySelectedEquip.Status !== 'Active'">warning</span>
+              <span class="font-headline-md text-headline-md font-bold uppercase" x-text="historySelectedEquip.Status || 'UNKNOWN'"></span>
+            </div>
+          </div>
+          <div class="relative z-10 mt-space-md">
+            <h2 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase break-words" x-text="historySelectedEquip.Nama"></h2>
+            <p class="font-label-mono-md text-label-mono-md text-tac-on-surface-variant mt-1"
+              x-text="'UNIT ID: ' + historySelectedEquip.EquipmentID + ' · SECTOR: ' + (historySelectedEquip.Lokasi || '—')"></p>
+          </div>
+        </div>
+
+        <!-- Precision Metrics Column -->
+        <div class="md:col-span-4">
+          <div class="h-full bg-tac-surface-container-low rounded-lg border border-tac-border-subtle p-space-md grid grid-cols-2 gap-x-3 gap-y-3 content-center">
+            <div class="min-w-0">
+              <span class="block font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-0.5">Brand</span>
+              <span class="block text-tac-on-surface font-body-md text-body-md font-semibold truncate" x-text="historySelectedEquip.Merk || '—'"></span>
+            </div>
+            <div class="min-w-0">
+              <span class="block font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-0.5">Model</span>
+              <span class="block text-tac-on-surface font-body-md text-body-md font-semibold truncate" x-text="historySelectedEquip.Model || '—'"></span>
+            </div>
+            <div class="min-w-0">
+              <span class="block font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-0.5">Serial</span>
+              <span class="block text-tac-on-surface font-label-mono-md text-label-mono-md font-semibold truncate" x-text="historySelectedEquip.SerialNumber || '—'"></span>
+            </div>
+            <div class="min-w-0">
+              <span class="block font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-0.5">Sector</span>
+              <span class="block text-tac-on-surface font-body-md text-body-md font-semibold truncate" x-text="historySelectedEquip.Lokasi || '—'"></span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
   </template>
 
-  <!-- ── Empty State: No Equipment Selected ────────────────────────────── -->
+  <!-- ═══ 4. EMPTY STATE — BELUM PILIH EQUIPMENT ═══════════════════════════ -->
   <div x-show="!historyEquipId || historyEquipId === 'all'"
-    class="text-center py-16 bg-stitch-surface-low border border-stitch-ghost-border">
+    class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
     <div class="inline-flex flex-col items-center gap-4">
-      <div class="w-16 h-16 bg-stitch-surface-lowest flex items-center justify-center border border-stitch-ghost-border">
-        <i class="fas fa-clipboard-list text-3xl text-stitch-on-surface-variant/60"></i>
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-on-surface-variant">assignment</span>
       </div>
       <div>
-        <p class="text-stitch-on-surface font-display font-black text-lg uppercase tracking-tight">Select Equipment Node</p>
-        <p class="text-slate-400 text-sm mt-1">Pilih unit di atas untuk menampilkan riwayat pemeliharaan</p>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Pilih Equipment</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Pilih unit di atas untuk menampilkan riwayat pemeliharaan</p>
       </div>
     </div>
   </div>
 
-  <!-- ── ZONA 3 · Ledger Table ─────────────────────────────────────────── -->
-  <div x-show="historyEquipId && historyEquipId !== 'all' && historyCurrentPageLogs.length > 0"
-    class="overflow-x-auto bg-stitch-surface-low border border-stitch-ghost-border shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-    <table class="w-full text-xs" id="history-card-table">
-      <thead>
-        <tr class="bg-stitch-surface-lowest border-b border-stitch-ghost-border">
-          <th @click="historySetSort('Tanggal')" class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-gold cursor-pointer hover:text-white whitespace-nowrap">
-            Date <i :class="historySortField === 'Tanggal' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
-          </th>
-          <th @click="historySetSort('woNumber')" class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-gold cursor-pointer hover:text-white whitespace-nowrap">
-            WO# <i :class="historySortField === 'woNumber' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
-          </th>
-          <th class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-on-surface-variant whitespace-nowrap">Type</th>
-          <th class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-on-surface-variant whitespace-nowrap">Description</th>
-          <th class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-on-surface-variant whitespace-nowrap">Parts Used</th>
-          <th @click="historySetSort('Technician')" class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-gold cursor-pointer hover:text-white whitespace-nowrap">
-            Technician <i :class="historySortField === 'Technician' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
-          </th>
-          <th @click="historySetSort('Downtime')" class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-gold cursor-pointer hover:text-white whitespace-nowrap">
-            Down <i :class="historySortField === 'Downtime' ? (historySortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'" class="fas ml-1 text-[9px]"></i>
-          </th>
-          <th class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-on-surface-variant whitespace-nowrap">Status</th>
-          <th class="p-3 text-left font-black uppercase tracking-[0.15em] text-stitch-on-surface-variant whitespace-nowrap">Notes</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-white/5">
-        <template x-for="(row, idx) in historyPartRows" :key="row.log.LogID + '-' + (row.part?.id || '__nopart')">
-          <tr class="hover:bg-stitch-surface-high transition-colors">
-            <td class="p-3 font-mono text-stitch-on-surface font-bold whitespace-nowrap" x-text="row.log.Tanggal"></td>
-            <td class="p-3 font-mono text-stitch-gold font-bold whitespace-nowrap" x-text="row.log.woNumber || '-'"></td>
-            <td class="p-3">
-              <span class="px-2 py-0.5 font-black uppercase text-[9px] tracking-wider whitespace-nowrap border-l-2"
-                :class="{
-                  'text-emerald-300 bg-emerald-500/10 border-emerald-500': row.log.Jenis === 'PM',
-                  'text-blue-300 bg-blue-500/10 border-blue-500': row.log.Jenis === 'Repair',
-                  'text-rose-300 bg-rose-500/10 border-rose-500': row.log.Jenis === 'Breakdown',
-                  'text-purple-300 bg-purple-500/10 border-purple-500': row.log.Jenis === 'Calibration',
-                  'text-amber-300 bg-amber-500/10 border-amber-500': row.log.Jenis === 'Inspection',
-                  'text-sky-300 bg-sky-500/10 border-sky-500': row.log.Jenis === 'Installation',
-                  'text-slate-400 bg-slate-500/10 border-slate-500': !['PM','Repair','Breakdown','Calibration','Inspection','Installation'].includes(row.log.Jenis)
-                }" x-text="row.log.Jenis || '-'"></span>
-            </td>
-            <td class="p-3 text-slate-300 max-w-xs truncate" x-text="row.log.Deskripsi || '-'" :title="row.log.Deskripsi"></td>
-            <td class="p-3">
-              <template x-if="row.part">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-stitch-gold font-bold" x-text="historyGetPartName(row.part.id)"></span>
-                  <span class="text-slate-500 text-[8px] font-mono" x-text="historyGetPartNumber(row.part.id) ? '('+historyGetPartNumber(row.part.id)+')' : ''"></span>
-                  <span class="text-stitch-gold/60 font-mono text-[9px]">x<span x-text="row.part.qty || 1"></span></span>
-                </div>
-              </template>
-              <span x-show="!row.part" class="text-slate-600">—</span>
-            </td>
-            <td class="p-3 text-stitch-on-surface uppercase" x-text="row.log.Technician || '-'"></td>
-            <td class="p-3 font-mono font-bold text-stitch-on-surface-variant" x-text="row.log.Downtime ? row.log.Downtime + 'h' : '-'"></td>
-            <td class="p-3">
-              <span class="px-2 py-0.5 font-black uppercase text-[9px] tracking-wider whitespace-nowrap border-l-2"
-                :class="{
-                  'text-emerald-300 bg-emerald-500/10 border-emerald-500': row.log.Status === 'Completed' || row.log.Status === 'Approved',
-                  'text-amber-300 bg-amber-500/10 border-amber-500': row.log.Status === 'Pending' || row.log.Status === 'In Progress',
-                  'text-rose-300 bg-rose-500/10 border-rose-500': row.log.Status === 'Rejected' || row.log.Status === 'Cancelled',
-                  'text-blue-300 bg-blue-500/10 border-blue-500': row.log.Status === 'Draft'
-                }" x-text="row.log.Status || 'Pending'"></span>
-            </td>
-            <td class="p-3 text-slate-500 max-w-[120px] truncate" x-text="row.log.Catatan || '-'" :title="row.log.Catatan"></td>
+  <!-- ═══ 5. LEDGER TABLE (DESKTOP) ════════════════════════════════════════ -->
+  <section x-show="historyEquipId && historyEquipId !== 'all' && historyCurrentPageLogs.length > 0"
+    class="hidden lg:block print:block bg-tac-surface-card rounded-lg border border-tac-border-subtle overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left" id="history-card-table">
+        <thead class="bg-tac-surface-recessed">
+          <tr class="border-b border-tac-border-subtle">
+            <th @click="historySetSort('Tanggal')" class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant cursor-pointer hover:text-tac-on-surface whitespace-nowrap select-none">
+              <span class="inline-flex items-center gap-1">TANGGAL
+                <span class="material-symbols-outlined text-[14px] transition-transform"
+                  :class="historySortField === 'Tanggal' ? (historySortDir === 'asc' ? 'rotate-180' : '') : 'opacity-30'">expand_more</span>
+              </span>
+            </th>
+            <th @click="historySetSort('woNumber')" class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant cursor-pointer hover:text-tac-on-surface whitespace-nowrap select-none">
+              <span class="inline-flex items-center gap-1">WO#
+                <span class="material-symbols-outlined text-[14px] transition-transform"
+                  :class="historySortField === 'woNumber' ? (historySortDir === 'asc' ? 'rotate-180' : '') : 'opacity-30'">expand_more</span>
+              </span>
+            </th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant whitespace-nowrap">JENIS</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant whitespace-nowrap">DESKRIPSI</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant whitespace-nowrap">PART</th>
+            <th @click="historySetSort('Technician')" class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant cursor-pointer hover:text-tac-on-surface whitespace-nowrap select-none">
+              <span class="inline-flex items-center gap-1">TEKNISI
+                <span class="material-symbols-outlined text-[14px] transition-transform"
+                  :class="historySortField === 'Technician' ? (historySortDir === 'asc' ? 'rotate-180' : '') : 'opacity-30'">expand_more</span>
+              </span>
+            </th>
+            <th @click="historySetSort('Downtime')" class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant cursor-pointer hover:text-tac-on-surface whitespace-nowrap select-none">
+              <span class="inline-flex items-center gap-1">DOWN
+                <span class="material-symbols-outlined text-[14px] transition-transform"
+                  :class="historySortField === 'Downtime' ? (historySortDir === 'asc' ? 'rotate-180' : '') : 'opacity-30'">expand_more</span>
+              </span>
+            </th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant whitespace-nowrap">STATUS</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant whitespace-nowrap">CATATAN</th>
           </tr>
-        </template>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in historyPartRows" :key="row.log.LogID + '-' + (row.part?.id || '__nopart')">
+            <tr class="border-b border-tac-border-subtle last:border-b-0 hover:bg-tac-surface-elevated/40 transition-colors">
+              <td class="p-3 font-label-mono-md text-label-mono-md font-semibold text-tac-on-surface whitespace-nowrap" x-text="row.log.Tanggal"></td>
+              <td class="p-3 font-label-mono-md text-label-mono-md font-bold text-tac-primary whitespace-nowrap" x-text="row.log.woNumber || '-'"></td>
+              <td class="p-3">
+                <span class="px-2 py-0.5 rounded border-l-2 font-label-mono-sm text-label-mono-sm uppercase whitespace-nowrap"
+                  :class="{
+                    'text-tac-status-operational bg-tac-status-operational/10 border-tac-status-operational': row.log.Jenis === 'PM',
+                    'text-tac-sync-cyan bg-tac-sync-cyan/10 border-tac-sync-cyan': row.log.Jenis === 'Repair',
+                    'text-tac-status-emergency bg-tac-status-emergency/10 border-tac-status-emergency': row.log.Jenis === 'Breakdown',
+                    'text-tac-tertiary bg-tac-tertiary/10 border-tac-tertiary': row.log.Jenis === 'Calibration',
+                    'text-tac-gold-bright bg-tac-gold-bright/10 border-tac-gold-bright': row.log.Jenis === 'Inspection',
+                    'text-tac-primary bg-tac-primary/10 border-tac-primary': row.log.Jenis === 'Installation',
+                    'text-tac-on-surface-variant bg-tac-surface-container-high border-tac-surface-variant': !['PM','Repair','Breakdown','Calibration','Inspection','Installation'].includes(row.log.Jenis)
+                  }" x-text="row.log.Jenis || '-'"></span>
+              </td>
+              <td class="p-3 font-body-sm text-body-sm text-tac-on-surface-variant max-w-xs truncate" x-text="row.log.Deskripsi || '-'" :title="row.log.Deskripsi"></td>
+              <td class="p-3">
+                <template x-if="row.part">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-body-sm text-body-sm font-semibold text-tac-primary" x-text="historyGetPartName(row.part.id)"></span>
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="historyGetPartNumber(row.part.id) ? '(' + historyGetPartNumber(row.part.id) + ')' : ''"></span>
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright">x<span x-text="row.part.qty || 1"></span></span>
+                  </div>
+                </template>
+                <span x-show="!row.part" class="text-tac-on-surface-variant">—</span>
+              </td>
+              <td class="p-3 font-body-sm text-body-sm text-tac-on-surface uppercase" x-text="row.log.Technician || '-'"></td>
+              <td class="p-3 font-label-mono-md text-label-mono-md font-bold text-tac-on-surface-variant" x-text="row.log.Downtime ? row.log.Downtime + 'h' : '-'"></td>
+              <td class="p-3">
+                <span class="px-2 py-0.5 rounded border-l-2 font-label-mono-sm text-label-mono-sm uppercase whitespace-nowrap"
+                  :class="{
+                    'text-tac-status-operational bg-tac-status-operational/10 border-tac-status-operational': row.log.Status === 'Completed' || row.log.Status === 'Approved',
+                    'text-tac-gold-bright bg-tac-gold-bright/10 border-tac-gold-bright': row.log.Status === 'Pending' || row.log.Status === 'In Progress',
+                    'text-tac-error bg-tac-error/10 border-tac-error': row.log.Status === 'Rejected' || row.log.Status === 'Cancelled',
+                    'text-tac-sync-cyan bg-tac-sync-cyan/10 border-tac-sync-cyan': row.log.Status === 'Draft'
+                  }" x-text="row.log.Status || 'Pending'"></span>
+              </td>
+              <td class="p-3 font-body-sm text-body-sm text-tac-on-surface-variant max-w-[120px] truncate" x-text="row.log.Catatan || '-'" :title="row.log.Catatan"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-  <!-- ── Empty Ledger ──────────────────────────────────────────────────── -->
+  <!-- ═══ 6. STREAM CARDS (MOBILE / TABLET) ════════════════════════════════ -->
+  <section x-show="historyEquipId && historyEquipId !== 'all' && historyCurrentPageLogs.length > 0"
+    class="lg:hidden print:hidden flex flex-col gap-space-sm">
+    <template x-for="(row, idx) in historyPartRows" :key="'m-' + row.log.LogID + '-' + (row.part?.id || '__nopart')">
+      <article class="relative bg-tac-surface-card rounded-lg border border-tac-border-subtle p-3 [content-visibility:auto] [contain-intrinsic-size:auto_180px]">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l"
+          :class="{
+            'bg-tac-status-operational': row.log.Status === 'Completed' || row.log.Status === 'Approved',
+            'bg-tac-gold-bright': row.log.Status === 'Pending' || row.log.Status === 'In Progress',
+            'bg-tac-status-emergency': row.log.Status === 'Rejected' || row.log.Status === 'Cancelled',
+            'bg-tac-sync-cyan': row.log.Status === 'Draft'
+          }"></div>
+        <div class="pl-2 flex flex-col gap-2">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase block" x-text="row.log.Tanggal || '-'"></span>
+              <span class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="row.log.woNumber || 'TANPA WO'"></span>
+            </div>
+            <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface shrink-0"
+              x-text="row.log.Jenis || '-'"></span>
+          </div>
+
+          <p class="font-body-sm text-body-sm text-tac-on-surface-variant" x-text="row.log.Deskripsi || '-'"></p>
+
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">person</span>
+              <span x-text="row.log.Technician || '-'"></span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">hourglass_bottom</span>
+              <span x-text="row.log.Downtime ? row.log.Downtime + 'h' : '-'"></span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">inventory_2</span>
+              <span x-text="row.part ? historyGetPartName(row.part.id) + ' x' + (row.part.qty || 1) : '-'"></span>
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-tac-border-subtle">
+            <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm uppercase"
+              :class="{
+                'text-tac-status-operational bg-tac-status-operational/10': row.log.Status === 'Completed' || row.log.Status === 'Approved',
+                'text-tac-gold-bright bg-tac-gold-bright/10': row.log.Status === 'Pending' || row.log.Status === 'In Progress',
+                'text-tac-error bg-tac-error/10': row.log.Status === 'Rejected' || row.log.Status === 'Cancelled',
+                'text-tac-sync-cyan bg-tac-sync-cyan/10': row.log.Status === 'Draft'
+              }" x-text="row.log.Status || 'Pending'"></span>
+            <span class="font-body-sm text-body-sm text-tac-on-surface-variant truncate max-w-[60%]" x-text="row.log.Catatan || '-'"></span>
+          </div>
+        </div>
+      </article>
+    </template>
+  </section>
+
+  <!-- ═══ 7. EMPTY LEDGER ══════════════════════════════════════════════════ -->
   <div x-show="historyEquipId && historyEquipId !== 'all' && historyCurrentPageLogs.length === 0 && !historyFilteredLogs.length"
-    class="text-center py-16 bg-stitch-surface-low border border-stitch-ghost-border">
+    class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
     <div class="inline-flex flex-col items-center gap-4">
-      <div class="w-16 h-16 bg-stitch-surface-lowest flex items-center justify-center border border-stitch-ghost-border">
-        <i class="fas fa-inbox text-3xl text-stitch-on-surface-variant/60"></i>
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-on-surface-variant">history</span>
       </div>
       <div>
-        <p class="text-stitch-on-surface font-display font-black text-lg uppercase tracking-tight">No Maintenance History</p>
-        <p class="text-slate-400 text-sm mt-1">Pilih unit lain atau sesuaikan filter pencarian</p>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Belum Ada Riwayat Maintenance</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Pilih unit lain atau sesuaikan filter pencarian</p>
       </div>
     </div>
   </div>
 
-  <!-- ── Pagination ────────────────────────────────────────────────────── -->
+  <!-- ═══ 8. PAGINATION ════════════════════════════════════════════════════ -->
   <div x-show="historyEquipId && historyEquipId !== 'all' && historyFilteredLogs.length > 0"
-    class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-stitch-surface-low border border-stitch-ghost-border">
-    <div class="flex items-center gap-2 text-xs text-stitch-on-surface-variant font-mono">
-      <span x-text="'Showing ' + ((historyPage-1)*historyPerPage+1) + '-' + Math.min(historyPage*historyPerPage, historyFilteredLogs.length) + ' of ' + historyFilteredLogs.length"></span>
-      <select x-model="historyPerPage" @change="historyPage=1"
-        class="p-1 bg-stitch-surface-lowest border border-stitch-ghost-border text-stitch-on-surface text-[10px] font-bold focus:outline-none focus:border-stitch-gold">
-        <option value="10" class="bg-stitch-surface-high">10</option>
-        <option value="20" class="bg-stitch-surface-high">20</option>
-        <option value="50" class="bg-stitch-surface-high">50</option>
-        <option value="100" class="bg-stitch-surface-high">100</option>
+    class="flex flex-col sm:flex-row items-center justify-between gap-space-sm p-3 bg-tac-surface-card rounded-lg border border-tac-border-subtle print:hidden">
+    <div class="flex items-center gap-2 font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
+      <span x-text="'MENAMPILKAN ' + ((historyPage-1)*historyPerPage+1) + '-' + Math.min(historyPage*historyPerPage, historyFilteredLogs.length) + ' DARI ' + historyFilteredLogs.length"></span>
+      <select x-model="historyPerPage" @change="historyPage=1" aria-label="Baris per halaman"
+        class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
       </select>
-      <span class="text-[9px] uppercase tracking-widest">per page</span>
+      <span class="uppercase">PER HALAMAN</span>
     </div>
-    <div class="flex gap-2 items-center">
-      <button @click="historyPrevPage()" :disabled="historyPage <= 1"
-        class="px-3 py-1.5 bg-stitch-surface-high border border-stitch-ghost-border text-xs font-bold disabled:opacity-40 transition-colors"
-        :class="historyPage > 1 ? 'text-stitch-gold hover:bg-stitch-surface-highest' : 'text-slate-600'">
-        <i class="fas fa-chevron-left"></i>
+
+    <div class="flex items-center gap-2">
+      <button type="button" @click="historyPrevPage()" :disabled="historyPage <= 1" aria-label="Halaman sebelumnya"
+        class="flex items-center justify-center px-3 py-1.5 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated disabled:opacity-40 transition-colors"
+        :class="historyPage > 1 ? 'text-tac-primary' : 'text-tac-on-surface-variant'">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
       </button>
-      <span class="px-3 py-1.5 text-xs font-mono font-bold text-stitch-on-surface" x-text="historyPage + '/' + historyTotalPages"></span>
-      <button @click="historyNextPage()" :disabled="historyPage >= historyTotalPages"
-        class="px-3 py-1.5 bg-stitch-surface-high border border-stitch-ghost-border text-xs font-bold disabled:opacity-40 transition-colors"
-        :class="historyPage < historyTotalPages ? 'text-stitch-gold hover:bg-stitch-surface-highest' : 'text-slate-600'">
-        <i class="fas fa-chevron-right"></i>
+      <span class="px-3 py-1.5 font-label-mono-md text-label-mono-md font-bold text-tac-on-surface" x-text="historyPage + '/' + historyTotalPages"></span>
+      <button type="button" @click="historyNextPage()" :disabled="historyPage >= historyTotalPages" aria-label="Halaman berikutnya"
+        class="flex items-center justify-center px-3 py-1.5 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated disabled:opacity-40 transition-colors"
+        :class="historyPage < historyTotalPages ? 'text-tac-primary' : 'text-tac-on-surface-variant'">
+        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
       </button>
     </div>
   </div>
@@ -271,5 +449,4 @@
   body * { visibility: hidden; }
   #history-card-table, #history-card-table * { visibility: visible; }
   #history-card-table { position: absolute; top: 0; left: 0; width: 100%; }
-  .card-modern { border: 1px solid #ccc; background: white !important; }
 </style>

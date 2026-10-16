@@ -1,128 +1,362 @@
-<!-- 📈 PAGE: PERFORMANCE TRACKER -->
-<div x-cloak class="space-y-4">
-  <!-- Header with Title and Actions -->
-  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-    <h3 class="font-black text-xl lg:text-2xl text-nexus-text nexus-glow-text uppercase tracking-tight">KPI Availability Matrix</h3>
-    <div class="flex flex-wrap gap-2.5 items-center">
-      <button @click="downloadTemplate('perf')" class="btn-nexus-small"><i class="fas fa-file-csv"></i><span class="hidden lg:inline ml-1">Template</span></button>
-      <button @click="exportData('perf', 'csv')" class="btn-nexus-small"><i class="fas fa-download"></i><span class="hidden lg:inline ml-1">CSV</span></button>
-      <label class="btn-nexus-small cursor-pointer">
-        <i class="fas fa-upload"></i><span class="hidden lg:inline ml-1">Import</span>
+<!-- ═══ PAGE: PERFORMANCE — KPI Availability Matrix (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
+
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
+    <div>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">AVAILABILITY &amp; RELIABILITY MATRIX</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Performance Ledger</h1>
+        <span class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-status-standby font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="perfKpi.total + ' RECORD'"></span>
+        <span x-show="perfKpi.autoBd > 0"
+          class="px-2 py-0.5 rounded-full bg-tac-primary/15 text-tac-primary font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="perfKpi.autoBd + ' BD AUTO-SYNC'"></span>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="downloadTemplate('perf')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Download CSV template">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">description</span>
+        <span class="hidden sm:inline">TEMPLATE</span>
+      </button>
+
+      <button type="button" @click="exportData('perf', 'csv')"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export CSV">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">download</span>
+        <span class="hidden sm:inline">CSV</span>
+      </button>
+
+      <label class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 cursor-pointer"
+        title="Import CSV/XLSX">
+        <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
+        <span class="hidden sm:inline">IMPORT</span>
         <input type="file" @change="importCSV($event, 'perf')" class="hidden" accept=".csv, .xlsx">
       </label>
-      <button @click="exportKPIToPDF()" class="btn-nexus-small"><i class="fas fa-file-pdf"></i><span class="hidden lg:inline ml-1">PDF</span></button>
-      <button @click="recomputeBD()" class="btn-nexus-small" title="Hitung ulang BD dari WO breakdown"><i class="fas fa-sync-alt"></i><span class="hidden lg:inline ml-1">Sync BD</span></button>
-      <button @click="openPerformanceModal(false)" class="btn-nexus-gold"><i class="fas fa-plus-circle"></i><span class="hidden lg:inline ml-1">Log</span></button>
-    </div>
-  </div>
 
-  <!-- Filter Bar -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 glass p-4 rounded-2xl border-nexus-accent/10">
-    <div>
-      <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Equipment</label>
-      <select x-model="perfFilterEquip" class="w-full p-2.5 glass text-xs font-bold">
-        <option value="">-- Semua Equipment --</option>
-        <template x-for="e in equipment" :key="e.EquipmentID">
-          <option :value="e.EquipmentID" x-text="e.Nama"></option>
-        </template>
-      </select>
-    </div>
-    <div>
-      <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Area</label>
-      <select x-model="perfFilterArea" class="w-full p-2.5 glass text-xs font-bold">
-        <option value="">-- Semua Area --</option>
-        <template x-for="area in [...new Set(performanceData.map(p => p.area).filter(Boolean))]" :key="area">
-          <option :value="area" x-text="area"></option>
-        </template>
-      </select>
-    </div>
-    <div>
-      <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Periode</label>
-      <select x-model="kpiFilter" class="w-full p-2.5 glass text-xs font-bold">
-        <option value="yearly">Yearly</option>
-        <option value="monthly">Monthly</option>
-        <option value="weekly">Weekly</option>
-        <option value="daily">Daily</option>
-      </select>
-    </div>
-    <div>
-      <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Tanggal</label>
-      <input type="date" x-model="kpiFilterDate" class="w-full p-2.5 glass text-xs font-bold text-white">
-    </div>
-  </div>
+      <button type="button" @click="exportKPIToPDF()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Export KPI ke PDF">
+        <span class="material-symbols-outlined text-[16px] text-tac-status-emergency">picture_as_pdf</span>
+        <span class="hidden sm:inline">PDF</span>
+      </button>
 
-  <!-- Performance Table -->
-  <div class="card-modern overflow-hidden border-nexus-accent/10">
+      <button type="button" @click="recomputeBD()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Hitung ulang BD dari WO breakdown">
+        <span class="material-symbols-outlined text-[16px] text-tac-sync-cyan">sync</span>
+        <span class="hidden sm:inline">SYNC BD</span>
+      </button>
+
+      <button type="button" x-show="isAdminOrSupervisor" @click="openPerformanceModal(false)"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        <span>+ LOG</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ 2. PERFORMANCE TELEMETRY DECK (4 KARTU) ══════════════════════════ -->
+  <section aria-label="KPI performance" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+
+    <!-- KPI 1 — Records -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Total Records</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-primary">
+          <span class="material-symbols-outlined text-[18px]">table_rows</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="perfKpi.total"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">BARIS DATA</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">TOTAL EVENT</span>
+        <span class="text-tac-on-surface font-semibold" x-text="perfKpi.events"></span>
+      </div>
+    </div>
+
+    <!-- KPI 2 — Downtime -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Breakdown Hours</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-emergency">
+          <span class="material-symbols-outlined text-[18px]">hourglass_bottom</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-emergency" x-text="perfKpi.bd"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">JAM BD</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">SINKRON DARI WO</span>
+        <span class="text-tac-primary font-semibold" x-text="perfKpi.autoBd + ' BARIS'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 3 — Avg MA -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Mechanical Availability</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+          <span class="material-symbols-outlined text-[18px]">troubleshoot</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-sync-cyan" x-text="perfKpi.avgMa + '%'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">RATA-RATA MA</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">PERIODE</span>
+        <span class="text-tac-on-surface font-semibold uppercase" x-text="kpiFilter"></span>
+      </div>
+    </div>
+
+    <!-- KPI 4 — Avg PA / Gap -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Physical Availability</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-operational">
+          <span class="material-symbols-outlined text-[18px]">trending_up</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-operational" x-text="perfKpi.avgPa + '%'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">RATA-RATA PA</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">RATA-RATA GAP</span>
+        <span :class="perfKpi.avgGap < 0 ? 'text-tac-status-emergency font-semibold' : 'text-tac-status-operational font-semibold'"
+          x-text="perfKpi.avgGap + '%'"></span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 3. TACTICAL FILTER MATRIX ════════════════════════════════════════ -->
+  <section aria-label="Filter performance" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+    <div class="flex flex-wrap items-center gap-space-sm">
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">EQUIPMENT:</span>
+        <select x-model="perfFilterEquip"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none min-w-[12rem]">
+          <option value="">SEMUA EQUIPMENT</option>
+          <template x-for="e in equipment" :key="e.EquipmentID">
+            <option :value="e.EquipmentID" x-text="e.Nama"></option>
+          </template>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">AREA:</span>
+        <select x-model="perfFilterArea"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          <option value="">SEMUA AREA</option>
+          <template x-for="area in [...new Set(performanceData.map(p => p.area).filter(Boolean))]" :key="area">
+            <option :value="area" x-text="area"></option>
+          </template>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">PERIODE:</span>
+        <select x-model="kpiFilter"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          <option value="yearly">YEARLY</option>
+          <option value="monthly">MONTHLY</option>
+          <option value="weekly">WEEKLY</option>
+          <option value="daily">DAILY</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">TANGGAL:</span>
+        <input type="date" x-model="kpiFilterDate" aria-label="Tanggal acuan"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+      </div>
+
+      <button type="button" x-show="perfFilterEquip || perfFilterArea"
+        @click="perfFilterEquip = ''; perfFilterArea = ''"
+        class="font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-status-emergency/30 text-tac-status-emergency hover:bg-tac-status-emergency/10 transition-colors">
+        RESET FILTER
+      </button>
+    </div>
+
+    <div class="flex items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">filter_list</span>
+        <span>MATRIKS AVAILABILITY (MA / PA / GAP)</span>
+      </span>
+      <span>MENAMPILKAN <span class="text-tac-on-surface font-bold" x-text="filteredPerformanceData.length"></span> DARI <span class="text-tac-on-surface font-bold" x-text="performanceData.length"></span> BARIS</span>
+    </div>
+  </section>
+
+  <!-- ═══ 4. MATRIX TABLE (DESKTOP) ════════════════════════════════════════ -->
+  <section class="hidden lg:block bg-tac-surface-card rounded-lg border border-tac-border-subtle overflow-hidden">
     <div class="overflow-x-auto">
-      <div class="overflow-x-auto"><table id="perfTable" class="w-full text-left">
-        <thead class="glass text-xs uppercase font-black tracking-widest text-amber-400/60">
-          <tr>
-            <th class="p-5">Timeline</th>
-            <th class="p-5">Asset Node</th>
-            <th class="p-5">Category</th>
-            <th class="p-5">Area</th>
-            <th class="p-5 text-center">HM</th>
-            <th class="p-5 text-center">WH</th>
-            <th class="p-5 text-center">BD</th>
-            <th class="p-5 text-center">Freq</th>
-            <th class="p-5 text-center">MA %</th>
-            <th class="p-5 text-center">PA %</th>
-            <th class="p-5 text-center">Gap %</th>
-            <th class="p-5 text-right">Protocol</th>
+      <table id="perfTable" class="w-full text-left">
+        <thead class="bg-tac-surface-recessed">
+          <tr class="border-b border-tac-border-subtle">
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">TIMELINE</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">ASSET NODE</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">CATEGORY</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">AREA</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">HM</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">WH</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">BD</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">FREQ</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">MA %</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">PA %</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">GAP %</th>
+            <th class="p-3 text-right font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">PROTOCOL</th>
           </tr>
         </thead>
-        <tbody class="text-xs">
+        <tbody>
           <template x-for="p in filteredPerformanceData" :key="p.id">
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-              <td class="p-5 font-bold text-nexus-text" x-text="p.date"></td>
-              <td class="p-5 text-amber-400 font-black" x-text="getEquipName(p.equipmentId)"></td>
-              <td class="p-5"><span class="tag-nexus" x-text="p.category || 'Mechanical'"></span></td>
-              <td class="p-5 text-slate-400" x-text="p.area"></td>
-              <td class="p-5 text-center font-bold text-amber-400" x-text="p.hm != null && p.hm !== '' ? Number(p.hm).toLocaleString() : '-'"></td>
-              <td class="p-5 text-center font-bold" x-text="p.wh"></td>
-              <td class="p-5 text-center text-rose-400 font-bold">
+            <tr class="border-b border-tac-border-subtle last:border-b-0 hover:bg-tac-surface-elevated/40 transition-colors">
+              <td class="p-3 font-body-sm text-body-sm font-semibold text-tac-on-surface" x-text="p.date"></td>
+              <td class="p-3 font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="getEquipName(p.equipmentId)"></td>
+              <td class="p-3">
+                <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface"
+                  x-text="p.category || 'Mechanical'"></span>
+              </td>
+              <td class="p-3 font-body-sm text-body-sm text-tac-on-surface-variant" x-text="p.area || '-'"></td>
+              <td class="p-3 text-center font-label-mono-md text-label-mono-md font-bold text-tac-primary"
+                x-text="p.hm != null && p.hm !== '' ? Number(p.hm).toLocaleString() : '-'"></td>
+              <td class="p-3 text-center font-label-mono-md text-label-mono-md text-tac-on-surface" x-text="p.wh || '-'"></td>
+              <td class="p-3 text-center font-label-mono-md text-label-mono-md font-bold text-tac-status-emergency">
                 <span x-text="p.bd"></span>
-                <span x-show="p.bdSource === 'wo'" class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-black uppercase tracking-widest border border-amber-500/30" title="Dari WO breakdown (auto-sync)">auto</span>
+                <span x-show="p.bdSource === 'wo'" title="Dari WO breakdown (auto-sync)"
+                  class="ml-1 px-1.5 py-0.5 rounded bg-tac-primary/20 text-tac-primary border border-tac-primary/30 font-label-mono-sm text-label-mono-sm">AUTO</span>
               </td>
-              <td class="p-5 text-center font-bold text-white"><span class="px-2 py-0.5 glass rounded-md border border-white/10" x-text="(p.events && p.events.length > 0) ? p.events.length : (p.freq || 0)"></span></td>
-              <td class="p-5 text-center font-black text-white"><div class="flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_#3b82f6]"></div><span x-text="calculateKPI(p).ma + '%'"></span></div></td>
-              <td class="p-5 text-center font-black text-white"><div class="flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]"></div><span x-text="calculateKPI(p).pa + '%'"></span></div></td>
-              <td class="p-5 text-center font-black">
-                <div class="flex items-center justify-center gap-2">
-                  <div class="w-2 h-2 rounded-full" :class="Number(calculateKPI(p).gap) < 0 ? 'bg-rose-500 shadow-[0_0_5px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_5px_#10b981]'"></div>
-                  <span :class="Number(calculateKPI(p).gap) < 0 ? 'text-rose-500' : 'text-emerald-500'" x-text="calculateKPI(p).gap + '%'"></span>
-                </div>
+              <td class="p-3 text-center">
+                <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-recessed font-label-mono-sm text-label-mono-sm text-tac-on-surface"
+                  x-text="(p.events && p.events.length > 0) ? p.events.length : (p.freq || 0)"></span>
               </td>
-              <td class="p-5 text-right">
-                <div x-show="isAdminOrSupervisor" class="flex justify-end gap-2">
-                  <button @click="openPerformanceModal(true, p)" class="w-8 h-8 glass rounded-lg text-amber-400 flex items-center justify-center hover:bg-nexus-accent/20"><i class="fas fa-edit text-xs"></i></button>
-                  <button @click="deleteItem('Performance', p.id)" class="w-8 h-8 glass rounded-lg text-rose-400 flex items-center justify-center hover:bg-rose-500/20"><i class="fas fa-trash text-xs"></i></button>
+              <td class="p-3 text-center">
+                <span class="inline-flex items-center gap-1.5 font-label-mono-md text-label-mono-md font-bold text-tac-on-surface">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tac-sync-cyan"></span>
+                  <span x-text="calculateKPI(p).ma + '%'"></span>
+                </span>
+              </td>
+              <td class="p-3 text-center">
+                <span class="inline-flex items-center gap-1.5 font-label-mono-md text-label-mono-md font-bold text-tac-on-surface">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tac-status-operational"></span>
+                  <span x-text="calculateKPI(p).pa + '%'"></span>
+                </span>
+              </td>
+              <td class="p-3 text-center">
+                <span class="inline-flex items-center gap-1.5 font-label-mono-md text-label-mono-md font-bold"
+                  :class="Number(calculateKPI(p).gap) < 0 ? 'text-tac-status-emergency' : 'text-tac-status-operational'">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="perfGapTac(calculateKPI(p).gap)"></span>
+                  <span x-text="calculateKPI(p).gap + '%'"></span>
+                </span>
+              </td>
+              <td class="p-3 text-right">
+                <div x-show="isAdminOrSupervisor" class="flex justify-end gap-1">
+                  <button type="button" @click="openPerformanceModal(true, p)" title="Edit baris"
+                    class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-sync-cyan hover:bg-tac-sync-cyan/20 flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">edit_note</span>
+                  </button>
+                  <button type="button" @click="deleteItem('Performance', p.id)" title="Hapus baris"
+                    class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-status-emergency hover:bg-tac-status-emergency/20 flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                  </button>
                 </div>
               </td>
             </tr>
           </template>
         </tbody>
-      </table></div>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 5. STREAM CARDS (MOBILE / TABLET) ════════════════════════════════ -->
+  <section class="lg:hidden flex flex-col gap-space-sm">
+    <template x-for="p in filteredPerformanceData" :key="'m-' + p.id">
+      <article class="relative bg-tac-surface-card rounded-lg border border-tac-border-subtle p-3 [content-visibility:auto] [contain-intrinsic-size:auto_180px]">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l"
+          :class="Number(calculateKPI(p).gap) < 0 ? 'bg-tac-status-emergency' : 'bg-tac-status-operational'"></div>
+        <div class="pl-2 flex flex-col gap-2">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase block" x-text="p.date || '-'"></span>
+              <span class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="getEquipName(p.equipmentId)"></span>
+            </div>
+            <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface shrink-0"
+              x-text="p.category || 'Mechanical'"></span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 p-2 rounded bg-tac-surface-recessed shadow-inner font-label-mono-sm text-label-mono-sm">
+            <div class="flex flex-col">
+              <span class="text-tac-status-standby uppercase text-[10px]">MA %</span>
+              <span class="text-tac-on-surface font-bold" x-text="calculateKPI(p).ma + '%'"></span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-tac-status-standby uppercase text-[10px]">PA %</span>
+              <span class="text-tac-on-surface font-bold" x-text="calculateKPI(p).pa + '%'"></span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-tac-status-standby uppercase text-[10px]">GAP %</span>
+              <span :class="Number(calculateKPI(p).gap) < 0 ? 'text-tac-status-emergency font-bold' : 'text-tac-status-operational font-bold'"
+                x-text="calculateKPI(p).gap + '%'"></span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">factory</span><span x-text="p.area || '-'"></span></span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">timer</span><span x-text="'HM ' + (p.hm != null && p.hm !== '' ? Number(p.hm).toLocaleString() : '-')"></span></span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">hourglass_bottom</span><span x-text="'BD ' + (p.bd || 0)"></span></span>
+          </div>
+
+          <div x-show="isAdminOrSupervisor" class="flex gap-1 pt-2 border-t border-tac-border-subtle">
+            <button type="button" @click="openPerformanceModal(true, p)"
+              class="flex items-center gap-1.5 px-2 py-1 rounded bg-tac-surface-container-high text-tac-sync-cyan font-label-mono-sm text-label-mono-sm">
+              <span class="material-symbols-outlined text-[14px]">edit_note</span><span>EDIT</span>
+            </button>
+            <button type="button" @click="deleteItem('Performance', p.id)"
+              class="flex items-center gap-1.5 px-2 py-1 rounded bg-tac-surface-container-high text-tac-status-emergency font-label-mono-sm text-label-mono-sm">
+              <span class="material-symbols-outlined text-[14px]">close</span><span>HAPUS</span>
+            </button>
+          </div>
+        </div>
+      </article>
+    </template>
+  </section>
+
+  <!-- ═══ 6. EMPTY STATE ═══════════════════════════════════════════════════ -->
+  <div x-show="filteredPerformanceData.length === 0"
+    class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
+    <div class="inline-flex flex-col items-center gap-4">
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-status-standby">search_off</span>
+      </div>
+      <div>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Belum Ada Data Performance</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">
+          <span x-show="performanceData.length === 0">Muat ulang data untuk menarik catatan terbaru</span>
+          <span x-show="performanceData.length > 0">Coba ubah filter equipment, area, atau tanggal</span>
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-space-sm">
+        <button type="button" x-show="performanceData.length === 0" @click="refreshData()"
+          class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">refresh</span><span>MUAT ULANG DATA</span>
+        </button>
+        <button type="button" x-show="isAdminOrSupervisor && performanceData.length === 0" @click="openPerformanceModal(false)"
+          class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-md text-label-mono-md transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">add_circle</span><span>TAMBAH DATA PERTAMA</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Empty State -->
-  <div x-show="filteredPerformanceData.length === 0" class="text-center py-16">
-    <div class="inline-flex flex-col items-center gap-4">
-      <i class="fas fa-chart-line text-6xl text-slate-600"></i>
-      <div>
-        <p class="text-slate-400 text-lg font-bold">Belum ada Data Performance</p>
-        <p class="text-slate-500 text-sm mt-2">
-          <span x-show="performanceData.length === 0">Klik tombol di bawah untuk memuat ulang data</span>
-          <span x-show="performanceData.length > 0">Coba ubah filter tanggal</span>
-        </p>
-      </div>
-      <button x-show="performanceData.length === 0" @click="refreshData()" class="btn-nexus-gold">
-        <i class="fas fa-sync-alt mr-2"></i> Muat Ulang Data
-      </button>
-      <button x-show="isAdminOrSupervisor && performanceData.length === 0" @click="openPerformanceModal(false)" class="btn-nexus-small">
-        <i class="fas fa-plus mr-1"></i> Tambah Data Pertama
-      </button>
-    </div>
-  </div>
 </div>

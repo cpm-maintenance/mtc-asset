@@ -1,59 +1,155 @@
-<!-- 📊 PAGE: MTBF/MTTR AUTO TRENDING -->
-<div x-cloak class="space-y-4">
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+<!-- ═══ PAGE: MTBF / MTTR — Reliability Trends (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
+
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
     <div>
-      <h3 class="font-black text-xl lg:text-2xl text-amber-400 nexus-glow-text uppercase tracking-tight">MTBF / MTTR</h3>
-      <p class="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Reliability &amp; Maintainability Trends</p>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">RELIABILITY &amp; MAINTAINABILITY</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">MTBF / MTTR</h1>
+        <span x-show="mtbfFilterEquip"
+          class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-primary font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="mtbfFilterEquip"></span>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <button @click="mtbfRefresh()" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-amber-400 transition-all">
-        <i class="fas fa-sync-alt text-xs"></i>
+
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="mtbfRefresh()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
+        title="Hitung ulang tren reliability">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">refresh</span>
+        <span class="hidden sm:inline">RECOMPUTE</span>
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Filter -->
-  <div class="glass border-nexus-accent/10 p-4 rounded-2xl">
-    <div class="flex flex-wrap items-end gap-4">
-      <div class="w-full md:w-72">
-        <label class="text-[9px] text-slate-500 uppercase font-black tracking-widest block mb-2">Equipment</label>
-        <select x-model="mtbfFilterEquip" @change="renderMTBFMTTRChart()" class="w-full p-3 glass border-nexus-accent/10 text-xs font-bold">
-          <option value="">-- Select Equipment --</option>
+  <!-- ═══ 2. RELIABILITY TELEMETRY DECK (4 KARTU) ══════════════════════════ -->
+  <section aria-label="KPI reliability" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+
+    <!-- KPI 1 — MTBF -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Mean Time Between Failures</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-operational">
+          <span class="material-symbols-outlined text-[18px]">troubleshoot</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-operational" x-text="(mtbfResult?.mtbfDays || 0)"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">HARI</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">BASIS</span>
+        <span class="text-tac-on-surface font-semibold" x-text="(mtbfResult?.totalEvents || 0) + ' EVENTS'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 2 — MTTR -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Mean Time To Repair</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-repair">
+          <span class="material-symbols-outlined text-[18px]">timer</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-repair" x-text="(mtbfResult?.mttrHours || 0)"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">JAM</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">RASIO MTBF/MTTR</span>
+        <span class="text-tac-on-surface font-semibold"
+          x-text="mtbfResult?.mttrHours ? Math.round((mtbfResult.mtbfDays * 24 / mtbfResult.mttrHours) * 10) / 10 + 'x' : '-'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 3 — Availability -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Inherent Availability</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+          <span class="material-symbols-outlined text-[18px]">trending_up</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-sync-cyan"
+          x-text="(mtbfResult?.mtbfDays && mtbfResult?.mttrHours) ? (Math.round((mtbfResult.mtbfDays * 24) / (mtbfResult.mtbfDays * 24 + mtbfResult.mttrHours) * 1000) / 10) + '%' : '-'"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">A = MTBF/(MTBF+MTTR)</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">TARGET</span>
+        <span class="text-tac-status-operational font-semibold">&ge; 95%</span>
+      </div>
+    </div>
+
+    <!-- KPI 4 — Failure Events -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Recorded Failures</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-emergency">
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-emergency" x-text="mtbfResult?.totalEvents || 0"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">EVENTS</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">RENTANG</span>
+        <span class="text-tac-on-surface font-semibold">6 BULAN</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 3. UNIT SELECTOR ═════════════════════════════════════════════════ -->
+  <section aria-label="Pilih equipment" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+    <div class="flex flex-wrap items-center justify-between gap-space-sm">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-tac-primary text-[18px]">precision_manufacturing</span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">UNIT ANALISIS:</span>
+        <select x-model="mtbfFilterEquip" @change="renderMTBFMTTRChart()"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1.5 rounded border border-tac-border-subtle outline-none min-w-[16rem]">
+          <option value="">-- PILIH EQUIPMENT --</option>
           <template x-for="eq in equipment" :key="eq.EquipmentID">
             <option :value="eq.EquipmentID" x-text="eq.EquipmentID + ' - ' + (eq.Nama || '')"></option>
           </template>
         </select>
       </div>
-      <div x-show="mtbfFilterEquip" class="flex gap-2">
-        <div class="glass p-3 rounded-xl">
-          <span class="text-[9px] text-slate-500 block uppercase font-black tracking-widest">MTBF</span>
-          <span class="text-lg font-black text-amber-400" x-text="(mtbfResult?.mtbfDays || 0) + ' days'"></span>
-        </div>
-        <div class="glass p-3 rounded-xl">
-          <span class="text-[9px] text-slate-500 block uppercase font-black tracking-widest">MTTR</span>
-          <span class="text-lg font-black text-amber-400" x-text="(mtbfResult?.mttrHours || 0) + ' hrs'"></span>
-        </div>
-        <div class="glass p-3 rounded-xl">
-          <span class="text-[9px] text-slate-500 block uppercase font-black tracking-widest">Events</span>
-          <span class="text-lg font-black text-white" x-text="mtbfResult?.totalEvents || 0"></span>
-        </div>
+      <div class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="text-tac-on-surface font-bold" x-text="equipment.length"></span> UNIT TERDAFTAR
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 4. TREND CHART ═══════════════════════════════════════════════════ -->
+  <section x-show="mtbfFilterEquip" class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
+    <div class="flex items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm mb-space-md">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-tac-primary text-[18px]">show_chart</span>
+        <h2 class="font-headline-md text-headline-md font-bold text-tac-on-surface uppercase tracking-wider">Rolling Trend</h2>
+      </div>
+      <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">6 BULAN · MTBF (HARI) / MTTR (JAM)</span>
+    </div>
+    <div class="h-80">
+      <canvas id="mtbfChart"></canvas>
+    </div>
+  </section>
+
+  <!-- ═══ 5. EMPTY STATE ═══════════════════════════════════════════════════ -->
+  <div x-show="!mtbfFilterEquip" class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
+    <div class="inline-flex flex-col items-center gap-4">
+      <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+        <span class="material-symbols-outlined text-[32px] text-tac-status-standby">search_off</span>
+      </div>
+      <div>
+        <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Pilih Equipment</p>
+        <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Pilih unit di atas untuk melihat tren reliability MTBF / MTTR</p>
       </div>
     </div>
   </div>
 
-  <!-- Chart -->
-  <div x-show="mtbfFilterEquip" class="glass border-nexus-accent/10 rounded-2xl p-4">
-    <div class="h-80">
-      <canvas id="mtbfChart"></canvas>
-    </div>
-    <p class="text-[9px] text-slate-600 text-center mt-2 uppercase font-black tracking-widest">6-Month Rolling MTBF (days) / MTTR (hours) Trend</p>
-  </div>
-
-  <!-- Empty -->
-  <div x-show="!mtbfFilterEquip" class="text-center py-16">
-    <i class="fas fa-chart-line text-5xl text-slate-700 mb-4 block"></i>
-    <p class="text-slate-400 text-lg font-bold">Select Equipment</p>
-    <p class="text-slate-500 text-sm mt-2">Choose equipment to view MTBF/MTTR reliability trends</p>
-  </div>
 </div>

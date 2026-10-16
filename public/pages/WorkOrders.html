@@ -305,7 +305,7 @@
       </span>
       <span class="flex items-center gap-3">
         <span class="font-label-mono-sm text-[10px] uppercase tracking-[0.2em] text-tac-on-surface-variant hidden sm:inline">Hotkey L</span>
-        <i class="fas fa-chevron-down text-tac-on-surface-variant transition-transform group-open:rotate-180"></i>
+        <span class="material-symbols-outlined text-[20px] text-tac-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
       </span>
     </summary>
 
@@ -351,14 +351,14 @@
             :aria-pressed="logForm.type !== 'Breakdown' ? 'true' : 'false'"
             class="min-h-[96px] flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98]"
             :class="logForm.type !== 'Breakdown' ? 'bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">
-            <i class="fas fa-circle-check text-2xl"></i>
+            <span class="material-symbols-outlined text-[28px]">check_circle</span>
             <span class="font-headline-md tracking-widest uppercase">Ready</span>
           </button>
           <button type="button" @click="logForm.type = 'Breakdown'"
             :aria-pressed="logForm.type === 'Breakdown' ? 'true' : 'false'"
             class="min-h-[96px] flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98]"
             :class="logForm.type === 'Breakdown' ? 'bg-[#93000A] text-white' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-[#93000A]/70 hover:text-white'">
-            <i class="fas fa-triangle-exclamation text-2xl"></i>
+            <span class="material-symbols-outlined text-[28px]">warning</span>
             <span class="font-headline-md tracking-widest uppercase">Breakdown</span>
           </button>
         </div>
@@ -368,7 +368,7 @@
       <template x-if="logForm.type === 'Breakdown'">
         <div class="bg-[#93000A] p-5" role="alert">
           <div class="flex items-center gap-3 mb-2">
-            <i class="fas fa-bolt text-white text-lg"></i>
+            <span class="material-symbols-outlined text-[20px] text-white">error</span>
             <p class="font-headline-md text-white uppercase tracking-tight">Failure Report Active</p>
           </div>
           <p class="text-[#ffdad6] text-xs leading-relaxed">
@@ -420,12 +420,12 @@
           </div>
           <div x-show="logForm.equipmentId && getLastHM(logForm.equipmentId) !== '-'"
             class="flex items-center gap-2 px-2 py-1 bg-[#93000A]/20 text-[#ffb4ab] text-[10px] font-bold uppercase tracking-tight">
-            <i class="fas fa-triangle-exclamation text-xs"></i>
+            <span class="material-symbols-outlined text-[14px]">warning</span>
             <span x-text="'Last recorded HM: ' + getLastHM(logForm.equipmentId)"></span>
           </div>
           <div x-show="logForm.equipmentId && getLastHM(logForm.equipmentId) !== '-' && logForm.hm && Number(String(logForm.hm).replace(/[^0-9.]/g, '')) <= Number(String(getLastHM(logForm.equipmentId)).replace(/[^0-9.]/g, ''))"
             class="flex items-center gap-2 px-2 py-1 bg-[#93000A] text-white text-[10px] font-bold uppercase tracking-tight">
-            <i class="fas fa-circle-exclamation text-xs"></i>
+            <span class="material-symbols-outlined text-[14px]">error</span>
             <span>Entry must be higher than previous</span>
           </div>
         </div>
@@ -453,7 +453,7 @@
           <h3 class="font-headline-md text-tac-gold-bright tracking-tight uppercase">Sparepart Utilization</h3>
           <button type="button" @click="addPartToLog()"
             class="bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface rounded-lg font-label-mono-md transition-colors min-h-[64px] text-[10px] tracking-widest">
-            <i class="fas fa-plus mr-2 text-xs"></i> Add Sparepart
+            <span class="material-symbols-outlined text-[14px] mr-2">add</span> Add Sparepart
           </button>
         </div>
 
@@ -481,21 +481,21 @@
                 <button type="button" @click="part.qty = Math.max(1, (Number(part.qty) || 1) - 1)"
                   aria-label="Decrease quantity"
                   class="min-w-[64px] min-h-[64px] bg-tac-surface-container-high text-tac-on-surface-variant hover:text-tac-gold-bright transition-colors flex items-center justify-center">
-                  <i class="fas fa-minus"></i>
+                  <span class="relative block w-4 h-4" aria-hidden="true"><span class="absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2 bg-current rounded-full"></span></span>
                 </button>
                 <input type="number" min="1" x-model="part.qty" aria-label="Quantity"
                   class="w-16 min-h-[64px] bg-transparent text-center font-headline-md text-tac-on-surface border-none focus:outline-none">
                 <button type="button" @click="part.qty = (Number(part.qty) || 0) + 1"
                   aria-label="Increase quantity"
                   class="min-w-[64px] min-h-[64px] bg-tac-surface-container-high text-tac-on-surface-variant hover:text-tac-gold-bright transition-colors flex items-center justify-center">
-                  <i class="fas fa-plus"></i>
+                  <span class="relative block w-4 h-4" aria-hidden="true"><span class="absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2 bg-current rounded-full"></span><span class="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 bg-current rounded-full"></span></span>
                 </button>
               </div>
             </div>
 
             <button type="button" @click="removePartFromLog(index)" aria-label="Remove component"
               class="col-span-1 min-h-[64px] bg-tac-surface-container-high text-rose-400/70 hover:text-rose-300 hover:bg-[#93000A]/30 transition-colors flex items-center justify-center">
-              <i class="fas fa-trash-alt"></i>
+              <span class="material-symbols-outlined text-[18px]">close</span>
             </button>
           </div>
         </template>
@@ -513,13 +513,13 @@
                 <img :src="p.preview" loading="lazy" alt="Photo evidence" class="w-full h-full object-cover">
                 <button type="button" @click="removeLogPhoto(idx)" aria-label="Remove photo"
                   class="absolute top-0 right-0 min-w-[44px] min-h-[44px] bg-[#93000A] text-white flex items-center justify-center">
-                  <i class="fas fa-times"></i>
+                  <span class="material-symbols-outlined text-[18px]">close</span>
                 </button>
               </div>
             </template>
             <label x-show="logForm.photos.length < 4"
               class="aspect-square bg-tac-surface-container-high border-2 border-dashed border-tac-border-subtle hover:border-tac-gold-bright/60 hover:bg-tac-surface-container-highest transition-all cursor-pointer flex flex-col items-center justify-center gap-2 min-h-[64px]">
-              <i class="fas fa-camera text-2xl text-tac-on-surface-variant"></i>
+              <span class="material-symbols-outlined text-[28px] text-tac-on-surface-variant">photo_camera</span>
               <span class="font-label-mono-sm text-[9px] font-bold uppercase tracking-widest text-tac-on-surface-variant px-2 text-center">Attach Photo</span>
               <input type="file" @change="handleLogPhoto($event)" class="hidden" accept="image/*" multiple>
             </label>
@@ -536,7 +536,7 @@
       <!-- Final action -->
       <button type="submit"
         class="w-full min-h-[80px] bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-headline-md tracking-[0.2em] uppercase active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_10px_30px_rgba(255,215,0,0.2)]">
-        <i class="fas fa-cloud-arrow-up"></i>
+        <span class="material-symbols-outlined text-[18px]">cloud_done</span>
         <span x-text="isEditingLog ? 'Execute Update' : 'Submit Log to Command'"></span>
       </button>
     </form>

@@ -411,6 +411,103 @@ export function app() {
             } catch(e) { return dateStr?.substring(0, 10) || '-'; }
         },
 
+        // ── Tactical Slate — Audit Trail telemetry & helper ─────────────────
+        get auditKpi() {
+            const rows = this.auditLogs || [];
+            const count = (/** @type {string} */ kw) => rows.filter((/** @type {any} */ e) => (e.action || '').includes(kw)).length;
+            const total = rows.length;
+            const actors = new Set(rows.map((/** @type {any} */ e) => e.email || e.uid).filter(Boolean)).size;
+            const admins = rows.filter((/** @type {any} */ e) => e.role === 'admin').length;
+            return {
+                total,
+                actors,
+                admins,
+                shown: (this.filteredAudit || []).length,
+                logins: count('Login'),
+                creates: count('Create'),
+                edits: count('Edit') + count('Update'),
+                deletes: count('Delete'),
+                approvals: count('Approve') + count('Complete'),
+            };
+        },
+
+        auditActionTac(action) {
+            const a = action || '';
+            if (a.includes('Delete') || a.includes('Reject') || a.includes('Cancel')) return 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30';
+            if (a.includes('Create') || a === 'Login' || a.includes('Approve') || a.includes('Complete')) return 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30';
+            if (a.includes('Edit') || a.includes('Update')) return 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30';
+            return 'bg-tac-surface-container-highest text-tac-on-surface-variant border-tac-border-subtle';
+        },
+
+        auditMarkerTac(action) {
+            const a = action || '';
+            if (a.includes('Delete') || a.includes('Reject') || a.includes('Cancel')) return 'bg-tac-status-emergency';
+            if (a.includes('Create') || a === 'Login' || a.includes('Approve') || a.includes('Complete')) return 'bg-tac-status-operational';
+            if (a.includes('Edit') || a.includes('Update')) return 'bg-tac-status-repair';
+            return 'bg-tac-status-standby';
+        },
+
+        auditIconTac(action) {
+            const a = action || '';
+            if (a.includes('Delete') || a.includes('Reject') || a.includes('Cancel')) return 'block';
+            if (a === 'Login') return 'logout';
+            if (a.includes('Create')) return 'add_circle';
+            if (a.includes('Edit') || a.includes('Update')) return 'edit_note';
+            if (a.includes('Approve') || a.includes('Complete')) return 'check_circle';
+            return 'history';
+        },
+
+        auditRoleTac(role) {
+            if (role === 'admin') return 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30';
+            if (role === 'supervisor') return 'bg-tac-primary/15 text-tac-primary border-tac-primary/30';
+            return 'bg-tac-surface-container-highest text-tac-on-surface-variant border-tac-border-subtle';
+        },
+
+        // ── Tactical Slate — Performance telemetry ──────────────────────────
+        get perfKpi() {
+            const rows = this.getFilteredPerfData() || [];
+            const total = rows.length;
+            const sum = (/** @type {(p: any) => number} */ fn) =>
+                rows.reduce((/** @type {number} */ a, /** @type {any} */ p) => a + fn(p), 0);
+            const round1 = (/** @type {number} */ v) => Math.round(v * 10) / 10;
+            const kpiOf = (/** @type {any} */ p) => this.calculateKPI(p) || { ma: 0, pa: 0, gap: 0 };
+            return {
+                total,
+                bd: round1(sum((/** @type {any} */ p) => Number(p.bd || 0))),
+                events: sum((/** @type {any} */ p) => (p.events ? p.events.length : 0)),
+                autoBd: rows.filter((/** @type {any} */ p) => p.bdSource === 'wo').length,
+                avgMa: total ? round1(sum((/** @type {any} */ p) => Number(kpiOf(p).ma)) / total) : 0,
+                avgPa: total ? round1(sum((/** @type {any} */ p) => Number(kpiOf(p).pa)) / total) : 0,
+                avgGap: total ? round1(sum((/** @type {any} */ p) => Number(kpiOf(p).gap)) / total) : 0,
+            };
+        },
+
+        perfGapTac(gap) {
+            return Number(gap) < 0 ? 'bg-tac-status-emergency' : 'bg-tac-status-operational';
+        },
+
+        // ── Tactical Slate — Monthly Plan helper ────────────────────────────
+        get mpMonthName() {
+            const names = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+            return names[Number(this.mpMonth)] || '-';
+        },
+
+        mpStatusTac(status) {
+            const s = (status || 'pending').toLowerCase();
+            if (s === 'completed') return 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30';
+            if (s === 'cancelled') return 'bg-tac-surface-container-highest text-tac-on-surface-variant border-tac-border-subtle';
+            if (s === 'in progress') return 'bg-tac-sync-cyan/15 text-tac-sync-cyan border-tac-sync-cyan/30';
+            return 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30';
+        },
+
+        mpStatusMarkerTac(status) {
+            const s = (status || 'pending').toLowerCase();
+            if (s === 'completed') return 'bg-tac-status-operational';
+            if (s === 'cancelled') return 'bg-tac-status-standby';
+            if (s === 'in progress') return 'bg-tac-sync-cyan';
+            return 'bg-tac-status-repair';
+        },
+
         async login() {
             const form = this.loginForm;
             if (!form.email || !form.password) {
@@ -1682,7 +1779,7 @@ if (confirm('Are you sure you want to logout?')) {
                         return { label: 'OVERDUE', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40', marker: 'bg-tac-status-emergency', icon: 'warning' };
                     }
                     if (pm.status === 'pending') {
-                        return { label: 'PENDING', badge: 'bg-tac-amber-muted text-tac-amber border-tac-border-subtle', marker: 'bg-tac-amber', icon: 'schedule' };
+                        return { label: 'PENDING', badge: 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30', marker: 'bg-tac-status-repair', icon: 'schedule' };
                     }
                     if (pm.status === 'completed') {
                         return { label: 'COMPLETED', badge: 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/40', marker: 'bg-tac-status-operational', icon: 'check_circle' };

@@ -1,223 +1,294 @@
-<!-- 🔍 PAGE: DETAIL EQUIPMENT -->
-<div x-cloak class="space-y-8">
-  <!-- Header with Back Button and Actions -->
-  <div class="flex justify-between items-center glass p-4 rounded-2xl border-nexus-accent/10">
-    <button @click="currentPage = 'equip'"
-      class="text-amber-400 hover:text-white text-xs font-black uppercase tracking-widest transition-all flex items-center">
-      <i class="fas fa-arrow-left mr-2"></i> Return to Nexus
-    </button>
-    <div class="flex gap-2">
-      <button @click="generateQR(selectedEquip.EquipmentID)"
-        class="glass border-nexus-accent/20 text-amber-400 px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-nexus-accent hover:text-nexus-black transition-all">
-        <i class="fas fa-qrcode mr-1"></i> QR
-      </button>
-      <button @click="exportToPDF(selectedEquip)"
-        class="glass border-nexus-purple/20 text-nexus-purple px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-nexus-purple hover:text-white transition-all">
-        <i class="fas fa-file-pdf mr-1"></i> PDF
-      </button>
-      <button x-show="isAdmin" @click="openEquipModal(true, selectedEquip)"
-        class="glass border-blue-500/20 text-blue-400 px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 hover:text-white transition-all">
-        <i class="fas fa-edit mr-1"></i> Modify
-      </button>
-      <button x-show="isAdmin" @click="deleteItem('Equipment', selectedEquip.EquipmentID)"
-        class="glass border-rose-500/20 text-rose-400 px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-rose-500 hover:text-white transition-all">
-        <i class="fas fa-trash mr-1"></i> Purge
-      </button>
-    </div>
-  </div>
+<!-- ═══ PAGE: EQUIPMENT DETAIL — Asset Dossier (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
 
-  <!-- Equipment Detail Card -->
-  <div class="card-modern p-8 flex flex-col md:flex-row gap-10 relative overflow-hidden" x-show="selectedEquip">
-    <div class="absolute top-0 right-0 w-80 h-80 bg-nexus-accent/5 rounded-full blur-3xl -mr-40 -mt-40"></div>
-    
-    <!-- Equipment Photo -->
-    <div class="w-48 h-48 glass rounded-3xl overflow-hidden border-nexus-accent/20 shrink-0 shadow-2xl relative z-10 p-2">
-      <img :src="selectedEquip?.FotoURL ? cleanUrl(selectedEquip.FotoURL) : 'https://via.placeholder.com/150?text=No+Data'" loading="lazy" decoding="async"
-        class="w-full h-full object-cover rounded-2xl">
-    </div>
-    
-    <!-- Equipment Info -->
-    <div class="flex-1 z-10">
-      <!-- Name and ID -->
-      <div class="flex flex-wrap items-center gap-4 mb-4">
-        <h2 class="text-4xl font-black text-white tracking-tight nexus-glow-text" x-text="selectedEquip?.Nama"></h2>
-        <span class="text-xs px-4 py-1.5 rounded-full glass text-amber-400 font-black border-nexus-accent/20 uppercase tracking-widest" x-text="selectedEquip?.EquipmentID"></span>
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
+    <div>
+      <button type="button" @click="currentPage = 'equip'"
+        class="flex items-center gap-0.5 font-label-mono-sm text-label-mono-sm text-tac-status-standby hover:text-tac-primary transition-colors">
+        <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+        <span>EQUIPMENT LEDGER</span>
+      </button>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Asset Dossier</h1>
+        <span class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-status-standby font-label-mono-sm text-label-mono-sm font-semibold">MASTER DATA</span>
       </div>
-      <p class="text-nexus-purple font-black mb-8 uppercase text-xs tracking-[0.4em]" x-text="selectedEquip?.Tipe"></p>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="generateQR(selectedEquip.EquipmentID)" title="Generate QR aset"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-sync-cyan">qr_code_scanner</span>
+        <span class="hidden sm:inline">QR</span>
+      </button>
+
+      <button type="button" @click="exportToPDF(selectedEquip)" title="Export PDF aset"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-status-emergency">picture_as_pdf</span>
+        <span class="hidden sm:inline">PDF</span>
+      </button>
+
+      <button type="button" x-show="isAdmin" @click="openEquipModal(true, selectedEquip)" title="Ubah data aset"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">edit_note</span>
+        <span class="hidden sm:inline">MODIFY</span>
+      </button>
+
+      <button type="button" x-show="isAdmin" @click="deleteItem('Equipment', selectedEquip.EquipmentID)" title="Hapus aset"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-status-emergency/20 text-tac-status-emergency font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px]">close</span>
+        <span class="hidden sm:inline">PURGE</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ 2. ASSET IDENTITY DECK ═══════════════════════════════════════════ -->
+  <section x-show="selectedEquip" aria-label="Identitas aset"
+    class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col lg:flex-row gap-space-md">
+
+    <!-- Foto aset -->
+    <div class="w-40 h-40 shrink-0 bg-tac-surface-recessed rounded-lg border border-tac-border-subtle p-1 overflow-hidden">
+      <img :src="selectedEquip?.FotoURL ? cleanUrl(selectedEquip.FotoURL) : 'https://via.placeholder.com/150?text=No+Data'" loading="lazy" decoding="async"
+        class="w-full h-full object-cover rounded">
+    </div>
+
+    <!-- Info aset -->
+    <div class="flex-1 min-w-0 flex flex-col gap-space-sm">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="font-headline-lg text-headline-lg text-tac-on-surface tracking-tight" x-text="selectedEquip?.Nama"></h2>
+          <span class="px-2 py-0.5 rounded-full bg-tac-primary/15 text-tac-primary font-label-mono-sm text-label-mono-sm font-semibold"
+            x-text="selectedEquip?.EquipmentID"></span>
+        </div>
+        <p class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase tracking-[0.3em] mt-0.5" x-text="selectedEquip?.Tipe"></p>
+      </div>
 
       <!-- Metadata Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-        <div>
-          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Location Sector</p>
-          <p class="text-white font-bold text-sm" x-text="selectedEquip?.Lokasi || '-'"></p>
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-space-sm p-space-sm rounded bg-tac-surface-recessed">
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px]">factory</span><span>LOKASI</span>
+          </span>
+          <span class="font-body-md text-body-md font-semibold text-tac-on-surface truncate" x-text="selectedEquip?.Lokasi || '-'"></span>
         </div>
-        <div>
-          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Priority Level</p>
-          <p :class="critColor(selectedEquip?.Criticality)" class="font-black text-sm uppercase" x-text="selectedEquip?.Criticality || '-'"></p>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px]">warning</span><span>PRIORITAS</span>
+          </span>
+          <span :class="critColor(selectedEquip?.Criticality)" class="font-label-mono-md text-label-mono-md uppercase" x-text="selectedEquip?.Criticality || '-'"></span>
         </div>
-        <div>
-          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Serial Signature</p>
-          <p class="text-white font-mono text-xs font-bold" x-text="selectedEquip?.SerialNumber || '-'"></p>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px]">fingerprint</span><span>SERIAL</span>
+          </span>
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface truncate" x-text="selectedEquip?.SerialNumber || '-'"></span>
         </div>
-        <div>
-          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Vendor Origin</p>
-          <p class="text-white font-bold text-sm" x-text="selectedEquip?.Vendor || '-'"></p>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px]">warehouse</span><span>VENDOR</span>
+          </span>
+          <span class="font-body-md text-body-md font-semibold text-tac-on-surface truncate" x-text="selectedEquip?.Vendor || '-'"></span>
         </div>
-        <div>
-          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Current HM</p>
-          <p class="text-white font-bold text-sm" x-text="selectedEquip?.CurrentHM ? Number(selectedEquip.CurrentHM).toLocaleString() : '-'"></p>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px]">timer</span><span>CURRENT HM</span>
+          </span>
+          <span class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="selectedEquip?.CurrentHM ? Number(selectedEquip.CurrentHM).toLocaleString() : '-'"></span>
         </div>
-        <div>
-          <p class="text-amber-400/40 text-sm uppercase font-black tracking-widest mb-2">Last Log HM</p>
-          <p class="text-white font-mono text-xs font-bold" x-text="getLastHM(selectedEquip?.EquipmentID)"></p>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px]">schedule</span><span>LAST LOG HM</span>
+          </span>
+          <span class="font-label-mono-md text-label-mono-md font-bold text-tac-on-surface" x-text="getLastHM(selectedEquip?.EquipmentID)"></span>
         </div>
       </div>
-      
-      <!-- Health & Prediction Cards -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Health Score Card -->
-        <div class="p-4 glass border-nexus-accent/5 rounded-2xl flex items-center gap-6">
-          <div class="flex-1">
-            <p class="text-sm text-amber-400/40 uppercase font-black tracking-widest mb-2">System Integrity (Health)</p>
-            <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-              <div class="h-full transition-all duration-1000" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color.replace('text-', 'bg-')" :style="'width: ' + (selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).score : 100) + '%'"></div>
-            </div>
+
+      <!-- Health & Prediction -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+
+        <!-- Health Score -->
+        <div class="bg-tac-surface-recessed rounded-lg border border-tac-border-subtle p-space-sm">
+          <div class="flex items-center justify-between gap-2">
+            <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+              <span class="material-symbols-outlined text-[14px]">monitoring</span><span>SYSTEM INTEGRITY</span>
+            </span>
+            <span class="font-headline-md text-headline-md font-bold"
+              :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color"
+              x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).score + '%' : '100%'"></span>
           </div>
-          <div class="text-right">
-            <p class="font-black text-xl nexus-glow-text" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color" x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).score + '%' : '100%'"></p>
-            <p class="text-xs font-black uppercase tracking-widest" :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color" x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).status : 'Optimal'"></p>
+          <div class="h-1.5 w-full bg-tac-surface-container-highest rounded-full overflow-hidden mt-2">
+            <div class="h-full transition-all duration-1000"
+              :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color.replace('text-', 'bg-')"
+              :style="'width: ' + (selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).score : 100) + '%'"></div>
           </div>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase mt-1 inline-block"
+            :class="selectedEquip && calculateHealthScore(selectedEquip.EquipmentID).color"
+            x-text="selectedEquip ? calculateHealthScore(selectedEquip.EquipmentID).status : 'Optimal'"></span>
         </div>
-        
-        <!-- Neural Prediction Card -->
-        <div class="p-4 glass border-nexus-purple/10 rounded-2xl flex items-center gap-6">
-          <div class="flex-1">
-            <p class="text-sm text-nexus-purple/40 uppercase font-black tracking-widest mb-2">Neural Prediction (Failure)</p>
-            <p class="text-white font-black text-sm nexus-glow-text" x-text="'EST: ' + (selectedEquip ? predictNextFailure(selectedEquip.EquipmentID) : 'N/A')"></p>
+
+        <!-- Failure Prediction -->
+        <div class="bg-tac-surface-recessed rounded-lg border border-tac-border-subtle p-space-sm flex items-center justify-between gap-space-sm">
+          <div class="min-w-0">
+            <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+              <span class="material-symbols-outlined text-[14px]">troubleshoot</span><span>PREDIKSI KEGAGALAN</span>
+            </span>
+            <span class="font-body-md text-body-md font-semibold text-tac-on-surface block mt-0.5"
+              x-text="'EST: ' + (selectedEquip ? predictNextFailure(selectedEquip.EquipmentID) : 'N/A')"></span>
           </div>
-          <div class="text-right">
-            <p class="text-white font-black text-lg nexus-glow-text" x-text="selectedEquip ? calculateMTBF(selectedEquip.EquipmentID) : '0'"></p>
-            <p class="text-xs text-slate-500 font-black uppercase tracking-widest">MTBF Hours</p>
+          <div class="text-right shrink-0">
+            <span class="font-headline-md text-headline-md font-bold text-tac-sync-cyan block"
+              x-text="selectedEquip ? calculateMTBF(selectedEquip.EquipmentID) : '0'"></span>
+            <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">MTBF HOURS</span>
           </div>
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- ═══ 3. TAB NAVIGATION ════════════════════════════════════════════════ -->
+  <div class="flex gap-space-md border-b border-tac-border-subtle">
+    <button type="button" @click="activeTab = 'hist'"
+      :class="activeTab === 'hist' ? 'border-b-2 border-tac-primary text-tac-primary' : 'text-tac-on-surface-variant hover:text-tac-primary'"
+      class="flex items-center gap-1.5 pb-2 font-label-mono-md text-label-mono-md uppercase transition-all">
+      <span class="material-symbols-outlined text-[16px]">history</span><span>RIWAYAT LOG</span>
+    </button>
+    <button type="button" @click="activeTab = 'parts'"
+      :class="activeTab === 'parts' ? 'border-b-2 border-tac-primary text-tac-primary' : 'text-tac-on-surface-variant hover:text-tac-primary'"
+      class="flex items-center gap-1.5 pb-2 font-label-mono-md text-label-mono-md uppercase transition-all">
+      <span class="material-symbols-outlined text-[16px]">inventory_2</span><span>SPARE PART</span>
+    </button>
+    <button type="button" @click="activeTab = 'pm'"
+      :class="activeTab === 'pm' ? 'border-b-2 border-tac-primary text-tac-primary' : 'text-tac-on-surface-variant hover:text-tac-primary'"
+      class="flex items-center gap-1.5 pb-2 font-label-mono-md text-label-mono-md uppercase transition-all">
+      <span class="material-symbols-outlined text-[16px]">calendar_month</span><span>JADWAL PM</span>
+    </button>
   </div>
 
-  <!-- Tabs Navigation -->
-  <div class="flex gap-10 border-b border-white/5 px-4">
-    <button @click="activeTab = 'hist'"
-      :class="activeTab === 'hist' ? 'border-b-2 border-nexus-accent text-amber-400' : 'text-slate-500 hover:text-amber-400/60'"
-      class="pb-5 text-xs font-black uppercase tracking-[0.2em] transition-all">Neural Log History</button>
-    <button @click="activeTab = 'parts'"
-      :class="activeTab === 'parts' ? 'border-b-2 border-nexus-accent text-amber-400' : 'text-slate-500 hover:text-amber-400/60'"
-      class="pb-5 text-xs font-black uppercase tracking-[0.2em] transition-all">Integrated Parts</button>
-    <button @click="activeTab = 'pm'"
-      :class="activeTab === 'pm' ? 'border-b-2 border-nexus-accent text-amber-400' : 'text-slate-500 hover:text-amber-400/60'"
-      class="pb-5 text-xs font-black uppercase tracking-[0.2em] transition-all">PM Schedule</button>
-  </div>
+  <!-- ═══ 4. TAB CONTENT ═══════════════════════════════════════════════════ -->
+  <div class="flex flex-col">
 
-  <!-- Tabs Content -->
-  <div class="mt-6">
     <!-- 📜 TAB: LOG HISTORY -->
-    <div x-show="activeTab === 'hist'" class="space-y-4">
+    <div x-show="activeTab === 'hist'" class="flex flex-col gap-space-sm">
       <template x-for="log in visibleEquipLogs" :key="log.LogID">
-        <div class="card-modern p-5 border-l-4 relative group" :style="'border-left-color: ' + getStatColor(logColor(log.Jenis))">
-          <div class="flex justify-between items-start mb-3">
-            <div class="flex items-center gap-3">
-              <span class="text-xs font-black text-amber-400 uppercase tracking-widest px-2 py-1 glass rounded-lg" x-text="log.Tanggal"></span>
-              <span class="text-sm font-black text-slate-500 uppercase tracking-[0.2em]" x-text="log.Jenis"></span>
+        <article class="bg-tac-surface-card rounded-lg border border-tac-border-subtle border-l-4 p-3 relative" :style="'border-left-color: ' + getStatColor(logColor(log.Jenis))">
+          <div class="flex items-start justify-between gap-2 flex-wrap mb-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface" x-text="log.Tanggal"></span>
+              <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby" x-text="log.Jenis"></span>
             </div>
-            <span class="px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border" :class="logStatusColor(log.Status)" x-text="log.Status || 'Completed'"></span>
+            <span class="px-2 py-0.5 rounded border font-label-mono-sm text-label-mono-sm uppercase font-semibold" :class="logStatusColor(log.Status)" x-text="log.Status || 'Completed'"></span>
           </div>
-          <h4 class="text-base font-black text-white mb-2 nexus-glow-text" x-text="log.Deskripsi"></h4>
-          <p class="text-sm text-slate-400 border-l border-white/10 pl-4 italic" x-text="log.Catatan || 'No technical notes recorded.'"></p>
+
+          <h4 class="font-headline-md text-headline-md text-tac-on-surface mb-1" x-text="log.Deskripsi"></h4>
+          <p class="font-body-sm text-body-sm text-tac-on-surface-variant border-l-2 border-tac-border-subtle pl-3 italic" x-text="log.Catatan || 'No technical notes recorded.'"></p>
+
           <div class="mt-2 flex flex-wrap gap-3" x-show="log.HM">
-            <span class="text-xs text-amber-400 font-black"><i class="fas fa-tachometer-alt mr-1"></i>HM: <span x-text="Number(log.HM).toLocaleString()"></span></span>
+            <span class="flex items-center gap-1 font-label-mono-sm text-label-mono-sm text-tac-primary">
+              <span class="material-symbols-outlined text-[14px]">timer</span>
+              <span>HM: <span x-text="Number(log.HM).toLocaleString()"></span></span>
+            </span>
           </div>
-          
-          <div class="mt-4 flex flex-wrap gap-2" x-show="log.PartsUsed && safeParseLogParts(log.PartsUsed).length > 0">
+
+          <div class="mt-2 flex flex-wrap gap-2" x-show="log.PartsUsed && safeParseLogParts(log.PartsUsed).length > 0">
             <template x-for="p in safeParseLogParts(log.PartsUsed)">
-              <span class="tag-nexus" x-text="(historyGetPartName(p.id)) + ' x' + p.qty"></span>
+              <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface" x-text="(historyGetPartName(p.id)) + ' x' + p.qty"></span>
             </template>
           </div>
-        </div>
+        </article>
       </template>
-      
+
       <!-- Load More Logs (local cap) -->
-      <div x-show="detailLogsHasMore" class="text-center pt-4">
-        <button @click="loadMoreDetailLogs()"
-          class="btn-nexus-small">
-          <i class="fas fa-sync-alt"></i>
-          Load More Logs <span x-text="'(' + visibleEquipLogs.length + '/' + filteredLogs.length + ' shown)'"></span>
+      <div x-show="detailLogsHasMore" class="text-center pt-space-sm">
+        <button type="button" @click="loadMoreDetailLogs()"
+          class="inline-flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[16px] text-tac-sync-cyan">sync</span>
+          <span>MUAT LOG LAGI</span>
+          <span class="text-tac-status-standby" x-text="'(' + visibleEquipLogs.length + '/' + filteredLogs.length + ' shown)'"></span>
         </button>
       </div>
-      
+
       <!-- Empty State -->
-      <div x-show="filteredLogs.length === 0" class="text-center py-16 card-modern border-dashed border-2 border-white/5">
-        <i class="fas fa-history text-4xl text-slate-700 mb-4 block"></i>
-        <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No neural logs recorded for this node</p>
+      <div x-show="filteredLogs.length === 0" class="text-center py-16 bg-tac-surface-card rounded-lg border border-dashed border-tac-border-subtle">
+        <div class="inline-flex flex-col items-center gap-space-sm">
+          <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+            <span class="material-symbols-outlined text-[32px] text-tac-status-standby">history</span>
+          </div>
+          <p class="font-label-mono-sm text-label-mono-sm uppercase tracking-[0.2em] text-tac-on-surface-variant">Belum ada log untuk aset ini</p>
+        </div>
       </div>
     </div>
 
     <!-- ⚙️ TAB: INTEGRATED PARTS -->
-    <div x-show="activeTab === 'parts'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div x-show="activeTab === 'parts'" class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
       <template x-for="p in allParts.filter(part => (part.EquipmentIDs && part.EquipmentIDs.includes(selectedEquip?.EquipmentID)) || part.EquipmentID === selectedEquip?.EquipmentID)" :key="p.PartID">
-        <div class="card-modern p-5 flex justify-between items-center group hover:border-nexus-accent/40 transition-all">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl glass flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-              <i class="fas fa-cog"></i>
-            </div>
-            <div>
-              <h4 class="text-sm font-black text-white uppercase tracking-tight" x-text="p.NamaPart"></h4>
-              <p class="text-xs text-amber-400/60 font-mono font-bold" x-text="p.PartID"></p>
+        <article class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-3 flex items-center justify-between gap-space-sm hover:border-tac-primary/40 transition-colors">
+          <div class="flex items-center gap-space-sm min-w-0">
+            <span class="w-10 h-10 rounded bg-tac-surface-recessed border border-tac-border-subtle flex items-center justify-center text-tac-primary shrink-0">
+              <span class="material-symbols-outlined text-[18px]">settings</span>
+            </span>
+            <div class="min-w-0">
+              <h4 class="font-label-mono-md text-label-mono-md font-bold text-tac-on-surface uppercase truncate" x-text="p.NamaPart"></h4>
+              <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="p.PartID"></p>
             </div>
           </div>
-          <div class="text-right">
-            <p class="text-sm text-slate-500 uppercase font-black mb-1 tracking-widest">In Stock</p>
-            <p class="text-2xl font-black nexus-glow-text" :class="isLowStock(p.Stok, p.MinStock) ? 'text-rose-500' : 'text-amber-400'" x-text="p.Stok"></p>
+          <div class="text-right shrink-0">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby block">STOCK</span>
+            <span class="font-headline-md text-headline-md font-bold" :class="isLowStock(p.Stok, p.MinStock) ? 'text-rose-500' : 'text-amber-400'" x-text="p.Stok"></span>
           </div>
-        </div>
+        </article>
       </template>
-      
+
       <!-- Empty State -->
-      <div x-show="allParts.filter(part => (part.EquipmentIDs && part.EquipmentIDs.includes(selectedEquip?.EquipmentID)) || part.EquipmentID === selectedEquip?.EquipmentID).length === 0" class="col-span-full text-center py-16 card-modern border-dashed border-2 border-white/5">
-        <i class="fas fa-microchip text-4xl text-slate-700 mb-4 block"></i>
-        <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No integrated parts detected for this node</p>
+      <div x-show="allParts.filter(part => (part.EquipmentIDs && part.EquipmentIDs.includes(selectedEquip?.EquipmentID)) || part.EquipmentID === selectedEquip?.EquipmentID).length === 0" class="col-span-full text-center py-16 bg-tac-surface-card rounded-lg border border-dashed border-tac-border-subtle">
+        <div class="inline-flex flex-col items-center gap-space-sm">
+          <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+            <span class="material-symbols-outlined text-[32px] text-tac-status-standby">inventory_2</span>
+          </div>
+          <p class="font-label-mono-sm text-label-mono-sm uppercase tracking-[0.2em] text-tac-on-surface-variant">Belum ada spare part terpasang</p>
+        </div>
       </div>
     </div>
-    
+
     <!-- 🔧 TAB: PM SCHEDULE -->
-    <div x-show="activeTab === 'pm'" class="space-y-4">
+    <div x-show="activeTab === 'pm'" class="flex flex-col gap-space-sm">
       <template x-for="pm in pmList.filter(l => l.equipmentId === selectedEquip?.EquipmentID).sort((a,b) => (a.date||'').localeCompare(b.date||''))" :key="pm.pmId">
-        <div class="card-modern p-5 border-l-4 group" :class="pm.status === 'completed' ? 'border-l-emerald-500/50' : (isPMOverdue(pm) ? 'border-l-rose-500/50' : 'border-l-amber-500/50')">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <span class="text-xs font-black text-amber-400 uppercase tracking-widest px-2 py-1 glass rounded-lg" x-text="pm.date"></span>
-                <span class="text-sm px-2 py-0.5 rounded-full font-bold"
+        <article class="bg-tac-surface-card rounded-lg border border-tac-border-subtle border-l-4 p-3" :class="pm.status === 'completed' ? 'border-l-emerald-500/50' : (isPMOverdue(pm) ? 'border-l-rose-500/50' : 'border-l-amber-500/50')">
+          <div class="flex items-start justify-between gap-space-sm">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface" x-text="pm.date"></span>
+                <span class="px-2 py-0.5 rounded-full border border-tac-border-subtle font-label-mono-sm text-label-mono-sm uppercase font-semibold"
                   :class="{
                     'bg-amber-500/20 text-amber-400': pm.status === 'pending',
                     'bg-emerald-500/20 text-emerald-400': pm.status === 'completed',
                     'bg-slate-500/20 text-slate-400': pm.status === 'skipped',
                   }" x-text="pm.status"></span>
-                <span x-show="isPMOverdue(pm)" class="text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-bold">OVERDUE</span>
+                <span x-show="isPMOverdue(pm)" class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-tac-status-emergency/20 text-tac-status-emergency font-label-mono-sm text-label-mono-sm uppercase font-semibold">
+                  <span class="material-symbols-outlined text-[14px]">warning</span><span>OVERDUE</span>
+                </span>
               </div>
-              <h4 class="text-sm font-black text-white" x-text="pm.taskName"></h4>
-              <p x-show="pm.notes" class="text-sm text-slate-500 mt-1 italic" x-text="pm.notes"></p>
+              <h4 class="font-label-mono-md text-label-mono-md font-bold text-tac-on-surface" x-text="pm.taskName"></h4>
+              <p x-show="pm.notes" class="font-body-sm text-body-sm text-tac-on-surface-variant mt-1 italic" x-text="pm.notes"></p>
             </div>
-            <div x-show="pm.technician" class="text-right shrink-0 ml-4">
-              <p class="text-sm text-slate-500 uppercase tracking-widest font-black">Technician</p>
-              <p class="text-xs font-bold text-amber-400" x-text="pm.technician"></p>
+            <div x-show="pm.technician" class="text-right shrink-0">
+              <span class="flex items-center justify-end gap-1 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">
+                <span class="material-symbols-outlined text-[14px]">badge</span><span>TECHNICIAN</span>
+              </span>
+              <span class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="pm.technician"></span>
             </div>
           </div>
-        </div>
+        </article>
       </template>
-      
+
       <!-- Empty State -->
-      <div x-show="!pmList.filter(l => l.equipmentId === selectedEquip?.EquipmentID).length" class="text-center py-16 card-modern border-dashed border-2 border-white/5">
-        <i class="fas fa-calendar-check text-4xl text-slate-700 mb-4 block"></i>
-        <p class="text-slate-500 text-xs font-black uppercase tracking-[0.3em]">No PM schedule for this equipment</p>
+      <div x-show="!pmList.filter(l => l.equipmentId === selectedEquip?.EquipmentID).length" class="text-center py-16 bg-tac-surface-card rounded-lg border border-dashed border-tac-border-subtle">
+        <div class="inline-flex flex-col items-center gap-space-sm">
+          <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+            <span class="material-symbols-outlined text-[32px] text-tac-status-standby">event_busy</span>
+          </div>
+          <p class="font-label-mono-sm text-label-mono-sm uppercase tracking-[0.2em] text-tac-on-surface-variant">Belum ada jadwal PM untuk aset ini</p>
+        </div>
       </div>
     </div>
   </div>

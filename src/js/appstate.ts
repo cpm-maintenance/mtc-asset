@@ -431,11 +431,24 @@ export interface AppState {
   get filteredAllLogsAll(): any;
   get filteredAllParts(): any;
   get filteredAudit(): any;
+  /** Halaman Audit Trail (Tactical Slate). */
+  get auditKpi(): any;
+  auditActionTac(...args: any[]): any;
+  auditMarkerTac(...args: any[]): any;
+  auditIconTac(...args: any[]): any;
+  auditRoleTac(...args: any[]): any;
   get filteredEquip(): any;
   get filteredLogs(): any;
   get filteredParts(): any;
   get filteredPartsForLog(): any;
   get filteredPerformanceData(): any;
+  /** Halaman Performance (Tactical Slate). */
+  get perfKpi(): any;
+  perfGapTac(...args: any[]): any;
+  /** Halaman Monthly Plan (Tactical Slate). */
+  get mpMonthName(): any;
+  mpStatusTac(...args: any[]): any;
+  mpStatusMarkerTac(...args: any[]): any;
   get filteredWorkOrders(): any;
   forceRefreshLogs: (...args: any[]) => any;
   formatAuditTime: (...args: any[]) => any;

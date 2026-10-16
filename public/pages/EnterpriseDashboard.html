@@ -1,325 +1,462 @@
-<!-- 🏭 PAGE: ENTERPRISE DASHBOARD -->
-<div x-cloak>
-  <!-- GLOBAL FILTER BAR -->
-  <div class="flex flex-wrap gap-2 items-center mb-5 pb-4 border-b border-white/10">
-    <div class="flex items-center gap-1.5 glass px-3 py-2 rounded-xl text-sm">
-      <i class="fas fa-industry text-blue-400 text-sm"></i>
-      <select x-model="plantFilter" class="bg-transparent border-0 text-sm font-bold w-24 p-0 focus:ring-0">
-        <option value="">All Plants</option>
-        <option value="Mill1">Mill 1</option>
-        <option value="Mill2">Mill 2</option>
-      </select>
-    </div>
-    <div class="flex items-center gap-1.5 glass px-3 py-2 rounded-xl text-sm">
-      <i class="fas fa-sitemap text-blue-400 text-sm"></i>
-      <select x-model="deptFilter" class="bg-transparent border-0 text-sm font-bold w-24 p-0 focus:ring-0">
-        <option value="">All Dept</option>
-        <option value="Mechanical">Mechanical</option>
-        <option value="Electrical">Electrical</option>
-        <option value="Instrument">Instrument</option>
-        <option value="Civil">Civil</option>
-      </select>
-    </div>
-    <div class="flex items-center gap-1.5 glass px-3 py-2 rounded-xl text-sm">
-      <i class="fas fa-calendar text-blue-400 text-sm"></i>
-      <input type="date" x-model="kpiDateFrom" class="bg-transparent border-0 text-sm font-bold w-28 p-0 focus:ring-0">
-      <span class="text-slate-600">→</span>
-      <input type="date" x-model="kpiDateTo" class="bg-transparent border-0 text-sm font-bold w-28 p-0 focus:ring-0">
-    </div>
-    <button @click="refreshDashboard()" class="glass px-3 py-2 rounded-xl text-sm font-bold text-amber-400 hover:border-amber-500/30"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
-  </div>
+<!-- ═══ PAGE: ENTERPRISE DASHBOARD — Plant Command Core (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
 
-  <!-- ═══ HERO: OEE + KPI Cards ═══ -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5 mb-6">
+  <!-- ═══ 1. COMMAND BANNER / GLOBAL FILTER BAR ════════════════════════════ -->
+  <header class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
+    <div>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">PLANT COMMAND CORE · ENTERPRISE VIEW</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Enterprise Dashboard</h1>
+        <span class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-status-standby font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="enterpriseSummary.openWO + ' WO TERBUKA'"></span>
+        <span x-show="plantFilter || deptFilter"
+          class="px-2 py-0.5 rounded-full bg-tac-primary/15 text-tac-primary font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="(plantFilter || 'SEMUA PLANT') + ' · ' + (deptFilter || 'SEMUA DEPT')"></span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-space-sm">
+      <div class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-tac-primary text-[16px]">factory</span>
+        <select x-model="plantFilter"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          <option value="">SEMUA PLANT</option>
+          <option value="Mill1">MILL 1</option>
+          <option value="Mill2">MILL 2</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-tac-primary text-[16px]">group_work</span>
+        <select x-model="deptFilter"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          <option value="">SEMUA DEPT</option>
+          <option value="Mechanical">Mechanical</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Instrument">Instrument</option>
+          <option value="Civil">Civil</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-tac-primary text-[16px]">event</span>
+        <input type="date" x-model="kpiDateFrom" aria-label="Tanggal mulai"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">→</span>
+        <input type="date" x-model="kpiDateTo" aria-label="Tanggal akhir"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+      </div>
+
+      <button type="button" @click="refreshDashboard()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">refresh</span>
+        <span class="hidden sm:inline">REFRESH</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ 2. HERO — OEE + KPI MATRIX ═══════════════════════════════════════ -->
+  <section aria-label="Hero OEE" class="grid grid-cols-1 xl:grid-cols-4 gap-space-md">
+
     <!-- OEE Hero -->
-    <div class="glass rounded-2xl p-4 md:col-span-1 relative overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
-      @click="kpiClick('oee')">
-      <div class="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
+    <button type="button" @click="kpiClick('oee')"
+      class="text-left relative overflow-hidden bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md hover:bg-tac-surface-elevated/60 transition-all active:scale-[0.99]">
+      <div class="absolute inset-0 opacity-10 pointer-events-none"
         :style="'background: radial-gradient(circle at 30% 30%, ' + enterpriseOEE.hexColor + ' 0%, transparent 70%)'"></div>
-      <div class="relative">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Overall OEE</p>
-        <div class="flex items-baseline gap-1">
-          <span class="text-4xl font-black tracking-tight nexus-glow-text transition-colors duration-500" 
-            :style="'color: ' + enterpriseOEE.hexColor" x-text="enterpriseOEE.oee + '%'"></span>
-          <span class="text-xs font-bold uppercase rounded-full px-2 py-0.5"
-            :class="enterpriseOEE.status === 'Optimal' ? 'bg-emerald-500/15 text-emerald-400' : enterpriseOEE.status === 'Good' ? 'bg-blue-500/15 text-blue-400' : enterpriseOEE.status === 'Warning' ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400'"
+      <div class="relative flex flex-col gap-space-sm">
+        <div class="flex items-center justify-between">
+          <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Overall OEE</span>
+          <span class="px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold uppercase border"
+            :class="enterpriseOEE.status === 'Optimal' ? 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30' : (enterpriseOEE.status === 'Good' ? 'bg-tac-sync-cyan/15 text-tac-sync-cyan border-tac-sync-cyan/30' : (enterpriseOEE.status === 'Warning' ? 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30' : 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30'))"
             x-text="enterpriseOEE.status"></span>
         </div>
-        <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/5">
-          <div><p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">A</p><p class="text-sm font-black text-white" x-text="enterpriseOEE.availability + '%'"></p></div>
-          <div><p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">P</p><p class="text-sm font-black text-white" x-text="enterpriseOEE.performance + '%'"></p></div>
-          <div><p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Q</p><p class="text-sm font-black text-white" x-text="enterpriseOEE.quality + '%'"></p></div>
+
+        <div class="flex items-baseline gap-1">
+          <span class="font-display-hero text-display-hero transition-colors duration-500"
+            :style="'color: ' + enterpriseOEE.hexColor" x-text="enterpriseOEE.oee + '%'"></span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-tac-border-subtle font-label-mono-sm text-label-mono-sm">
+          <div class="flex flex-col">
+            <span class="text-tac-status-standby uppercase text-[10px]">AVAILABILITY</span>
+            <span class="text-tac-on-surface font-bold" x-text="enterpriseOEE.availability + '%'"></span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-tac-status-standby uppercase text-[10px]">PERFORMANCE</span>
+            <span class="text-tac-on-surface font-bold" x-text="enterpriseOEE.performance + '%'"></span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-tac-status-standby uppercase text-[10px]">QUALITY</span>
+            <span class="text-tac-on-surface font-bold" x-text="enterpriseOEE.quality + '%'"></span>
+          </div>
         </div>
       </div>
-    </div>
+    </button>
 
-    <!-- 6 KPI Cards -->
-    <div class="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+    <!-- KPI matrix -->
+    <div class="xl:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-md">
       <template x-for="kpi in enterpriseKPIList.slice(0,6)" :key="kpi.key">
-        <div class="glass rounded-xl p-3 border-l-[3px] hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
-          :style="'border-left-color: ' + kpi.color" @click="kpiClick(kpi.key)">
-          <div class="flex items-start justify-between mb-1">
-            <i :class="'fas ' + kpi.icon" class="text-base opacity-60" :style="'color: ' + kpi.color"></i>
-            <span class="text-xs font-black px-1.5 py-0.5 rounded" :class="kpi.trend > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'"
-              x-text="(kpi.trend > 0 ? '+' : '') + kpi.trend + '%'"></span>
+        <button type="button" @click="kpiClick(kpi.key)"
+          class="text-left relative bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md hover:bg-tac-surface-elevated/60 transition-all active:scale-[0.99] overflow-hidden">
+          <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l" :style="'background: ' + kpi.color"></div>
+          <div class="pl-2 flex flex-col gap-1">
+            <div class="flex items-start justify-between gap-2">
+              <span class="material-symbols-outlined text-[18px]" :style="'color: ' + kpi.color" x-text="kpi.ms || 'monitoring'"></span>
+              <span class="px-1.5 py-0.5 rounded font-label-mono-sm text-label-mono-sm font-bold"
+                :class="kpi.trend > 0 ? 'bg-tac-status-operational/15 text-tac-status-operational' : 'bg-tac-status-emergency/15 text-tac-status-emergency'"
+                x-text="(kpi.trend > 0 ? '+' : '') + kpi.trend + '%'"></span>
+            </div>
+            <span class="font-headline-md text-headline-md font-bold text-tac-on-surface" x-text="kpi.value"></span>
+            <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby" x-text="kpi.label"></span>
+            <div class="h-5 mt-1 opacity-60" x-html="kpi.sparkline || ''"></div>
           </div>
-          <p class="text-xl font-black text-white nexus-glow-text tracking-tight" x-text="kpi.value"></p>
-          <p class="text-xs font-bold text-slate-400 mt-0.5" x-text="kpi.label"></p>
-          <div class="h-5 mt-1 opacity-40 group-hover:opacity-70 transition-opacity" x-html="kpi.sparkline || ''"></div>
-        </div>
+        </button>
       </template>
     </div>
-  </div>
 
-  <!-- ═══ ROW 1: Health Dist (compact) + WO Status (expanded) ═══ -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-    <div class="glass rounded-2xl p-4 md:p-5">
-      <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-heartbeat text-emerald-400 mr-2"></i>Equipment Health</h4>
-        <span class="text-xs font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-full" x-text="enterpriseSummary.avgHealth + '% avg'"></span>
+  </section>
+
+  <!-- ═══ 3. ROW 1 — Health Distribution + WO Status ═══════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+    <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col">
+      <div class="flex items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm mb-space-md">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-tac-status-operational text-[18px]">troubleshoot</span>
+          <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Equipment Health</h2>
+        </div>
+        <span class="font-label-mono-sm text-label-mono-sm px-2 py-0.5 rounded-full bg-tac-surface-recessed text-tac-status-standby"
+          x-text="enterpriseSummary.avgHealth + '% AVG'"></span>
       </div>
       <div class="relative h-[260px]"><canvas id="eHealthChart"></canvas></div>
-    </div>
-    <div class="glass rounded-2xl p-4 md:p-5 lg:col-span-2">
-      <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-tasks text-blue-400 mr-2"></i>Work Order Status</h4>
-        <span class="text-xs font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-full" x-text="enterpriseSummary.openWO + ' open'"></span>
+    </section>
+
+    <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col lg:col-span-2">
+      <div class="flex items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm mb-space-md">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-tac-sync-cyan text-[18px]">assignment</span>
+          <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Work Order Status</h2>
+        </div>
+        <span class="font-label-mono-sm text-label-mono-sm px-2 py-0.5 rounded-full bg-tac-surface-recessed text-tac-status-standby"
+          x-text="enterpriseSummary.openWO + ' OPEN'"></span>
       </div>
       <div class="relative h-[260px]"><canvas id="woStatusChart"></canvas></div>
-    </div>
+    </section>
   </div>
 
-  <!-- ═══ ROW 2: Critical Table (expanded) ═══ -->
-  <div class="glass rounded-2xl p-4 md:p-5 mb-5">
-    <div class="flex items-center justify-between mb-3">
-      <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-exclamation-triangle text-rose-400 mr-2"></i>Top 10 Critical Equipment</h4>
-      <button @click="exportPDF('critical')" class="text-sm text-slate-500 hover:text-amber-400"><i class="fas fa-file-pdf mr-1"></i>Export</button>
+  <!-- ═══ 4. ROW 2 — Top 10 Critical Equipment ═════════════════════════════ -->
+  <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle overflow-hidden">
+    <div class="flex items-center justify-between gap-space-sm px-3 py-2 border-b border-tac-border-subtle bg-tac-surface-recessed">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-tac-status-emergency text-[18px]">warning</span>
+        <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Top 10 Critical Equipment</h2>
+      </div>
+      <button type="button" @click="exportPDF('critical')"
+        class="flex items-center gap-1.5 font-label-mono-sm text-label-mono-sm text-tac-status-standby hover:text-tac-primary transition-colors">
+        <span class="material-symbols-outlined text-[14px]">picture_as_pdf</span>
+        <span>EXPORT</span>
+      </button>
     </div>
+
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead><tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
-          <th class="text-left py-2 font-black">ID</th><th class="text-left py-2 font-black">Name</th>
-          <th class="text-center py-2 font-black">Health</th><th class="text-center py-2 font-black">Criticality</th>
-          <th class="text-center py-2 font-black">Last Failure</th><th class="text-center py-2 font-black">Run Hrs</th>
-          <th class="text-center py-2 font-black">MTBF</th><th class="text-center py-2 font-black">MTTR</th>
-          <th class="text-center py-2 font-black">Priority</th>
-        </tr></thead>
+      <table class="w-full text-left">
+        <thead class="bg-tac-surface-container-low">
+          <tr class="border-b border-tac-border-subtle">
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">ID</th>
+            <th class="p-3 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">NAME</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">HEALTH</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">CRITICALITY</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">LAST FAILURE</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">RUN HRS</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">MTBF</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">MTTR</th>
+            <th class="p-3 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">PRIORITY</th>
+          </tr>
+        </thead>
         <template x-for="e in enterpriseCritical" :key="e.EquipmentID">
           <tbody>
-              <tr class="border-b border-white/[0.02] hover:bg-white/[0.03] cursor-pointer transition-colors"
-                @click="$el.nextElementSibling.classList.toggle('hidden')">
-                <td class="py-2 font-mono text-amber-400" x-text="e.EquipmentID"></td>
-                <td class="py-2 font-bold text-white/90" x-text="e.Nama">
-                  <i class="fas fa-chevron-down ml-1 text-[9px] text-amber-400/60"></i>
-                </td>
-                <td class="py-2 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold" 
-                  :class="e.healthColor === 'green' ? 'bg-emerald-500/10 text-emerald-400' : e.healthColor === 'orange' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'"
-                  x-text="e.score"></span></td>
-                <td class="py-2 text-center text-slate-400" x-text="e.Criticality || '-'"></td>
-                <td class="py-2 text-center text-slate-400" x-text="e.lastFailure"></td>
-                <td class="py-2 text-center text-slate-400" x-text="e.runningHrs"></td>
-                <td class="py-2 text-center font-mono" x-text="e.mtbf"></td>
-                <td class="py-2 text-center font-mono" x-text="e.mttr"></td>
-                <td class="py-2 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold"
-                  :class="e.priority === 'Critical' ? 'bg-rose-500/15 text-rose-400' : e.priority === 'High' ? 'bg-amber-500/15 text-amber-400' : 'bg-amber-500/15 text-amber-400'"
-                  x-text="e.priority"></span></td>
-              </tr>
-              <!-- Expandable detail row -->
-              <tr class="hidden border-b border-white/5">
-                <td colspan="9" class="p-0 border-b border-white/5">
-                  <div class="bg-white/[0.02] p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Status</span><span class="text-white font-bold" x-text="e.Status || '-'"></span></div>
-                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Location</span><span class="text-white font-bold" x-text="e.Lokasi || '-'"></span></div>
-                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Department</span><span class="text-white font-bold" x-text="e.Departemen || '-'"></span></div>
-                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Health</span><span class="font-bold" :class="e.healthColor === 'green' ? 'text-emerald-400' : e.healthColor === 'orange' ? 'text-amber-400' : 'text-rose-400'" x-text="e.healthStatus"></span></div>
-                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">SPV</span><span class="text-white font-bold" x-text="e.Supervisor || '-'"></span></div>
-                    <div><span class="text-xs text-slate-500 block font-bold uppercase tracking-wider">Next PM</span><span class="text-white font-bold" x-text="e.NextPMDate || '-'"></span></div>
-                    <div class="md:col-span-2 flex items-end">
-                      <button @click.stop="goToDetail(e.EquipmentID)" class="text-xs px-3 py-1.5 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-lg font-bold hover:bg-amber-500/30 transition-all">
-                        <i class="fas fa-external-link-alt mr-1"></i> Open Equipment Detail
-                      </button>
-                    </div>
+            <tr class="border-b border-tac-border-subtle hover:bg-tac-surface-elevated/40 cursor-pointer transition-colors"
+              @click="$el.nextElementSibling.classList.toggle('hidden')">
+              <td class="p-3 font-label-mono-md text-label-mono-md text-tac-primary font-bold" x-text="e.EquipmentID"></td>
+              <td class="p-3 font-body-sm text-body-sm font-semibold text-tac-on-surface">
+                <span x-text="e.Nama"></span>
+                <span class="material-symbols-outlined text-[14px] text-tac-primary align-middle ml-1">expand_more</span>
+              </td>
+              <td class="p-3 text-center">
+                <span class="px-2 py-0.5 rounded-full border font-label-mono-sm text-label-mono-sm font-bold"
+                  :class="e.healthColor === 'green' ? 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/30' : (e.healthColor === 'orange' ? 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30' : 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30')"
+                  x-text="e.score"></span>
+              </td>
+              <td class="p-3 text-center font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="e.Criticality || '-'"></td>
+              <td class="p-3 text-center font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="e.lastFailure"></td>
+              <td class="p-3 text-center font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="e.runningHrs"></td>
+              <td class="p-3 text-center font-label-mono-md text-label-mono-md text-tac-on-surface" x-text="e.mtbf"></td>
+              <td class="p-3 text-center font-label-mono-md text-label-mono-md text-tac-on-surface" x-text="e.mttr"></td>
+              <td class="p-3 text-center">
+                <span class="px-2 py-0.5 rounded-full border font-label-mono-sm text-label-mono-sm font-bold"
+                  :class="e.priority === 'Critical' ? 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30' : 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30'"
+                  x-text="e.priority"></span>
+              </td>
+            </tr>
+            <!-- Expandable detail row -->
+            <tr class="hidden border-b border-tac-border-subtle">
+              <td colspan="9" class="p-0">
+                <div class="bg-tac-surface-recessed p-space-md grid grid-cols-2 md:grid-cols-4 gap-space-sm font-label-mono-sm text-label-mono-sm">
+                  <div><span class="text-tac-status-standby block uppercase text-[10px]">STATUS</span><span class="text-tac-on-surface font-bold" x-text="e.Status || '-'"></span></div>
+                  <div><span class="text-tac-status-standby block uppercase text-[10px]">LOCATION</span><span class="text-tac-on-surface font-bold" x-text="e.Lokasi || '-'"></span></div>
+                  <div><span class="text-tac-status-standby block uppercase text-[10px]">DEPARTMENT</span><span class="text-tac-on-surface font-bold" x-text="e.Departemen || '-'"></span></div>
+                  <div><span class="text-tac-status-standby block uppercase text-[10px]">HEALTH</span><span class="font-bold" :class="e.healthColor === 'green' ? 'text-tac-status-operational' : (e.healthColor === 'orange' ? 'text-tac-status-repair' : 'text-tac-status-emergency')" x-text="e.healthStatus"></span></div>
+                  <div><span class="text-tac-status-standby block uppercase text-[10px]">SPV</span><span class="text-tac-on-surface font-bold" x-text="e.Supervisor || '-'"></span></div>
+                  <div><span class="text-tac-status-standby block uppercase text-[10px]">NEXT PM</span><span class="text-tac-on-surface font-bold" x-text="e.NextPMDate || '-'"></span></div>
+                  <div class="md:col-span-2 flex items-end">
+                    <button type="button" @click.stop="goToDetail(e.EquipmentID)"
+                      class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold transition-all active:scale-95">
+                      <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
+                      <span>OPEN EQUIPMENT DETAIL</span>
+                    </button>
                   </div>
-                </td>
-                </td>
-              </tr>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </template>
         <tbody x-show="!enterpriseCritical.length">
-          <tr><td colspan="9" class="text-center py-8 text-slate-600 text-sm">No equipment data</td></tr>
+          <tr><td colspan="9" class="text-center py-8 font-label-mono-sm text-label-mono-sm text-tac-status-standby">TIDAK ADA DATA EQUIPMENT</td></tr>
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 
-  <!-- ═══ ROW 3: PM Compliance Trend (expanded) + Downtime Trend ═══ -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-    <div class="glass rounded-2xl p-4 md:p-5 lg:col-span-2">
-      <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-clipboard-check text-amber-400 mr-2"></i>PM Compliance Trend</h4>
-        <span class="text-lg font-black text-amber-400" x-text="enterpriseSummary.pmc.pct + '%'"></span>
+  <!-- ═══ 5. ROW 3 — PM Compliance + Downtime Trend ════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+    <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col lg:col-span-2">
+      <div class="flex items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm mb-space-md">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-tac-primary text-[18px]">fact_check</span>
+          <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">PM Compliance Trend</h2>
+        </div>
+        <span class="font-headline-md text-headline-md font-bold text-tac-primary" x-text="enterpriseSummary.pmc.pct + '%'"></span>
       </div>
       <div class="relative h-[260px]"><canvas id="pmTrendChart"></canvas></div>
-    </div>
-    <div class="glass rounded-2xl p-4 md:p-5">
-      <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-chart-line text-rose-400 mr-2"></i>Downtime Trend (hrs)</h4>
+    </section>
+
+    <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col">
+      <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm mb-space-md">
+        <span class="material-symbols-outlined text-tac-status-emergency text-[18px]">show_chart</span>
+        <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Downtime Trend (HRS)</h2>
+      </div>
       <div class="relative h-[260px]"><canvas id="downtimeTrendChart"></canvas></div>
-    </div>
+    </section>
   </div>
 
-  <!-- ═══ SECONDARY SECTION: Collapsible extra charts & tables ═══ -->
-  <div x-data="{ showExtra: false }" class="mb-5">
-    <button @click="showExtra = !showExtra" 
-      class="w-full flex items-center justify-center gap-2 py-3 glass rounded-2xl text-sm font-bold text-slate-400 hover:text-white transition-all border border-white/5">
-      <i class="fas" :class="showExtra ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-      <span x-text="showExtra ? 'Hide Secondary Charts' : 'Show More Analytics'"></span>
+  <!-- ═══ 6. SECONDARY ANALYTICS (COLLAPSIBLE) ═════════════════════════════ -->
+  <div x-data="{ showExtra: false }">
+    <button type="button" @click="showExtra = !showExtra"
+      class="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-tac-surface-card border border-tac-border-subtle font-label-mono-md text-label-mono-md text-tac-status-standby hover:text-tac-on-surface transition-all">
+      <span class="material-symbols-outlined text-[18px]">expand_more</span>
+      <span x-text="showExtra ? 'SEMBUNYIKAN ANALITIK SEKUNDER' : 'TAMPILKAN ANALITIK LAINNYA'"></span>
     </button>
 
-    <div x-show="showExtra" class="mt-5">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-        <!-- Upcoming PM -->
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-calendar-alt text-amber-400 mr-2"></i>Upcoming PM Schedule</h4>
-          <div class="space-y-1.5 max-h-[280px] overflow-y-auto">
+    <div x-show="showExtra" class="flex flex-col gap-space-md mt-space-md">
+
+      <!-- Upcoming PM + Critical WO -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+        <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
+          <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm mb-space-md">
+            <span class="material-symbols-outlined text-tac-primary text-[18px]">event_busy</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Upcoming PM Schedule</h2>
+          </div>
+          <div class="flex flex-col gap-1.5 max-h-[280px] overflow-y-auto">
             <template x-for="pm in enterpriseUpcomingPM" :key="pm.date + pm.taskName">
-              <div class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-white/[0.03] transition-colors">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-black"
-                  :class="pm.due === 'today' ? 'bg-rose-500/10 text-rose-400' : pm.due === 'tomorrow' ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-500/10 text-amber-400'">
-                  <i class="fas" :class="pm.due === 'today' ? 'fa-exclamation' : pm.due === 'tomorrow' ? 'fa-clock' : 'fa-calendar-day'"></i>
+              <div class="flex items-center gap-2.5 p-2 rounded bg-tac-surface-recessed border border-tac-border-subtle">
+                <div class="w-8 h-8 rounded border flex items-center justify-center shrink-0"
+                  :class="pm.due === 'today' ? 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/30' : 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/30'">
+                  <span class="material-symbols-outlined text-[16px]" x-text="pm.due === 'today' ? 'warning' : (pm.due === 'tomorrow' ? 'schedule' : 'event')"></span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-bold text-white/90 truncate" x-text="pm.taskName"></p>
-                  <p class="text-xs text-slate-500" x-text="pm.date + ' · ' + (equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId)"></p>
+                  <p class="font-body-sm text-body-sm font-semibold text-tac-on-surface truncate" x-text="pm.taskName"></p>
+                  <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby truncate"
+                    x-text="pm.date + ' · ' + (equipment.find(e => e.EquipmentID === pm.equipmentId)?.Nama || pm.equipmentId)"></p>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded-full font-bold uppercase"
-                  :class="pm.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : pm.status === 'cancelled' ? 'bg-slate-500/10 text-slate-400' : 'bg-amber-500/10 text-amber-400'"
-                  x-text="pm.status"></span>
+                <span class="px-2 py-0.5 rounded-full border font-label-mono-sm text-label-mono-sm font-bold uppercase shrink-0"
+                  :class="mpStatusTac(pm.status)" x-text="pm.status"></span>
               </div>
             </template>
           </div>
-        </div>
-        <!-- Critical WO -->
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-exclamation-circle text-rose-400 mr-2"></i>Critical Work Orders</h4>
+        </section>
+
+        <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
+          <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm mb-space-md">
+            <span class="material-symbols-outlined text-tac-status-emergency text-[18px]">assignment_late</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Critical Work Orders</h2>
+          </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead><tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
-                <th class="text-left py-2 font-black">WO</th><th class="text-left py-2 font-black">Equip</th>
-                <th class="text-center py-2 font-black">Priority</th><th class="text-center py-2 font-black">Due</th>
-                <th class="text-center py-2 font-black">Status</th>
-              </tr></thead>
+            <table class="w-full text-left">
+              <thead class="bg-tac-surface-recessed">
+                <tr class="border-b border-tac-border-subtle">
+                  <th class="p-2 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">WO</th>
+                  <th class="p-2 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">EQUIP</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">PRIORITY</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">DUE</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">STATUS</th>
+                </tr>
+              </thead>
               <tbody>
                 <template x-for="wo in enterpriseCriticalWO" :key="wo.LogID || wo.woNumber">
-                  <tr class="border-b border-white/[0.02] hover:bg-white/[0.03] cursor-pointer transition-colors" @click="openLogModal(true, wo)">
-                    <td class="py-2 font-mono text-amber-400" x-text="wo.woNumber || wo.LogID"></td>
-                    <td class="py-2 text-white/90" x-text="equipment.find(e => e.EquipmentID === wo.EquipmentID)?.Nama || wo.EquipmentID"></td>
-                    <td class="py-2 text-center"><span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase"
-                      :class="{'bg-rose-500/15 text-rose-400': wo.woPriority === 'Emergency', 'bg-orange-500/15 text-orange-400': wo.woPriority === 'Urgent', 'bg-amber-500/15 text-amber-400': wo.woPriority === 'Normal' || !wo.woPriority}"
-                      x-text="wo.woPriority || 'Normal'"></span></td>
-                    <td class="py-2 text-center text-slate-400" x-text="wo.dueDate || wo.Tanggal || '-'"></td>
-                    <td class="py-2 text-center text-slate-400" x-text="wo.Status"></td>
+                  <tr class="border-b border-tac-border-subtle last:border-b-0 hover:bg-tac-surface-elevated/40 cursor-pointer transition-colors" @click="openLogModal(true, wo)">
+                    <td class="p-2 font-label-mono-md text-label-mono-md text-tac-primary font-bold" x-text="wo.woNumber || wo.LogID"></td>
+                    <td class="p-2 font-body-sm text-body-sm text-tac-on-surface" x-text="equipment.find(e => e.EquipmentID === wo.EquipmentID)?.Nama || wo.EquipmentID"></td>
+                    <td class="p-2 text-center">
+                      <span class="px-1.5 py-0.5 rounded border font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                        :class="planningPriorityTac(wo.woPriority || 'Normal')" x-text="wo.woPriority || 'Normal'"></span>
+                    </td>
+                    <td class="p-2 text-center font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="wo.dueDate || wo.Tanggal || '-'"></td>
+                    <td class="p-2 text-center">
+                      <span class="px-1.5 py-0.5 rounded-full border font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                        :class="logStatusTac(wo.Status)" x-text="wo.Status"></span>
+                    </td>
                   </tr>
                 </template>
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-coins text-amber-400 mr-2"></i>Maintenance Cost</h4>
+      <!-- Cost + ABC -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+        <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col">
+          <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm mb-space-md">
+            <span class="material-symbols-outlined text-tac-primary text-[18px]">payments</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Maintenance Cost</h2>
+          </div>
           <div class="relative h-[260px]"><canvas id="costTrendChart"></canvas></div>
-        </div>
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-layer-group text-purple-400 mr-2"></i>Inventory ABC Analysis</h4>
-          <div class="relative h-[180px]"><canvas id="abcChart"></canvas></div>
-          <div class="flex gap-3 mt-2 justify-center text-xs">
-            <span class="bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded font-bold">A (80%)</span>
-            <span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold">B (15%)</span>
-            <span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold">C (5%)</span>
+        </section>
+
+        <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col">
+          <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm mb-space-md">
+            <span class="material-symbols-outlined text-tac-sync-cyan text-[18px]">inventory_2</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Inventory ABC Analysis</h2>
           </div>
-        </div>
+          <div class="relative h-[180px]"><canvas id="abcChart"></canvas></div>
+          <div class="flex gap-3 mt-2 justify-center font-label-mono-sm text-label-mono-sm">
+            <span class="px-2 py-0.5 rounded border border-tac-status-emergency/30 bg-tac-status-emergency/15 text-tac-status-emergency font-bold">A (80%)</span>
+            <span class="px-2 py-0.5 rounded border border-tac-status-repair/30 bg-tac-status-repair/15 text-tac-status-repair font-bold">B (15%)</span>
+            <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high text-tac-on-surface-variant font-bold">C (5%)</span>
+          </div>
+        </section>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-microchip text-purple-400 mr-2"></i>MTBF / MTTR</h4>
-          <div class="space-y-4">
-            <div><p class="text-xs font-bold text-slate-400 mb-1">Avg MTBF</p>
-              <p class="text-2xl font-black text-white" x-text="enterpriseSummary.avgMTBF + ' h'"></p>
-              <div class="h-1.5 bg-white/5 rounded-full mt-1"><div class="h-full bg-emerald-500 rounded-full" :style="'width: ' + Math.min(100, (enterpriseSummary.avgMTBF / 500) * 100) + '%'"></div></div>
-            </div>
-            <div><p class="text-xs font-bold text-slate-400 mb-1">Avg MTTR</p>
-              <p class="text-2xl font-black text-white" x-text="enterpriseSummary.avgMTTR + ' h'"></p>
-              <div class="h-1.5 bg-white/5 rounded-full mt-1"><div class="h-full bg-amber-500 rounded-full" :style="'width: ' + Math.min(100, (enterpriseSummary.avgMTTR / 50) * 100) + '%'"></div></div>
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
-              <div><p class="text-xs font-bold text-slate-400">Availability</p><p class="text-sm font-black text-emerald-400" x-text="enterpriseSummary.avgAvail + '%'"></p></div>
-              <div><p class="text-xs font-bold text-slate-400">Reliability</p><p class="text-sm font-black text-blue-400" x-text="enterpriseSummary.avgRel + '%'"></p></div>
+      <!-- MTBF/MTTR + Low Stock -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+        <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md flex flex-col gap-space-md">
+          <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm">
+            <span class="material-symbols-outlined text-tac-sync-cyan text-[18px]">troubleshoot</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">MTBF / MTTR</h2>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">AVG MTBF</span>
+            <span class="font-headline-lg text-headline-lg font-bold text-tac-status-operational" x-text="enterpriseSummary.avgMTBF + ' h'"></span>
+            <div class="h-1.5 bg-tac-surface-recessed rounded-full overflow-hidden shadow-inner">
+              <div class="h-full bg-tac-status-operational rounded-full transition-all duration-500"
+                :style="'width: ' + Math.min(100, (enterpriseSummary.avgMTBF / 500) * 100) + '%'"></div>
             </div>
           </div>
-        </div>
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Low Stock Spare Parts</h4>
+
+          <div class="flex flex-col gap-1">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">AVG MTTR</span>
+            <span class="font-headline-lg text-headline-lg font-bold text-tac-status-repair" x-text="enterpriseSummary.avgMTTR + ' h'"></span>
+            <div class="h-1.5 bg-tac-surface-recessed rounded-full overflow-hidden shadow-inner">
+              <div class="h-full bg-tac-status-repair rounded-full transition-all duration-500"
+                :style="'width: ' + Math.min(100, (enterpriseSummary.avgMTTR / 50) * 100) + '%'"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-tac-border-subtle font-label-mono-sm text-label-mono-sm">
+            <div class="flex flex-col">
+              <span class="text-tac-status-standby uppercase text-[10px]">AVAILABILITY</span>
+              <span class="text-tac-status-operational font-bold" x-text="enterpriseSummary.avgAvail + '%'"></span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-tac-status-standby uppercase text-[10px]">RELIABILITY</span>
+              <span class="text-tac-sync-cyan font-bold" x-text="enterpriseSummary.avgRel + '%'"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
+          <div class="flex items-center gap-2 border-b border-tac-border-subtle pb-space-sm mb-space-md">
+            <span class="material-symbols-outlined text-tac-status-repair text-[18px]">inventory</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">Low Stock Spare Parts</h2>
+          </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead><tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
-                <th class="text-left py-2 font-black">No</th><th class="text-left py-2 font-black">Part</th>
-                <th class="text-center py-2 font-black">Stock</th><th class="text-center py-2 font-black">Min</th>
-                <th class="text-center py-2 font-black">Max</th><th class="text-center py-2 font-black">Status</th>
-              </tr></thead>
+            <table class="w-full text-left">
+              <thead class="bg-tac-surface-recessed">
+                <tr class="border-b border-tac-border-subtle">
+                  <th class="p-2 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">NO</th>
+                  <th class="p-2 font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">PART</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">STOCK</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">MIN</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">MAX</th>
+                  <th class="p-2 text-center font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">STATUS</th>
+                </tr>
+              </thead>
               <tbody>
                 <template x-for="(p, i) in enterpriseLowStock" :key="p.PartID">
-                  <tr class="border-b border-white/[0.02] hover:bg-white/[0.03] transition-colors">
-                    <td class="py-2 text-slate-500" x-text="i+1"></td>
-                    <td class="py-2 text-white/90 font-medium" x-text="p.NamaPart || p.PartID"></td>
-                    <td class="py-2 text-center font-mono text-rose-400 font-bold" x-text="p.Stok"></td>
-                    <td class="py-2 text-center text-slate-400" x-text="p.MinStock || 0"></td>
-                    <td class="py-2 text-center text-slate-400" x-text="p.MaxStock || '-'"></td>
-                    <td class="py-2 text-center"><span class="px-1.5 py-0.5 rounded text-xs font-bold bg-rose-500/10 text-rose-400">LOW</span></td>
+                  <tr class="border-b border-tac-border-subtle last:border-b-0 hover:bg-tac-surface-elevated/40 transition-colors">
+                    <td class="p-2 font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="i+1"></td>
+                    <td class="p-2 font-body-sm text-body-sm text-tac-on-surface" x-text="p.NamaPart || p.PartID"></td>
+                    <td class="p-2 text-center font-label-mono-md text-label-mono-md font-bold text-tac-status-emergency" x-text="p.Stok"></td>
+                    <td class="p-2 text-center font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="p.MinStock || 0"></td>
+                    <td class="p-2 text-center font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="p.MaxStock || '-'"></td>
+                    <td class="p-2 text-center">
+                      <span class="px-1.5 py-0.5 rounded border border-tac-status-emergency/30 bg-tac-status-emergency/15 text-tac-status-emergency font-label-mono-sm text-label-mono-sm font-bold">LOW</span>
+                    </td>
                   </tr>
                 </template>
               </tbody>
             </table>
           </div>
-        </div>
-        <div class="glass rounded-2xl p-4 md:p-5">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80 mb-3"><i class="fas fa-stopwatch text-amber-400 mr-2"></i>Shutdown Progress</h4>
-          <div class="space-y-3">
-            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Preparation</span><span class="text-white font-bold">85%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-amber-500 rounded-full" style="width:85%"></div></div></div>
-            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Material Ready</span><span class="text-white font-bold">70%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-blue-500 rounded-full" style="width:70%"></div></div></div>
-            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Manpower Ready</span><span class="text-white font-bold">90%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:90%"></div></div></div>
-            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-400">Completed</span><span class="text-white font-bold">60%</span></div><div class="h-1.5 bg-white/5 rounded-full"><div class="h-full bg-purple-500 rounded-full" style="width:60%"></div></div></div>
-          </div>
-        </div>
+        </section>
       </div>
 
-      <!-- AI Insights (breakout — full width, accent tinted background) -->
-      <div class="rounded-2xl p-5 mt-5 border border-white/5 transition-all"
-        style="background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(217,119,6,0.08) 50%, rgba(5,7,10,0.8) 100%);">
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="text-sm font-black uppercase tracking-wider text-white/80"><i class="fas fa-robot text-amber-400 mr-2"></i>AI Maintenance Insights</h4>
-          <span class="flex items-center gap-1.5 text-sm text-slate-500"><i class="fas fa-sync-alt text-amber-400" :class="{'animate-spin': aiLoading}"></i> Real-time</span>
+      <!-- AI Insights -->
+      <section class="bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
+        <div class="flex items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm mb-space-md">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-tac-gold-bright text-[18px]">smart_toy</span>
+            <h2 class="font-label-mono-md text-label-mono-md font-bold uppercase text-tac-on-surface">AI Maintenance Insights</h2>
+          </div>
+          <span class="flex items-center gap-1.5 font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+            <span class="material-symbols-outlined text-[14px] text-tac-primary" :class="aiLoading ? 'animate-spin' : ''">sync</span>
+            <span>REAL-TIME</span>
+          </span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
           <template x-for="ins in enterpriseInsights" :key="ins.msg">
-            <div class="p-3 rounded-xl backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
-              :style="'background: rgba(' + (ins.type === 'critical' ? '239,68,68' : ins.type === 'warning' ? '245,158,11' : ins.type === 'success' ? '34,197,94' : '59,130,246') + ',0.08); border-left: 3px solid ' + (ins.type === 'critical' ? '#ef4444' : ins.type === 'warning' ? '#f59e0b' : ins.type === 'success' ? '#22c55e' : '#3b82f6')">
-              <div class="flex items-center gap-2 mb-1.5">
-                <div class="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-                  :style="'background: rgba(' + (ins.type === 'critical' ? '239,68,68' : ins.type === 'warning' ? '245,158,11' : ins.type === 'success' ? '34,197,94' : '59,130,246') + ',0.15)'">
-                  <i :class="'fas ' + (ins.icon || 'fa-robot')" :style="'color: ' + (ins.type === 'critical' ? '#ef4444' : ins.type === 'warning' ? '#f59e0b' : ins.type === 'success' ? '#22c55e' : '#3b82f6')"></i>
+            <article class="relative bg-tac-surface-recessed rounded border border-tac-border-subtle p-3 overflow-hidden">
+              <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l"
+                :class="ins.type === 'critical' ? 'bg-tac-status-emergency' : (ins.type === 'warning' ? 'bg-tac-status-repair' : (ins.type === 'success' ? 'bg-tac-status-operational' : 'bg-tac-sync-cyan'))"></div>
+              <div class="pl-2 flex flex-col gap-1.5">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[16px]"
+                    :class="ins.type === 'critical' ? 'text-tac-status-emergency' : (ins.type === 'warning' ? 'text-tac-status-repair' : (ins.type === 'success' ? 'text-tac-status-operational' : 'text-tac-sync-cyan'))"
+                    x-text="ins.ms || 'smart_toy'"></span>
+                  <span class="font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                    :class="ins.type === 'critical' ? 'text-tac-status-emergency' : (ins.type === 'warning' ? 'text-tac-status-repair' : (ins.type === 'success' ? 'text-tac-status-operational' : 'text-tac-sync-cyan'))"
+                    x-text="ins.type.toUpperCase()"></span>
                 </div>
-                <span class="text-xs font-black uppercase tracking-wider"
-                  :style="'color: ' + (ins.type === 'critical' ? '#ef4444' : ins.type === 'warning' ? '#f59e0b' : ins.type === 'success' ? '#22c55e' : '#3b82f6')"
-                  x-text="ins.type.toUpperCase()"></span>
+                <p class="font-body-sm text-body-sm text-tac-on-surface leading-relaxed" x-text="ins.msg"></p>
               </div>
-              <p class="text-sm text-slate-300 leading-relaxed" x-text="ins.msg"></p>
-            </div>
+            </article>
           </template>
         </div>
-      </div>
+      </section>
+
     </div>
   </div>
+
 </div>

@@ -436,7 +436,7 @@
                     'bg-tac-status-emergency': evt.isOverdue,
                     'bg-tac-gold-bright': evt.isDueSoon,
                     'bg-tac-status-operational': evt.isCompleted,
-                    'bg-tac-amber': !evt.isOverdue && !evt.isDueSoon && !evt.isCompleted
+                    'bg-tac-status-repair': !evt.isOverdue && !evt.isDueSoon && !evt.isCompleted
                   }"></div>
                 </template>
                 <span x-show="day.events.length > 5" class="text-[8px] text-tac-status-standby font-mono pl-1">+</span>
@@ -518,7 +518,7 @@
                     'bg-tac-status-emergency': row.status === 'Overdue',
                     'bg-tac-status-repair': row.status === 'Due Soon',
                     'bg-tac-status-operational': row.status === 'Completed',
-                    'bg-tac-amber': row.status === 'Scheduled'
+                    'bg-tac-status-repair': row.status === 'Scheduled'
                   }"></span>
                   <span class="font-body-sm text-body-sm font-bold text-tac-on-surface truncate" x-text="row.name"></span>
                 </div>
@@ -535,7 +535,7 @@
                     :class="{
                       'bg-tac-status-emergency/40 border-tac-status-emergency hover:bg-tac-status-emergency/60': evt.isOverdue,
                       'bg-tac-status-repair/40 border-tac-status-repair hover:bg-tac-status-repair/60': evt.isDueSoon,
-                      'bg-tac-amber-muted border-amber-500/50 hover:bg-tac-amber/40': !evt.isOverdue && !evt.isDueSoon && !evt.isCompleted,
+                      'bg-tac-status-repair/15 border-tac-status-repair/50 hover:bg-tac-status-repair/25': !evt.isOverdue && !evt.isDueSoon && !evt.isCompleted,
                       'bg-tac-status-operational/40 border-tac-status-operational': evt.isCompleted,
                     }"
                     class="absolute top-1/2 -translate-y-1/2 h-5 rounded border cursor-pointer transition-all group z-10 shadow-sm"

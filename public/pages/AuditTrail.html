@@ -1,94 +1,209 @@
-<!-- 📋 PAGE: AUDIT TRAIL -->
-<div x-cloak class="space-y-5 md:space-y-7">
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<!-- ═══ PAGE: AUDIT TRAIL — Security Event Ledger (Tactical Slate) ═══ -->
+<div x-cloak class="w-full flex flex-col gap-space-md pb-12">
+
+  <!-- ═══ 1. COMMAND BANNER / HEADER BAR ═══════════════════════════════════ -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm">
     <div>
-      <h2 class="text-xl md:text-3xl font-black text-white nexus-glow-text uppercase tracking-tighter">Audit Trail</h2>
-      <p class="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">
-        <span x-text="auditLogs.length + ' events'"></span>
-        <span x-show="auditLoading" class="text-nexus-accent ml-2">loading...</span>
-      </p>
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        <span class="inline-block w-2 h-2 rounded-full bg-tac-primary animate-pulse"></span>
+        <span class="text-tac-on-surface font-semibold">SECURITY &amp; COMPLIANCE LEDGER</span>
+      </div>
+      <div class="flex items-center gap-space-sm mt-0.5 flex-wrap">
+        <h1 class="font-headline-lg text-headline-lg text-tac-on-surface uppercase tracking-tight">Audit Trail</h1>
+        <span class="px-2 py-0.5 rounded-full bg-tac-surface-container-high text-tac-status-standby font-label-mono-sm text-label-mono-sm font-semibold"
+          x-text="auditKpi.total + ' EVENTS'"></span>
+        <span x-show="auditLoading"
+          class="px-2 py-0.5 rounded-full bg-tac-sync-cyan/15 text-tac-sync-cyan font-label-mono-sm text-label-mono-sm font-semibold animate-pulse">
+          SYNCING…
+        </span>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <button @click="loadAuditLogs()" class="px-4 py-2 glass text-xs font-bold text-nexus-accent rounded-xl hover:bg-nexus-accent/10 transition-all uppercase tracking-wider flex items-center gap-2">
-        <i class="fas fa-sync-alt"></i> Refresh
+
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <button type="button" @click="loadAuditLogs()"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">refresh</span>
+        <span class="hidden sm:inline">REFRESH</span>
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Filters -->
-  <div class="flex flex-wrap gap-2 p-3 glass rounded-2xl border-nexus-accent/10">
-    <input type="text" x-model="auditFilter" placeholder="Search action, user, details..." 
-      class="flex-1 min-w-[200px] px-3 py-2 glass text-xs font-bold text-slate-300 border border-white/5 rounded-xl outline-none">
-    <select x-model="auditActionFilter" @change="auditFilter = ''"
-      class="px-3 py-2 glass text-xs font-bold text-slate-300 border border-white/5 rounded-xl outline-none">
-      <option value="">All actions</option>
-      <option value="Login">Login</option>
-      <option value="Logout">Logout</option>
-      <option value="Create">Create</option>
-      <option value="Edit">Edit</option>
-      <option value="Delete">Delete</option>
-      <option value="Approve">Approve</option>
-      <option value="Reject">Reject</option>
-      <option value="Complete">Complete</option>
-      <option value="Cancel">Cancel</option>
-    </select>
-    <button @click="auditShowAll = !auditShowAll" class="px-3 py-2 glass text-xs font-bold rounded-xl transition-all"
-      :class="auditShowAll ? 'text-nexus-accent border border-nexus-accent/30 bg-nexus-accent/10' : 'text-slate-500 border border-transparent hover:text-white'">
-      {{ auditShowAll ? 'Admin only' : 'Show all' }}
-    </button>
-  </div>
+  <!-- ═══ 2. AUDIT TELEMETRY DECK (4 KARTU) ════════════════════════════════ -->
+  <section aria-label="KPI audit" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
 
-  <!-- Empty state -->
-  <div x-show="!auditLoading && filteredAudit.length === 0" class="text-center py-16">
-    <div class="inline-flex flex-col items-center gap-4">
-      <i class="fas fa-bars text-6xl text-slate-600"></i>
-      <div>
-        <p class="text-slate-400 text-lg font-bold">No audit entries yet</p>
-        <p class="text-slate-500 text-sm mt-2">Audit trail akan muncul saat pengguna melakukan aksi</p>
+    <!-- KPI 1 — Total Events -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Total Events</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-primary">
+          <span class="material-symbols-outlined text-[18px]">history</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-on-surface" x-text="auditKpi.total"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">RECORDS</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">ACTOR UNIK</span>
+        <span class="text-tac-on-surface font-semibold" x-text="auditKpi.actors + ' USER'"></span>
       </div>
     </div>
-  </div>
 
-  <!-- Audit List -->
-  <div x-show="filteredAudit.length > 0" class="space-y-2">
+    <!-- KPI 2 — Sessions -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Login Sessions</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-sync-cyan">
+          <span class="material-symbols-outlined text-[18px]">logout</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-sync-cyan" x-text="auditKpi.logins"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">LOGIN EVENT</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">AKSES ADMIN</span>
+        <span class="text-tac-status-emergency font-semibold" x-text="auditKpi.admins + ' EVENT'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 3 — Mutations -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Data Mutations</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-repair">
+          <span class="material-symbols-outlined text-[18px]">edit_note</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-repair" x-text="auditKpi.creates + auditKpi.edits"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">CREATE + EDIT</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">DELETE</span>
+        <span :class="auditKpi.deletes > 0 ? 'text-tac-status-emergency font-semibold' : 'text-tac-on-surface font-semibold'"
+          x-text="auditKpi.deletes + ' EVENT'"></span>
+      </div>
+    </div>
+
+    <!-- KPI 4 — Approvals -->
+    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Approvals &amp; Closure</span>
+        <span class="p-1 rounded bg-tac-surface-container text-tac-status-operational">
+          <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        </span>
+      </div>
+      <div class="mt-space-sm flex items-baseline gap-2">
+        <span class="font-headline-lg text-headline-lg font-bold text-tac-status-operational" x-text="auditKpi.approvals"></span>
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">APPROVE + COMPLETE</span>
+      </div>
+      <div class="mt-space-xs pt-2 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+        <span class="text-tac-status-standby">TAMPIL SEKARANG</span>
+        <span class="text-tac-on-surface font-semibold" x-text="auditKpi.shown + ' / ' + auditKpi.total"></span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══ 3. TACTICAL SEARCH & CONTROL BAR ═════════════════════════════════ -->
+  <section aria-label="Filter audit" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-sm">
+      <div class="flex-1 max-w-xl relative flex items-center bg-tac-surface-recessed rounded px-space-sm py-2 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]">
+        <span class="material-symbols-outlined text-tac-status-standby text-[18px] mr-2">search</span>
+        <label for="audit-search" class="sr-only">Cari audit</label>
+        <input id="audit-search" type="text" x-model="auditFilter" placeholder="Cari action, user, detail…"
+          class="w-full bg-transparent text-tac-on-surface font-body-sm text-body-sm outline-none placeholder:text-tac-status-standby">
+        <button type="button" x-show="auditFilter" @click="auditFilter = ''"
+          class="font-label-mono-sm text-label-mono-sm px-1.5 py-0.5 rounded bg-tac-surface-container-high text-tac-status-standby hover:text-tac-on-surface">ESC</button>
+      </div>
+
+      <button type="button" @click="auditShowAll = !auditShowAll"
+        class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded font-label-mono-md text-label-mono-md transition-colors border"
+        :class="auditShowAll ? 'bg-tac-primary-container text-tac-on-primary-container font-bold border-tac-primary-container' : 'bg-tac-surface-container-high text-tac-status-standby border-tac-border-subtle hover:text-tac-on-surface'">
+        <span class="material-symbols-outlined text-[16px]">verified_user</span>
+        <span x-text="auditShowAll ? 'ADMIN ONLY' : 'SHOW ALL'"></span>
+      </button>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle">
+      <div class="flex items-center gap-1">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">ACTION:</span>
+        <select x-model="auditActionFilter" @change="auditFilter = ''"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          <option value="">SEMUA ACTION</option>
+          <option value="Login">Login</option>
+          <option value="Logout">Logout</option>
+          <option value="Create">Create</option>
+          <option value="Edit">Edit</option>
+          <option value="Delete">Delete</option>
+          <option value="Approve">Approve</option>
+          <option value="Reject">Reject</option>
+          <option value="Complete">Complete</option>
+          <option value="Cancel">Cancel</option>
+        </select>
+      </div>
+
+      <div class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">
+        MENAMPILKAN <span class="text-tac-on-surface font-bold" x-text="filteredAudit.length"></span> DARI <span class="text-tac-on-surface font-bold" x-text="auditKpi.total"></span> EVENT
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 4. EVENT LEDGER STREAM ═══════════════════════════════════════════ -->
+  <section class="flex flex-col gap-space-sm">
     <template x-for="(entry, i) in filteredAudit" :key="entry._key || i">
-      <div class="glass rounded-2xl p-4 border border-white/5 hover:border-white/10 transition-all group">
-        <div class="flex items-start gap-3">
+      <article class="relative bg-tac-surface-card rounded-lg border border-tac-border-subtle p-3 md:p-4 hover:bg-tac-surface-elevated/60 transition-all group [content-visibility:auto] [contain-intrinsic-size:auto_96px]">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l" :class="auditMarkerTac(entry.action)"></div>
+
+        <div class="pl-2 flex items-start gap-3">
           <!-- Role badge -->
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-black"
-            :class="{
-              'bg-rose-500/15 text-rose-400': entry.role === 'admin',
-              'bg-amber-500/15 text-amber-400': entry.role === 'supervisor',
-              'bg-slate-500/15 text-slate-400': !entry.role || entry.role === 'user',
-            }">
-            <i :class="entry.role === 'admin' ? 'fas fa-shield-alt' : 'fas fa-user'"></i>
+          <div class="w-9 h-9 rounded border flex items-center justify-center shrink-0"
+            :class="auditRoleTac(entry.role)">
+            <span class="material-symbols-outlined text-[18px]" x-text="entry.role === 'admin' ? 'verified_user' : (entry.role === 'supervisor' ? 'manage_accounts' : 'person')"></span>
           </div>
+
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-bold text-white/90" x-text="entry.email || entry.uid"></span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider"
-                :class="{
-                  'bg-rose-500/10 text-rose-400': entry.action?.includes('Delete'),
-                  'bg-emerald-500/10 text-emerald-400': entry.action?.includes('Create') || entry.action === 'Login',
-                  'bg-amber-500/10 text-amber-400': entry.action?.includes('Edit') || entry.action?.includes('Update'),
-                  'bg-blue-500/10 text-blue-400': entry.action?.includes('Approve') || entry.action?.includes('Complete'),
-                  'bg-slate-500/10 text-slate-400': !entry.action,
-                }" x-text="entry.action"></span>
-              <span class="text-[10px] text-slate-600 font-mono" x-text="formatAuditTime(entry.date)"></span>
+              <span class="font-body-sm text-body-sm font-semibold text-tac-on-surface truncate" x-text="entry.email || entry.uid"></span>
+              <span class="px-1.5 py-0.5 rounded-full border font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                :class="auditActionTac(entry.action)" x-text="entry.action || 'EVENT'"></span>
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby" x-text="formatAuditTime(entry.date)"></span>
             </div>
-            <p class="text-xs text-slate-400 mt-1 truncate" x-text="entry.details || entry.page || '-'"></p>
+            <p class="font-body-sm text-body-sm text-tac-on-surface-variant mt-1 truncate" x-text="entry.details || entry.page || '-'"></p>
           </div>
-          <div class="text-[10px] text-slate-600 font-mono shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" x-text="entry.uid?.substring(0, 8)"></div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby opacity-0 group-hover:opacity-100 transition-opacity"
+              x-text="entry.uid?.substring(0, 8)"></span>
+            <span class="material-symbols-outlined text-[16px] text-tac-status-standby" x-text="auditIconTac(entry.action)"></span>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <!-- Load more -->
+    <div x-show="auditLogs.length >= auditLimit && !auditLoading" class="text-center pt-2">
+      <button type="button" @click="auditLimit += 100"
+        class="inline-flex items-center gap-2 px-space-md py-2 rounded bg-tac-surface-container-high text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[14px]">sync</span>
+        <span x-text="'MUAT LEBIH BANYAK (' + auditLogs.length + ' TAMPIL)'"></span>
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div x-show="!auditLoading && filteredAudit.length === 0"
+      class="text-center py-16 bg-tac-surface-card rounded-lg border border-tac-border-subtle">
+      <div class="inline-flex flex-col items-center gap-4">
+        <div class="w-16 h-16 bg-tac-surface-recessed rounded flex items-center justify-center">
+          <span class="material-symbols-outlined text-[32px] text-tac-status-standby">search_off</span>
+        </div>
+        <div>
+          <p class="text-tac-on-surface font-headline-md text-headline-md uppercase tracking-tight">Belum Ada Entri Audit</p>
+          <p class="text-tac-on-surface-variant font-body-sm text-body-sm mt-1">Audit trail akan muncul saat pengguna melakukan aksi</p>
         </div>
       </div>
-    </template>
-  </div>
+    </div>
+  </section>
 
-  <!-- Load more -->
-  <div x-show="auditLogs.length >= auditLimit && !auditLoading" class="text-center pt-2">
-    <button @click="auditLimit += 100" class="text-[10px] text-slate-600 hover:text-nexus-accent uppercase tracking-widest font-bold transition-colors">
-      Load more (<span x-text="auditLogs.length"></span> shown)
-    </button>
-  </div>
 </div>
