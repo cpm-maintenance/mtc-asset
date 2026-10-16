@@ -70,7 +70,7 @@ export function app() {
         selectedWODetail: null,
         // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate):
         // mode tampilan ledger/kanban + filter sektor (Lokasi unit).
-        woView: 'ledger', woSectorFilter: '',
+        woView: 'ledger', woSectorFilter: '', woLimit: 30,
 
         // Dashboard date range filter
         dashboardDateFrom: new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0],
@@ -712,17 +712,47 @@ if (confirm('Are you sure you want to logout?')) {
             (this.equipment || []).forEach(e => { if (e && e.Lokasi) set.add(e.Lokasi); });
             return [...set].sort();
         },
-        /** WO setelah semua filter (search/status/prioritas/tanggal + sektor). */
+        /** WO setelah semua filter (search/status/prioritas/tanggal + sektor). Hasil di-cache. */
         get woFiltered() {
+            // Alpine mengevaluasi getter berulang tiap render (dan `woKanbanColumns`,
+            // `woSelected`, `woNextInQueue`, `woVisible` semuanya memanggil ini) —
+            // tanpa cache, satu render = puluhan kali filter+sort atas seluruh `logs`.
+            const key = [
+                this.searchWO, this.filterWOStatus, this.filterWOPriority,
+                this.filterDateFrom, this.filterDateTo, this.sortByScore, this.woSectorFilter,
+            ].join('\u0001');
+            if (this._woFilterCache && this._woFilterKey === key && this._woFilterLogsRef === this.logs) {
+                return this._woFilterCache;
+            }
             const list = this.sortByScore ? this.sortedByPriority : this.filteredWorkOrders;
-            if (!this.woSectorFilter) return list;
-            return list.filter((/** @type {any} */ l) => this.woSectorOf(l.EquipmentID) === this.woSectorFilter);
+            const out = this.woSectorFilter
+                ? list.filter((/** @type {any} */ l) => this.woSectorOf(l.EquipmentID) === this.woSectorFilter)
+                : list;
+            this._woFilterKey = key;
+            this._woFilterLogsRef = this.logs;
+            this._woFilterCache = out;
+            return out;
+        },
+        /**
+         * Potongan yang benar-benar dirender (P1 — batas render).
+         * Tanpa ini, 200 WO = ±13.800 node DOM dan ±8 s di CPU mobile 4×.
+         * Pola sama seperti `filteredAllLogs` + `allLogsLimit` di All Logs.
+         */
+        get woVisible() {
+            return this.woFiltered.slice(0, this.woLimit || 30);
+        },
+        get canLoadMoreWO() {
+            return this.woFiltered.length > this.woVisible.length;
+        },
+        loadMoreWO() {
+            if (this.canLoadMoreWO) this.woLimit = (this.woLimit || 30) + 30;
         },
         /** Kanban Stack: WO dikelompokkan per status workflow. */
         get woKanbanColumns() {
+            const visible = this.woVisible;
             return ['Pending', 'Approved', 'In Progress', 'Completed'].map(status => ({
                 status,
-                items: this.woFiltered.filter((/** @type {any} */ l) => (l.Status || 'Pending') === status),
+                items: visible.filter((/** @type {any} */ l) => (l.Status || 'Pending') === status),
             }));
         },
         /** WO yang sedang dibuka di inspector kanan. */
@@ -739,8 +769,9 @@ if (confirm('Are you sure you want to logout?')) {
             const list = this.woFiltered.filter((/** @type {any} */ l) => l.LogID !== id && l.Status !== 'Completed' && l.Status !== 'Cancelled');
             return list.length ? list[0] : null;
         },
-        /** Jumlah WO per status (seluruh ledger, bukan hasil filter). */
+        /** Jumlah WO per status (seluruh ledger, bukan hasil filter). Hasil di-cache. */
         get woCounts() {
+            if (this._woCountsCache && this._woCountsLogsRef === this.logs) return this._woCountsCache;
             const out = { all: 0, Draft: 0, Pending: 0, Approved: 0, 'In Progress': 0, Completed: 0, Cancelled: 0 };
             (this.logs || []).forEach(l => {
                 if (!l || !l.woNumber) return;
@@ -748,16 +779,21 @@ if (confirm('Are you sure you want to logout?')) {
                 const s = l.Status || 'Pending';
                 if (s in out) (/** @type {Record<string, number>} */ (out))[s]++;
             });
+            this._woCountsLogsRef = this.logs;
+            this._woCountsCache = out;
             return out;
         },
-        /** KPI deck Work Orders. MTTR/biaya/downtime/spares — semua dari data nyata. */
+        /** KPI deck Work Orders. MTTR/biaya/downtime/spares — semua dari data nyata. Hasil di-cache. */
         get woKpi() {
+            if (this._woKpiCache && this._woKpiLogsRef === this.logs && this._woKpiPartsRef === this.allParts) {
+                return this._woKpiCache;
+            }
             const logs = (this.logs || []).filter(l => l && l.woNumber);
             const open = logs.filter(l => l.Status !== 'Completed' && l.Status !== 'Cancelled');
             const byStatus = (/** @type {string} */ s) => logs.filter(l => (l.Status || 'Pending') === s).length;
             const repairs = (this.logs || []).filter(l => l && (l.Jenis === 'Breakdown' || l.Jenis === 'Repair'));
             const downSum = repairs.reduce((s, l) => s + (Number(l.Downtime) || 0), 0);
-            const partMap = new Map((this.allParts || []).map(p => [p.PartID, p]));
+            const partMap = this.partsMap();
             const partIds = new Set();
             let partsQty = 0, partsValue = 0;
             open.forEach(l => this.parsePartsUsed(l.PartsUsed).forEach((/** @type {any} */ p) => {
@@ -768,7 +804,7 @@ if (confirm('Are you sure you want to logout?')) {
                 if (pr) partsValue += q * (Number(pr.Harga) || 0);
             }));
             const today = new Date().toISOString().split('T')[0];
-            return {
+            const result = {
                 total: logs.length,
                 open: open.length,
                 inProgress: byStatus('In Progress'),
@@ -782,10 +818,22 @@ if (confirm('Are you sure you want to logout?')) {
                 cost: logs.reduce((s, l) => s + (Number(l.Cost) || 0), 0),
                 partsQty, partsValue, partsCount: partIds.size,
             };
+            this._woKpiLogsRef = this.logs;
+            this._woKpiPartsRef = this.allParts;
+            this._woKpiCache = result;
+            return result;
+        },
+        /** Map PartID → part. Di-cache; dibangun ulang hanya kalau `allParts` berganti referensi. */
+        partsMap() {
+            if (!this._partsMap || this._partsMapRef !== this.allParts) {
+                this._partsMap = new Map((this.allParts || []).map(p => [p.PartID, p]));
+                this._partsMapRef = this.allParts;
+            }
+            return this._partsMap;
         },
         /** Parts yang dipakai satu WO + status stoknya (inspector). */
         woParts(log) {
-            const map = new Map((this.allParts || []).map(p => [p.PartID, p]));
+            const map = this.partsMap();
             return this.parsePartsUsed(log && log.PartsUsed).map((/** @type {any} */ p) => {
                 const pr = map.get(p.id);
                 const stok = pr ? Number(pr.Stok) || 0 : 0;

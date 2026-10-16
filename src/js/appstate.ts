@@ -206,6 +206,8 @@ export interface AppState {
   /** Halaman Work Orders (design Stitch 'Work Orders Ledger'). */
   woView?: string;
   woSectorFilter?: string;
+  /** Batas jumlah kartu WO yang dirender (P1) — pola sama `allLogsLimit`. */
+  woLimit?: number;
   showAPISettings?: boolean;
   showCreateUserModal?: boolean;
   showCropModalOpen?: boolean;
@@ -246,6 +248,16 @@ export interface AppState {
   _critMapRef?: any;
   _sectorMap?: any;
   _sectorMapRef?: any;
+  _partsMap?: any;
+  _partsMapRef?: any;
+  _woFilterCache?: any;
+  _woFilterKey?: any;
+  _woFilterLogsRef?: any;
+  _woCountsCache?: any;
+  _woCountsLogsRef?: any;
+  _woKpiCache?: any;
+  _woKpiLogsRef?: any;
+  _woKpiPartsRef?: any;
   _cropper?: any;
   _dashTimeout?: any;
   _kpiCache?: any;
@@ -631,6 +643,10 @@ export interface AppState {
   woMarkerTac: (...args: any[]) => any;
   woElapsed: (...args: any[]) => any;
   get woDowntimeSpark(): any;
+  get woVisible(): any;
+  get canLoadMoreWO(): any;
+  loadMoreWO: (...args: any[]) => any;
+  partsMap: (...args: any[]) => any;
   rp: (...args: any[]) => any;
   rpShort: (...args: any[]) => any;
 }

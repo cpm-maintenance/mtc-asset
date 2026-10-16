@@ -290,7 +290,7 @@
         <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">SORT BY PRIORITY SCORE</span>
       </label>
       <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase ml-auto"
-        x-text="woFiltered.length + ' RECORDS'"></span>
+        x-text="woVisible.length + ' / ' + woFiltered.length + ' RECORDS'"></span>
     </div>
   </section>
 
@@ -552,7 +552,7 @@
       <!-- View: LEDGER STREAM -->
       <template x-if="woView === 'ledger'">
         <div class="flex flex-col gap-space-sm">
-          <template x-for="log in woFiltered" :key="log.LogID">
+          <template x-for="log in woVisible" :key="log.LogID">
             <article class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] transition-all hover:bg-tac-surface-elevated/80 relative overflow-hidden"
               :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : ''">
               <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="woMarkerTac(log)"></div>
@@ -722,6 +722,13 @@
           </template>
         </div>
       </template>
+
+      <!-- Batas render (P1): muat 30 kartu lagi. Tanpa ini 200 WO = ±13.800 node DOM. -->
+      <button type="button" x-show="canLoadMoreWO" @click="loadMoreWO()"
+        class="w-full py-3 rounded-lg bg-tac-surface-container-low hover:bg-tac-surface-container-high text-tac-on-surface font-label-mono-md text-label-mono-md flex items-center justify-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-[18px] text-tac-primary">expand_more</span>
+        <span x-text="'MUAT LEBIH BANYAK (' + (woFiltered.length - woVisible.length) + ' LAGI)'"></span>
+      </button>
     </div>
 
     <!-- ── KANAN 4 kolom: Tactical Inspector HUD ── -->

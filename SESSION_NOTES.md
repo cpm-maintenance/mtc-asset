@@ -45,6 +45,27 @@
 - **WO-2**: footer status strip global (`h-10`) dari markup desain belum dipasang di `index.html` (sidebar desain memakai `top-16 bottom-10`).
 - D-2 masih gate: halaman Work Orders kini **sudah** Tactical, jadi tinggal 3 halaman Monolith + 13 halaman lama.
 
+### Lanjutan sesi yang sama — audit performa (P1 + P2)
+
+User bertanya *"apa nantinya sistem ini tidak berat di desktop dan di mobile phone"*. Diukur, bukan ditebak:
+
+**First load produksi (terkompresi, cache dimatikan):** total **± 512 KB** · `sentry` 119 KB · `jspdf` 114 KB · `vendor` 83 KB · `firebase` 74 KB · `main.js` 53 KB · `vendor.css` 18 KB · `alpine` 14 KB · DCL 2,1 s. Precache SW **3,48 MB / 65 entri** (ikut `xlsx` 415 KB + `html2canvas` 195 KB).
+
+**Runtime halaman Work Orders (benchmark 200 WO, build nyata):**
+
+| Metrik | Sebelum | Sesudah |
+|---|---|---|
+| Render pertama, desktop | 1.400 ms | **177 ms** |
+| Render pertama, CPU mobile 4× | 7.793 ms | **2.619 ms** |
+| DOM node (`main`) | 13.842 | **2.455** |
+| JS heap | 142 MB | **35 MB** |
+
+**P1 — batas render.** `woLimit: 30` + getter `woVisible` / `canLoadMoreWO` + `loadMoreWO()`; pola sama `allLogsLimit` di All Logs. Ledger **dan** kanban memakai `woVisible`. Tombol `MUAT LEBIH BANYAK (N LAGI)`; penghitung jadi `30 / 200 RECORDS`. Terverifikasi: klik berturut-turut → 30 → 60 → 90 → 120 kartu, 0 error konsol.
+**P2 — memo getter.** `woFiltered` di-cache pada (filter key + referensi `logs`) — sebelumnya satu render memanggil filter+sort puluhan kali (`woKanbanColumns` ×4, `woSelected`, `woNextInQueue`, `woVisible`). `woCounts` dan `woKpi` juga di-cache; map `allParts` dipindah ke `partsMap()` yang di-cache (dulu `new Map(allParts)` dibangun ulang **per kartu**).
+
+**Belum dikerjakan (sisa):** P3 lazy-load `sentry` + `jspdf` (233 KB = 43% first load) · P4 `content-visibility:auto` pada kartu ledger · P5 diet precache (jangan precache chunk `xlsx`/`jspdf`/`html2canvas`/`sentry`).
+`sw.js` `CACHE_NAME` → **`mtc-asset-v6`** (fragment berubah lagi).
+
 ---
 
 ## 📝 Session 12 (S12, 2026-10-15) — Gelombang 9 Stitch tuntas + Dashboard 'Tactical Slate' (rebuild 1:1 dari markup)
