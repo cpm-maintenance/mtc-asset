@@ -9,7 +9,7 @@
     3. Workspace 12 kolom → kiri 8 kolom (Maintenance Activity Protocol +
        Neural Performance Protocol + distribusi log), kanan 4 kolom
        (System Access, Optical Scanner, Critical Spare Parts Stock)
-    4. Drawer Ajeng AI Diagnostics
+    4. Drawer MTC AI Diagnostics
     5. Status strip
 
   Semua angka diambil dari state aplikasi (equipment, logs, performanceData,
@@ -55,7 +55,7 @@
         <button type="button" @click="aiDrawerOpen = true"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tac-secondary/15 hover:bg-tac-secondary/25 text-tac-secondary font-label-mono-md text-label-mono-md transition-all shadow-[0_0_12px_rgba(76,215,246,0.15)] active:scale-95">
           <span class="material-symbols-outlined icon-16">smart_toy</span>
-          <span>Ajeng AI Node</span>
+          <span>MTC AI Node</span>
         </button>
       </div>
     </div>
@@ -550,7 +550,7 @@
     </aside>
   </div>
 
-  <!-- ═══ 4. DRAWER AJENG AI DIAGNOSTICS ═════════════════════════════════ -->
+  <!-- ═══ 4. DRAWER MTC AI DIAGNOSTICS ═════════════════════════════════ -->
   <div x-show="aiDrawerOpen" x-transition
        class="fixed right-6 bottom-14 z-50 w-96 max-w-[calc(100vw-2rem)] bg-tac-surface-card rounded-2xl p-5 shadow-2xl border-t border-tac-secondary/30 flex flex-col gap-3 backdrop-blur-xl">
     <div class="flex items-center justify-between pb-2 border-b border-white/5">
@@ -559,7 +559,7 @@
           <span class="material-symbols-outlined icon-18">neurology</span>
         </div>
         <div>
-          <h4 class="font-headline-md text-[14px] text-tac-on-surface">Ajeng AI Diagnostics</h4>
+          <h4 class="font-headline-md text-[14px] text-tac-on-surface">MTC AI Diagnostics</h4>
           <span class="font-label-mono-sm text-label-mono-sm flex items-center gap-1"
                 :class="(aiApiKeys || []).length ? 'text-tac-status-operational' : 'text-tac-status-repair'">
             <span class="w-1.5 h-1.5 rounded-full" :class="(aiApiKeys || []).length ? 'bg-tac-status-operational' : 'bg-tac-status-repair'"></span>
