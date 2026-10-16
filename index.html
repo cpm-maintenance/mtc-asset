@@ -487,50 +487,23 @@
     </div>
   </div>
 
-  <!-- Sidebar (Desktop) -->
-  <nav x-show="isLoggedIn" x-cloak 
-    :class="sidebarCollapsed ? 'w-24' : 'w-72'"
-    class="fixed left-0 top-0 h-full bg-nexus-black/40 backdrop-blur-2xl hidden lg:flex flex-col p-6 z-50 border-r border-white/5 shadow-2xl transition-all duration-300">
-    
+  <!-- Sidebar (Desktop) — gaya design system Stitch (bg #080f18, item aktif = pill emas) -->
+  <nav x-show="isLoggedIn" x-cloak
+    :class="sidebarCollapsed ? 'w-20' : 'w-64'"
+    class="fixed left-0 top-0 h-full bg-tac-surface-container-lowest hidden lg:flex flex-col py-space-md z-50 shadow-[4px_0_16px_rgba(0,0,0,0.4)] transition-all duration-300">
+
     <!-- Sidebar Toggle (Floating) -->
     <button @click="sidebarCollapsed = !sidebarCollapsed" aria-label="Toggle sidebar"
-      class="absolute -right-3 top-20 w-6 h-6 bg-nexus-accent rounded-full flex items-center justify-center text-nexus-black shadow-lg border border-white/10 hover:scale-110 transition-all z-[60]">
-      <i class="fas" :class="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'" style="font-size: 10px"></i>
+      class="absolute -right-3 top-20 w-6 h-6 bg-tac-primary-container rounded-full flex items-center justify-center text-tac-on-primary-container shadow-lg hover:scale-110 transition-all z-[60]">
+      <span class="material-symbols-outlined icon-14" x-text="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"></span>
     </button>
 
-    <div class="flex items-center gap-4 mb-8 group cursor-pointer overflow-hidden">
-      <div
-        class="w-12 h-12 gold-gradient rounded-2xl flex items-center justify-center text-nexus-black font-bold text-xl shadow-[0_0_20px_rgba(0,242,255,0.3)] overflow-hidden transition-transform group-hover:rotate-6 shrink-0">
-        <img src="/logo.png" alt="MTC" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerText='MTC'">
-      </div>
-      <div x-show="!sidebarCollapsed" x-transition>
-        <h1 class="text-xl font-black text-white tracking-tighter leading-none">MTC<span class="gold-text"> ASSET</span></h1>
-        <p class="text-[8px] text-nexus-accent/40 font-black uppercase tracking-[0.3em] mt-1">Page: <span x-text="currentPage"></span></p>
-      </div>
-    </div>
-
-    <!-- Notification Bell -->
-    <button @click="
-      showNotifications = !showNotifications;
-      if(window.notificationAPI?.requestNotificationPermission) {
-        window.notificationAPI.requestNotificationPermission().then(granted => {
-          if (granted) window.notificationAPI.registerFCMToken();
-        });
-      }
-      if(window.notificationAPI?.resetNotifBlocker) {
-        window.notificationAPI.resetNotifBlocker();
-        window.notificationAPI.checkAllNotifications();
-      }"
-      aria-label="Notifications"
-      class="relative p-3 rounded-xl text-slate-400 hover:text-nexus-accent hover:bg-white/5 transition-all mb-4">
-      <i class="fas fa-bell text-lg"></i>
-      <span x-show="notifications.length > 0" x-text="notifications.length" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"></span>
-    </button>
-
-    <div class="space-y-0.5 flex-1 overflow-y-auto">
-      <template x-for="(group, gi) in menuGroups" :key="gi">
+    <div class="flex-1 overflow-y-auto px-space-sm space-y-1">
+      <template x-for="(group, gi) in filteredMenuGroups" :key="gi">
         <div>
-          <div x-show="!sidebarCollapsed" class="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] px-3 pt-4 pb-1.5" x-text="group.name"></div>
+          <div x-show="!sidebarCollapsed" class="pt-space-md px-space-sm pb-space-xs">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby" x-text="group.name"></span>
+          </div>
           <template x-for="item in group.items" :key="item.id">
             <div @click="openMenuItem(item.id)"
               role="button" tabindex="0"
@@ -538,124 +511,189 @@
               @keydown.space.prevent="openMenuItem(item.id)"
               :aria-current="isMenuActive(item.id) ? 'page' : false"
               :aria-label="item.name + (badgeCount(item.id) ? ' — ' + badgeLabel(item.id, item.name) : '')"
-              :class="isMenuActive(item.id) ? 'bg-nexus-accent/10 text-nexus-accent border-r-2 border-nexus-accent' : 'text-slate-500 hover:bg-white/5 hover:text-nexus-accent'"
-              class="flex items-center gap-3 md:gap-4 p-3 md:p-4 cursor-pointer rounded-2xl transition-all duration-300 group relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-accent/60">
-              <i :class="item.icon" class="w-5 md:w-6 text-center text-base md:text-lg group-hover:scale-110 transition-transform"></i>
-              <span x-show="!sidebarCollapsed" x-transition x-text="item.name" class="font-black text-[10px] uppercase tracking-wider whitespace-nowrap"></span>
+              :title="sidebarCollapsed ? item.name : ''"
+              :class="isMenuActive(item.id)
+                ? 'bg-tac-primary-container text-tac-on-primary-container font-headline-md rounded-lg shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                : 'text-tac-on-surface-variant hover:bg-tac-surface-container-high hover:text-tac-on-surface'"
+              class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg cursor-pointer transition-all relative focus:outline-none focus-visible:ring-2 focus-visible:ring-tac-primary-container">
+              <span class="material-symbols-outlined icon-18 shrink-0" x-text="item.ms || 'circle'"></span>
+              <span x-show="!sidebarCollapsed" x-transition x-text="item.name" class="font-body-md text-body-md whitespace-nowrap truncate"></span>
               <!-- U-1: Badge counter (expanded) -->
               <span x-show="!sidebarCollapsed && badgeCount(item.id)" x-cloak x-text="badgeCount(item.id)"
                 :class="badgeClass(item.id)"
-                class="ml-auto min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-black flex items-center justify-center shrink-0 tabular-nums"></span>
-              <div x-show="isMenuActive(item.id)" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 md:h-6 bg-nexus-accent rounded-r-full shadow-[0_0_10px_var(--nexus-accent)]"></div>
+                class="ml-auto min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 tabular-nums"></span>
             </div>
           </template>
         </div>
       </template>
+      <!-- Pencarian menu tidak ketemu -->
+      <div x-show="filteredMenuGroups.length === 0" class="px-space-md py-space-lg text-center">
+        <span class="material-symbols-outlined icon-22 text-tac-status-standby">search_off</span>
+        <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby mt-1">Menu tidak ditemukan</p>
+      </div>
     </div>
 
-    <!-- Sidebar Footer / Logout -->
-    <div class="mt-auto pt-4 md:pt-6 border-t border-white/5 space-y-1 md:space-y-2 overflow-hidden">
-      <!-- Create User Button (Admin Only) -->
-      <button x-show="isAdmin" @click="loadAllUsers(); openCreateUserModal()"
-        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-nexus-accent hover:bg-nexus-accent/10 rounded-xl transition-all group">
-        <i class="fas fa-user-plus w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Add User</span>
-      </button>
-      <!-- Manage Users Button (Admin Only) -->
-      <button x-show="isAdmin" @click="loadAllUsers(); showUserManagement = true"
-        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-nexus-accent hover:bg-nexus-accent/10 rounded-xl transition-all group">
-        <i class="fas fa-users w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Manage Users</span>
-      </button>
-      <!-- Install App Button (PWA) -->
-      <button x-show="showInstallButton" @click="installApp()"
-        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all group">
-        <i class="fas fa-download w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-y-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Install App</span>
-      </button>
-      <button @click="logout()" 
-        class="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group">
-        <i class="fas fa-sign-out-alt w-5 md:w-6 text-center text-base md:text-lg group-hover:translate-x-1 transition-transform"></i>
-        <span x-show="!sidebarCollapsed" x-transition class="font-black text-[10px] uppercase tracking-wider">Logout</span>
-      </button>
+    <!-- PWA cache + aksi akun -->
+    <div class="mt-auto px-space-md pt-space-md space-y-space-xs">
+      <div x-show="!sidebarCollapsed" x-transition class="bg-tac-surface-recessed p-space-sm rounded flex flex-col gap-1 shadow-inner">
+        <div class="flex items-center justify-between">
+          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">PWA CACHE</span>
+          <span class="font-label-mono-sm text-label-mono-sm" :class="isOnline ? 'text-tac-secondary' : 'text-tac-status-repair'"
+            x-text="isOnline ? 'ONLINE' : 'QUEUE'"></span>
+        </div>
+        <div class="w-full h-1 bg-tac-surface-container rounded-full overflow-hidden">
+          <div class="h-full transition-all" :class="isOnline ? 'bg-tac-secondary' : 'bg-tac-status-repair'"
+            :style="'width:' + (isOnline ? 100 : 35) + '%'"></div>
+        </div>
+      </div>
+
+      <div class="pt-space-sm border-t border-tac-border-subtle space-y-1">
+        <!-- Create User Button (Admin Only) -->
+        <button x-show="isAdmin" @click="loadAllUsers(); openCreateUserModal()" :title="sidebarCollapsed ? 'Add User' : ''"
+          class="w-full flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tac-gold-bright hover:bg-tac-surface-container-high transition-all">
+          <span class="material-symbols-outlined icon-18 shrink-0">person_add</span>
+          <span x-show="!sidebarCollapsed" x-transition class="font-label-mono-md text-label-mono-md uppercase tracking-wider">Add User</span>
+        </button>
+        <!-- Manage Users Button (Admin Only) -->
+        <button x-show="isAdmin" @click="loadAllUsers(); showUserManagement = true" :title="sidebarCollapsed ? 'Manage Users' : ''"
+          class="w-full flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tac-gold-bright hover:bg-tac-surface-container-high transition-all">
+          <span class="material-symbols-outlined icon-18 shrink-0">manage_accounts</span>
+          <span x-show="!sidebarCollapsed" x-transition class="font-label-mono-md text-label-mono-md uppercase tracking-wider">Manage Users</span>
+        </button>
+        <!-- Install App Button (PWA) -->
+        <button x-show="showInstallButton" @click="installApp()" :title="sidebarCollapsed ? 'Install App' : ''"
+          class="w-full flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tac-status-operational hover:bg-tac-surface-container-high transition-all">
+          <span class="material-symbols-outlined icon-18 shrink-0">download</span>
+          <span x-show="!sidebarCollapsed" x-transition class="font-label-mono-md text-label-mono-md uppercase tracking-wider">Install App</span>
+        </button>
+        <button @click="logout()" :title="sidebarCollapsed ? 'Logout' : ''"
+          class="w-full flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tac-error hover:bg-tac-surface-container-high transition-all">
+          <span class="material-symbols-outlined icon-18 shrink-0">logout</span>
+          <span x-show="!sidebarCollapsed" x-transition class="font-label-mono-md text-label-mono-md uppercase tracking-wider">Logout</span>
+        </button>
+      </div>
     </div>
   </nav>
 
   <!-- 📱 MAIN INTERFACE -->
   <main x-show="isLoggedIn" x-cloak 
-    :class="sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-72'"
-    class="pb-16 lg:pb-0 transition-all duration-500">
-    <!-- ⚡ HEADER / STATUS BAR -->
-    <header class="p-4 md:p-6 lg:p-8 glass sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 lg:px-12 border-b border-white/5 backdrop-blur-3xl shadow-xl">
-<div class="flex items-center gap-3 md:gap-6">
-          <div class="lg:hidden w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl gold-gradient flex items-center justify-center text-nexus-black shadow-lg">
-             <i class="fas fa-atom text-base md:text-lg"></i>
-          </div>
-          <h2 class="text-lg md:text-2xl lg:text-3xl font-black text-white nexus-glow-text tracking-tighter uppercase" x-text="currentPageName"></h2>
-        </div>
+    :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
+    class="pb-16 lg:pb-0 transition-all duration-500 bg-tac-surface min-h-screen">
+    <!-- ⚡ HEADER / STATUS BAR — gaya design system Stitch -->
+    <header class="sticky top-0 z-40 h-16 flex items-center justify-between gap-space-md px-space-md lg:px-gutter-desktop bg-tac-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
 
-      <div class="flex items-center gap-2 md:gap-3">
-        <!-- ⚡ Quick Action: + New WO Button -->
-        <button x-show="isAdminOrSupervisor" @click="openLogModal(false)"
-          title="Create New Work Order (Shortcut: N)" aria-label="Create New Work Order"
-          class="btn-nexus-gold text-xs font-black uppercase tracking-wider px-3 py-1.5 md:px-3.5 md:py-2 rounded-xl shadow-lg flex items-center gap-1.5 md:gap-2 active:scale-95 transition-all shrink-0">
-          <i class="fas fa-plus text-xs"></i>
-          <span class="hidden sm:inline">New WO</span>
-        </button>
-        <!-- Offline Banner (Mobile) -->
-        <div x-show="!isOnline" x-cloak class="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-[10px] font-black py-2 px-4 flex items-center justify-center gap-2 lg:hidden">
-          <i class="fas fa-wifi-slash"></i> OFFLINE - Changes will sync when online
+      <!-- KIRI: brand + chip status -->
+      <div class="flex items-center gap-space-md min-w-0">
+        <div class="lg:hidden w-9 h-9 rounded-lg bg-tac-primary-container flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined icon-20 text-tac-on-primary-container">precision_manufacturing</span>
         </div>
-        <!-- Connection Status - Modern Design (All Screens) -->
-        <div class="flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider"
-          :class="isOnline ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
-          :title="isOnline ? 'Online - Data synced' : 'Offline - Changes queued'">
-          <span class="w-1.5 h-1.5 rounded-full animate-pulse"
-            :class="isOnline ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-rose-400 shadow-[0_0_6px_#fb7185]'">
-          </span>
-          <span class="hidden sm:inline" x-text="isOnline ? 'LIVE' : 'OFF'"></span>
+        <div class="flex items-center gap-space-sm min-w-0">
+          <img src="/logo.png" alt="MTC ASSET" class="h-8 w-auto object-contain hidden lg:block"
+            onerror="this.style.display='none'">
+          <div class="flex flex-col min-w-0">
+            <span class="font-headline-md text-[16px] tracking-tight uppercase text-tac-on-surface leading-none">MTC ASSET</span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider truncate">Industrial Telemetry Core</span>
+          </div>
         </div>
-        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-        <button @click="open = !open" title="Theme" aria-label="Change theme" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:bg-nexus-accent/10 transition-colors">
-          <i :class="themeMode === 'light' ? 'fas fa-sun text-sm' : 'fas fa-moon text-sm'"></i>
-        </button>
-        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-          class="absolute right-0 mt-2 w-44 rounded-2xl glass border border-nexus-border shadow-2xl p-1.5 z-50">
-          <button @click="setTheme('night'); open = false" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors hover:bg-nexus-accent/10"
-            :class="themeMode === 'night' ? 'text-nexus-accent bg-nexus-accent/10' : 'text-slate-400'">
-            <span class="w-3.5 h-3.5 rounded-full border border-amber-400/50" style="background: linear-gradient(135deg,#ff8c1a,#ffb74d)"></span> Gold
-          </button>
-          <button @click="setTheme('navy'); open = false" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors hover:bg-nexus-accent/10"
-            :class="themeMode === 'navy' ? 'text-nexus-accent bg-nexus-accent/10' : 'text-slate-400'">
-            <span class="w-3.5 h-3.5 rounded-full border border-blue-400/50" style="background: linear-gradient(135deg,#3b82f6,#1d4ed8)"></span> Navy
-          </button>
-          <button @click="setTheme('purple'); open = false" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors hover:bg-nexus-accent/10"
-            :class="themeMode === 'purple' ? 'text-nexus-accent bg-nexus-accent/10' : 'text-slate-400'">
-            <span class="w-3.5 h-3.5 rounded-full border border-purple-400/50" style="background: linear-gradient(135deg,#a855f7,#7c3aed)"></span> Purple
-          </button>
-          <button @click="setTheme('light'); open = false" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors hover:bg-nexus-accent/10"
-            :class="themeMode === 'light' ? 'text-nexus-accent bg-nexus-accent/10' : 'text-slate-400'">
-            <span class="w-3.5 h-3.5 rounded-full border border-slate-400/50" style="background: linear-gradient(135deg,#ffffff,#cbd5e1)"></span> Light
-          </button>
+        <div class="hidden xl:flex items-center gap-space-xs pl-space-sm">
+          <div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-tac-surface-container"
+            :class="isOnline ? 'shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'shadow-[0_0_12px_rgba(239,68,68,0.15)]'">
+            <span class="h-2 w-2 rounded-full animate-pulse" :class="isOnline ? 'bg-tac-status-operational' : 'bg-tac-status-emergency'"></span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface" x-text="isOnline ? 'ONLINE - SYNCED' : 'OFFLINE - QUEUED'"></span>
+          </div>
+          <div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-tac-surface-container">
+            <span class="material-symbols-outlined icon-14 text-tac-sync-cyan">wifi_tethering</span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant" x-text="'PWA READY / PAGE: ' + (currentPage || 'dash').toUpperCase()"></span>
+          </div>
         </div>
       </div>
-        <button @click="exportExcelFull()" title="Export Excel Lengkap" aria-label="Export Excel" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-emerald-400 flex items-center justify-center hover:text-emerald-300 transition-colors">
-          <i class="fas fa-file-excel text-sm"></i>
+
+      <!-- TENGAH: pencarian menu (Ctrl+K) -->
+      <div class="flex-1 max-w-md hidden md:flex items-center" @keydown.window.ctrl.k.prevent="$refs.menuSearch && $refs.menuSearch.focus()">
+        <div class="relative w-full flex items-center bg-tac-surface-recessed rounded px-space-sm py-space-xs shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)]">
+          <span class="material-symbols-outlined icon-18 text-tac-status-standby mr-space-sm">search</span>
+          <input x-ref="menuSearch" type="text" x-model="menuSearch" placeholder="Cari menu / halaman..." aria-label="Cari menu"
+            class="bg-transparent border-0 outline-none flex-1 min-w-0 font-body-sm text-body-sm text-tac-on-surface placeholder:text-tac-status-standby">
+          <kbd class="px-space-xs py-0.5 rounded bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">Ctrl+K</kbd>
+        </div>
+      </div>
+
+      <!-- KANAN: aksi -->
+      <div class="flex items-center gap-space-sm shrink-0">
+        <!-- ⚡ Quick Action: + New WO -->
+        <button x-show="isAdminOrSupervisor" @click="openLogModal(false)"
+          title="Buat Work Order baru (Shortcut: N)" aria-label="Buat Work Order baru"
+          class="flex items-center gap-space-xs px-space-md py-space-xs rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:bg-tac-gold-bright transition-all active:scale-95">
+          <span class="material-symbols-outlined icon-16">add</span>
+          <span class="hidden sm:inline">+ NEW WO</span>
         </button>
-        <button @click="refreshData()" title="Refresh Data" aria-label="Refresh data" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent flex items-center justify-center hover:text-nexus-accent transition-colors">
-          <i class="fas fa-sync-alt text-sm"></i>
+
+        <!-- Offline Banner (Mobile) -->
+        <div x-show="!isOnline" x-cloak class="fixed top-0 left-0 right-0 z-50 bg-tac-status-emergency text-tac-on-surface font-label-mono-md text-label-mono-md py-2 px-4 flex items-center justify-center gap-2 lg:hidden">
+          <span class="material-symbols-outlined icon-16">wifi_off</span> OFFLINE — perubahan masuk antrean
+        </div>
+
+        <!-- Theme pills (GOLD / NAVY / PURPLE / LIGHT) -->
+        <div class="hidden lg:flex items-center bg-tac-surface-recessed p-0.5 rounded">
+          <template x-for="t in [['night', 'GOLD'], ['navy', 'NAVY'], ['purple', 'PURPLE'], ['light', 'LIGHT']]" :key="t[0]">
+            <button @click="setTheme(t[0])" :title="'Tema ' + t[1]"
+              class="px-space-xs py-0.5 rounded font-label-mono-sm text-label-mono-sm transition-all"
+              :class="themeMode === t[0] ? 'bg-tac-primary-container text-tac-on-primary-container' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container-high'"
+              x-text="t[1]"></button>
+          </template>
+        </div>
+
+        <!-- Notification Bell -->
+        <button @click="
+          showNotifications = !showNotifications;
+          if(window.notificationAPI?.requestNotificationPermission) {
+            window.notificationAPI.requestNotificationPermission().then(granted => {
+              if (granted) window.notificationAPI.registerFCMToken();
+            });
+          }
+          if(window.notificationAPI?.resetNotifBlocker) {
+            window.notificationAPI.resetNotifBlocker();
+            window.notificationAPI.checkAllNotifications();
+          }"
+          aria-label="Notifications" title="Notifikasi"
+          class="relative flex items-center justify-center p-space-xs rounded text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined icon-20">notifications</span>
+          <span x-show="notifications.length > 0" x-text="notifications.length"
+            class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-tac-status-emergency font-label-mono-sm text-label-mono-sm text-tac-on-surface flex items-center justify-center font-bold"></span>
         </button>
-        <button @click="systemReset()" title="Reset System" aria-label="Reset system" class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent/40 flex items-center justify-center hover:text-nexus-accent transition-colors">
-          <i class="fas fa-broom text-sm"></i>
+
+        <!-- Utility: export / refresh / reset / QR -->
+        <button @click="exportExcelFull()" title="Export Excel lengkap" aria-label="Export Excel"
+          class="flex items-center justify-center p-space-xs rounded text-tac-status-operational hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined icon-20">table_view</span>
         </button>
-        <button @click="openQR()" aria-label="Open QR scanner"
-          class="w-9 h-9 md:w-10 md:h-10 rounded-xl glass text-nexus-accent hover:bg-nexus-accent hover:text-nexus-black transition-all flex items-center justify-center">
-          <i class="fas fa-qrcode text-sm"></i>
+        <button @click="refreshData()" title="Muat ulang data" aria-label="Muat ulang data"
+          class="flex items-center justify-center p-space-xs rounded text-tac-sync-cyan hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined icon-20">refresh</span>
         </button>
-        <button @click="logout()" aria-label="Logout"
-          class="lg:hidden w-9 md:w-10 h-9 md:h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center hover:bg-rose-500/20 transition-all">
-          <i class="fas fa-sign-out-alt text-xs md:text-sm"></i>
+        <button @click="systemReset()" title="Reset sistem" aria-label="Reset sistem"
+          class="hidden sm:flex items-center justify-center p-space-xs rounded text-tac-status-standby hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined icon-20">cleaning_services</span>
         </button>
+        <button @click="openQR()" title="Scan QR aset" aria-label="Scan QR aset"
+          class="flex items-center justify-center p-space-xs rounded text-tac-gold-bright hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined icon-20">qr_code_scanner</span>
+        </button>
+        <button @click="logout()" aria-label="Logout" title="Logout"
+          class="lg:hidden flex items-center justify-center p-space-xs rounded text-tac-error hover:bg-tac-surface-container-high transition-colors">
+          <span class="material-symbols-outlined icon-20">logout</span>
+        </button>
+
+        <!-- Identitas pengguna -->
+        <div class="hidden sm:flex items-center gap-space-sm pl-space-xs">
+          <div class="w-8 h-8 rounded-full bg-tac-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined icon-18 text-tac-on-primary">person</span>
+          </div>
+          <div class="hidden xl:flex flex-col text-left">
+            <span class="font-label-mono-md text-label-mono-md text-tac-on-surface uppercase" x-text="userRole || 'user'"></span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-sync-cyan">MTC AI READY</span>
+          </div>
+        </div>
       </div>
     </header>
 

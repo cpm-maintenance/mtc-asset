@@ -6,7 +6,7 @@
 
 :root { 
   /* Default to Dark (Industrial Look) */
-  --nexus-bg: #05070a;
+  --nexus-bg: #0d141d;
   --nexus-card: rgba(13, 17, 23, 0.8);
   --nexus-accent: #ffd700;
   --nexus-accent-glow: rgba(255, 215, 0, 0.15);
@@ -39,7 +39,7 @@
 }
 
 [data-theme='dark'] {
-  --nexus-bg: #05070a; 
+  --nexus-bg: #0d141d; 
   --nexus-card: rgba(13, 17, 23, 0.8);
   --nexus-accent: #ffd700;
   --nexus-accent-glow: rgba(255, 215, 0, 0.15);

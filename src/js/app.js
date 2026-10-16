@@ -483,38 +483,54 @@ if (confirm('Are you sure you want to logout?')) {
         aiLoading: false,
 
         menuItems: [
+            // `icon` = FontAwesome (dipakai nav mobile + drawer), `ms` = Material Symbols
+            // (ikon design system Stitch, dipakai sidebar desktop). Nama `ms` harus
+            // sama persis dengan nama ikon di fonts.google.com/icons.
             // --- MONITORING ---
-            { id: 'dash', name: 'Dashboard', short: 'Home', icon: 'fas fa-chart-pie', mobile: true, group: 'Monitoring' },
+            { id: 'dash', name: 'Dashboard', short: 'Home', icon: 'fas fa-chart-pie', ms: 'dashboard', mobile: true, group: 'Monitoring' },
 
             // --- MAINTENANCE ---
-            { id: 'wo', name: 'Work Orders', short: 'WO', icon: 'fas fa-clipboard-list', mobile: true, group: 'Maintenance' },
-            { id: 'pms', name: 'PM Schedule', short: 'PM', icon: 'fas fa-calendar-alt', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
-            { id: 'equip', name: 'Equipment', short: 'Assets', icon: 'fas fa-tools', mobile: true, group: 'Maintenance' },
+            { id: 'wo', name: 'Work Orders', short: 'WO', icon: 'fas fa-clipboard-list', ms: 'engineering', mobile: true, group: 'Maintenance' },
+            { id: 'pms', name: 'PM Schedule', short: 'PM', icon: 'fas fa-calendar-alt', ms: 'calendar_month', mobile: true, allowedRole: 'supervisor', group: 'Maintenance' },
+            { id: 'equip', name: 'Equipment', short: 'Assets', icon: 'fas fa-tools', ms: 'precision_manufacturing', mobile: true, group: 'Maintenance' },
 
             // --- PLANNING ---
-            { id: 'planning', name: 'Planning Board', short: 'Plan', icon: 'fas fa-columns', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
-            { id: 'monthlyplan', name: 'Monthly Plan', short: 'Monthly', icon: 'fas fa-file-alt', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
-            { id: 'workload', name: 'Workload', short: 'Load', icon: 'fas fa-user-hard-hat', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'planning', name: 'Planning Board', short: 'Plan', icon: 'fas fa-columns', ms: 'view_kanban', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'monthlyplan', name: 'Monthly Plan', short: 'Monthly', icon: 'fas fa-file-alt', ms: 'description', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
+            { id: 'workload', name: 'Workload', short: 'Load', icon: 'fas fa-user-hard-hat', ms: 'group_work', mobile: true, allowedRole: 'supervisor', group: 'Planning' },
 
             // --- LOGS & REPORTS ---
-            { id: 'hist', name: 'All Logs', short: 'Logs', icon: 'fas fa-history', mobile: true, group: 'Logs & Reports' },
-            { id: 'history', name: 'History Card', short: 'History', icon: 'fas fa-clipboard-check', mobile: true, group: 'Logs & Reports' },
-            { id: 'audit', name: 'Audit Trail', short: 'Audit', icon: 'fas fa-scroll', mobile: false, allowedRole: 'admin', group: 'Logs & Reports' },
+            { id: 'hist', name: 'All Logs', short: 'Logs', icon: 'fas fa-history', ms: 'history', mobile: true, group: 'Logs & Reports' },
+            { id: 'history', name: 'History Card', short: 'History', icon: 'fas fa-clipboard-check', ms: 'fact_check', mobile: true, group: 'Logs & Reports' },
+            { id: 'audit', name: 'Audit Trail', short: 'Audit', icon: 'fas fa-scroll', ms: 'receipt_long', mobile: false, allowedRole: 'admin', group: 'Logs & Reports' },
 
             // --- INVENTORY ---
-            { id: 'parts', name: 'Spare Parts', short: 'Parts', icon: 'fas fa-box', mobile: true, group: 'Inventory' },
-            { id: 'request', name: 'Request Part', short: 'Request', icon: 'fas fa-shopping-cart', mobile: true, group: 'Inventory' },
+            { id: 'parts', name: 'Spare Parts', short: 'Parts', icon: 'fas fa-box', ms: 'inventory_2', mobile: true, group: 'Inventory' },
+            { id: 'request', name: 'Request Part', short: 'Request', icon: 'fas fa-shopping-cart', ms: 'shopping_cart', mobile: true, group: 'Inventory' },
 
             // --- ANALYTICS (U-3: dikonsolidasi menjadi satu entri "Analytics Hub") ---
-            { id: 'analytics', name: 'Analytics Hub', short: 'Analytics', icon: 'fas fa-chart-pie', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'analytics', name: 'Analytics Hub', short: 'Analytics', icon: 'fas fa-chart-pie', ms: 'monitoring', mobile: true, allowedRole: 'supervisor', group: 'Analytics' },
             // Sub-view lama tetap terdaftar sebagai `hidden` supaya deep-link, guard akses,
             // dan watcher chart per-halaman (kpi/enterprise) tetap berfungsi apa adanya.
-            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', icon: 'fas fa-chart-line', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
-            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
-            { id: 'ai', name: 'AI Analysis', short: 'AI', icon: 'fas fa-robot', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'perf', name: 'Performance', short: 'Perf', icon: 'fas fa-chart-simple', ms: 'trending_up', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'mtbfmttr', name: 'MTBF/MTTR', short: 'MTBF', icon: 'fas fa-chart-line', ms: 'show_chart', mobile: false, hidden: true, allowedRole: 'supervisor', group: 'Analytics' },
+            { id: 'enterprise', name: 'Enterprise KPI', short: 'Ent KPI', icon: 'fas fa-industry', ms: 'factory', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'kpi', name: 'KPI Analytics', short: 'KPI', icon: 'fas fa-brain', ms: 'psychology', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
+            { id: 'ai', name: 'AI Analysis', short: 'AI', icon: 'fas fa-robot', ms: 'neurology', mobile: false, hidden: true, allowedRole: 'admin', group: 'Analytics' },
         ],
+
+        // Pencarian menu di header (design Stitch) — memfilter daftar menu sidebar.
+        // Ctrl+K memfokuskan input ini (lihat header di index.html).
+        menuSearch: '',
+
+        get filteredMenuGroups() {
+            const q = (this.menuSearch || '').trim().toLowerCase();
+            const groups = this.menuGroups || [];
+            if (!q) return groups;
+            return groups
+                .map((/** @type {any} */ g) => ({ ...g, items: (g.items || []).filter((/** @type {any} */ i) => (i.name || '').toLowerCase().includes(q)) }))
+                .filter((/** @type {any} */ g) => g.items.length > 0);
+        },
 
         // --- MOBILE PRIMARY NAV (5 slots + More) ---
         get mobilePrimaryItems() {

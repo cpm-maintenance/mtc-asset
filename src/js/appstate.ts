@@ -142,6 +142,8 @@ export interface AppState {
   dashWoFilter?: string;
   aiDrawerOpen?: boolean;
   menuItems: any[];
+  menuSearch?: string;
+  get filteredMenuGroups(): any[];
   analyticsTabs: any[];
   analyticsTab: string;
   modalsLoaded?: boolean;
