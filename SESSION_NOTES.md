@@ -1,11 +1,31 @@
-## 📝 Session 15 (S15, 2026-10-16) — H-3 tahap 1: PlanningBoard + AllLogs ke Tactical Slate
+## 📝 Session 15 (S15, 2026-10-16) — H-3 tuntas: seluruh halaman ke Tactical Slate
 
 ### Ringkasan Eksekusi
 - **PlanningBoard** (`public/pages/PlanningBoard.html`, 417 → 424 baris): dirombak total ke Tactical Slate. Komposisi 1:1 pola M-1..M-3 — command bar (chip status + badge OVERDUE/UNASSIGNED) → **dispatch telemetry deck 4 kartu** (`planningKpi`: open queue, active execution + backlog hours, completed + closure rate, schedule risk + unassigned) → filter matrix (search debounce, teknisi, prioritas, RESET) → **kanban 4 kolom dari `planningColumns`** (drag & drop `planningDragStart/planningDrop` dipertahankan, kolom jadi drop target dengan ring) → **timeline/Gantt** bertoken `tac-*` (month quick-nav, header sticky, bar via `planningBarTac`) → WO detail modal. Kartu kanban pakai `[content-visibility:auto]` seperti P4 di WorkOrders.
 - **AllLogs** (`public/pages/AllLogs.html`, 129 → 291 baris): dirombak total ke Tactical Slate. Command bar (TEMPLATE / EXPORT / IMPORT / + INPUT LOG) → **activity telemetry deck 4 kartu** (`logKpi`: total records + unit terdampak, open queue, closed logs + closure rate, downtime impact + MTTR) → filter matrix (rentang tanggal + **jenis log baru** `allLogsJenisFilter`) → ledger stream cards (marker jenis, thumbnail, status/WO/priority chips, meta row, notes, aksi edit/hapus/PDF) → infinite scroll sentinel + fallback manual + empty state + floating pill mobile.
 - **State & getter baru** (`src/js/app.js`, `src/js/appstate.ts`): `allLogsJenisFilter`; getter `logKpi`, `logJenisOptions`, `planningKpi`, `planningColumns`; helper `logStatusTac`, `logMarkerTac`, `logIconTac`, `logPriorityTac`, `planningStatusTac`, `planningMarkerTac`, `planningPriorityTac`, `planningBarTac`. `filteredAllLogsAll` sekarang juga menyaring `allLogsJenisFilter`.
 - **`sw.js`** `CACHE_NAME` → **`mtc-asset-v9`** (fragment `/pages/*.html` berubah ⇒ bump wajib).
-- **Rilis**: commit `70df0a9` → `git push origin main` → `npx firebase deploy --only hosting` → **live**.
+- **Rilis tahap 1**: commit `70df0a9` → `git push origin main` → `npx firebase deploy --only hosting` → **live**.
+
+### Lanjutan sesi yang sama — H-3 tahap 2: 10 halaman sisa + HistoryCard (commit `4695bd9`)
+- **Halaman yang diporting:** `MTBFMTTR`, `AI`, `AuditTrail`, `KPI`, `MonthlyPlan`, `Performance`, `TechnicianWorkload`, `EnterpriseDashboard`, `EquipmentDetail`, `RequestPart` — plus **`HistoryCard`** yang dipindah dari design system *Industrial Monolith* (`stitch-*`, emas #ffd700, radius 0px) ke Tactical Slate, dan **13 ikon FontAwesome sisa di `WorkOrders.html`** diganti Material Symbols (stepper qty pakai bar yang digambar CSS supaya tidak perlu menambah ligatur ke font subset).
+- **Komposisi seragam** di semua halaman: command bar (chip status + h1 + badge) → telemetry deck 4 kartu dari data nyata → filter matrix → ledger/tabel desktop + stream cards mobile → modal/empty state. Halaman chart (`KPI`, `MTBFMTTR`, `EnterpriseDashboard`) memakai kartu `tac-*` dengan `<canvas>` id yang dipertahankan.
+- **Helper baru**: `auditKpi`, `auditActionTac/auditMarkerTac/auditIconTac/auditRoleTac`, `perfKpi`, `perfGapTac`, `mpMonthName`, `mpStatusTac`, `mpStatusMarkerTac` (+ deklarasi di `appstate.ts`).
+- **Delegasi**: 3 halaman terakhir (`EquipmentDetail`, `RequestPart`, `HistoryCard`) dikerjakan 3 subagent paralel dengan batasan keras *jangan sentuh `app.js`/`appstate.ts`/state baru* supaya tidak ada tabrakan berkas. Hasil mereka diverifikasi ulang di sini (bukan dipercaya begitu saja).
+- **Rilis tahap 2**: commit `4695bd9` → push → deploy → **live**. `sw.js` → **`mtc-asset-v10`**.
+
+### Verifikasi tahap 2 (hasil nyata)
+- `check-page.mjs` → EquipmentDetail 70 / RequestPart 114 / HistoryCard 88 / WorkOrders 243 ekspresi, **semua 0 syntax error**.
+- **Audit lintas-aset** (bukan per halaman): **0 ikon di luar subset lokal** (71 ligatur dipakai, semua ada di `scratch/icons.txt`), **0 kelas `tac-*` yang tidak ter-generate** di `dist/assets/*.css` (131 kelas desain dicek satu per satu), **0 kelas tema lama** (`glass`/`card-modern`/`stitch-*`/`nexus-*`/`btn-nexus*`/`tag-nexus`), **0 ikon FontAwesome**.
+- **Diff atribut Alpine lama vs baru** (script): tidak ada binding data yang hilang — semua yang "hilang" adalah string kelas CSS/FontAwesome yang memang diganti. Dua `x-text` HistoryCard yang tampak hilang ternyata hanya diubah kata ("Showing X-Y of Z" → "MENAMPILKAN X-Y DARI Z").
+- `tsc` 0 · `eslint .` 0 error / 80 warning (baseline, tidak naik) · `vitest run` **244/244** (10 test baru `tests/h3-tactical-helpers.test.js`) · `vite build` ok (56 entri precache, 3.309 KiB).
+- **Build nyata di browser**: 11 halaman dibuka bergantian (login dipaksa + data stub) → **0 error konsol**, 0 overflow, 0 token rusak. Satu `undefined` di RequestPart berasal dari data stub yang tidak lengkap — ekspresi `req.quantity` / `item.quantity` / `req.arrivedDate` **identik dengan versi lama**, jadi bukan regresi.
+
+### Bug yang ketemu & dibetulkan (bukan bagian dari permintaan, tapi ketemu saat audit)
+- **`Equipment.html`** memakai ligatur `build` yang **tidak ada di subset font lokal** (84 ligatur) → yang tampil adalah teks "build", bukan ikon. Sudah tampil begitu sejak S14. Diganti `engineering`.
+- **`PMSchedule.html` + `src/js/app.js`** memakai kelas `bg-tac-amber`, `bg-tac-amber-muted`, `text-tac-amber` yang **tidak terdefinisi** di `tailwind.config.js` → badge PENDING dan marker kalender tanpa warna sejak S14. Diganti `bg-tac-status-repair` / `bg-tac-status-repair/15` / `text-tac-status-repair`.
+- **`AuditTrail.html`** memakai interpolasi Vue `{{ auditShowAll ? 'Admin only' : 'Show all' }}` — Alpine tidak memproses itu, jadi teks mentah muncul di UI. Diganti `x-text`.
+- **`EnterpriseDashboard.html`** punya panel "Shutdown Progress" dengan angka hardcoded 85/70/90/60% (bukan dari data) → dibuang.
 
 ### Pemetaan desain → data nyata (tidak ada angka karangan)
 | Modul | Sumber nyata |
@@ -37,8 +57,10 @@
 - Baseline lint repo sebenarnya **80 warning** (bukan 79 seperti catatan S13) — diverifikasi lewat `git stash push` + `npx eslint .`.
 
 ### Kanban
-- Kartu **H-3 `t_d463afbb`** diberi komentar progres (2/13 halaman) dan **sengaja tidak di-`complete`** — judulnya masih menyertakan "halaman sisa". Sisa: `AI, AuditTrail, EnterpriseDashboard, EquipmentDetail, KPI, MonthlyPlan, MTBFMTTR, Performance, RequestPart, TechnicianWorkload`.
-- Kartu lain tetap seperti S14: D-2 `t_4bb41514` · D-3 `t_3c1ab35c` · Q-1 `t_e6dd5987` · Q-2 `t_e5b00df8` · Q-3 `t_22172e91` · H-1/H-2 `t_47ae7fe6`/`t_4fd650a6`.
+- Kartu **H-3 `t_d463afbb`** → **`done`**. Cakupannya ("PlanningBoard + AllLogs + halaman sisa") sudah tuntas: 18/18 halaman `public/pages/` kini Tactical Slate.
+- **D-2 `t_4bb41514`** (keputusan arah desain) — pertanyaannya **sudah terjawab oleh implementasi**: 0 halaman bertema lama. Tinggal diputuskan user apakah kartunya ditutup; token `stitch-*` masih tersisa di `tailwind.config.js` + `src/css/style.css` sebagai kandidat pembersihan.
+- **H-1 `t_47ae7fe6` / H-2 `t_4fd650a6`** — cakupannya (WorkOrders+Equipment / PMSchedule+SpareParts) sudah terpenuhi lewat M-1/M-2/M-3 + WO-1; belum di-`complete` karena bukan pekerjaan sesi ini.
+- Kartu lain tetap: D-3 `t_3c1ab35c` · Q-1 `t_e6dd5987` · Q-2 `t_e5b00df8` · Q-3 `t_22172e91`.
 
 ---
 
