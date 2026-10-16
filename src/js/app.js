@@ -1773,7 +1773,7 @@ if (confirm('Are you sure you want to logout?')) {
 
                 // Tactical Slate Helpers for PM Schedule
                 pmStatusTac(pm) {
-                    if (!pm) return { label: 'UNKNOWN', badge: 'bg-tac-surface-recessed text-tac-text-dim border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'help_outline' };
+                    if (!pm) return { label: 'UNKNOWN', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'help_outline' };
                     const today = new Date().toISOString().split('T')[0];
                     if (pm.status === 'pending' && pm.date < today) {
                         return { label: 'OVERDUE', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40', marker: 'bg-tac-status-emergency', icon: 'warning' };
@@ -1784,13 +1784,13 @@ if (confirm('Are you sure you want to logout?')) {
                     if (pm.status === 'completed') {
                         return { label: 'COMPLETED', badge: 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/40', marker: 'bg-tac-status-operational', icon: 'check_circle' };
                     }
-                    return { label: 'CANCELLED', badge: 'bg-tac-surface-recessed text-tac-text-dim border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'cancel' };
+                    return { label: 'CANCELLED', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'cancel' };
                 },
 
                 pmPriorityTac(priority) {
                     const p = (priority || 'Medium').toLowerCase();
                     if (p === 'high') return { label: 'HIGH', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40' };
-                    if (p === 'low') return { label: 'LOW', badge: 'bg-tac-surface-recessed text-tac-text-dim border-tac-border-subtle' };
+                    if (p === 'low') return { label: 'LOW', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle' };
                     return { label: 'MED', badge: 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/40' };
                 },
 

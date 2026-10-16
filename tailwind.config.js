@@ -26,81 +26,110 @@ export default {
         // 2861085646384681595 (screen f88b02d0cb). Prefix `tac-` dipakai supaya
         // tidak bentrok dengan token `primary`/`nexus` milik app.
         // Spec: design/DESIGN-TACTICAL.md
+        //
+        // ⚠️ JANGAN kembalikan nilai di bawah ke hex literal.
+        // Setiap warna = `rgb(var(--tac-xxx) / <alpha-value>)`:
+        //   • `<alpha-value>` membuat opacity modifier Tailwind tetap mengemit
+        //     alpha → `bg-tac-status-emergency/15` benar-benar 15%.
+        //   • `var()` membuat warna bisa di-override per tema
+        //     (`data-theme` = dark/night · navy · purple · light) di
+        //     `src/css/tactical.css` → Dashboard & seluruh halaman ikut tema.
+        // Hex literal tidak bisa theme-aware; `var()` polos tidak bisa
+        // diopacity-kan Tailwind. Makanya dua-duanya tidak dipakai.
+        // Var-nya adalah TRIPLE CHANNEL RGB (mis. `--tac-primary: 255 193 116`).
         tac: {
           surface: {
-            base: '#0b0f15',
-            DEFAULT: '#0d141d',
-            dim: '#0d141d',
-            canvas: '#0f141c',
-            card: '#161d27',
-            elevated: '#1e2634',
-            recessed: '#0a0e14',
-            bright: '#333a44',
-            variant: '#2e3540',
-            'container-lowest': '#080f18',
-            'container-low': '#151c26',
-            container: '#19202a',
-            'container-high': '#232a35',
-            'container-highest': '#2e3540',
-            tint: '#ffb95f',
+            base: 'rgb(var(--tac-surface-base) / <alpha-value>)',
+            DEFAULT: 'rgb(var(--tac-surface) / <alpha-value>)',
+            dim: 'rgb(var(--tac-surface-dim) / <alpha-value>)',
+            canvas: 'rgb(var(--tac-surface-canvas) / <alpha-value>)',
+            card: 'rgb(var(--tac-surface-card) / <alpha-value>)',
+            elevated: 'rgb(var(--tac-surface-elevated) / <alpha-value>)',
+            recessed: 'rgb(var(--tac-surface-recessed) / <alpha-value>)',
+            bright: 'rgb(var(--tac-surface-bright) / <alpha-value>)',
+            variant: 'rgb(var(--tac-surface-variant) / <alpha-value>)',
+            'container-lowest': 'rgb(var(--tac-surface-container-lowest) / <alpha-value>)',
+            'container-low': 'rgb(var(--tac-surface-container-low) / <alpha-value>)',
+            container: 'rgb(var(--tac-surface-container) / <alpha-value>)',
+            'container-high': 'rgb(var(--tac-surface-container-high) / <alpha-value>)',
+            'container-highest': 'rgb(var(--tac-surface-container-highest) / <alpha-value>)',
+            tint: 'rgb(var(--tac-surface-tint) / <alpha-value>)',
           },
           primary: {
-            DEFAULT: '#ffc174',
-            container: '#f59e0b',
-            fixed: '#ffddb8',
-            'fixed-dim': '#ffb95f',
-            inverse: '#855300',
+            DEFAULT: 'rgb(var(--tac-primary) / <alpha-value>)',
+            container: 'rgb(var(--tac-primary-container) / <alpha-value>)',
+            fixed: 'rgb(var(--tac-primary-fixed) / <alpha-value>)',
+            'fixed-dim': 'rgb(var(--tac-primary-fixed-dim) / <alpha-value>)',
+            inverse: 'rgb(var(--tac-primary-inverse) / <alpha-value>)',
           },
           'on-primary': {
-            DEFAULT: '#472a00',
-            container: '#613b00',
-            fixed: '#2a1700',
-            'fixed-variant': '#653e00',
+            DEFAULT: 'rgb(var(--tac-on-primary) / <alpha-value>)',
+            container: 'rgb(var(--tac-on-primary-container) / <alpha-value>)',
+            fixed: 'rgb(var(--tac-on-primary-fixed) / <alpha-value>)',
+            'fixed-variant': 'rgb(var(--tac-on-primary-fixed-variant) / <alpha-value>)',
           },
           secondary: {
-            DEFAULT: '#4cd7f6',
-            container: '#03b5d3',
-            fixed: '#acedff',
-            'fixed-dim': '#4cd7f6',
+            DEFAULT: 'rgb(var(--tac-secondary) / <alpha-value>)',
+            container: 'rgb(var(--tac-secondary-container) / <alpha-value>)',
+            fixed: 'rgb(var(--tac-secondary-fixed) / <alpha-value>)',
+            'fixed-dim': 'rgb(var(--tac-secondary-fixed-dim) / <alpha-value>)',
           },
           'on-secondary': {
-            DEFAULT: '#003640',
-            container: '#00424e',
-            fixed: '#001f26',
-            'fixed-variant': '#004e5c',
+            DEFAULT: 'rgb(var(--tac-on-secondary) / <alpha-value>)',
+            container: 'rgb(var(--tac-on-secondary-container) / <alpha-value>)',
+            fixed: 'rgb(var(--tac-on-secondary-fixed) / <alpha-value>)',
+            'fixed-variant': 'rgb(var(--tac-on-secondary-fixed-variant) / <alpha-value>)',
           },
           tertiary: {
-            DEFAULT: '#ffbcb7',
-            container: '#ff938c',
-            fixed: '#ffdad7',
-            'fixed-dim': '#ffb3ad',
+            DEFAULT: 'rgb(var(--tac-tertiary) / <alpha-value>)',
+            container: 'rgb(var(--tac-tertiary-container) / <alpha-value>)',
+            fixed: 'rgb(var(--tac-tertiary-fixed) / <alpha-value>)',
+            'fixed-dim': 'rgb(var(--tac-tertiary-fixed-dim) / <alpha-value>)',
           },
           'on-tertiary': {
-            DEFAULT: '#68000a',
-            container: '#8d0012',
-            fixed: '#410004',
-            'fixed-variant': '#930013',
+            DEFAULT: 'rgb(var(--tac-on-tertiary) / <alpha-value>)',
+            container: 'rgb(var(--tac-on-tertiary-container) / <alpha-value>)',
+            fixed: 'rgb(var(--tac-on-tertiary-fixed) / <alpha-value>)',
+            'fixed-variant': 'rgb(var(--tac-on-tertiary-fixed-variant) / <alpha-value>)',
           },
-          error: { DEFAULT: '#ffb4ab', container: '#93000a' },
-          'on-error': { DEFAULT: '#690005', container: '#ffdad6' },
-          'on-surface': { DEFAULT: '#dce3f1', variant: '#d8c3ad', inverse: '#2a313b' },
-          'inverse-surface': '#dce3f1',
-          outline: { DEFAULT: '#a08e7a', variant: '#534434' },
-          border: { tactical: '#283446', subtle: 'rgba(255, 255, 255, 0.06)' },
+          error: {
+            DEFAULT: 'rgb(var(--tac-error) / <alpha-value>)',
+            container: 'rgb(var(--tac-error-container) / <alpha-value>)',
+          },
+          'on-error': {
+            DEFAULT: 'rgb(var(--tac-on-error) / <alpha-value>)',
+            container: 'rgb(var(--tac-on-error-container) / <alpha-value>)',
+          },
+          'on-surface': {
+            DEFAULT: 'rgb(var(--tac-on-surface) / <alpha-value>)',
+            variant: 'rgb(var(--tac-on-surface-variant) / <alpha-value>)',
+            inverse: 'rgb(var(--tac-on-surface-inverse) / <alpha-value>)',
+          },
+          'inverse-surface': 'rgb(var(--tac-inverse-surface) / <alpha-value>)',
+          outline: {
+            DEFAULT: 'rgb(var(--tac-outline) / <alpha-value>)',
+            variant: 'rgb(var(--tac-outline-variant) / <alpha-value>)',
+          },
+          border: {
+            tactical: 'rgb(var(--tac-border-tactical) / <alpha-value>)',
+            // Sudah membawa alpha sendiri & tidak pernah dipakai dengan
+            // opacity modifier Tailwind → cukup var warna utuh.
+            subtle: 'var(--tac-line-subtle)',
+          },
           gold: {
-            bright: '#fbbf24',
-            dim: '#b45309',
-            glow: 'rgba(245, 158, 11, 0.18)',
+            bright: 'rgb(var(--tac-gold-bright) / <alpha-value>)',
+            dim: 'rgb(var(--tac-gold-dim) / <alpha-value>)',
+            glow: 'var(--tac-gold-glow)',
           },
           status: {
-            operational: '#10b981',
-            repair: '#f59e0b',
-            emergency: '#ef4444',
-            standby: '#64748b',
+            operational: 'rgb(var(--tac-status-operational) / <alpha-value>)',
+            repair: 'rgb(var(--tac-status-repair) / <alpha-value>)',
+            emergency: 'rgb(var(--tac-status-emergency) / <alpha-value>)',
+            standby: 'rgb(var(--tac-status-standby) / <alpha-value>)',
           },
           sync: {
-            cyan: '#06b6d4',
-            'cyan-glow': 'rgba(6, 182, 212, 0.2)',
+            cyan: 'rgb(var(--tac-sync-cyan) / <alpha-value>)',
+            'cyan-glow': 'var(--tac-sync-glow)',
           },
         }
       },

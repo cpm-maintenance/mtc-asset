@@ -10,47 +10,272 @@
  *  - Efek "specular rim" dipertahankan sebagai garis 1px (bukan shadow).
  */
 
+/* ── Token warna Tactical Slate — THEME-AWARE (D-3) ─────────────────────────
+ * Semua nilai di bawah adalah TRIPLE CHANNEL RGB (`11 15 21`), BUKAN hex.
+ * Alasannya: `tailwind.config.js` memakai `rgb(var(--tac-x) / <alpha-value>)`
+ * sehingga
+ *   • opacity modifier Tailwind tetap mengemit alpha
+ *     (`bg-tac-status-emergency/15` benar-benar 15%), dan
+ *   • warna tetap bisa di-override per tema lewat atribut `data-theme`.
+ * Hex literal tidak bisa theme-aware; `var()` polos tidak bisa diopacity-kan
+ * Tailwind — karena itu dua-duanya tidak dipakai di sini.
+ *
+ * Tema aktif di-set oleh `ui.js → applyTheme()`:
+ *   night → `data-theme="dark"` (default :root di bawah) · navy · purple · light
+ *
+ * ⚠️ Kalau menambah token baru: definisikan di :root DAN di setiap override
+ * tema yang membutuhkannya, lalu pakai namanya di tailwind.config.js.
+ * `tests/tac-theme.test.js` menjaga keduanya tetap sinkron.
+ */
 :root {
   --tac-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --tac-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --tac-base: #0b0f15;
-  --tac-canvas: #0f141c;
-  --tac-card: #161d27;
-  --tac-elevated: #1e2634;
-  --tac-recessed: #0a0e14;
-  --tac-c-low: #151c26;
-  --tac-c: #19202a;
-  --tac-c-high: #232a35;
-  --tac-c-highest: #2e3540;
-  --tac-line: #283446;
-  --tac-text: #dce3f1;
-  --tac-text-dim: #d8c3ad;
-  --tac-muted: #64748b;
-  --tac-gold: #f59e0b;
-  --tac-gold-bright: #fbbf24;
-  --tac-cyan: #06b6d4;
-  --tac-ok: #10b981;
-  --tac-emergency: #ef4444;
+  /* ── Tema default: NIGHT (Tactical Slate asli, slate #0b0f15 + amber) ─── */
+  --tac-surface-base: 11 15 21;
+  --tac-surface: 13 20 29;
+  --tac-surface-dim: 13 20 29;
+  --tac-surface-canvas: 15 20 28;
+  --tac-surface-card: 22 29 39;
+  --tac-surface-elevated: 30 38 52;
+  --tac-surface-recessed: 10 14 20;
+  --tac-surface-bright: 51 58 68;
+  --tac-surface-variant: 46 53 64;
+  --tac-surface-container-lowest: 8 15 24;
+  --tac-surface-container-low: 21 28 38;
+  --tac-surface-container: 25 32 42;
+  --tac-surface-container-high: 35 42 53;
+  --tac-surface-container-highest: 46 53 64;
+  --tac-surface-tint: 255 185 95;
+
+  --tac-primary: 255 193 116;
+  --tac-primary-container: 245 158 11;
+  --tac-primary-fixed: 255 221 184;
+  --tac-primary-fixed-dim: 255 185 95;
+  --tac-primary-inverse: 133 83 0;
+  --tac-on-primary: 71 42 0;
+  --tac-on-primary-container: 97 59 0;
+  --tac-on-primary-fixed: 42 23 0;
+  --tac-on-primary-fixed-variant: 101 62 0;
+
+  --tac-secondary: 76 215 246;
+  --tac-secondary-container: 3 181 211;
+  --tac-secondary-fixed: 172 237 255;
+  --tac-secondary-fixed-dim: 76 215 246;
+  --tac-on-secondary: 0 54 64;
+  --tac-on-secondary-container: 0 66 78;
+  --tac-on-secondary-fixed: 0 31 38;
+  --tac-on-secondary-fixed-variant: 0 78 92;
+
+  --tac-tertiary: 255 188 183;
+  --tac-tertiary-container: 255 147 140;
+  --tac-tertiary-fixed: 255 218 215;
+  --tac-tertiary-fixed-dim: 255 179 173;
+  --tac-on-tertiary: 104 0 10;
+  --tac-on-tertiary-container: 141 0 18;
+  --tac-on-tertiary-fixed: 65 0 4;
+  --tac-on-tertiary-fixed-variant: 147 0 19;
+
+  --tac-error: 255 180 171;
+  --tac-error-container: 147 0 10;
+  --tac-on-error: 105 0 5;
+  --tac-on-error-container: 255 218 214;
+
+  --tac-on-surface: 220 227 241;
+  --tac-on-surface-variant: 216 195 173;
+  --tac-on-surface-inverse: 42 49 59;
+  --tac-inverse-surface: 220 227 241;
+
+  --tac-outline: 160 142 122;
+  --tac-outline-variant: 83 68 52;
+  --tac-border-tactical: 40 52 70;
+
+  --tac-gold-bright: 251 191 36;
+  --tac-gold-dim: 180 83 9;
+
+  --tac-status-operational: 16 185 129;
+  --tac-status-repair: 245 158 11;
+  --tac-status-emergency: 239 68 68;
+  --tac-status-standby: 100 116 139;
+
+  --tac-sync-cyan: 6 182 212;
+
+  /* Warna yang sudah membawa alpha sendiri — tidak pernah dipakai dengan
+   * opacity modifier Tailwind, jadi cukup di-override sebagai warna utuh. */
+  --tac-line-subtle: rgba(255, 255, 255, 0.06);
+  --tac-gold-glow: rgba(245, 158, 11, 0.18);
+  --tac-sync-glow: rgba(6, 182, 212, 0.2);
+
+  /* Tepi & bayangan taktil — ikut tema supaya tema terang tidak "kotor". */
+  --tac-edge: rgba(255, 255, 255, 0.05);
+  --tac-rim-a: rgba(255, 255, 255, 0.09);
+  --tac-rim-b: rgba(255, 255, 255, 0);
+  --tac-well-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.04);
+  --tac-rail-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* ── NAVY: slate digeser ke biru, senada `--nexus-bg` navy #0a0f1e ────────── */
+[data-theme='navy'] {
+  --tac-surface-base: 10 15 30;
+  --tac-surface: 12 18 36;
+  --tac-surface-dim: 12 18 36;
+  --tac-surface-canvas: 13 19 38;
+  --tac-surface-card: 19 28 48;
+  --tac-surface-elevated: 26 36 56;
+  --tac-surface-recessed: 8 13 25;
+  --tac-surface-bright: 59 74 99;
+  --tac-surface-variant: 42 53 73;
+  --tac-surface-container-lowest: 7 11 22;
+  --tac-surface-container-low: 16 24 39;
+  --tac-surface-container: 20 29 46;
+  --tac-surface-container-high: 29 39 57;
+  --tac-surface-container-highest: 38 49 69;
+
+  --tac-on-surface: 226 232 240;
+  --tac-on-surface-variant: 195 207 227;
+  --tac-on-surface-inverse: 15 23 42;
+  --tac-inverse-surface: 226 232 240;
+
+  --tac-outline: 143 163 192;
+  --tac-outline-variant: 61 77 104;
+  --tac-border-tactical: 38 52 76;
+
+  --tac-edge: rgba(147, 197, 253, 0.07);
+  --tac-rim-a: rgba(191, 219, 254, 0.1);
+}
+
+/* ── PURPLE: slate digeser ke ungu, senada `--nexus-bg` purple #0d0714 ───── */
+[data-theme='purple'] {
+  --tac-surface-base: 13 7 20;
+  --tac-surface: 18 10 28;
+  --tac-surface-dim: 18 10 28;
+  --tac-surface-canvas: 20 11 31;
+  --tac-surface-card: 27 17 40;
+  --tac-surface-elevated: 36 23 52;
+  --tac-surface-recessed: 10 5 16;
+  --tac-surface-bright: 74 58 94;
+  --tac-surface-variant: 55 42 73;
+  --tac-surface-container-lowest: 9 4 15;
+  --tac-surface-container-low: 23 14 34;
+  --tac-surface-container: 29 19 41;
+  --tac-surface-container-high: 39 26 54;
+  --tac-surface-container-highest: 50 35 67;
+
+  --tac-on-surface: 243 232 255;
+  --tac-on-surface-variant: 216 201 234;
+  --tac-on-surface-inverse: 45 20 60;
+  --tac-inverse-surface: 243 232 255;
+
+  --tac-outline: 168 146 196;
+  --tac-outline-variant: 74 53 99;
+  --tac-border-tactical: 52 36 74;
+
+  --tac-edge: rgba(216, 180, 254, 0.07);
+  --tac-rim-a: rgba(233, 213, 255, 0.1);
+}
+
+/* ── LIGHT: surface terang + aksen digelapkan supaya teks tetap AA ─────────
+ * Kontras teks fungsional dijaga ≥ 4.5:1 di atas `--tac-surface-card` (#fff).
+ * Warna aksen (primary/gold/status) digelapkan dari varian night karena
+ * di tema ini token yang sama dipakai sebagai WARNA TEKS, bukan cuma latar.
+ * Contoh terverifikasi: `text-tac-status-standby` (#475569) di atas kartu putih
+ * = 7.58:1.
+ */
+[data-theme='light'] {
+  --tac-surface-base: 238 242 247;
+  --tac-surface: 246 248 251;
+  --tac-surface-dim: 230 235 242;
+  --tac-surface-canvas: 248 250 252;
+  --tac-surface-card: 255 255 255;
+  --tac-surface-elevated: 255 255 255;
+  --tac-surface-recessed: 232 237 244;
+  --tac-surface-bright: 203 213 225;
+  --tac-surface-variant: 226 232 240;
+  --tac-surface-container-lowest: 255 255 255;
+  --tac-surface-container-low: 248 250 252;
+  --tac-surface-container: 241 245 249;
+  --tac-surface-container-high: 230 235 242;
+  --tac-surface-container-highest: 219 227 236;
+  --tac-surface-tint: 162 74 6;
+
+  --tac-primary: 162 74 6;
+  --tac-primary-container: 245 158 11;
+  --tac-primary-fixed: 253 230 138;
+  --tac-primary-fixed-dim: 252 211 77;
+  --tac-primary-inverse: 255 193 116;
+  --tac-on-primary: 255 255 255;
+  --tac-on-primary-container: 66 32 6;
+  --tac-on-primary-fixed: 69 26 3;
+  --tac-on-primary-fixed-variant: 120 53 15;
+
+  --tac-secondary: 14 116 144;
+  --tac-secondary-container: 6 182 212;
+  --tac-secondary-fixed: 165 243 252;
+  --tac-secondary-fixed-dim: 103 232 249;
+  --tac-on-secondary: 255 255 255;
+  --tac-on-secondary-container: 8 51 68;
+  --tac-on-secondary-fixed: 22 78 99;
+  --tac-on-secondary-fixed-variant: 21 94 117;
+
+  --tac-tertiary: 190 18 60;
+  --tac-tertiary-container: 251 113 133;
+  --tac-tertiary-fixed: 255 228 230;
+  --tac-tertiary-fixed-dim: 253 164 175;
+  --tac-on-tertiary: 255 255 255;
+  --tac-on-tertiary-container: 76 5 25;
+  --tac-on-tertiary-fixed: 136 19 55;
+  --tac-on-tertiary-fixed-variant: 159 18 57;
+
+  --tac-error: 185 28 28;
+  --tac-error-container: 254 202 202;
+  --tac-on-error: 255 255 255;
+  --tac-on-error-container: 127 29 29;
+
+  --tac-on-surface: 15 23 42;
+  --tac-on-surface-variant: 71 85 105;
+  --tac-on-surface-inverse: 248 250 252;
+  --tac-inverse-surface: 30 41 59;
+
+  --tac-outline: 148 163 184;
+  --tac-outline-variant: 203 213 225;
+  --tac-border-tactical: 211 219 230;
+
+  --tac-gold-bright: 162 74 6;
+  --tac-gold-dim: 120 53 15;
+
+  --tac-status-operational: 4 120 87;
+  --tac-status-repair: 162 74 6;
+  --tac-status-emergency: 185 28 28;
+  --tac-status-standby: 71 85 105;
+
+  --tac-sync-cyan: 14 116 144;
+
+  --tac-line-subtle: rgba(15, 23, 42, 0.08);
+
+  --tac-edge: rgba(15, 23, 42, 0.1);
+  --tac-rim-a: rgba(15, 23, 42, 0.06);
+  --tac-rim-b: rgba(15, 23, 42, 0);
+  --tac-well-shadow: inset 2px 2px 5px rgba(15, 23, 42, 0.1), inset -1px -1px 3px rgba(255, 255, 255, 0.9);
+  --tac-rail-shadow: inset 1px 1px 3px rgba(15, 23, 42, 0.1);
 }
 
 /* ── Wadah flat (bukan neumorphism) ─────────────────────────────────────── */
 .tac-plate {
-  background-color: var(--tac-card);
-  border: 1px solid var(--tac-line);
+  background-color: rgb(var(--tac-surface-card));
+  border: 1px solid rgb(var(--tac-border-tactical));
   border-radius: 0.75rem;
   position: relative;
 }
 
 .tac-plate-flat {
-  background-color: var(--tac-canvas);
-  border: 1px solid var(--tac-line);
+  background-color: rgb(var(--tac-surface-canvas));
+  border: 1px solid rgb(var(--tac-border-tactical));
   border-radius: 0.5rem;
 }
 
 .tac-plate-inset {
-  background-color: var(--tac-c);
-  border: 1px solid var(--tac-line);
+  background-color: rgb(var(--tac-surface-container));
+  border: 1px solid rgb(var(--tac-border-tactical));
   border-radius: 0.5rem;
 }
 
@@ -63,16 +288,16 @@
   right: 0;
   height: 1px;
   border-radius: inherit;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0));
+  background: linear-gradient(90deg, var(--tac-rim-a), var(--tac-rim-b));
   pointer-events: none;
 }
 
 /* ── Kontrol taktil kecil (diizinkan) ───────────────────────────────────── */
 .tac-well {
-  background-color: var(--tac-recessed);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgb(var(--tac-surface-recessed));
+  border: 1px solid var(--tac-edge);
   border-radius: 0.5rem;
-  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.04);
+  box-shadow: var(--tac-well-shadow);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -82,10 +307,10 @@
 }
 
 .tac-rail {
-  background-color: var(--tac-recessed);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgb(var(--tac-surface-recessed));
+  border: 1px solid var(--tac-edge);
   border-radius: 0.5rem;
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--tac-rail-shadow);
 }
 
 /* ── Tombol ─────────────────────────────────────────────────────────────── */
@@ -123,25 +348,25 @@
 }
 
 .tac-btn-ghost {
-  background-color: var(--tac-c);
-  border: 1px solid var(--tac-line);
-  color: var(--tac-text);
+  background-color: rgb(var(--tac-surface-container));
+  border: 1px solid rgb(var(--tac-border-tactical));
+  color: rgb(var(--tac-on-surface));
 }
 
 .tac-btn-ghost:hover {
   border-color: rgba(245, 158, 11, 0.6);
-  color: var(--tac-gold-bright);
+  color: rgb(var(--tac-gold-bright));
 }
 
 .tac-btn-destructive {
-  background-color: var(--tac-c);
+  background-color: rgb(var(--tac-surface-container));
   border: 1px solid rgba(239, 68, 68, 0.55);
-  color: #ffb4ab;
+  color: rgb(var(--tac-error));
 }
 
 .tac-btn-destructive:hover {
   background-color: rgba(239, 68, 68, 0.12);
-  color: #ffffff;
+  color: rgb(var(--tac-on-error-container));
 }
 
 .tac-btn-primary:disabled,
@@ -158,7 +383,7 @@
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--tac-muted);
+  color: rgb(var(--tac-status-standby));
 }
 
 .tac-label-md {
@@ -209,7 +434,7 @@
 .tac-meter {
   height: 4px;
   width: 100%;
-  background-color: var(--tac-recessed);
+  background-color: rgb(var(--tac-surface-recessed));
   border-radius: 9999px;
   overflow: hidden;
 }

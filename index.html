@@ -59,16 +59,18 @@
           localStorage.removeItem('darkMode');
           localStorage.setItem('_theme_migrated', '1');
         }
-        // Default to DARK (industrial look)
-        const stored = localStorage.getItem('darkMode');
-        const isDark = stored === null ? true : stored === 'true';
-        if (isDark) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.setAttribute('data-theme', 'light');
-          document.documentElement.classList.remove('dark');
+        // Anti-flash: pasang tema SEBELUM Alpine hidup. Sumber kebenaran =
+        // 'themeMode' (sama dengan ui.js applyTheme): night → data-theme="dark",
+        // lalu navy · purple · light. Skrip lama cuma kenal darkMode boolean,
+        // jadi navy/purple sempat berkedip gelap dulu.
+        let mode = localStorage.getItem('themeMode');
+        if (!mode) {
+          const legacy = localStorage.getItem('darkMode');
+          mode = legacy === null ? 'night' : (legacy === 'true' ? 'night' : 'light');
         }
+        if (!['night', 'navy', 'purple', 'light'].includes(mode)) mode = 'night';
+        document.documentElement.setAttribute('data-theme', mode === 'night' ? 'dark' : mode);
+        document.documentElement.classList.toggle('dark', mode !== 'light');
       })();
   </script>
 

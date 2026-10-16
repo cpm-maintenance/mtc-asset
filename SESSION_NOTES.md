@@ -1,3 +1,47 @@
+## 📝 Session 16 (S16, 2026-10-16) — D-3: palette `tac-*` jadi theme-aware
+
+### Masalah
+Palette `tac-*` di `tailwind.config.js` memakai **hex literal**, jadi Dashboard (dan seluruh chrome app) tetap gelap walau tema = `light` — satu-satunya bagian yang tidak mengikuti tema. Hex literal dipilih di commit `497969f` karena Tailwind v3 tidak menerapkan opacity modifier pada warna berbasis `var()` polos. Jadi perbaikannya harus menyelesaikan **dua** hal sekaligus: theme-aware **dan** `bg-tac-status-emergency/15` tetap 15%.
+
+### Solusi: `rgb(var(--tac-…) / <alpha-value>)`
+Sintaks resmi Tailwind v3. Setiap token `tac` sekarang menunjuk **triple channel RGB** yang didefinisikan dan di-override per tema:
+
+- **`tailwind.config.js`** — 59 token `tac.*` jadi `rgb(var(--tac-xxx) / <alpha-value>)`; **0 hex literal** di palette. Tiga token yang sudah membawa alpha sendiri (`border.subtle`, `gold.glow`, `sync.cyan-glow`) tetap `var()` utuh karena tidak pernah dipakai dengan opacity modifier.
+- **`src/css/tactical.css`** — `:root` (night) + blok `[data-theme='navy']`, `[data-theme='purple']`, `[data-theme='light']`. Utility `.tac-plate/-flat/-inset`, `.tac-well`, `.tac-rail`, `.tac-label`, `.tac-meter`, `.tac-btn-*` ikut `rgb(var(…))`; tepi/bayangan taktil dapat var sendiri (`--tac-edge`, `--tac-rim-a/b`, `--tac-well-shadow`, `--tac-rail-shadow`) supaya tema terang tidak "kotor".
+- **night tidak berubah sedikit pun** (nilai channel = hex lama) → 0 regresi visual di tema default.
+- **navy / purple** menggeser permukaan ke biru / ungu agar senada `--nexus-bg` (`#0a0f1e` / `#0d0714`).
+- **light** = permukaan terang + aksen digelapkan, karena token yang sama dipakai sebagai **warna teks**. Mis. `primary`/`gold-bright`/`status-repair` → `#A24A06`, `status-standby` → `#475569`, `status-emergency`/`error` → `#b91c1c`.
+
+### Bug yang ketemu & dibetulkan
+- **`text-tac-text-dim` (3× di `src/js/app.js`)** tidak punya token di `tailwind.config.js` → kelasnya **tidak pernah ter-generate**, jadi badge UNKNOWN / CANCELLED / LOW tampil tanpa warna sejak S15 (dan lolos dari `check-page.mjs` + `tsc` + `eslint`). Diganti `text-tac-on-surface-variant` (warna identik: `#d8c3ad`).
+- **`hover:bg-emerald-400` + `text-tac-surface-container-lowest` di `Dashboard.html`** → di tema terang teks putih di atas hijau terang (1.7:1). Jadi `hover:bg-emerald-700 dark:hover:bg-emerald-400` (5.5:1 di terang, 9.6:1 di gelap).
+- **Anti-flash `index.html`** hanya kenal `darkMode` boolean → `navy`/`purple` sempat berkedip gelap saat reload. Sekarang membaca `themeMode` (sumber kebenaran yang sama dengan `ui.js applyTheme`).
+- **Gap AA tema gelap yang SUDAH ADA** (sengaja **tidak** diubah, cuma dicatat): `text-tac-status-standby` 3.56:1 dan `text-tac-gold-dim` 3.37:1 di atas `bg-tac-surface-card`. Perbaikannya = keputusan desain terpisah (mis. standby → slate-400). Ditulis eksplisit di `KNOWN_DARK_GAPS` (`tests/tac-theme.test.js`) supaya tidak hilang.
+
+### Tes penjaga baru: `tests/tac-theme.test.js` (12 tes) — suite **256 → 268**
+1. setiap nilai `tac` = `rgb(var(…) / <alpha-value>)` atau `var()` utuh yang diizinkan · 2. 0 hex literal · 3. var yang dirujuk config ada di `:root` · 4. var yang dirujuk CSS ada di `:root` · 5. nilai channel = 3 angka 0-255 di tiap tema · 6. night identik dengan Tactical Slate asli · 7. navy/purple/light meng-override permukaan + teks · 8. light benar-benar terang, navy biru, purple ungu · 9. kontras tema light ≥ 4.5:1 (18 pasangan) · 10. kontras tema gelap ≥ 3:1 · 11. gap AA tema gelap persis sebanyak yang didokumentasikan · 12. **setiap kelas `tac-*` di halaman/JS punya token** (ini yang menangkap `text-tac-text-dim`).
+
+### Verifikasi (hasil nyata, bukan klaim)
+- `npm run typecheck` **0** · `npm run lint` **0 error / 80 warning** (baseline, tidak naik) · `npm run test:run` **268/268** (17 berkas) · `npm run build` ok (**56 entri precache, 3.235 KiB**).
+- `node scratch/check-page.mjs public/pages/Dashboard.html` → **136 ekspresi, 0 syntax error**.
+- CSS hasil build: `bg-tac-status-emergency/15` → `rgb(var(--tac-status-emergency) / .15)`; `bg-tac-surface-card` → `rgb(var(--tac-surface-card) / var(--tw-bg-opacity,1))`; `border-tac-border-subtle` → `var(--tac-line-subtle)`.
+- **Audit kelas** (`scratch/check-tac-generated.py`): 141 kelas `tac-*` dipakai → **141 ter-generate, 0 hilang**.
+- **Build nyata di browser** (`python -m http.server` di `dist/`, login dipaksa): `body` = `#0d141d` (night) / `#0a0f1e` (navy) / `#0d0714` (purple) / `#f8fafc` (light); kartu = `#161d27` / `#131c30` / `#1b1128` / `#ffffff`; sidebar = `#080f18` / `#070b16` / `#09040f` / `#ffffff`. **0 error konsol, 0 overflow di keempat tema.**
+- **Opacity modifier tetap utuh** (`getComputedStyle`): `/15` → `rgba(239,68,68,.15)` → light `rgba(185,28,28,.15)`; `/10`, `/40`, `/60`, `/95` semua benar; `border-tac-border-subtle` `rgba(255,255,255,.06)` → light `rgba(15,23,42,.08)`.
+- **Kontras light** `text-tac-status-standby` di atas `bg-tac-surface-card` = **7.58:1** (syarat kartu ≥ 4.5:1).
+- 8 halaman lain (`wo`, `pms`, `equip`, `planning`, `hist`, `parts`, `kpi`, `audit`) di tema light: kartu `rgb(255,255,255)`, **0 error konsol, 0 overflow**.
+- `sw.js` `CACHE_NAME` → **`mtc-asset-v12`**.
+
+### Pelajaran
+- Tailwind v3 **memang** mendukung `rgb(var(--x) / <alpha-value>)`. Yang tidak didukung cuma `var(--x)` polos (alpha hilang). Jadi hex literal tidak pernah diperlukan untuk theme-aware.
+- **`getComputedStyle` di tab yang tidak fokus bisa menahan nilai LAMA selama transisi CSS** (`transition-all duration-300` di `body`/sidebar) — nilainya beku di keadaan awal karena rAF di-throttle. Matikan transisi (`*{transition:none!important}`) sebelum mengukur, jangan simpulkan "CSS tidak jalan".
+- Kelas warna yang disusun di string JS **tidak divalidasi** oleh `tsc`, `eslint`, maupun `check-page.mjs`. Hanya tes yang membandingkan daftar kelas vs token Tailwind yang bisa menangkapnya — `text-tac-text-dim` lolos 3 sesi.
+
+### Kanban
+- Kartu **D-3 `t_3c1ab35c`** → **`done`**. Sesuai aturan board: dikerjakan manual, status dibiarkan `blocked`, tidak pernah di-`unblock`.
+
+---
+
 ## 📝 Session 15 (S15, 2026-10-16) — H-3 tuntas: seluruh halaman ke Tactical Slate
 
 ### Ringkasan Eksekusi
