@@ -33,6 +33,18 @@
 - Arsip desain `design/stitch/*.html` **sengaja TIDAK diubah** — itu screen asli Stitch, masih menulis "Ajeng AI"; jangan dipakai sebagai sumber label UI lagi.
 - Verifikasi: `grep -rin ajeng` di luar `design/` = 0 hasil · typecheck 0 · test 224/224 · build ok.
 
+### Bug deploy: UI tidak berubah walau sudah di-push (commit `7505be3`)
+User lapor **"belum berubah"** setelah rename — padahal `curl` ke live sudah menunjukkan label baru. Akar masalahnya BUKAN browser user:
+
+1. `/pages/**` disajikan dengan `Cache-Control: max-age=3600` → fragment di-cache browser sampai 1 jam. Fragment **tidak punya hash di nama file**, jadi `max-age` panjang = UI basi.
+2. `sw.js` handler `/pages/**` memakai `fetch(event.request)` biasa → **boleh dilayani HTTP cache**, jadi respons basi ikut di-`cache.put` ulang ke SW cache (basi jadi permanen).
+3. `CACHE_NAME` masih `mtc-asset-v3` → `activate` tidak membuang precache lama (fragment basi tetap ada).
+4. `cache.add(url)` saat install juga lewat HTTP cache → precache bisa menyalin salinan basi.
+
+**Perbaikan:** `firebase.json` tambah header `/pages/**` → `no-cache` · `CACHE_NAME` → **`mtc-asset-v4`** · install pakai `cache.add(new Request(url, { cache: 'reload' }))` · handler `/pages/**` pakai `fetch(request, { cache: 'no-store' })` (fallback cache saat offline tetap jalan).
+**Diverifikasi live:** `/sw.js` = `mtc-asset-v4` + `no-store` · `/pages/Dashboard.html` → `Cache-Control: no-cache` · `/assets/*` tetap `immutable`.
+**Pelajaran:** setiap kali menambah/mengubah fragment `/pages/*.html`, **naikkan `CACHE_NAME` di `sw.js`** — kalau tidak, user lama tetap melihat versi basi walau live sudah benar.
+
 ### Pelajaran
 - **Kalau markup sumber desain bisa didapat, JANGAN porting dari screenshot.** Vision atas screenshot berulang kali halusinasi (pernah "membaca" `NETGUARD`, `OEE Forecast`, `Total Cycles`, tanggal `2024-01-xx` — tidak ada di desain maupun di app). Kalau perlu teks dari gambar: **crop region kecil**, jangan gambar penuh.
 - `write_file` menolak menimpa file yang belum dibaca penuh di konteks berjalan → untuk rewrite total: backup ke `scratch/`, `rm`, lalu tulis.
