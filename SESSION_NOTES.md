@@ -70,6 +70,13 @@ User bertanya *"apa nantinya sistem ini tidak berat di desktop dan di mobile pho
 - **P5**: Precache diet menjadi 55 entri (3.127 KB).
 `sw.js` `CACHE_NAME` → **`mtc-asset-v7`**.
 
+### Update Sesi S13 Lanjutan — D-4 (Material Symbols Offline) Selesai
+- Ikon **Material Symbols Outlined** resmi disubset dan disimpan lokal di `public/fonts/material-symbols-outlined.woff2` (336 KB) mencakup seluruh 84 ligatur yang dipakai di app.
+- Link CDN `fonts.googleapis.com` untuk Material Symbols di `index.html` dicabut. `@font-face` dideklarasikan di `src/css/tactical-icons.css`.
+- `vite.config.js` menyertakan `fonts/*.woff2` ke manifest SW → ter-precache otomatis.
+- Teruji langsung di browser dengan network offline/blocked ke Google Fonts: seluruh ikon tetap ter-render sebagai icon glyph sempurna (bukan teks fallback).
+- Cache bump ke **`mtc-asset-v8`**. Kartu `t_1f747d46` (D-4) ditandai **`done`**.
+
 ---
 
 ## 📝 Session 12 (S12, 2026-10-15) — Gelombang 9 Stitch tuntas + Dashboard 'Tactical Slate' (rebuild 1:1 dari markup)

@@ -1,9 +1,16 @@
 /*
- * Material Symbols Outlined — ikon resmi design system Google Stitch
- * (project 2861085646384681595, screen f88b02d0cb).
- * Font-nya sendiri dimuat dari Google Fonts di index.html; kelas di bawah ini
- * adalah "wajib" agar ligature nama ikon (mis. `dashboard`) ter-render.
+ * Material Symbols Outlined — ikon resmi design system Google Stitch.
+ * Dimuat secara lokal dari /fonts/material-symbols-outlined.woff2 agar 100% tahan
+ * banting saat aplikasi berjalan offline (PWA offline-first).
  */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url('/fonts/material-symbols-outlined.woff2') format('woff2');
+}
+
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined', sans-serif;
   font-weight: normal;
