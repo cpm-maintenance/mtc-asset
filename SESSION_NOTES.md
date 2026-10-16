@@ -28,6 +28,11 @@
 - Terbuka lama: Q-1 `t_e6dd5987`, Q-2 `t_e5b00df8`, Q-3 `t_22172e91`, H-1/H-2/H-3 `t_47ae7fe6`/`t_4fd650a6`/`t_d463afbb`.
 - D-1/D-1b (porting + rebuild Dashboard) **belum punya kartu** — belum diputuskan user.
 
+### Rename branding
+- **`Ajeng AI` → `MTC AI`** (commit `6f400b2`): label Dashboard jadi `MTC AI Node` + `MTC AI Diagnostics`, dan `MTC AI Settings` di `index.html` + `public/components/modals/APISettingsModal.html`.
+- Arsip desain `design/stitch/*.html` **sengaja TIDAK diubah** — itu screen asli Stitch, masih menulis "Ajeng AI"; jangan dipakai sebagai sumber label UI lagi.
+- Verifikasi: `grep -rin ajeng` di luar `design/` = 0 hasil · typecheck 0 · test 224/224 · build ok.
+
 ### Pelajaran
 - **Kalau markup sumber desain bisa didapat, JANGAN porting dari screenshot.** Vision atas screenshot berulang kali halusinasi (pernah "membaca" `NETGUARD`, `OEE Forecast`, `Total Cycles`, tanggal `2024-01-xx` — tidak ada di desain maupun di app). Kalau perlu teks dari gambar: **crop region kecil**, jangan gambar penuh.
 - `write_file` menolak menimpa file yang belum dibaca penuh di konteks berjalan → untuk rewrite total: backup ke `scratch/`, `rm`, lalu tulis.
