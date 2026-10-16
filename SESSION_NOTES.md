@@ -1,3 +1,47 @@
+## 📝 Session 15 (S15, 2026-10-16) — H-3 tahap 1: PlanningBoard + AllLogs ke Tactical Slate
+
+### Ringkasan Eksekusi
+- **PlanningBoard** (`public/pages/PlanningBoard.html`, 417 → 424 baris): dirombak total ke Tactical Slate. Komposisi 1:1 pola M-1..M-3 — command bar (chip status + badge OVERDUE/UNASSIGNED) → **dispatch telemetry deck 4 kartu** (`planningKpi`: open queue, active execution + backlog hours, completed + closure rate, schedule risk + unassigned) → filter matrix (search debounce, teknisi, prioritas, RESET) → **kanban 4 kolom dari `planningColumns`** (drag & drop `planningDragStart/planningDrop` dipertahankan, kolom jadi drop target dengan ring) → **timeline/Gantt** bertoken `tac-*` (month quick-nav, header sticky, bar via `planningBarTac`) → WO detail modal. Kartu kanban pakai `[content-visibility:auto]` seperti P4 di WorkOrders.
+- **AllLogs** (`public/pages/AllLogs.html`, 129 → 291 baris): dirombak total ke Tactical Slate. Command bar (TEMPLATE / EXPORT / IMPORT / + INPUT LOG) → **activity telemetry deck 4 kartu** (`logKpi`: total records + unit terdampak, open queue, closed logs + closure rate, downtime impact + MTTR) → filter matrix (rentang tanggal + **jenis log baru** `allLogsJenisFilter`) → ledger stream cards (marker jenis, thumbnail, status/WO/priority chips, meta row, notes, aksi edit/hapus/PDF) → infinite scroll sentinel + fallback manual + empty state + floating pill mobile.
+- **State & getter baru** (`src/js/app.js`, `src/js/appstate.ts`): `allLogsJenisFilter`; getter `logKpi`, `logJenisOptions`, `planningKpi`, `planningColumns`; helper `logStatusTac`, `logMarkerTac`, `logIconTac`, `logPriorityTac`, `planningStatusTac`, `planningMarkerTac`, `planningPriorityTac`, `planningBarTac`. `filteredAllLogsAll` sekarang juga menyaring `allLogsJenisFilter`.
+- **`sw.js`** `CACHE_NAME` → **`mtc-asset-v9`** (fragment `/pages/*.html` berubah ⇒ bump wajib).
+- **Rilis**: commit `70df0a9` → `git push origin main` → `npx firebase deploy --only hosting` → **live**.
+
+### Pemetaan desain → data nyata (tidak ada angka karangan)
+| Modul | Sumber nyata |
+|---|---|
+| Planning: OPEN QUEUE | `planningWOs` Status `Pending`/`Draft` |
+| Planning: ACTIVE EXECUTION + BACKLOG HOURS | Status `In Progress`; Σ `estimatedHours` WO belum Completed/Cancelled |
+| Planning: COMPLETED + CLOSURE RATE | Status `Completed`; completed/total |
+| Planning: SCHEDULE RISK | `dueDate < today` dan status belum selesai; `unassigned` = tanpa `assignedTo` |
+| AllLogs: TOTAL RECORDS + UNIT TERDAMPAK | `filteredAllLogsAll.length`; `new Set(EquipmentID).size` |
+| AllLogs: DOWNLOAD/MTTR | Σ `Downtime`; MTTR = Σ downtime breakdown ÷ jumlah breakdown |
+| AllLogs: closure | Completed ÷ total |
+
+### Verifikasi (hasil nyata, bukan klaim)
+- `node scratch/check-page.mjs public/pages/PlanningBoard.html` → **119 ekspresi, 0 syntax error**; `AllLogs.html` → **73 ekspresi, 0 syntax error**.
+- `npm run typecheck` **0** · `npm run lint` **0 error / 80 warning** (baseline, diverifikasi dengan `git stash` — perubahan ini menambah 0 warning) · `npm run test:run` **234/234** (10 test baru) · `npm run build` ok (**56 entri precache, 3.196 KiB**).
+- Test baru: `tests/planning-kpi.test.js` (5 test: `planningKpi`, `planningColumns`, filter teknisi/prioritas/search, helper badge) + blok baru di `tests/alllogs-pagination.test.js` (5 test: filter jenis, `logJenisOptions`, `logKpi`, kasus kosong tanpa NaN, helper badge).
+- Harness browser (`node scratch/make-harness.mjs <page>` — kini menerima argumen path halaman; stub state diperluas untuk planning + logs) → **0 error konsol**, PlanningBoard 4 kartu kanban / 5 baris Gantt / 4 bar / modal detail isi data nyata; AllLogs 4 kartu stream, 0 `undefined`/`NaN`.
+- **Build nyata di browser** (`python -m http.server` di `dist/` + paksa `isLoggedIn`, data stub): `main` `rgb(13,20,29)` · kartu `rgb(22,29,39)` · h1 `26px/600` (headline-lg) · **0 overflow** (`main.scrollWidth === main.clientWidth`) · 0 token rusak · `document.fonts.check('18px "Material Symbols Outlined"')` = true (font lokal) · 0 error konsol. Filter jenis All Logs 4 → 3 log dan `logKpi` ikut terhitung ulang (downtime 12 h, MTTR 4 h, biaya Rp 3,75 jt). Timeline Planning 5 baris / 4 bar, modal detail menampilkan nama equipment hasil resolve (`Belt Conveyor CV-104`).
+- **Ikon**: 34 ligatur dipakai di dua halaman ini, **0 di luar subset lokal** (dicek terhadap `scratch/icons.txt`, 84 ligatur).
+- **Kelas Tailwind**: 45 kelas `tac-*` yang dipakai dicek langsung di `dist/assets/*.css` — semuanya ter-generate.
+- **Live**: `curl -s https://mtc-asset.web.app/pages/PlanningBoard.html | grep -c "Tactical Slate"` = **1**, `.../AllLogs.html | grep -c "MAINTENANCE ACTIVITY STREAM"` = **1**, `sw.js` = **`mtc-asset-v9`**.
+
+### Pelajaran
+- **`write_file` menolak menimpa file yang belum dibaca penuh** — `rm` dulu (berlaku juga untuk `scratch/make-harness.mjs`). Simpan salinan lama ke `scratch/*.prev.html` sebelum `rm`.
+- **`patch` dengan `old_string` sebaris gagal** kalau baris target terlalu pendek/unik-nya tipis — sertakan satu baris konteks berikutnya.
+- `tsc` tetap memeriksa `src/js/app.js`: semua callback `.filter`/`.reduce` di atas nilai bertipe `any` **wajib** `/** @type {any} */` pada parameternya (kali ini 12 error TS7006 muncul dan langsung dibereskan).
+- **Kelas Tailwind yang disusun di runtime tidak akan ter-generate.** Jangan `planningMarkerTac(x) + '/40'` — Tailwind memindai literal di source, jadi opacity harus ikut tertulis di string literal (`planningBarTac` mengembalikan `bg-tac-status-repair/40 border-tac-status-repair/60` utuh).
+- Untuk verifikasi build nyata, `x-page` hanya ter-mount saat `currentPage` cocok; id halaman All Logs = **`hist`**, Planning Board = **`planning`** (lihat `index.html`).
+- Baseline lint repo sebenarnya **80 warning** (bukan 79 seperti catatan S13) — diverifikasi lewat `git stash push` + `npx eslint .`.
+
+### Kanban
+- Kartu **H-3 `t_d463afbb`** diberi komentar progres (2/13 halaman) dan **sengaja tidak di-`complete`** — judulnya masih menyertakan "halaman sisa". Sisa: `AI, AuditTrail, EnterpriseDashboard, EquipmentDetail, KPI, MonthlyPlan, MTBFMTTR, Performance, RequestPart, TechnicianWorkload`.
+- Kartu lain tetap seperti S14: D-2 `t_4bb41514` · D-3 `t_3c1ab35c` · Q-1 `t_e6dd5987` · Q-2 `t_e5b00df8` · Q-3 `t_22172e91` · H-1/H-2 `t_47ae7fe6`/`t_4fd650a6`.
+
+---
+
 ## 📝 Session 14 (S14, 2026-10-16) — Porting M-1, M-2, M-3 ke Tactical Slate
 
 ### Ringkasan Eksekusi
