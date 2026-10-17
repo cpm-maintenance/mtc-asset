@@ -21,14 +21,17 @@
 ### Ratchet coverage dinaikkan
 `vitest.config.js`: threshold **10/11/9/10 → 27/25/28/28** (sedikit di bawah hasil nyata supaya refactor wajar tidak langsung memerahkan gate). Ini yang mengubah config — bukan sumber aplikasi.
 
-### ⚠️ Temuan (BELUM diperbaiki — menunggu keputusan user)
-1. **`ai.js → loadAISettings()`: model tersimpan hilang.** `this.aiModel` diisi dari localStorage, lalu `updateModelOptions()` **menimpanya** dengan opsi pertama provider. Akibatnya pilihan model user reset setiap reload, dan cabang `Custom: <model>` di bawahnya **tidak pernah tercapai**. Dikunci oleh tes berjudul `KNOWN DEFECT:` di `tests/ai-module.test.js` (kalau diperbaiki, ubah tes itu). Perbaikan = pindahkan `updateModelOptions()` sebelum pembacaan `ai_model` (~2 baris).
-2. **`requisition.js → bulkApproveRequisitions()` selalu menulis `approvedBy: 'unknown'`.** Baris 409 memakai `this.currentUser?.email`, padahal `currentUser` hanya dideklarasikan di `appstate.ts` dan **tidak pernah di-assign** di mana pun; `approveRequisition()` memakai `this.user?.email`. Jadi approve massal kehilangan identitas approver. Perbaikan = ganti ke `this.user?.email` (1 token).
+### Tindak lanjut — 2 temuan DIPERBAIKI (commit `347d3f7`, live)
+Kedua temuan di atas diperbaiki atas persetujuan user (perintah "kerjakan"), bukan dibiarkan menggantung:
+1. **`ai.js → loadAISettings()`** — `this.updateModelOptions()` dipindah ke **atas** pembacaan model, dan `this.aiModel = localStorage.getItem('ai_model') || this.aiModel` dibaca **sesudahnya** dengan fallback ke default provider. Jadi model tersimpan menang, dan cabang `Custom: <model>` sekarang benar-benar hidup. Tes `KNOWN DEFECT` diganti **2 tes regresi** (model tersimpan menang · fallback ke opsi pertama saat `ai_model` kosong).
+2. **`requisition.js → bulkApproveRequisitions()`** — `this.currentUser?.email` → **`this.user?.email`** (konsisten dengan `approveRequisition()`). Deklarasi mati `currentUser?: any` di `src/js/appstate.ts` **dihapus** supaya tidak memancing pengulangan bug yang sama (`grep -rn currentUser src/` → 0 hit). Tes `bulkApprove` sekarang menyuntik `user`, bukan `currentUser` palsu.
+3. **Bundle benar-benar berubah**: `main-B22hopwX.js` → **`main-DW9IUQwh.js`** (diverifikasi lokal = live lewat marker nama berkas di `index.html`); CSS tetap `main-DcdhVYeZ.css`. `sw.js` `CACHE_NAME` **tetap `mtc-asset-v12`** — aset ber-hash di nama berkas ditangani revision manifest Workbox, dan bump manual di repo ini hanya diwajibkan saat fragment `/pages/*.html` berubah (tidak terjadi di sini).
+4. Coverage sesudah perbaikan: **28.34% stmt · 26.78% branch · 29.95% func · 29.53% line** — tetap 412/412 tes.
 
 ### Verifikasi (hasil nyata)
-- `npm run typecheck` **0 error** · `npm run lint` **0 error / 80 warning** (baseline, tidak naik) · `npm run test:run` **412/412** (21 berkas) · `npm run test:coverage` lolos threshold baru · `npm run build` ok (**56 entri precache, 3.235 KiB** — identik baseline).
-- **Bundle tidak berubah**: perubahan hanya di `tests/` + `vitest.config.js`, jadi `dist/` tetap sama dengan S16.
-- `git status`: `vitest.config.js` (M) + 4 berkas tes baru (??). `m .open/skills` **tidak disentuh**.
+- `npm run typecheck` **0 error** · `npm run lint` **0 error / 80 warning** (baseline, tidak naik) · `npm run test:run` **412/412** (21 berkas) · `npm run test:coverage` lolos threshold baru · `npm run build` ok (**56 entri precache, 3.235 KiB**).
+- **Dua commit**: `d0db110` (tes + ratchet) lalu `347d3f7` (perbaikan 2 temuan). Keduanya di-push ke `origin/main` + `firebase deploy --only hosting`. Live diverifikasi lewat marker konten: `sw.js` = `mtc-asset-v12`, `index.html` menunjuk `main-DW9IUQwh.js` (sama dengan `dist/assets/`), `themeMode` masih ada.
+- `git status`: bersih kecuali `m .open/skills` (anomali lokal, **tidak disentuh**).
 
 ### Pelajaran
 - `Object.create(module)` (bukan spread `{...module}`) adalah cara aman memberi setiap tes state sendiri pada modul Alpine: spread akan **mengevaluasi getter** jadi nilai statis, sedangkan `Object.create` mempertahankan getter + metode lewat prototype chain dan assignment tetap jadi own-property.
