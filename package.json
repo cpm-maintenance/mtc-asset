@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/verify-precache.mjs",
+    "verify:precache": "node scripts/verify-precache.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",

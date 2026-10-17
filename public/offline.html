@@ -1,161 +1,286 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
   <title>Offline — MTC.ASSET</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <!--
+    Halaman ini dilayani service worker sebagai fallback navigasi TERAKHIR saat
+    offline (lihat OFFLINE_URL di sw.js). Karena itu WAJIB self-contained:
+    - tanpa CDN (font/ikon eksternal tidak akan termuat saat offline);
+    - ikon sebagai inline SVG, BUKAN ligatur Material Symbols — ligatur butuh
+      /fonts/material-symbols-outlined.woff2 + kelas .material-symbols-outlined,
+      yang tidak ada di halaman ini, sehingga akan tampil sebagai TEKS mentah.
+    Jangan tambahkan <link> atau <script src> ke domain luar di sini.
+  -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       background: #05070a;
-      font-family: 'Outfit', system-ui, sans-serif;
+      color: #94a3b8;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100dvh;
       padding: 24px;
-      background-image: radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.04) 0%, transparent 60%);
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 60%);
+      -webkit-font-smoothing: antialiased;
     }
+
     .card {
-      max-width: 380px;
+      max-width: 420px;
       width: 100%;
-      background: rgba(7, 11, 16, 0.75);
-      backdrop-filter: blur(24px);
-      border: 1px solid rgba(251,191,36,0.12);
-      border-radius: 32px;
+      background: #0f141c;
+      border: 1px solid rgba(245, 158, 11, 0.14);
+      border-radius: 24px;
       padding: 40px 32px;
       text-align: center;
-      box-shadow: 0 0 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(251,191,36,0.05);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
     }
+
     .glow-icon {
       width: 72px; height: 72px;
-      background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(168,85,247,0.08));
-      border-radius: 24px;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 28px;
-      border: 1px solid rgba(251,191,36,0.12);
-      box-shadow: 0 0 30px rgba(251,191,36,0.05);
+      margin: 0 auto 24px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(34, 211, 238, 0.06));
+      border: 1px solid rgba(245, 158, 11, 0.16);
+      color: #f59e0b;
     }
-    .glow-icon i { font-size: 28px; color: #fbbf24; }
+    .glow-icon svg { width: 34px; height: 34px; display: block; }
+
     h1 {
       font-size: 22px;
-      font-weight: 900;
-      color: #fbbf24;
-      margin-bottom: 8px;
-      letter-spacing: -0.02em;
-      text-shadow: 0 0 20px rgba(251,191,36,0.15);
+      font-weight: 800;
+      color: #f59e0b;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
     }
-    .subtitle {
+
+    .eyebrow {
       font-size: 10px;
       font-weight: 700;
-      color: rgba(251,191,36,0.3);
       text-transform: uppercase;
-      letter-spacing: 0.25em;
-      margin-bottom: 20px;
+      letter-spacing: 0.24em;
+      color: rgba(245, 158, 11, 0.45);
+      margin-bottom: 22px;
     }
-    p {
-      font-size: 13px;
-      line-height: 1.7;
-      color: #64748b;
-      margin-bottom: 32px;
-    }
-    p strong { color: #94a3b8; }
+
     .status-dot {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 8px 16px;
-      background: rgba(239,68,68,0.08);
-      border: 1px solid rgba(239,68,68,0.15);
       border-radius: 999px;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: #ef4444;
-      margin-bottom: 28px;
+      letter-spacing: 0.16em;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      margin-bottom: 26px;
     }
     .status-dot::before {
       content: '';
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: #ef4444;
-      box-shadow: 0 0 8px #ef4444;
-      animation: pulse 2s infinite;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+      animation: pulse 2s ease-in-out infinite;
     }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-    .actions {
-      display: flex;
-      flex-direction: column;
+    .status-dot.is-online {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.18);
+      color: #f59e0b;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    p {
+      font-size: 13px;
+      line-height: 1.75;
+      color: #64748b;
+      margin-bottom: 28px;
+    }
+    p strong { color: #cbd5e1; font-weight: 600; }
+
+    .hint {
+      font-size: 11.5px;
+      line-height: 1.65;
+      color: #475569;
+      margin: -12px 0 26px;
+    }
+
+    ul {
+      list-style: none;
+      text-align: left;
+      margin: 0 0 28px;
+      display: grid;
       gap: 10px;
     }
+    li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #64748b;
+    }
+    li svg { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 2px; color: #22d3ee; }
+
+    .actions { display: grid; gap: 10px; }
+
     .btn {
-      padding: 14px 32px;
-      background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(168,85,247,0.05));
-      border: 1px solid rgba(251,191,36,0.15);
-      border-radius: 14px;
-      color: #fbbf24;
-      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border: 1px solid rgba(245, 158, 11, 0.22);
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+      font: inherit;
       font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .btn svg { width: 15px; height: 15px; }
+    .btn:hover { background: rgba(245, 158, 11, 0.16); border-color: rgba(245, 158, 11, 0.32); }
+    .btn:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
+    .btn-secondary {
+      background: transparent;
+      border-color: rgba(148, 163, 184, 0.16);
+      color: #94a3b8;
+    }
+    .btn-secondary:hover { background: rgba(148, 163, 184, 0.06); border-color: rgba(148, 163, 184, 0.28); }
+
+    .footer-note {
+      margin-top: 26px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: #475569;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
     }
-    .btn:hover {
-      background: rgba(251,191,36,0.15);
-      border-color: rgba(251,191,36,0.25);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(251,191,36,0.08);
-    }
-    .btn-secondary {
-      background: transparent;
-      border-color: rgba(255,255,255,0.06);
-      color: #64748b;
-    }
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.03);
-      border-color: rgba(255,255,255,0.1);
-      color: #94a3b8;
-      box-shadow: none;
-    }
-    .footer-note {
-      margin-top: 24px;
-      font-size: 10px;
-      color: #475569;
-      letter-spacing: 0.05em;
+    .footer-note svg { width: 14px; height: 14px; color: #475569; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .status-dot::before { animation: none; }
+      .btn { transition: none; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="glow-icon">
-      <span class="material-symbols-outlined text-[16px]">wifi_off</span>
+  <main class="card">
+    <div class="glow-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 8.82a15 15 0 0 1 20 0" opacity="0.35"></path>
+        <path d="M5 12.86a10 10 0 0 1 14 0" opacity="0.6"></path>
+        <path d="M8.5 16.43a5 5 0 0 1 7 0" opacity="0.85"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        <line x1="3" y1="3" x2="21" y2="21"></line>
+      </svg>
     </div>
-    <div class="status-dot">Offline</div>
-    <h1>You're Offline</h1>
+
+    <div class="status-dot" id="status" role="status" aria-live="polite">Tidak ada koneksi</div>
+
+    <h1>Anda sedang offline</h1>
+    <div class="eyebrow">MTC.ASSET &mdash; Mode Luring</div>
+
     <p>
-      <strong>Cached pages</strong> are still accessible.<br>
-      Changes will auto-sync when connection returns.
+      <strong>Aplikasi tetap bisa dibuka.</strong><br>
+      Halaman yang sudah pernah dibuka tersimpan di perangkat ini.
     </p>
+
+    <p class="hint" id="hint"></p>
+
+    <ul>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>Melihat data yang pernah dimuat (equipment, WO, spare part, PM).</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>Mengisi log &amp; work order &mdash; perubahan diantre di perangkat.</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>Perubahan terkirim otomatis begitu koneksi kembali.</span>
+      </li>
+    </ul>
+
     <div class="actions">
-      <button class="btn" onclick="window.location.reload()">
-        <span class="material-symbols-outlined text-[16px]">refresh</span> Retry Connection
+      <button type="button" class="btn" id="retry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        Coba Lagi
       </button>
-      <button class="btn btn-secondary" onclick="history.back()">
-        <span class="material-symbols-outlined text-[16px]">chevron_left</span> Go Back
+      <button type="button" class="btn btn-secondary" id="back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        Kembali
       </button>
     </div>
+
     <div class="footer-note">
-      <span class="material-symbols-outlined text-[16px] mr-1">warehouse</span> MTC.Asset Industrial Suite
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg>
+      MTC.ASSET &mdash; Industrial Maintenance Suite
     </div>
-  </div>
+  </main>
+
+  <script>
+    (function () {
+      var statusEl = document.getElementById('status');
+      var hintEl = document.getElementById('hint');
+      var retryEl = document.getElementById('retry');
+
+      function paint() {
+        var online = navigator.onLine;
+        // Bedakan "tidak ada sinyal" dari "server tidak terjangkau" — teknisi di
+        // site perlu tahu apakah masalahnya di perangkat atau di sisi server.
+        statusEl.textContent = online ? 'Jaringan aktif' : 'Tidak ada koneksi';
+        statusEl.classList.toggle('is-online', online);
+        if (hintEl) {
+          hintEl.textContent = online
+            ? 'Perangkat terhubung ke jaringan, tetapi server MTC.ASSET tidak bisa dijangkau. Data yang tersimpan di perangkat tetap bisa dipakai.'
+            : 'Perangkat tidak punya koneksi. Data yang tersimpan di perangkat tetap bisa dipakai.';
+        }
+      }
+
+      function goHome() {
+        window.location.replace('/');
+      }
+
+      retryEl.addEventListener('click', goHome);
+
+      document.getElementById('back').addEventListener('click', function () {
+        // Kalau tidak ada riwayat (halaman ini dibuka langsung sebagai fallback),
+        // history.back() tidak melakukan apa pun -> paksa ke app shell.
+        if (window.history.length > 1) window.history.back();
+        else goHome();
+      });
+
+      // Begitu browser melaporkan koneksi kembali, langsung masuk ke app.
+      // navigator.onLine bisa keliru (true padahal internet mati), jadi tetap
+      // sediakan tombol manual di atas.
+      window.addEventListener('online', function () {
+        paint();
+        goHome();
+      });
+      window.addEventListener('offline', paint);
+
+      paint();
+    })();
+  </script>
 </body>
 </html>

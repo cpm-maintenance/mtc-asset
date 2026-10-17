@@ -3,7 +3,31 @@
 
 // Nama cache menyertakan brand + versi rilis. Naikkan angka versi saat rilis
 // besar supaya cache lama dibuang bersih di handler 'activate'.
-const CACHE_NAME = 'mtc-asset-v12';
+const CACHE_NAME = 'mtc-asset-v13';
+
+// Halaman fallback terakhir saat navigasi offline dan app shell pun tidak ada
+// di cache. Wajib SELF-CONTAINED (tanpa CDN) — kalau tidak, halaman ini sendiri
+// gagal dirender saat offline. Lihat public/offline.html.
+const OFFLINE_URL = '/offline.html';
+
+// ============================================================
+// CATATAN AUDIT (Q-2) — kenapa Firebase RTDB TIDAK di-cache di SW ini
+// ============================================================
+// Data RTDB tidak lewat `fetch()`: SDK memakai WebSocket (wss://) + long-polling
+// XHR ke `*.firebasedatabase.app`, jadi handler `fetch` di sini TIDAK PERNAH
+// menerimanya — menambahkan `caches.match` untuk RTDB hanya akan jadi dead code.
+// Yang lebih penting: RTDB **sudah** offline-capable di sisi SDK — data yang
+// pernah tersinkron disimpan otomatis di IndexedDB (~10 MB, LRU), dan setiap
+// write saat offline diantre lalu dikirim ulang setelah reconnect. Catatan:
+// `enableIndexedDbPersistence()` itu API **Firestore**, bukan RTDB; pada SDK web
+// modular v9+ (repo ini pakai firebase 12) tidak ada opt-in untuk RTDB karena
+// persistence-nya memang otomatis.
+// Jadi jangan tambahkan aturan runtime cache untuk firebase di file ini. Yang
+// benar: andalkan SDK + indikator `isOnline` aplikasi (dari `/.info/connected`).
+// ============================================================
+
+// Aset build ber-hash: /assets/**, /fonts/**, /icons/**.
+const HASHED_ASSET = /^\/(assets|fonts|icons)\//;
 
 // vite-plugin-pwa mengganti `self.__WB_MANIFEST` dengan daftar aset hasil build
 // (HTML, components, icons, dan SELURUH bundle JS/CSS). Dulu nilai ini hanya
@@ -85,14 +109,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Aset build ber-hash (/assets/**, /fonts/**, /icons/**) — CACHE-FIRST.
+  // Nama berkasnya mengandung hash konten dan semuanya sudah di-precache, jadi
+  // menariknya lewat jaringan setiap kali hanya membuang bandwidth di link
+  // tambang yang putus-nyambung. Cache miss (mis. chunk lazy yang baru dipakai
+  // setelah deploy baru) tetap jatuh ke jaringan seperti biasa.
+  if (HASHED_ASSET.test(new URL(url).pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached || fetch(event.request))
+    );
+    return;
+  }
+
   // Default: network first for app routes
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request).then((cached) => {
-        // Page (navigation) miss → serve index.html (SPA fallback)
         if (cached) return cached;
+        // Navigasi: app shell dulu, baru halaman offline.
+        // CATATAN: rantai ini WAJIB berurutan lewat .then() — menulis
+        // `caches.match('/index.html') || caches.match('/')` salah, karena
+        // promise selalu truthy sehingga cabang kedua tidak pernah dievaluasi
+        // dan navigasi bisa berakhir tanpa respons.
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html') || caches.match('/');
+          return caches
+            .match('/index.html')
+            .then((shell) => shell || caches.match('/'))
+            .then((shell) => shell || caches.match(OFFLINE_URL))
+            .then(
+              (page) =>
+                page ||
+                new Response('Offline', { status: 503, statusText: 'Service Unavailable' })
+            );
         }
         return new Response('', { status: 404, statusText: 'Not Found' });
       });

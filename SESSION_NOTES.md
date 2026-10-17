@@ -1,3 +1,49 @@
+## 📝 Session 18 (S18, 2026-10-17) — Q-2: audit offline-first (precache + strategi runtime cache)
+
+### Ringkasan
+Audit penuh offline-first untuk teknisi di site tambang (koneksi putus-nyambung). Hasilnya: **precache-nya sudah benar dan lengkap**, yang rusak adalah **lapisan fallback + halaman offline**-nya. 5 perbaikan + 1 penjaga otomatis baru.
+
+### Hasil audit — yang SUDAH benar (jangan diubah tanpa alasan)
+- **Precache lengkap**: 56 entri / 3.239 KiB — 17 aset build (termasuk chunk lazy `jspdf`/`xlsx`/`html2canvas`/`chart`), 18 halaman `pages/`, 6 `components/modals/`, font Material Symbols, 8 ikon, `index.html`, `offline.html`, `manifest.json`, `logo.png`, `registerSW.js`.
+- **Runtime cache `/pages/*.html`**: network-first + cache fallback + `cache: 'no-store'` — sudah tepat (fragment tidak punya hash di nama berkas).
+- **CropperJS dari cdnjs**: stale-while-revalidate — masih relevan (`app.js` memang lazy-load cropperjs dari CDN saat crop foto).
+- **Offline di sisi aplikasi**: `isOnline` bersumber dari `/.info/connected` (`data.js`), antrean operasi tertunda di IndexedDB + `syncPendingOperations()` saat event `online`, chip sidebar `PWA CACHE / ONLINE|QUEUE`. Sudah ada, tidak disentuh.
+
+### 🔎 Keputusan penting: Firebase RTDB **TIDAK** di-cache di service worker
+Kartu meminta "strategi runtime cache untuk Firebase RTDB reads". Setelah ditelusuri, jawabannya **jangan** — dan alasannya ditulis permanen di `sw.js` (`CATATAN AUDIT (Q-2)`):
+1. RTDB **tidak lewat `fetch()`**. SDK memakai WebSocket (`wss://`) + long-polling XHR ke `*.firebasedatabase.app`, jadi handler `fetch` di SW tidak pernah menerimanya — aturan `caches.match` untuk RTDB cuma akan jadi **dead code**.
+2. RTDB **sudah** offline-capable di sisi SDK: data yang pernah tersinkron disimpan otomatis di IndexedDB (~10 MB, LRU), dan setiap write saat offline diantre lalu dikirim ulang setelah reconnect.
+3. `enableIndexedDbPersistence()` itu API **Firestore**, bukan RTDB (diverifikasi: hanya ada di `@firebase/firestore/dist/*.d.ts`, tidak ada di `@firebase/database/dist/*.d.ts`). Pada SDK web modular v9+ (repo ini firebase **12**) tidak ada opt-in untuk RTDB karena persistence-nya memang otomatis.
+4. Menaruh data terautentikasi di Cache Storage juga salah secara keamanan.
+Ditambah penjaga tes: `sw.js` **tidak boleh** memuat `firebasedatabase.app`/`firebaseio.com`.
+
+### Gap yang ketemu & dibetulkan
+1. **`offline.html` ter-precache tapi TIDAK PERNAH dilayani.** Fallback navigasi hanya menunjuk `/index.html`, jadi halaman offline itu praktis mati. Sekarang rantainya: `index.html` → `/` → **`offline.html`** → 503.
+2. **Bug `||` pada rantai fallback (gagal senyap).** Kode lama: `return caches.match('/index.html') || caches.match('/')`. Promise selalu truthy → cabang kedua **tidak pernah dievaluasi**, dan kalau `index.html` tidak ada di cache, `respondWith()` menerima `undefined` → navigasi berakhir tanpa respons. Sekarang dirantai berurutan lewat `.then()`.
+3. **`offline.html` sendiri rusak saat offline.** Tiga cacat sekaligus: (a) menarik Google Fonts dari CDN — tidak akan termuat saat offline; (b) ikon memakai **ligatur Material Symbols** padahal halaman itu tidak pernah memuat font/CSS-nya → yang tampil adalah **teks mentah** `wifi_off`, `refresh`, `chevron_left`, `warehouse`; (c) kelas Tailwind (`text-[16px]`, `mr-1`) tanpa Tailwind. Plus teksnya bahasa Inggris padahal UI aplikasi Indonesia. **Ditulis ulang self-contained**: ikon inline SVG, system font stack, **0 permintaan eksternal**, copy Indonesia, membedakan "tidak ada sinyal" vs "server tidak terjangkau", auto-kembali saat event `online`, hormati `prefers-reduced-motion`, `role="status"` + `aria-live="polite"`.
+4. **Aset ber-hash dulu network-first** → setiap muat menarik ulang seluruh bundle di link tambang yang lemah. Sekarang `/assets|fonts|icons/**` **cache-first** (aman: nama berkas ber-hash konten dan semuanya sudah di-precache; cache miss tetap jatuh ke jaringan).
+5. `sw.js` `CACHE_NAME` → **`mtc-asset-v13`** (logika SW berubah).
+
+### Penjaga baru
+- **`scripts/verify-precache.mjs`** + `postbuild` di `package.json` — gagal kalau ada berkas hasil build (aset, font, ikon, halaman, komponen, app shell) yang **tidak** masuk daftar precache. Tanpa ini, chunk lazy baru bisa lolos tanpa error apa pun dan aplikasi cuma "blank" saat offline. Sekarang: **56/56 berkas OK**.
+  - Saat ditulis, penjaga ini langsung menangkap dua kenyataan yang mudah salah: entri `__WB_MANIFEST` dari Workbox ditulis **relatif** (`assets/x.js`), sedangkan app shell di `sw.js` **absolut** (`/index.html`); dan `dist/sw.js` hasil build **diminify dengan literal backtick** (`` `/manifest.json` ``), bukan tanda kutip.
+- **`tests/sw-contract.test.js`** (21 tes) — kontrak offline-first di level sumber (tanpa perlu `dist/`): precache app shell lengkap, rantai fallback berurutan sampai `offline.html`, tidak ada `||` pada `caches.match`, `/pages/` tetap `no-store`, aset ber-hash cache-first, **tidak ada** cache RTDB, `offline.html` tanpa aset eksternal & tanpa ligatur Material Symbols, `postbuild` terpasang.
+
+### Verifikasi (hasil nyata)
+- Suite: `tsc` 0 · `eslint` 0 error / 80 warning (baseline) · **434/434** tes (22 berkas) · `vite build` ok · `verify:precache` **56/56 OK**.
+- **Browser, SW aktif** (`mtc-asset-v13`, 57 entri), `navigator.onLine === false`: fragment `/pages/Dashboard.html` **200** (48.356 B), halaman yang **belum pernah dibuka** `/pages/MTBFMTTR.html` **200** (9.965 B), `/assets/main-DW9IUQwh.js` **200** (298.762 B), font ikon **200** (343.220 B), `manifest.json` **200**.
+- **Server preview benar-benar dimatikan** (bukan cuma mode offline DevTools): navigasi ke `/` → **app shell tampil** (`[x-data]` ada). Lalu `/index.html` + `/` dihapus dari cache SW → navigasi ke `/` → **`offline.html` tersaji**: judul `Offline — MTC.ASSET`, h1 "Anda sedang offline", 7 inline SVG, **0 referensi eksternal**, hint "Perangkat terhubung ke jaringan, tetapi server MTC.ASSET tidak bisa dijangkau…".
+
+### Pelajaran
+- **`Network.emulateNetworkConditions({offline:true})` dari CDP TIDAK cukup untuk menguji service worker.** Dua sebab: (a) emulasi itu berlaku pada target halaman, sedangkan `fetch()` di dalam SW berasal dari target SW sendiri; (b) HTTP cache browser tetap bisa memenuhi `fetch()` sehingga rantai fallback `.catch()` tidak pernah jalan. Satu-satunya uji offline yang jujur: **matikan servernya**, lalu `Page.navigate` di tab yang sudah dikontrol SW (`navigator.serviceWorker.controller === true`). Membuka tab baru setelah `unregister()` membuat navigasi gagal `ERR_CONNECTION_REFUSED` — SW-nya belum mengontrol tab itu.
+- Halaman fallback offline **wajib** diaudit dengan pertanyaan "kalau semua jaringan mati, apa yang masih bisa dimuat halaman ini?" — CDN dan ligatur font lolos dari review karena tidak error, cuma salah tampil.
+- `respondWith(promise || promise)` adalah pola yang mudah ditulis dan selalu salah: promise selalu truthy.
+
+### Kanban
+Kartu **Q-2 `t_e5b00df8`** → **`done`**. Dikerjakan manual, status dibiarkan `blocked`, tidak pernah di-`unblock`.
+
+---
+
 ## 📝 Session 17 (S17, 2026-10-17) — Q-1: ukur test coverage & tutup gap modul berisiko
 
 ### Hasil
