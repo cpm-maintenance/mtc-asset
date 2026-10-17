@@ -1,3 +1,64 @@
+## 📝 Session 21 (S21, 2026-10-17) — index.html diporting ke Tactical Slate
+
+### Premis yang dikonfirmasi lebih dulu
+Catatan S19 menyebut `index.html` masih memakai design system lama: **91 `glass`** + **155 token `nexus-*`** (120 di antaranya `nexus-accent` = emas `#ffd700`), **14 `card-modern`**, plus **11 kelas `neu-*`** yang sama sekali belum tercatat (layar login masih neumorphic — padahal aturan proyek melarang full-neuromorphism). Semua kelas itu masih hidup di `style.css`/`tailwind.config.js`, jadi tidak ada yang rusak — hanya belum seragam dengan 18 halaman `public/pages/`.
+
+Sebelum menyentuh apa pun, premis "hanya index.html yang tersisa" diuji: `grep -rn "glass\|card-modern\|btn-nexus\|gold-gradient\|neu-"` di `src/`, `public/`, `sw.js` → **0 hit** (kecuali `src/css`). Artinya setelah porting, seluruh CSS komponen legacy itu benar-benar mati dan boleh dihapus.
+
+### Pemetaan (satu arah, tanpa kompromi)
+| lama | baru |
+|---|---|
+| `.glass` pada input/select/textarea | `bg-tac-surface-recessed border border-tac-border-subtle` |
+| `.glass` pada panel/tombol | `bg-tac-surface-card/60 border border-tac-border-tactical` |
+| `.card-modern` (14 modal) | `bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical` |
+| `text/bg/border/ring/from/to-nexus-accent` | `*-tac-gold-bright` |
+| `bg-nexus-black/60…95` (scrim) | `bg-black/60…95` (sama seperti modal di 18 halaman) |
+| `gold-gradient` + `text-nexus-black` (CTA) | `bg-tac-primary-container` + `text-tac-on-primary-container` |
+| `nexus-glow-text` | `.tac-glow-text` (baru, 5 baris di `tactical.css`, `--tac-gold-glow`) |
+| `btn-nexus-small/-gold/-close`, `btn-nexus` | `tac-btn-ghost` / `tac-btn-primary` |
+| `neu-shell/card/icon/title/sub/label/foot/field/btn/inset-rail` | `tac-plate`, `tac-well`, `tac-btn-primary`, `font-label-mono-sm` |
+| `text-white`, `text-slate-400/500/600` | `text-tac-on-surface`, `text-tac-on-surface-variant`, `text-tac-status-standby` |
+| `bg-white/5`, `border-white/5`, `border-white/10` | `bg-tac-surface-container-low`, `border-tac-border-subtle`, `border-tac-border-tactical` |
+| `rose-*` → `tac-status-emergency` · `amber-*` → `tac-status-repair` · `emerald-*` → `tac-status-operational` · `purple-400` → `tac-secondary` | |
+
+Dikerjakan bertahap, bukan sapu rata: (1) token warna legacy, (2) komponen `glass`/`card-modern`, (3) palet netral + semantik, (4) layar login, (5) hapus CSS mati. Skrip transformasi (`scratch/port-index-tac.py`) **idempoten** — dijalankan dua kali menghasilkan 0 perubahan, jadi aman diulang kalau ada kelas baru yang lolos.
+
+### Tiga temuan yang lebih penting dari portingnya sendiri
+1. **Aturan input global memakai `!important`** (`style.css`: `input, select, textarea { background-color: rgba(255,255,255,.03) !important; border: 1px solid var(--nexus-border) !important; color: var(--text-main) !important; border-radius: 1rem !important }`). Efeknya: **seluruh kelas `bg-tac-*`/`text-tac-*` pada input di 18 halaman tidak pernah berlaku sejak S15** — semua input masih putih-3% + aksen `#ffd700`. Diperbaiki ke token `tac-*` (recessed / border-tactical / on-surface / fokus `tac-primary`). Ini yang membuat login dan 21 input modal log ikut benar.
+2. **Layar login masih neumorphic** (`.neu-*`): 2 shadow ekstrusi + `!important` sendiri. Ditulis ulang jadi `tac-plate` + `tac-well` + `tac-btn-primary`.
+3. **Warna hardcoded yang lolos dari grep kelas**: `bg-[#131313]/95` (overlay scanner), `from-[#FFD700] to-[#E9C400] text-black` + `hover:bg-[#93000A]` (tombol scanner), dan `style="background: linear-gradient(135deg,#1a2e1a,#0d1f0d)"` di modal AI Settings (permukaan hijau gelap yang tidak ikut tema terang). Semua diganti token.
+
+### Hasil terukur
+- `index.html`: `glass` **91 → 0** · token `nexus-*` **155 → 0** · `card-modern` **14 → 0** · `neu-*` **11 → 0** · `text-white`/`text-slate-*`/`border-white/*`/`bg-white/*`/`rose|amber|emerald|purple-*` **0 sisa** · hex hardcoded **7 → 0** (kecuali `bg-white` untuk kanvas QR — memang harus putih).
+- `src/css/style.css`: **17.408 → 10.519 byte (−6.889, −39,6%)** — 21 blok mati dihapus (`glass`, `card-modern`+hover, `btn-nexus-*`, `tag-nexus`, `gold-gradient`, `nexus-glow-text`, `neu-pill-*`, `neu-*`, animasi `#page-dash .card-modern`), `@layer components` kosong ikut dibuang.
+- `src/css/tactical.css`: **+145 byte** (satu utilitas `.tac-glow-text`).
+- `index.html` **+9,0 KB** (129.990 → 138.990) — konsekuensi wajar: `glass` (5 huruf) menjadi tiga utility eksplisit. Ditukar dengan 0 ketergantungan pada kelas komponen mati.
+- Kelas `tac-*`: **141 dipakai / 141 ter-generate** (`scratch/check-tac-generated.py`) — tidak ada kelas yang tidak punya token.
+
+### Verifikasi (angka riil, bukan klaim)
+- `tsc --noEmit` **0** · `eslint` **0 error / 79 warning** (baseline) · `vitest` **447/447** (23 berkas) · `vite build` ok · `verify:precache` **50/50**.
+- `node scratch/check-page.mjs index.html` → **402 ekspresi, 0 syntax error** (identik baseline).
+- **Lighthouse 12.6.1** (desktop, preview build): performance **100** · accessibility **100** · best-practices **100** · seo **92** · LCP 0,7 s · CLS 0 · TBT 20 ms.
+- **Matriks computed style 4 tema** (night/navy/purple/light), transisi dimatikan dulu:
+  - login: panel `#161d27 / #131c30 / #1b1128 / #fff`, input recessed `#0a0e14 / #080d19 / #0a0510 / #e8edf4`, kontras label **13,2–17,9:1**, CTA emas **6,11:1**;
+  - modal (Equipment / Log / AI Settings): panel `rgba(22,29,39,.95)` → `rgba(255,255,255,.95)`, border emas `rgba(251,191,36,.2)` → `rgba(162,74,6,.2)`, judul **13,2–17,9:1**, CTA emas **4,58:1** (gelap) / **6,79:1** (terang);
+  - sidebar `container-lowest`, header `surface-base/90`, body `--nexus-bg` — semuanya ikut tema;
+  - mobile 390×844: bottom nav + sheet "More" ikut tema, **overflow 0**, 0 error konsol.
+
+### Jebakan (hemat waktu sesi berikutnya)
+- **`!important` global menang atas utility class.** Kalau kelas `tac-*` "tidak berefek" pada input, jangan curiga Tailwind purge — cek `style.css` baris ~138.
+- **`getComputedStyle` di tengah transisi CSS mengembalikan nilai LAMA** (kejadian lagi di sesi ini: border terbaca nilai tema sebelumnya). Matikan `*{transition:none!important}` lalu tunggu 2× `requestAnimationFrame`.
+- **Prettier sudah gagal pada `index.html` di HEAD** (`Unexpected closing tag "div"` di baris ~1981, 3 `</div>` berlebih) — kondisi lama, bukan regresi. `npm run format:check` juga sudah merah untuk `tests/*`, `tsconfig.json`, `vite.config.js`. Jangan dikejar di tengah porting.
+- Regex `class="([^"]*)"` **juga menangkap `:class="…"`** — berguna: string ternary Alpine (`currentPage === item.id ? 'text-nexus-accent' : 'text-slate-500'`) ikut ternormalisasi tanpa penanganan khusus.
+- Dua utility warna Tailwind yang bertumpuk (mis. `border-tac-border-tactical` + `border-tac-gold-bright/20`) diputus oleh **urutan key di config**, bukan urutan di atribut `class`. Hindari menumpuk; pilih satu.
+
+### Sisa yang belum dikerjakan
+- `src/js/**` masih menyusun kelas dari palet lama di string JS: `text-slate-400` (`app.js`, `charts.js`, `ui.js`), `bg-rose-500 text-white` (badge di `app.js`). Tidak ikut tervalidasi `tsc`/`eslint`/`check-page.mjs`; kandidat sesi berikutnya.
+- `notification.js` masih mengirim nama ikon **FontAwesome** (`'fa-hourglass-half'`, `'fa-hourglass-end'`) ke `pushInAppNotif` — FontAwesome sudah dibuang sejak S15, jadi ikon notifikasi itu tidak akan tampil.
+- `.gold-text` dan `.nav-active` di `style.css` sudah 0 referensi tapi dibiarkan (di luar cakupan porting).
+
+---
+
 ## 📝 Session 20 (S20, 2026-10-17) — font ikon 343 KB → 10 KB
 
 ### Masalahnya dua lapis, bukan satu

@@ -430,6 +430,11 @@
   box-shadow: 0 0 16px rgba(6, 182, 212, 0.3);
 }
 
+/* Glow teks — pengganti `.nexus-glow-text` (dulu `--nexus-accent-glow`). */
+.tac-glow-text {
+  text-shadow: 0 0 10px var(--tac-gold-glow);
+}
+
 /* ── Bar progres telemetri ──────────────────────────────────────────────── */
 .tac-meter {
   height: 4px;

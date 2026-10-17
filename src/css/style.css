@@ -111,136 +111,6 @@ body {
   background-attachment: fixed;
 }
 
-@layer components {
-  /* Glassmorphism Refined */
-  .glass { 
-    background: var(--nexus-card); 
-    backdrop-filter: blur(20px); 
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--nexus-border); 
-  }
-
-  /* Nexus Card Styling */
-  .card-modern {
-    background: var(--nexus-card);
-    backdrop-filter: blur(12px);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--nexus-border);
-    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.5);
-  }
-
-  .card-modern:hover {
-    transform: translateY(-4px) scale(1.01);
-    border-color: var(--nexus-accent);
-    box-shadow: 0 0 20px var(--nexus-accent-glow), 0 20px 40px -20px rgba(0, 0, 0, 0.6);
-  }
-
-  /* Google Stitch: The Industrial Monolith Utilities */
-
-
-
-
-
-
-
-
-
-  /* 💠 Nexus UI Components */
-  .btn-nexus-small {
-    background: var(--nexus-card);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--nexus-border);
-    color: var(--nexus-accent);
-    padding: 0.75rem 1.25rem;
-    border-radius: 1rem;
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-  }
-  .btn-nexus-small:hover {
-    border-color: var(--nexus-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--nexus-accent-glow);
-  }
-  .btn-nexus-small i {
-    font-size: 14px;
-  }
-
-  .btn-nexus-gold {
-    background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%);
-    color: #05070a;
-    padding: 0.75rem 1.5rem;
-    border-radius: 1.25rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 20px var(--nexus-accent-glow);
-    font-size: 12px;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-  }
-  .btn-nexus-gold:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 12px 24px var(--nexus-accent-glow);
-  }
-  .btn-nexus-gold:active {
-    transform: translateY(1px);
-    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4), inset -1px -1px 3px rgba(255, 255, 255, 0.2);
-  }
-  .btn-nexus-gold i {
-    font-size: 14px;
-  }
-
-  .btn-nexus-close {
-    background: var(--nexus-card);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--nexus-border);
-    color: #64748b;
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
-  .btn-nexus-close:hover {
-    color: var(--nexus-accent);
-    border-color: var(--nexus-accent);
-    background: var(--nexus-accent-glow);
-  }
-
-  .tag-nexus {
-    background: var(--nexus-card);
-    backdrop-filter: blur(5px);
-    border: 1px solid var(--nexus-border);
-    color: var(--nexus-accent);
-    padding: 0.4rem 0.75rem;
-    border-radius: 0.75rem;
-    font-size: 10px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-}
-
 /* Typography Nexus AI */
 h1, h2, h3, h4 { 
   font-family: var(--font-display);
@@ -248,12 +118,6 @@ h1, h2, h3, h4 {
   font-weight: 700;
 }
 
-.gold-gradient { 
-  background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%); 
-  color: #05070a;
-  box-shadow: 0 8px 20px var(--nexus-accent-glow);
-  font-weight: 700;
-}
 
 .gold-text {
   background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%);
@@ -270,44 +134,46 @@ h1, h2, h3, h4 {
   border-left: 3px solid var(--nexus-accent);
 }
 
-/* Inputs Refinement */
+/* Inputs Refinement — token Tactical Slate (theme-aware).
+ * !important dipakai karena banyak input memasang utility `bg-*`/`text-*` sendiri;
+ * tanpa ini bentuk kontrol jatuh ke style lama (rgba putih 3%, aksen #ffd700). */
 input, select, textarea {
-  background-color: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid var(--nexus-border) !important;
-  color: var(--text-main) !important;
-  border-radius: 1rem !important;
-  transition: all 0.3s ease;
+  background-color: rgb(var(--tac-surface-recessed)) !important;
+  border: 1px solid rgb(var(--tac-border-tactical)) !important;
+  color: rgb(var(--tac-on-surface)) !important;
+  border-radius: 0.5rem !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 /* Form control text follows theme (override hardcoded text-white/slate classes) */
 input.text-white, select.text-white, textarea.text-white,
 input.text-slate-400, select.text-slate-400, textarea.text-slate-400,
 input.text-slate-500, select.text-slate-500, textarea.text-slate-500 {
-  color: var(--text-main) !important;
+  color: rgb(var(--tac-on-surface)) !important;
 }
 
 /* Placeholders follow theme muted color */
 input::placeholder, select::placeholder, textarea::placeholder {
-  color: var(--text-muted) !important;
+  color: rgb(var(--tac-on-surface-variant)) !important;
   opacity: 0.75;
 }
 input.placeholder-slate-500::placeholder, input.placeholder-slate-600::placeholder,
 textarea.placeholder-slate-500::placeholder, textarea.placeholder-slate-600::placeholder {
-  color: var(--text-muted) !important;
+  color: rgb(var(--tac-on-surface-variant)) !important;
   opacity: 0.75;
 }
 
 input:focus, select:focus, textarea:focus {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: var(--nexus-accent) !important;
-  box-shadow: 0 0 15px var(--nexus-accent-glow) !important;
+  background-color: rgb(var(--tac-surface-recessed)) !important;
+  border-color: rgb(var(--tac-primary)) !important;
+  box-shadow: 0 0 0 1px rgb(var(--tac-primary) / 0.35) !important;
   outline: none;
 }
 
 /* Native select dropdown follows theme */
 select option {
-  background-color: var(--nexus-card) !important;
-  color: var(--text-main) !important;
+  background-color: rgb(var(--tac-surface-container)) !important;
+  color: rgb(var(--tac-on-surface)) !important;
 }
 
 /* Native controls (dropdown arrow, date picker) follow theme */
@@ -323,14 +189,6 @@ select option {
 
 /* Mobile Header Compact & Performance */
 @media (max-width: 1023px) {
-  .card-modern {
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-  }
-  .glass {
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-  }
 
   header.sticky {
     min-height: 50px;
@@ -366,13 +224,6 @@ select option {
   }
 }
 
-/* Mobile Responsive Fixes */
-@media (max-width: 480px) {
-  .card-modern {
-    padding: 0.75rem !important;
-  }
-}
-
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--nexus-bg); }
@@ -390,9 +241,6 @@ select option {
   animation: pulse-nexus 2s infinite;
 }
 
-.nexus-glow-text {
-    text-shadow: 0 0 10px var(--nexus-accent-glow);
-}
 
 /* =========================================
    SKELETON LOADING
@@ -472,11 +320,8 @@ select option {
   body {
     font-size: 16px;
   }
-  input, select, textarea, button, .btn-nexus-small, .btn-nexus-gold {
+  input, select, textarea, button {
     font-size: 0.875rem !important;
-  }
-  .card-modern {
-    font-size: 0.9375rem;
   }
 }
 
@@ -500,133 +345,18 @@ select option {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-#page-dash .card-modern,
 #page-dash a.rounded-2xl {
   animation: dashRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-#page-dash .card-modern:nth-child(1), #page-dash a.rounded-2xl:nth-child(1) { animation-delay: 0.03s; }
-#page-dash .card-modern:nth-child(2), #page-dash a.rounded-2xl:nth-child(2) { animation-delay: 0.06s; }
-#page-dash .card-modern:nth-child(3), #page-dash a.rounded-2xl:nth-child(3) { animation-delay: 0.09s; }
-#page-dash .card-modern:nth-child(4), #page-dash a.rounded-2xl:nth-child(4) { animation-delay: 0.12s; }
-#page-dash .card-modern:nth-child(5), #page-dash a.rounded-2xl:nth-child(5) { animation-delay: 0.15s; }
+#page-dash a.rounded-2xl:nth-child(1) { animation-delay: 0.03s; }
+#page-dash a.rounded-2xl:nth-child(2) { animation-delay: 0.06s; }
+#page-dash a.rounded-2xl:nth-child(3) { animation-delay: 0.09s; }
+#page-dash a.rounded-2xl:nth-child(4) { animation-delay: 0.12s; }
+#page-dash a.rounded-2xl:nth-child(5) { animation-delay: 0.15s; }
 
 /* Chart canvas subtle lift on hover */
 #page-dash .group:hover canvas {
   filter: drop-shadow(0 0 12px var(--nexus-accent-glow));
-}
-
-/* =========================================
-   NEUMORPHIC LOGIN (dark) — scoped to the login gate only.
-   Soft dual-shadow extrusion over the industrial dark palette.
-   Text kept at #e2e8f0 on #1c2230 for WCAG AA.
-   ========================================= */
-.neu-shell {
-  --neu-bg: #1c2230;
-  --neu-light: rgba(255, 255, 255, 0.05);
-  --neu-dark: rgba(0, 0, 0, 0.6);
-  --neu-text: #e2e8f0;
-  --neu-muted: #94a3b8;
-  --neu-out: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light);
-  --neu-in: inset 5px 5px 11px var(--neu-dark), inset -5px -5px 11px var(--neu-light);
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255, 140, 26, 0.07), transparent 55%),
-    radial-gradient(circle at 80% 85%, rgba(0, 97, 255, 0.08), transparent 55%),
-    #0f131c;
-}
-
-.neu-card {
-  background: var(--neu-bg);
-  border-radius: var(--radius-2xl);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: var(--neu-out), 0 30px 60px -30px rgba(0, 0, 0, 0.9);
-}
-
-.neu-icon {
-  background: var(--neu-bg);
-  border: 1px solid rgba(255, 140, 26, 0.22);
-  box-shadow: var(--neu-out);
-  color: var(--nexus-accent);
-}
-
-.neu-title {
-  color: var(--neu-text);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 1px rgba(0, 0, 0, 0.6);
-}
-
-.neu-sub { color: var(--nexus-accent); opacity: 0.8; }
-.neu-label { color: var(--neu-muted); }
-.neu-foot { color: #7c8ba1; }
-
-/* Sunken input wells. !important needed to beat the global input rules above. */
-.neu-shell input.neu-field {
-  background: var(--neu-bg) !important;
-  border: 1px solid transparent !important;
-  border-radius: 1rem !important;
-  color: var(--neu-text) !important;
-  caret-color: var(--nexus-accent);
-  box-shadow: var(--neu-in) !important;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.neu-shell input.neu-field::placeholder {
-  color: var(--neu-muted) !important;
-  opacity: 0.7;
-}
-
-/* Visible focus ring — neumorphism alone fails contrast requirements. */
-.neu-shell input.neu-field:focus {
-  border-color: var(--nexus-accent) !important;
-  box-shadow: var(--neu-in), 0 0 0 3px var(--nexus-accent-glow) !important;
-  outline: none;
-}
-
-/* Raised button that presses into a well on :active. */
-.neu-btn {
-  background: var(--neu-bg);
-  color: var(--nexus-accent);
-  border: 1px solid rgba(255, 140, 26, 0.22);
-  box-shadow: var(--neu-out);
-  transition: box-shadow 0.2s ease, color 0.2s ease;
-}
-
-.neu-btn:hover:not(:disabled) {
-  color: #ffb74d;
-  box-shadow: 8px 8px 18px var(--neu-dark), -8px -8px 18px var(--neu-light);
-}
-
-.neu-btn:active:not(:disabled) {
-  box-shadow: var(--neu-in);
-}
-
-.neu-btn:disabled {
-  box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light);
-}
-
-.neu-btn:focus-visible {
-  outline: 2px solid var(--nexus-accent);
-  outline-offset: 3px;
-}
-
-/* Tactile hybrid controls (segmented switches & rails) */
-.neu-inset-rail {
-  background: rgba(10, 15, 26, 0.7);
-  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.neu-pill-active {
-  background: var(--nexus-accent) !important;
-  color: #05070a !important;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4), -1px -1px 2px rgba(255, 255, 255, 0.15);
-}
-
-.neu-pill-btn {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.neu-pill-btn:active {
-  transform: translateY(1px);
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
