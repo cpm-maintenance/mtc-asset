@@ -389,7 +389,7 @@ describe('requisition.js — transisi status', () => {
         const ctx = makeCtx({
             requisitions: [r1, r2],
             reqSelectedIds: ['R1', 'R2'],
-            currentUser: { email: 'admin@cpm.co.id' },
+            user: { email: 'admin@cpm.co.id', uid: 'uid-admin' },
         });
 
         await ctx.bulkApproveRequisitions();
@@ -421,7 +421,7 @@ describe('requisition.js — transisi status', () => {
         const ctx = makeCtx({
             requisitions: [{ id: 'R1', status: 'pending' }],
             reqSelectedIds: ['R1'],
-            currentUser: { email: 'a@b.c' },
+            user: { email: 'a@b.c' },
         });
         vi.spyOn(console, 'error').mockImplementation(() => {});
 

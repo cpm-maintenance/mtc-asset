@@ -351,21 +351,21 @@ describe('ai.js — API key management', () => {
         expect(ctx.aiModelOptions.map((o) => o.value)).toContain('claude-3-opus-20240229');
     });
 
-    /**
-     * ⚠️ KNOWN DEFECT (belum diperbaiki — menunggu keputusan user).
-     *
-     * `loadAISettings()` membaca `ai_model` dari localStorage, lalu memanggil
-     * `updateModelOptions()` yang **menimpa** `this.aiModel` dengan opsi pertama
-     * provider. Akibatnya: (a) model yang tersimpan hilang saat reload, dan
-     * (b) cabang `Custom: <model>` di bawahnya **tidak pernah tercapai** karena
-     * `this.aiModel` sudah pasti ada di `aiModelOptions`.
-     *
-     * Test ini mengunci perilaku SEKARANG. Kalau diperbaiki (mis. pindahkan
-     * `updateModelOptions()` sebelum pembacaan `ai_model`), ubah test ini.
-     */
-    it('KNOWN DEFECT: model tersimpan dari localStorage tertimpa opsi pertama provider', async () => {
+    it('memakai model tersimpan dari localStorage, bukan default provider', async () => {
         localStorage.setItem('ai_provider', 'openrouter');
         localStorage.setItem('ai_model', 'vendor/model-x');
+
+        const ctx = makeCtx();
+        ctx.loadAISettings();
+
+        await vi.waitFor(() => expect(ctx.aiModelOptions.length).toBeGreaterThan(0));
+
+        expect(ctx.aiModel).toBe('vendor/model-x');
+        expect(ctx.aiModelOptions.at(-1)).toEqual({ value: 'vendor/model-x', label: 'Custom: vendor/model-x' });
+    });
+
+    it('jatuh ke opsi pertama provider bila ai_model kosong', async () => {
+        localStorage.setItem('ai_provider', 'openrouter');
 
         const ctx = makeCtx();
         ctx.loadAISettings();

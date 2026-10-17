@@ -310,7 +310,6 @@ export interface AppState {
   _woSeenIds?: any;
   basePath?: any;
   cache?: any;
-  currentUser?: any;
   darkMode?: any;
   db?: any;
   dbReady?: any;

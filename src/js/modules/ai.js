@@ -736,10 +736,13 @@ Please provide:
             this.aiApiKeyInput4 = localStorage.getItem('ai_api_key_3') || '';
             this.aiApiKeyInput5 = localStorage.getItem('ai_api_key_4') || '';
             this.aiProvider = localStorage.getItem('ai_provider') || 'openrouter';
-            this.aiModel = localStorage.getItem('ai_model') || '';
             this.customPrompt = localStorage.getItem('ai_custom_prompt') || '';
             this.activeKeyIndex = parseInt(localStorage.getItem('ai_active_key_index') || '0');
             this.updateModelOptions();
+            // Model tersimpan wajib menang atas default provider: updateModelOptions()
+            // men-set aiModel ke opsi pertama, jadi pembacaannya harus SESUDAH itu.
+            // Kalau kosong, pakai default provider tadi sebagai fallback.
+            this.aiModel = localStorage.getItem('ai_model') || this.aiModel;
             if (this.aiModel && !this.aiModelOptions.find(o => o.value === this.aiModel)) {
                 this.aiModelOptions.push({ value: this.aiModel, label: 'Custom: ' + this.aiModel });
             }

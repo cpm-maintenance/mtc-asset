@@ -406,7 +406,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
             try {
                 const updates = {
                     status: 'approved',
-                    approvedBy: this.currentUser?.email || 'unknown',
+                    approvedBy: this.user?.email || 'unknown',
                     approvedAt: now,
                     updatedAt: now,
                 };
