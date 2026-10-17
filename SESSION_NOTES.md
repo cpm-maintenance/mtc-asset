@@ -33,6 +33,27 @@ Field state-nya **ada dan ikut tersimpan**: `src/js/constants.ts:64` (`actualHou
 - `scratch/make-scanner-harness.mjs` (harness lokal, **gitignored**) membaca `QRScannerModal.html` → sekarang akan gagal kalau dijalankan. Bukan bagian repo, tidak diperbaiki.
 - Semua ligatur yang dipakai di 6 fragment (`add`, `close`, `cloud_done`, `description`, `download`, `fact_check`, `fingerprint`, `inventory`, `logout`, `monitoring`, `photo_camera`, `qr_code_scanner`) **masih dipakai** di halaman/app.js → **tidak ada** entri yatim di `icon-subset.txt`, jadi font subset tidak perlu diregenerasi karena kartu ini.
 
+### Tindak lanjut — 2 temuan DIPERBAIKI (menunggu keputusan user, sudah dijawab "ya")
+**1. `index.html` meta viewport — zoom diblokir (WCAG 1.4.4).** `maximum-scale=1, user-scalable=no` dihapus → sekarang `width=device-width, initial-scale=1.0`. Pinch-zoom aktif kembali; audit Lighthouse `meta-viewport` yang sebelumnya **gagal** sekarang lolos.
+
+**2. Input `actualHours` + `completedDate` dipindah ke modal log inline.** Fitur yang dulu hanya hidup di fragment mati sekarang benar-benar bisa diisi:
+- `<input type="number" x-model="logForm.actualHours" min="0" step="0.1">` — label **Actual Hours**.
+- `<input type="date" x-model="logForm.completedDate" :max="<hari ini>">` — label **Completed Date**, dibungkus `x-show="logForm.status === 'Completed'"`.
+- `<select x-model="logForm.status">` dapat `@change` yang **mengisi `completedDate` otomatis** dengan tanggal hari ini saat status diubah ke `Completed` (dan tidak menimpa kalau sudah terisi).
+- `DEFAULT_LOG_FORM()` di `src/js/constants.ts` sekarang mendeklarasikan `completedDate: ''` — sebelumnya field ini **tidak ada** di default, jadi `x-model` mengikat ke properti `undefined` dan nilainya tidak pernah ter-reset saat modal dibuka ulang.
+- Gaya mengikuti tetangganya (`glass` + `text-nexus-accent/40`) supaya konsisten dengan field lain di modal itu.
+
+**3. 7 tes penjaga baru** — `tests/log-form-contract.test.js`: viewport tidak boleh memakai `user-scalable=no`/`maximum-scale=1` · `DEFAULT_LOG_FORM` mendeklarasikan kedua field · input-nya ada di `index.html` dengan `step`/`:max` yang benar · `Completed Date` dibungkus `x-show` status · `@change` mengisi otomatis · kedua field benar-benar disubmit oleh `logs.js`.
+
+**Verifikasi nyata:**
+- `node scratch/check-page.mjs index.html` → **402 ekspresi, 0 syntax error**.
+- `tsc` 0 · `eslint` 0 error / 80 warning (baseline) · **444/444** tes (23 berkas) · `vite build` ok · `verify:precache` **50/50** (3.201,53 KiB, +0,88 KiB dari markup baru).
+- **Lighthouse 12.6.1 sesudah perbaikan: performance 99 · accessibility 94 → **100** · best-practices 100 · seo 92.** Audit `meta-viewport` yang tadinya **gagal (score 0)** sekarang **lolos (score 1)** — "`[user-scalable="no"]` is not used … and `[maximum-scale]` is not less than 5".
+- **Browser (dev server `localhost:3000`)**: meta viewport = `width=device-width, initial-scale=1.0` (zoom diizinkan); kedua input ada; label "Actual Hours" & "Completed Date" tampil; `Completed Date` **tersembunyi saat status Pending**, **muncul saat Completed**; mengubah status lewat event `change` **mengisi `completedDate` = `2026-10-17`** otomatis; `step=0.1`/`min=0` dan `max` = hari ini terpasang.
+
+### ⚠️ Temuan baru (belum diperbaiki — menunggu keputusan user)
+`index.html` **masih memakai design system lama** di banyak tempat: **89 pemakaian `glass`** dan **109 pemakaian `nexus-accent`** (emas `#ffd700`), termasuk seluruh modal log ini. Kelasnya **masih hidup** di `src/css/style.css` (`.glass` di baris 116 & 330, `--nexus-accent` di baris 11) dan `tailwind.config.js`, jadi **tidak rusak** — hanya belum diporting ke Tactical Slate (`tac-*`). Catatan S15 ("0 kelas `glass`/`nexus-*`") berlaku untuk `public/pages/` (18 halaman), **bukan** `index.html`. Kalau mau diseragamkan, itu kartu tersendiri.
+
 ### Kanban
 Kartu **Q-3 `t_22172e91`** → **`done`**. Dikerjakan manual, status dibiarkan `blocked`, tidak pernah di-`unblock`.
 

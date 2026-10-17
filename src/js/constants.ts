@@ -61,7 +61,7 @@ export const DEFAULT_LOG_FORM = () => ({
   parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM',
   // Work Order Fields
   woPriority: 'Normal', woNumber: '', assignedTo: '', dueDate: '',
-  estimatedHours: 0, actualHours: 0, laborCost: 0,
+  estimatedHours: 0, actualHours: 0, laborCost: 0, completedDate: '',
   // Department Request Fields
   requestSource: 'Production', requestedBy: '', requestDate: new Date().toISOString().split('T')[0],
   approvedBy: '', approvalDate: '',
