@@ -10,7 +10,6 @@ const filesToScan = [
   'index.html',
   'public/offline.html',
   ...fs.readdirSync('public/pages').filter(f => f.endsWith('.html')).map(f => `public/pages/${f}`),
-  ...fs.readdirSync('public/components/modals').filter(f => f.endsWith('.html')).map(f => `public/components/modals/${f}`),
   'src/js/app.js',
 ];
 const icons = new Set();

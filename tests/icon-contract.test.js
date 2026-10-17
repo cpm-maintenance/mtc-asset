@@ -36,9 +36,6 @@ const htmlFiles = [
   ...fs.readdirSync(path.join(ROOT, 'public/pages'))
     .filter((f) => f.endsWith('.html'))
     .map((f) => `public/pages/${f}`),
-  ...fs.readdirSync(path.join(ROOT, 'public/components/modals'))
-    .filter((f) => f.endsWith('.html'))
-    .map((f) => `public/components/modals/${f}`),
 ];
 
 /** Semua nama ligatur yang benar-benar dirender dari sebuah berkas HTML. */
@@ -146,5 +143,38 @@ describe('kontrak design system — tidak ada sisa `stitch-*`', () => {
       if (m) hits.push(`${f}: ${[...new Set(m)].join(', ')}`);
     }
     expect(hits).toEqual([]);
+  });
+});
+
+describe('kontrak komponen — fragment modal legacy tidak boleh hidup lagi (Q-3)', () => {
+  it('public/components/modals sudah tidak ada', () => {
+    // 6 fragment di sana tidak pernah dirender: `component-loader` hanya memuat
+    // dari /pages (basePath hardcoded) dan markup-nya sudah inline di
+    // index.html. Selama ada, mereka hanya jadi bobot precache + sumber
+    // kebenaran palsu yang bisa menyesatkan.
+    expect(fs.existsSync(path.join(ROOT, 'public/components/modals'))).toBe(false);
+  });
+
+  it('component-loader hanya memuat dari /pages', () => {
+    const src = read('src/js/utils/component-loader.js');
+    expect(src).toContain("this.basePath = '/pages'");
+    expect(src).not.toMatch(/components\/modals/);
+  });
+
+  it('tidak ada kode runtime yang menyentuh public/components/modals', () => {
+    // Yang dijaga hanya kode RUNTIME (src/ + halaman). Berkas tes/script boleh
+    // menyebut path itu untuk keperluan penjagaan seperti ini.
+    const walk = (dir) =>
+      fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((e) => {
+        const rel = `${dir}/${e.name}`;
+        if (e.isDirectory()) return walk(rel);
+        return /\.(js|mjs|ts|html)$/.test(e.name) ? [rel] : [];
+      });
+
+    const runtime = [...htmlFiles, ...walk('src')];
+    const offenders = runtime.filter(
+      (f) => fs.existsSync(path.join(ROOT, f)) && read(f).includes('components/modals'),
+    );
+    expect(offenders).toEqual([]);
   });
 });

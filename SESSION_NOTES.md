@@ -1,3 +1,43 @@
+## 📝 Session 19 (S19, 2026-10-17) — Q-3: buang 6 fragment modal legacy
+
+### Keputusan
+Kartu Q-3 minta **pilih SATU**: hapus, atau wiring sungguhan. Dipilih **HAPUS** — markup-nya sudah inline di `index.html`, dan tidak ada kode yang pernah memuatnya. Wiring hanya akan menambah jalur pemuatan dinamis untuk UI yang sudah jalan.
+
+### Premis dibuktikan dulu, bukan dipercaya
+Sebelum menghapus, tiga hal dicek:
+1. **Tidak ada kode runtime yang memuatnya.** `component-loader.js` men-set `this.basePath = '/pages'` di constructor dan **tidak pernah** diubah di mana pun; `loadPage(name)` → `/pages/<name>.html`. Grep `components/modals` di `src/`, `index.html`, `public/pages/` → **0 hit**. Satu-satunya penyebut path itu adalah tooling (script generator ikon + tes), bukan runtime.
+2. **Markup-nya memang sudah inline.** Dibandingkan per-token (atribut Alpine, `id`, potongan teks) antara tiap fragment dan `index.html`: APISettings 100% · Equipment 95% · Log 94% · QRPreview 100% · QRScanner 100% · SpareParts 100% sudah ada di `index.html`.
+3. **Tidak ada worktree.** Kartu menyebut `.worktrees\t_22172e91`; direktori itu tidak ada → dikerjakan di working dir utama.
+
+### Yang dikerjakan
+- **6 berkas dihapus** (`git rm`): `APISettingsModal`, `EquipmentModal`, `LogModal`, `QRPreviewModal`, `QRScannerModal`, `SparePartsModal` — total **40.489 byte**. Direktori `public/components/` ikut hilang (tidak ada isi lain).
+- **2 pembaca direktori diperbaiki** — keduanya akan **crash ENOENT** kalau dibiarkan, karena memanggil `fs.readdirSync('public/components/modals')`:
+  - `scripts/download-material-symbols.mjs` — entri modals dibuang dari `filesToScan`.
+  - `tests/icon-contract.test.js` — entri modals dibuang dari `htmlFiles`.
+- **3 tes penjaga baru** (`tests/icon-contract.test.js`, describe "fragment modal legacy tidak boleh hidup lagi"): direktori `public/components/modals` **tidak boleh ada**, `component-loader` hanya boleh punya `basePath = '/pages'`, dan **tidak ada kode runtime** (`src/**` + halaman) yang menyebut `components/modals`.
+
+### Hasil
+- **Precache 56 → 50 entri, 3.240,23 → 3.200,65 KiB (−39,58 KiB).** `verify:precache` **50/50 OK**.
+- Suite **434 → 437** tes (22 berkas), `tsc` 0, `eslint` 0 error / 80 warning (baseline), `vite build` ok.
+- Dev server (`localhost:3000`) dicek ulang setelah penghapusan: app shell tampil, 3 elemen modal inline ada, 55 span Material Symbols, **0 teks ligatur mentah**.
+
+### ⚠️ Temuan terpisah (BELUM diperbaiki — menunggu keputusan user)
+`LogModal.html` bukan salinan persis: ia punya **3 binding Alpine yang tidak ada** di modal inline `index.html`:
+- `x-model="logForm.actualHours"`
+- `x-model="logForm.completedDate"`
+- `x-show="logForm.status === 'Completed'"`
+
+Field state-nya **ada dan ikut tersimpan**: `src/js/constants.ts:64` (`actualHours: 0`) dan `src/js/modules/logs.js:381-382` membaca `this.logForm.actualHours` / `this.logForm.completedDate` saat submit. Tapi modal inline **tidak punya input untuk keduanya** → nilainya selalu `0` / `''`. Jadi ada fitur kecil ("actual hours" + "completed date") yang dulu dibuat di fragment mati dan **tidak pernah benar-benar rilis**. Berkasnya bisa dipulihkan dari git (`git show e667618:public/components/modals/LogModal.html`). Menambah 2 input itu ke modal inline = kerja fitur, bukan bagian Q-3, jadi tidak dikerjakan.
+
+### Catatan kecil
+- `scratch/make-scanner-harness.mjs` (harness lokal, **gitignored**) membaca `QRScannerModal.html` → sekarang akan gagal kalau dijalankan. Bukan bagian repo, tidak diperbaiki.
+- Semua ligatur yang dipakai di 6 fragment (`add`, `close`, `cloud_done`, `description`, `download`, `fact_check`, `fingerprint`, `inventory`, `logout`, `monitoring`, `photo_camera`, `qr_code_scanner`) **masih dipakai** di halaman/app.js → **tidak ada** entri yatim di `icon-subset.txt`, jadi font subset tidak perlu diregenerasi karena kartu ini.
+
+### Kanban
+Kartu **Q-3 `t_22172e91`** → **`done`**. Dikerjakan manual, status dibiarkan `blocked`, tidak pernah di-`unblock`.
+
+---
+
 ## 📝 Session 18 (S18, 2026-10-17) — Q-2: audit offline-first (precache + strategi runtime cache)
 
 ### Ringkasan
