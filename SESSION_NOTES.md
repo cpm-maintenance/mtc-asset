@@ -1,3 +1,46 @@
+## 📝 Session 17 (S17, 2026-10-17) — Q-1: ukur test coverage & tutup gap modul berisiko
+
+### Hasil
+`npm run test:coverage` dijalankan pertama kali. Baseline: **18.49% stmt · 17.73% branch · 21.51% func · 19.10% line** (268 tes / 17 berkas). Setelah 4 berkas tes baru: **28.32% stmt · 26.75% branch · 29.95% func · 29.51% line** — suite **268 → 412** tes (**17 → 21** berkas). Tidak ada tes lama yang diubah.
+
+### Modul berisiko yang ditutup
+
+| Modul | Lines sebelum | Lines sesudah | Funcs sebelum | Funcs sesudah |
+| --- | --- | --- | --- | --- |
+| `src/js/modules/ai.js` | 2.63% | **76.0%** | 10.16% | **88.1%** |
+| `src/js/modules/requisition.js` | 11.94% | **67.2%** | 13.95% | **79.1%** |
+| `src/js/modules/export.js` | 0.56% | **45.5%** | 0% | **42.0%** |
+| `src/js/modules/notification.js` | 40.54% | **77.0%** | 38.7% | **83.9%** |
+
+### Tes baru
+- **`tests/ai-module.test.js`** (45 tes) — prompt builder murni (`formatKPIForPrompt` / `buildSmartPrompt` / `buildAnalysisPrompt`), `getKPIContext` (termasuk edge case: log tanpa `woNumber` bukan WO, RCA di-lowercase + top 5, `avgResponseDays` dari `approvalDate`, part tanpa `minStock`), manajemen key (`init` / `setApiKey` / `clearApiKey` / `rotateApiKey` / getter `activeApiKey` / `loadAISettings`), dispatch provider `callAI` (openai / claude / openrouter / key eksplisit / `app.aiApiKeys`) + normalisasi pesan error, alur `analyzeKPI` (tanpa key · sukses · placeholder custom prompt · rate-limit → `rotateApiKey` · semua gagal), `getAIRecommendations`, `sendAIChat`, `updateModelOptions`, `clearAIChat`.
+- **`tests/requisition-module.test.js`** (35 tes) — `itemAvail`, `reqGetFilteredList` (filter status/tipe + urut `createdAt` menurun, tidak memutasi sumber), getter `openWOs`, line item (`reqAddLineItem` objek terpisah, `reqRemoveLineItem` menjaga minimal 1), `submitRequisition` (record baru · mode edit · backlink `reqIds` ke WO · error Firebase), transisi status (`approveRequisition` · `markArrived` + auto-tambah stok · `closeRequisition` · `bulkApproveRequisitions` · `deleteRequisition`), `autoReorderLowStock` (qty `MinStock*2 - Stok`, dedupe part yang sudah diajukan, skip `MinStock` 0).
+- **`tests/export-module.test.js`** (30 tes) — `exportData` (normalisasi `EquipmentIDs` → string berkoma, `PartsUsed`/`PhotoURLs`/`events` → JSON string, jalur `window.Alpine.raw`, nama file per tipe), `downloadTemplate` (5 tipe), `exportKPIToPDF` (guard tanpa data · tabel `#perfTable` · elemen hilang), `exportWOToPDF` (guard · WO tidak ketemu · delegasi ke `generateProfessionalWOPDF` · error), `importCSV` (pemetaan 4 tipe · `EquipmentIDs` berkoma → array · `freq` turunan dari `bd` · parse JSON `PartsUsed`/`events` · `PartsUsed` non-JSON → `[]` · error). `xlsx`, `jspdf`, dan `wo-pdf-template` di-mock.
+- **`tests/notification-checkers.test.js`** (34 tes) — `requestNotificationPermission` (API absen / granted / denied / prompt grant / prompt deny / prompt melempar), `sendBrowserNotification` (izin belum granted · fallback `new Notification` · jalur `registration.showNotification` · tag default · konstruktor melempar), dan keempat checker privat lewat `checkAllNotifications()`: low stock (stok 0 · menyentuh `MinStock` · ringkasan `+N lainnya` · fallback `PartID`), WO urgent/aging (batas 3 hari, tanggal invalid), PM overdue & H-3, umur pakai part, anti-spam, auto-reorder khusus admin/supervisor.
+
+### Ratchet coverage dinaikkan
+`vitest.config.js`: threshold **10/11/9/10 → 27/25/28/28** (sedikit di bawah hasil nyata supaya refactor wajar tidak langsung memerahkan gate). Ini yang mengubah config — bukan sumber aplikasi.
+
+### ⚠️ Temuan (BELUM diperbaiki — menunggu keputusan user)
+1. **`ai.js → loadAISettings()`: model tersimpan hilang.** `this.aiModel` diisi dari localStorage, lalu `updateModelOptions()` **menimpanya** dengan opsi pertama provider. Akibatnya pilihan model user reset setiap reload, dan cabang `Custom: <model>` di bawahnya **tidak pernah tercapai**. Dikunci oleh tes berjudul `KNOWN DEFECT:` di `tests/ai-module.test.js` (kalau diperbaiki, ubah tes itu). Perbaikan = pindahkan `updateModelOptions()` sebelum pembacaan `ai_model` (~2 baris).
+2. **`requisition.js → bulkApproveRequisitions()` selalu menulis `approvedBy: 'unknown'`.** Baris 409 memakai `this.currentUser?.email`, padahal `currentUser` hanya dideklarasikan di `appstate.ts` dan **tidak pernah di-assign** di mana pun; `approveRequisition()` memakai `this.user?.email`. Jadi approve massal kehilangan identitas approver. Perbaikan = ganti ke `this.user?.email` (1 token).
+
+### Verifikasi (hasil nyata)
+- `npm run typecheck` **0 error** · `npm run lint` **0 error / 80 warning** (baseline, tidak naik) · `npm run test:run` **412/412** (21 berkas) · `npm run test:coverage` lolos threshold baru · `npm run build` ok (**56 entri precache, 3.235 KiB** — identik baseline).
+- **Bundle tidak berubah**: perubahan hanya di `tests/` + `vitest.config.js`, jadi `dist/` tetap sama dengan S16.
+- `git status`: `vitest.config.js` (M) + 4 berkas tes baru (??). `m .open/skills` **tidak disentuh**.
+
+### Pelajaran
+- `Object.create(module)` (bukan spread `{...module}`) adalah cara aman memberi setiap tes state sendiri pada modul Alpine: spread akan **mengevaluasi getter** jadi nilai statis, sedangkan `Object.create` mempertahankan getter + metode lewat prototype chain dan assignment tetap jadi own-property.
+- `vi.hoisted()` wajib untuk mock `xlsx`/`jspdf` karena factory `vi.mock` di-hoist ke atas deklarasi `const`.
+- `vi.stubGlobal('Notification', ...)` cukup untuk `'Notification' in window` di lingkungan jsdom (jsdom tidak mengimplementasikan Notification).
+- Modul yang seluruh jalurnya menabrak library berat tetap bisa diuji: mock **library**-nya, bukan modulnya — jadi logika pemetaan data (`exportData`, `importCSV`) yang justru berisiko tetap dieksekusi sungguhan.
+
+### Kanban
+Kartu **Q-1 `t_e6dd5987`** → **`done`**. Dikerjakan manual, status dibiarkan `blocked`, tidak pernah di-`unblock`.
+
+---
+
 ## 📝 Session 16 (S16, 2026-10-16) — D-3: palette `tac-*` jadi theme-aware
 
 ### Masalah
