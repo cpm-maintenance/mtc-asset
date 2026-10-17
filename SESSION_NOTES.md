@@ -1,4 +1,45 @@
-## 📝 Session 19 (S19, 2026-10-17) — Q-3: buang 6 fragment modal legacy
+## 📝 Session 20 (S20, 2026-10-17) — font ikon 343 KB → 10 KB
+
+### Masalahnya dua lapis, bukan satu
+Item opsional ini tercatat sebagai "335 KB karena 4 sumbu variabel (opsz/wght/FILL/GRAD)". Setelah diukur, **sumbu variabel cuma sebagian kecil biayanya**:
+
+| varian permintaan | ukuran | glyph |
+|---|---|---|
+| asli: `opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200` + `&text=` | **343,2 KB** | 6.090 |
+| sumbu dipin `@24,400,0,0` + `&text=` | 276,0 KB | 3.645 |
+| sumbu dipin + **`&icon_names=`** | **9,8 KB** | **112** |
+
+Penyebab sebenarnya: **`&text=` mensubset berdasarkan KARAKTER, bukan ikon.** Aplikasi mengirim 84 *nama ligatur* sebagai teks, jadi Google menyertakan huruf `a-z` + `_` — dan tetap mengirim **ribuan glyph ikon** karena target ligatur tidak bisa ditebak dari daftar karakter. Memin sumbu hanya membuang 20%; `&icon_names=` membuang 97%.
+
+### Dibuktikan, bukan diasumsikan
+Font 9,8 KB itu terlalu bagus untuk dipercaya, jadi diverifikasi dua arah:
+1. **Isi font** (`fonttools`): 112 glyph = 84 ikon + 25 huruf + 3 lain, cmap 155 entri (128 PUA), **tanpa `fvar`** → statis, dan huruf tetap ada → ligatur masih mungkin.
+2. **Render di browser**: 84/84 ligatur tampil sebagai ikon (lebar ≤ 1em, 0 jatuh ke teks) · **84 hash piksel unik**, 0 kosong, 0 duplikat → bukan tofu. Kontrol negatif `zzz_bukan_ikon` render sebagai teks (ink 178) → tes memang bisa membedakan.
+3. **Aplikasi nyata** (`localhost:3000`, login dipaksa): **38/38 ikon tampil**, `document.fonts.check()` = true, berkas ter-serve 10.048 byte.
+
+### Yang dikerjakan
+- `scripts/download-material-symbols.mjs` **ditulis ulang**:
+  - `&icon_names=` menggantikan `&text=` (pengungkit ukuran sebenarnya).
+  - **Nama berkas keluaran diperbaiki**: dulu menulis `material-symbols-subset.woff2`, padahal `@font-face` memuat `material-symbols-outlined.woff2` — skripnya tidak pernah benar-benar meng-update font yang dipakai.
+  - **UA wajib lengkap dengan `Chrome/…`** — tanpa itu Google mengirim `truetype`, bukan woff2 (kegagalan pertama sesi ini).
+  - **Pemindaian ikon diperluas** dari `app.js` saja ke seluruh `src/js/**` (menu/analytics memakai field `ms:` di modul lain).
+  - **Font dibangun dari allowlist**, bukan hasil deteksi — menjamin setiap ligatur yang diizinkan punya glyph.
+  - **Output CSS mati dibuang**: dulu menulis `material-symbols-local.css` yang tidak pernah dimuat siapa pun.
+- `src/css/tactical-icons.css`: `font-weight: 100 700` → **`400`**. Deklarasi rentang hanya benar untuk font variabel; font ini statis. Tidak ada pemakaian `'FILL' 1` di repo, jadi satu instance cukup.
+- **3 tes ratchet** (`tests/icon-contract.test.js`): font **< 50 KB** dan ber-magic `wOF2` · skrip memakai `icon_names` (bukan `text=`) · `@font-face` mendeklarasikan satu bobot. Plafon 50 KB memberi ruang ~4x untuk menambah ikon tapi menangkap kalau parameternya dikembalikan.
+
+### Hasil
+- Font: **343.220 → 10.048 byte (−97,1%)**. Payload offline turun **−325,4 KiB**.
+- Suite **444 → 447** tes (23 berkas) · `tsc` 0 · `eslint` **0 error / 79 warning** (baseline turun 1) · build ok · `verify:precache` **50/50**.
+
+### Jebakan yang perlu diingat
+- **Angka "precache N entries (X KiB)" dari Vite PWA TIDAK menghitung berkas `public/`.** Font 343 KB dan 10 KB menghasilkan angka yang sama (3.201,52 KiB). Untuk payload sebenarnya, jumlahkan sendiri ukuran berkas yang tercantum di `dist/sw.js` (di sesi ini: 48 berkas = 3.375,5 KiB).
+- `document.fonts.check()` = **false** kalau belum ada elemen terlihat yang memakai font itu — di layar login tidak ada ikon, jadi ini bukan tanda font rusak. Paksa login dulu.
+- 5 ligatur di allowlist **tidak dipakai** di mana pun (`account_circle`, `help`, `home`, `info`, `menu`) — sisa dari modal yang dihapus di Q-3. Dibiarkan: biayanya ~600 byte, dan memangkasnya berisiko kalau ternyata dipakai lewat pola markup yang tidak terdeteksi skrip.
+
+---
+
+
 
 ### Keputusan
 Kartu Q-3 minta **pilih SATU**: hapus, atau wiring sungguhan. Dipilih **HAPUS** — markup-nya sudah inline di `index.html`, dan tidak ada kode yang pernah memuatnya. Wiring hanya akan menambah jalur pemuatan dinamis untuk UI yang sudah jalan.

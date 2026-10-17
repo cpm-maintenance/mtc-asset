@@ -10,10 +10,11 @@ import { app } from '../src/js/app.js';
  * Dua hal yang pernah rusak diam-diam di repo ini, dan tes ini menjaganya:
  *
  *  1. **Ligatur di luar subset font lokal** — ikon Material Symbols yang tidak ada
- *     di `src/css/icon-subset.txt` tidak punya glyph di `material-symbols-subset.woff2`,
- *     jadi yang tampil adalah TEKS namanya (mis. "build" bukan ikon). Tidak ada error,
- *     tidak ada test yang gagal — cuma salah tampil. Contoh nyata: `build` di
- *     `Equipment.html`, dan `circle` sebagai fallback `item.ms`.
+ *     di `src/css/icon-subset.txt` tidak punya glyph di
+ *     `material-symbols-outlined.woff2`, jadi yang tampil adalah TEKS namanya
+ *     (mis. "build" bukan ikon). Tidak ada error, tidak ada test yang gagal —
+ *     cuma salah tampil. Contoh nyata: `build` di `Equipment.html`, dan `circle`
+ *     sebagai fallback `item.ms`.
  *
  *  2. **Sisa design system `stitch-*` / FontAwesome** — sudah tidak dipakai di
  *     halaman mana pun, tapi token & dependensinya masih hidup dan ikut ke bundle.
@@ -143,6 +144,36 @@ describe('kontrak design system — tidak ada sisa `stitch-*`', () => {
       if (m) hits.push(`${f}: ${[...new Set(m)].join(', ')}`);
     }
     expect(hits).toEqual([]);
+  });
+});
+
+describe('kontrak ikon — font subset tetap kecil (ratchet ukuran)', () => {
+  const FONT = 'public/fonts/material-symbols-outlined.woff2';
+
+  it('font subset ada, berformat woff2, dan di bawah 50 KB', () => {
+    // Regresi nyata yang pernah terjadi: font ini 343 KB (4 sumbu variabel
+    // diminta sebagai rentang) lalu 276 KB (masih `text=`, yang mensubset per
+    // KARAKTER sehingga Google tetap mengirim ~3.600 glyph untuk 84 ikon).
+    // Dengan `icon_names=` jadi ~10 KB. Plafon 50 KB menyisakan ruang ~4x
+    // untuk menambah ikon, tapi menangkap kalau parameter permintaannya
+    // dikembalikan ke `text=`.
+    const p = path.join(ROOT, FONT);
+    expect(fs.existsSync(p), `${FONT} tidak ada`).toBe(true);
+    const buf = fs.readFileSync(p);
+    expect(buf.subarray(0, 4).toString('latin1')).toBe('wOF2');
+    expect(buf.length).toBeLessThan(50 * 1024);
+  });
+
+  it('skrip pembangun font memakai icon_names, bukan text=', () => {
+    const src = read('scripts/download-material-symbols.mjs');
+    expect(src).toContain('&icon_names=');
+    expect(src).not.toMatch(/&text=\$\{/);
+  });
+
+  it('@font-face mendeklarasikan font statis (satu bobot), bukan rentang', () => {
+    const css = read('src/css/tactical-icons.css');
+    expect(css).toMatch(/font-weight:\s*400;/);
+    expect(css).not.toMatch(/font-weight:\s*100 700;/);
   });
 });
 
