@@ -51,13 +51,22 @@ export default defineConfig({
             // network), uploadImage, blobToBase64, systemReset (SW + Cache Storage).
             // ui.js 32.98 → 98.96% lines. Total 73.39/62.65/71.47/74.96. Suite 999 → 1050.
             // Threshold 69/59/66/70 → 71/60/69/72 (margin ~2 poin).
+            // S30 lanjutan: sisa jalur `ai.js` — catch luar `analyzeKPI`, rotate key
+            // di `generateRecommendations` (rate limit / tanpa rotateApiKey / hasil
+            // bukan array / rotate melempar), `callAI` key eksplisit tanpa window.app,
+            // error HTTP Claude, body OpenRouter bukan JSON, `generatePPT` (tanpa
+            // hasil / delegasi / fallback / error), `generateSimpleReport` (window.open
+            // + auto-print), `loadAIFromFirebase` + `saveAIToFirebase` +
+            // `saveAIWithCustomModel`, setter `aiApiKey`.
+            // ai.js 76.31 → 100% lines (branch 87.42). Total 74.68/63.59/72.01/76.42.
+            // Suite 1050 → 1077. Threshold 71/60/69/72 → 72/61/70/74 (margin ~2 poin).
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 71,
-                branches: 60,
-                functions: 69,
-                lines: 72,
+                statements: 72,
+                branches: 61,
+                functions: 70,
+                lines: 74,
             },
         },
     },

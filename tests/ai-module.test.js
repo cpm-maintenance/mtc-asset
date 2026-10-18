@@ -669,3 +669,395 @@ describe('ai.js — updateModelOptions', () => {
         expect(ctx.aiModel).toBe('google/gemma-4-26b-a4b-it:free');
     });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// S30 lanjutan — sisa jalur yang belum tersentuh: error luar analyzeKPI,
+// rotate pada generateRecommendations, error HTTP Claude, body OpenRouter
+// bukan JSON, generatePPT + laporan cetak, siklus simpan/muat Firebase, dan
+// setter `aiApiKey`.
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Stub RTDB minimal: `window.db/ref/get/set`. */
+function stubFirebase({ exists = true, data = null, throws = false } = {}) {
+    window.db = { fake: true };
+    window.ref = vi.fn((db, path) => ({ path }));
+    const set = vi.fn(async () => {});
+    window.set = set;
+    window.get = vi.fn(async () => {
+        if (throws) throw new Error('rtdb down');
+        return { exists: () => exists, val: () => data };
+    });
+    return { set };
+}
+
+describe('ai.js — jalur error & cabang tersisa', () => {
+    afterEach(() => {
+        delete window.db;
+        delete window.ref;
+        delete window.get;
+        delete window.set;
+    });
+
+    it('analyzeKPI menangkap kegagalan getKPIContext di catch luar', async () => {
+        const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ apiKey: 'sk-test' });
+        ctx.getKPIContext = () => {
+            throw new Error('kpi rusak');
+        };
+
+        await expect(ctx.analyzeKPI()).resolves.toBeNull();
+
+        expect(errSpy).toHaveBeenCalled();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: kpi rusak', 'error');
+        expect(ctx.isAnalyzing).toBe(false);
+    });
+
+    it('generateRecommendations merotasi key saat rate limit lalu menyerah dengan []', async () => {
+        window.app = { rotateApiKey: vi.fn(), activeApiKey: 'sk-kedua', showNotification: vi.fn() };
+        const ctx = makeCtx({ logs: [{ woNumber: 'WO-1', rca: 'Wear' }] });
+        ctx.callAI = vi.fn(async () => {
+            throw new Error('Rate Limit reached');
+        });
+
+        await expect(ctx.generateRecommendations()).resolves.toEqual([]);
+
+        expect(ctx.callAI).toHaveBeenCalledTimes(5);
+        expect(window.app.rotateApiKey).toHaveBeenCalledTimes(5);
+        expect(ctx.apiKey).toBe('sk-kedua');
+    });
+
+    it('generateRecommendations aman saat app tidak punya rotateApiKey', async () => {
+        window.app = { showNotification: vi.fn() };
+        const ctx = makeCtx();
+        ctx.callAI = vi.fn(async () => {
+            throw new Error('quota exceeded');
+        });
+
+        await expect(ctx.generateRecommendations()).resolves.toEqual([]);
+        expect(ctx.callAI).toHaveBeenCalledTimes(5);
+    });
+
+    it('generateRecommendations mengabaikan hasil yang bukan array berisi', async () => {
+        window.app = { showNotification: vi.fn() };
+        const ctx = makeCtx();
+        ctx.callAI = vi.fn(async () => '{}');
+
+        await expect(ctx.generateRecommendations()).resolves.toEqual([]);
+        expect(ctx.callAI).toHaveBeenCalledTimes(5);
+    });
+
+    it('generateRecommendations menangkap kegagalan di dalam catch (rotate melempar)', async () => {
+        const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        window.app = {
+            rotateApiKey: () => {
+                throw new Error('rotate broken');
+            },
+            showNotification: vi.fn(),
+        };
+        const ctx = makeCtx();
+        ctx.callAI = vi.fn(async () => {
+            throw new Error('quota exceeded');
+        });
+
+        await expect(ctx.generateRecommendations()).resolves.toEqual([]);
+        expect(errSpy).toHaveBeenCalled();
+    });
+
+    it('callAI memakai provider dari localStorage saat key eksplisit tanpa window.app', async () => {
+        localStorage.setItem('ai_provider', 'openai');
+        localStorage.setItem('ai_model', 'gpt-4o');
+        const fetchMock = vi.fn(async () => okJson({ choices: [{ message: { content: 'ok' } }] }));
+        vi.stubGlobal('fetch', fetchMock);
+
+        const ctx = makeCtx();
+        await expect(ctx.callAI('halo', 'sk-explicit')).resolves.toBe('ok');
+
+        expect(ctx.apiProvider).toBe('openai');
+        expect(fetchMock.mock.calls[0][0]).toContain('api.openai.com');
+    });
+
+    it('callClaude meneruskan pesan error dari body provider', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => failJson({ error: { message: 'claude down' } }, 500)));
+        const ctx = makeCtx({ apiProvider: 'claude', apiKey: 'sk-claude' });
+
+        await expect(ctx.callClaude('hi')).rejects.toThrow('claude down');
+    });
+
+    it('callOpenRouter melempar error saat body sukses bukan JSON', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({ ok: true, status: 200, text: async () => 'bukan json' }))
+        );
+        const ctx = makeCtx({ apiProvider: 'openrouter', apiKey: 'sk-test' });
+
+        await expect(ctx.callOpenRouter('hi')).rejects.toThrow('Invalid response: bukan json');
+    });
+
+    it('rotateApiKey mengembalikan null saat semua slot lain kosong', () => {
+        const ctx = makeCtx({ aiApiKeys: ['sk-a', '   ', ''], activeKeyIndex: 0 });
+        expect(ctx.rotateApiKey()).toBeNull();
+        expect(ctx.activeKeyIndex).toBe(0);
+    });
+});
+
+describe('ai.js — generatePPT & laporan cetak', () => {
+    it('generatePPT menolak saat belum ada hasil analisis', async () => {
+        const ctx = makeCtx();
+        await ctx.generatePPT();
+
+        expect(ctx.showNotification).toHaveBeenCalledWith('Please analyze KPI first', 'error');
+        expect(ctx.isGenerating).toBe(false);
+    });
+
+    it('generatePPT mendelegasikan ke exportModule.generateKPIPPT', async () => {
+        const generateKPIPPT = vi.fn(async () => {});
+        const ctx = makeCtx({ analysisResult: 'HASIL', exportModule: { generateKPIPPT } });
+
+        await ctx.generatePPT();
+
+        expect(generateKPIPPT).toHaveBeenCalledWith('HASIL', expect.objectContaining({ totalEquipment: 0 }));
+        expect(ctx.showNotification).toHaveBeenCalledWith('PPT Generated!', 'success');
+        expect(ctx.isGenerating).toBe(false);
+    });
+
+    it('generatePPT jatuh ke laporan sederhana saat exportModule tidak tersedia', async () => {
+        const ctx = makeCtx({ analysisResult: 'HASIL' });
+        ctx.generateSimpleReport = vi.fn(async () => {});
+
+        await ctx.generatePPT();
+
+        expect(ctx.generateSimpleReport).toHaveBeenCalledTimes(1);
+        expect(ctx.isGenerating).toBe(false);
+    });
+
+    it('generatePPT menangkap kegagalan export', async () => {
+        const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({
+            analysisResult: 'HASIL',
+            exportModule: {
+                generateKPIPPT: async () => {
+                    throw new Error('ppt boom');
+                },
+            },
+        });
+
+        await ctx.generatePPT();
+
+        expect(errSpy).toHaveBeenCalled();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Failed to generate PPT', 'error');
+        expect(ctx.isGenerating).toBe(false);
+    });
+
+    it('generateSimpleReport menulis HTML ke jendela cetak lalu mencetak saat onload', async () => {
+        const write = vi.fn();
+        const close = vi.fn();
+        const print = vi.fn();
+        const fakeWin = { document: { write, close }, print, onload: null };
+        const openSpy = vi.spyOn(window, 'open').mockReturnValue(fakeWin);
+
+        const ctx = makeCtx({
+            analysisResult: 'HASIL AI',
+            logs: [{ woNumber: 'WO-1', Status: 'Pending', Downtime: 4 }],
+        });
+        await ctx.generateSimpleReport();
+
+        expect(openSpy).toHaveBeenCalledWith('', '_blank');
+        const html = write.mock.calls[0][0];
+        expect(html).toContain('KPI Analysis Report');
+        expect(html).toContain('HASIL AI');
+        expect(html).toContain('Total Downtime</td><td class="metric">4 hrs');
+        expect(close).toHaveBeenCalled();
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            'Report generated! Press Ctrl+P to save as PDF',
+            'success'
+        );
+
+        fakeWin.onload();
+        expect(print).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('ai.js — simpan/muat Firebase', () => {
+    afterEach(() => {
+        delete window.db;
+        delete window.ref;
+        delete window.get;
+        delete window.set;
+    });
+
+    it('loadAIFromFirebase menolak jalan tanpa admin / tanpa db', async () => {
+        const ctx = makeCtx({ isAdmin: false, user: { email: 'x@y' } });
+        await expect(ctx.loadAIFromFirebase()).resolves.toBe(false);
+
+        window.db = {};
+        ctx.isAdmin = true;
+        ctx.user = null;
+        await expect(ctx.loadAIFromFirebase()).resolves.toBe(false);
+    });
+
+    it('loadAIFromFirebase memuat beberapa key + provider/model/prompt', async () => {
+        stubFirebase({
+            data: {
+                apiKey: 'k1',
+                apiKeys: ['k1', 'k2', 'k3', 'k4', 'k5'],
+                provider: 'claude',
+                model: 'claude-3-haiku-20240307',
+                customPrompt: 'prompt admin',
+            },
+        });
+        const ctx = makeCtx({ isAdmin: true, user: { email: 'admin@x' } });
+
+        await expect(ctx.loadAIFromFirebase()).resolves.toBe(true);
+
+        expect(ctx.aiApiKeys).toEqual(['k1', 'k2', 'k3', 'k4', 'k5']);
+        expect(ctx.aiApiKeyInput1).toBe('k1');
+        expect(ctx.aiApiKeyInput2).toBe('k2');
+        expect(ctx.aiApiKeyInput5).toBe('k5');
+        expect(ctx.aiProvider).toBe('claude');
+        expect(ctx.aiModel).toBe('claude-3-haiku-20240307');
+        expect(ctx.customPrompt).toBe('prompt admin');
+        expect(window.ref).toHaveBeenCalledWith(window.db, 'AI_Settings/admin');
+    });
+
+    it('loadAIFromFirebase membungkus satu key tunggal jadi array', async () => {
+        stubFirebase({ data: { apiKey: 'solo' } });
+        const ctx = makeCtx({ isAdmin: true, user: {} });
+
+        await expect(ctx.loadAIFromFirebase()).resolves.toBe(true);
+
+        expect(ctx.aiApiKeys).toEqual(['solo']);
+        expect(ctx.aiApiKeyInput1).toBe('solo');
+        expect(ctx.aiApiKeyInput2).toBe('');
+        expect(ctx.aiProvider).toBe('openrouter');
+        expect(ctx.aiModel).toBe('');
+    });
+
+    it('loadAIFromFirebase mengembalikan false saat snapshot kosong', async () => {
+        stubFirebase({ exists: false });
+        const ctx = makeCtx({ isAdmin: true, user: {} });
+
+        await expect(ctx.loadAIFromFirebase()).resolves.toBe(false);
+    });
+
+    it('loadAIFromFirebase menelan error RTDB', async () => {
+        stubFirebase({ throws: true });
+        const ctx = makeCtx({ isAdmin: true, user: {} });
+
+        await expect(ctx.loadAIFromFirebase()).resolves.toBe(false);
+    });
+
+    it('saveAIToFirebase menulis payload lengkap sebagai admin', async () => {
+        const { set } = stubFirebase();
+        const ctx = makeCtx({
+            isAdmin: true,
+            user: { email: 'admin@x' },
+            aiApiKeys: ['k1'],
+            aiProvider: 'openai',
+            customPrompt: 'cp',
+        });
+
+        await ctx.saveAIToFirebase('k1', 'gpt-4o');
+
+        expect(set).toHaveBeenCalledTimes(1);
+        const payload = set.mock.calls[0][1];
+        expect(payload).toMatchObject({
+            apiKey: 'k1',
+            apiKeys: ['k1'],
+            provider: 'openai',
+            model: 'gpt-4o',
+            customPrompt: 'cp',
+            updatedBy: 'admin@x',
+        });
+        expect(typeof payload.updatedAt).toBe('string');
+    });
+
+    it('saveAIToFirebase memakai updatedBy admin saat user tanpa email', async () => {
+        const { set } = stubFirebase();
+        const ctx = makeCtx({ isAdmin: true, user: {}, aiApiKeys: [], customPrompt: '' });
+
+        await ctx.saveAIToFirebase('k1', '');
+
+        expect(set.mock.calls[0][1]).toMatchObject({ updatedBy: 'admin', model: '', customPrompt: '' });
+    });
+
+    it('saveAIToFirebase tidak menulis tanpa db atau tanpa admin', async () => {
+        const ctx = makeCtx({ isAdmin: false });
+        await expect(ctx.saveAIToFirebase('k', 'm')).resolves.toBeUndefined();
+
+        const { set } = stubFirebase();
+        ctx.isAdmin = false;
+        await ctx.saveAIToFirebase('k', 'm');
+        expect(set).not.toHaveBeenCalled();
+    });
+
+    it('saveAIToFirebase menelan error RTDB', async () => {
+        const { set } = stubFirebase();
+        set.mockImplementation(async () => {
+            throw new Error('permission denied');
+        });
+        const ctx = makeCtx({ isAdmin: true, user: { email: 'a@b' }, aiApiKeys: [] });
+
+        await expect(ctx.saveAIToFirebase('k', 'm')).resolves.toBeUndefined();
+    });
+
+    it('saveAIWithCustomModel menyaring input kosong dan memakai model custom', () => {
+        const ctx = makeCtx({
+            aiApiKeyInput1: ' k1 ',
+            aiApiKeyInput2: '',
+            aiApiKeyInput3: 'k2',
+            aiApiKeyInput4: '   ',
+            aiApiKeyInput5: 'k3',
+            aiModel: '__custom__',
+            customModelInput: ' my/custom-model ',
+            aiProvider: 'openrouter',
+            customPrompt: 'cp',
+        });
+        ctx.saveAIToFirebase = vi.fn();
+
+        ctx.saveAIWithCustomModel();
+
+        expect(ctx.aiApiKeys).toEqual(['k1', 'k2', 'k3']);
+        expect(ctx.activeKeyIndex).toBe(0);
+        expect(ctx.aiModel).toBe('my/custom-model');
+        expect(localStorage.getItem('ai_api_keys_count')).toBe('3');
+        expect(localStorage.getItem('ai_api_key_0')).toBe('k1');
+        expect(localStorage.getItem('ai_api_key_2')).toBe('k3');
+        expect(localStorage.getItem('ai_model')).toBe('my/custom-model');
+        expect(localStorage.getItem('ai_provider')).toBe('openrouter');
+        expect(localStorage.getItem('ai_custom_prompt')).toBe('cp');
+        expect(localStorage.getItem('ai_active_key_index')).toBe('0');
+        expect(ctx.saveAIToFirebase).toHaveBeenCalledWith('k1', 'my/custom-model');
+        expect(ctx.showAPISettings).toBe(false);
+    });
+
+    it('saveAIWithCustomModel membiarkan model non-custom apa adanya', () => {
+        const ctx = makeCtx({ aiApiKeyInput1: 'k1', aiModel: 'gpt-4o', aiProvider: 'openai' });
+        ctx.saveAIToFirebase = vi.fn();
+
+        ctx.saveAIWithCustomModel();
+
+        expect(ctx.aiModel).toBe('gpt-4o');
+        expect(ctx.aiApiKeys).toEqual(['k1']);
+        expect(ctx.saveAIToFirebase).toHaveBeenCalledWith('k1', 'gpt-4o');
+    });
+});
+
+describe('ai.js — setter aiApiKey', () => {
+    it('mengisi slot pertama bila kosong dan menyimpan input', () => {
+        const ctx = makeCtx({ aiApiKeys: [] });
+
+        ctx.aiApiKey = 'sk-baru';
+
+        expect(ctx.aiApiKeys[0]).toBe('sk-baru');
+        expect(localStorage.getItem('ai_api_key_input_0')).toBe('sk-baru');
+    });
+
+    it('tidak menimpa slot pertama yang sudah terisi', () => {
+        const ctx = makeCtx({ aiApiKeys: ['sk-lama'] });
+
+        ctx.aiApiKey = 'sk-baru';
+
+        expect(ctx.aiApiKeys[0]).toBe('sk-lama');
+        expect(localStorage.getItem('ai_api_key_input_0')).toBe('sk-baru');
+    });
+});
