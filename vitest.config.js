@@ -33,13 +33,18 @@ export default defineConfig({
             // unggah foto, sanitasi, retry/backoff, jalur offline vs RTDB,
             // pemotongan stok, audit, refresh 500 ms. logs.js 68.62 → 97.65%
             // lines, total 66.47/58.03/66.22/68.08. Suite 896 → 938.
+            // S29 (kartu A lanjutan): unit test `kpi-engine.js` (43.92 → 100%
+            // lines, 33.12 → 96.87% branch) — health score, cache `_kpiCache`,
+            // interval HM vs kalender, gabungan HistoryLog+Performance, semua
+            // cabang `predictNextFailure`. Total 67.67/59.63/66.84/69.16.
+            // Suite 938 → 987. Threshold branch 56 → 57, lines 66 → 67.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
                 statements: 65,
-                branches: 56,
+                branches: 57,
                 functions: 65,
-                lines: 66,
+                lines: 67,
             },
         },
     },
