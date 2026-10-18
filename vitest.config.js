@@ -37,14 +37,20 @@ export default defineConfig({
             // lines, 33.12 → 96.87% branch) — health score, cache `_kpiCache`,
             // interval HM vs kalender, gabungan HistoryLog+Performance, semua
             // cabang `predictNextFailure`. Total 67.67/59.63/66.84/69.16.
-            // Suite 938 → 987. Threshold branch 56 → 57, lines 66 → 67.
+            // Suite 938 → 987.
+            // S29 lanjutan: `export.js` 45.5 → 100% lines lewat tiga jalur yang
+            // belum tersentuh — `exportExcelFull` (7 sheet + Summary),
+            // `exportPMSchedulePDF` (sort overdue, page break, warna status),
+            // `exportToPDF` (tabel log/PM/parts, placeholder, error path).
+            // Total 71.2/61.59/68.92/72.66. Suite 987 → 999.
+            // Threshold 65/57/65/67 → 69/59/66/70 (margin ~2 poin).
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 65,
-                branches: 57,
-                functions: 65,
-                lines: 67,
+                statements: 69,
+                branches: 59,
+                functions: 66,
+                lines: 70,
             },
         },
     },
