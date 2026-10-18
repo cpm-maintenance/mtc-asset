@@ -1,3 +1,90 @@
+## 📝 Session 28 (S28, 2026-10-18) — badan `submitLog` 68,62% → 97,65% (kartu C-2)
+
+### Kenapa `submitLog` duluan
+`logs.js` 68,62% dan hampir semua sisa merahnya ada di satu fungsi: `submitLog`
+(305–517). Itu fungsi yang **menulis data permanen** — bukan render, bukan tampilan.
+Yang belum diuji justru bagian yang paling mahal kalau salah: foto yang hilang, stok
+yang terpotong dua kali, diff downtime yang salah ke `Stats/totalDowntime`, dan jalur
+offline yang diam-diam menulis ke RTDB saat koneksi mati.
+
+### `tests/logs-module.test.js` 47 → 89 tes (42 baru) — 68,62% → **97,65%** lines
+Harness lama dipakai ulang (`stubFirebase` + `makeCtx`), cuma ditambah `set` (Firebase
+`set`) ke stub. Tambahan helper: `baseForm()`, `submitCtx()`, `runSubmit()` (memutar
+timer sampai promise `submitLog` settle), `writtenPayload()`, `refPaths()`.
+
+- **Jalur online**: payload `HistoryLog/LOG-*` lengkap (termasuk `createdBy`/`updatedBy`
+  /`createdAt`), `Stats/totalDowntime` hanya saat diff ≠ 0 (`curr||0`, `Math.max(0, …)`),
+  Equipment → `Active` kalau `Status === 'Completed'` (plus `LastHM`) atau `In Maintenance`,
+  `EXTERNAL` tidak menyentuh Equipment, potong stok **sekali per part ber-id**
+  (`SpareParts/<id>/Stok`), dilewati kalau `woNumber` ada atau saat edit, satu transaksi
+  stok gagal tidak menghentikan part berikutnya, `syncPerformanceBD` hanya untuk `Breakdown`.
+- **Sanitasi**: `Deskripsi` di-escape (`< > " ' /` → entitas, kata `script` dibuang),
+  sementara `PartsUsed` & `PhotoURLs` **dikembalikan mentah** — dikunci eksak
+  (`'[{"id":"P1","qty":2}]'`) supaya regresi `&quot;` langsung merah.
+- **Metadata edit**: `createdBy`/`createdAt` lama dipertahankan, log lama tak ada →
+  `createdBy` tidak ditulis sama sekali, `updatedBy` selalu diisi (`unknown` tanpa user).
+- **Foto**: URL remote dilewatkan tanpa upload · `blob:` + `file` → `uploadImage` →
+  URL hasilnya · base64 legacy tanpa file disimpan apa adanya · upload melempar atau
+  mengembalikan `''` → foto dibuang + notifikasi warning (log tetap tersimpan) ·
+  `uploadImage` bukan fungsi → dibuang · entri `null` dilewati · `photos` berupa objek
+  Alpine di-unwrap lewat `Alpine.raw`, tanpa `Alpine` → daftar kosong.
+- **Offline**: `isOnline=false` + queue sukses → RTDB **tidak** disentuh, `saveToIndexedDB`
+  sekali, log masuk daftar lokal (unshift atau ganti di tempat saat edit), notifikasi
+  "Log saved offline"; queue gagal → jatuh ke jalur online; `saveToIndexedDB` melempar →
+  ditangkap `catch` luar.
+- **Retry/audit/refresh**: gagal sekali karena jaringan → notifikasi "Network error,
+  retrying..." lalu sukses; error non-jaringan → tanpa notifikasi itu; 3× gagal →
+  `Error: <msg>`, modal tetap terbuka; audit `Create Log/WO` / `Update Log/WO` dengan
+  `{id, equip, jenis}`, audit melempar diabaikan, `auditModule` tak ada tidak melempar;
+  refresh 500 ms mengganti `logs` hasil RTDB terurut menurun, snapshot kosong tidak
+  mengubah apa pun, `get` melempar diabaikan.
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `logs.js` | 68,62% | **97,65%** (stmt 95,97 · branch 86,6 · func 96,49) |
+
+Total **66,3% → 68,08%** lines · 66,47% stmt · 58,03% branch · 66,22% func.
+Suite **896 → 938** tes (34 berkas). Ratchet `vitest.config.js` **63/55/63/64 → 65/56/65/66**.
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 79 warning** (turun 1 dari baseline 80) ·
+  `vitest` **938/938** · `test:coverage` lolos threshold baru · `build` ok ·
+  `verify:precache` **50/50**.
+- **`src/js/**` tidak disentuh** → bundle identik, `sw.js` tetap **`mtc-asset-v15`**.
+
+### Sisa merah di `logs.js` (sengaja, di luar cakupan kartu)
+- `313` — `catch` luar ekstraksi `parts`; tak bisa dicapai karena semua jalur yang
+  melempar sudah ditangkap `try` di dalamnya.
+- `57`, `63`, `232` — `openLogModal` cabang diagnostik/parse.
+- `790–793` — sinkronisasi `window.app.logs` di **`completeWO`**, bukan `submitLog`.
+
+### Jebakan baru (catat biar tidak diulang)
+- **`submitCtx` menimpa override-nya sendiri.** `ctx.isOnline = true` setelah
+  `Object.assign(ctx, overrides)` membuat tes jalur offline **diam-diam** jalan di jalur
+  online (gejalanya `window.ref is not a function`). Pakai
+  `ctx.isOnline = overrides.isOnline ?? true`.
+- **`withRetry` memakai `setTimeout` asli** (1.000 ms lalu 2.000 ms) dan `submitLog`
+  menjadwalkan refresh 500 ms. Tanpa fake timer, callback refresh jalan **setelah** tes
+  selesai dan `window.get` sudah di-unstub → TypeError di promise yatim. Selalu
+  `vi.useFakeTimers()` + helper `runSubmit()` yang memutar timer sampai promise settle.
+- **Lupa `stubFirebase()` = tes palsu hijau.** Tanpa stub, `window.set` undefined →
+  `submitLog` masuk `catch` dan tetap "sukses" tanpa menulis apa pun. Tes `syncPerformanceBD`
+  sempat 0 panggilan karena ini.
+- **`sanitizeInput` membuang kata `script`** (bukan cuma meng-escape `<`/`>`), jadi
+  assertion `toContain('&lt;script&gt;')` salah. Hasil nyata: `&lt;&gt;alert(1)&lt;&#x2F;&gt;`.
+- **`makeCtx` tidak menyetel `isAdminOrSupervisor`** selain `true`; `submitCtx` juga
+  menyetel `queueOfflineOperation`/`saveToIndexedDB`/`syncPerformanceBD` sebagai `vi.fn()`,
+  jadi tes yang butuh perilaku asli harus menimpanya setelah `submitCtx`.
+
+### Sisa
+- Kandidat berikutnya: `ui.js` 32,98% · `equipment.js` 46,57% · `kpi-engine.js` 43,92% ·
+  `export.js` 45,5% · `parts.js` 54,83% · `requisition.js` 67,16% · `app.js` 20,9%
+  (butuh harness Alpine).
+- Kartu C-3 (Lighthouse) & D-5 (gap AA tema gelap) tetap terbuka; D-5 butuh keputusan user.
+
+---
+
 ## 📝 Session 27 (S27, 2026-10-18) — coverage `charts.js` 8,5% → 97,36% (kartu C-1)
 
 ### Kenapa `charts.js` terakhir

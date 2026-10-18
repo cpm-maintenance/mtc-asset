@@ -29,13 +29,17 @@ export default defineConfig({
             // `vi.mock('chart.js')` — seluruh perhitungan MTBF/MTTR/availability/
             // reliability/Pareto/cost benar-benar dieksekusi), total
             // 64.8/56.14/65.38/66.3. Suite 848 → 896.
+            // S28 (kartu C-2): badan `submitLog` (logs.js 305–517) ditutup —
+            // unggah foto, sanitasi, retry/backoff, jalur offline vs RTDB,
+            // pemotongan stok, audit, refresh 500 ms. logs.js 68.62 → 97.65%
+            // lines, total 66.47/58.03/66.22/68.08. Suite 896 → 938.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 63,
-                branches: 55,
-                functions: 63,
-                lines: 64,
+                statements: 65,
+                branches: 56,
+                functions: 65,
+                lines: 66,
             },
         },
     },

@@ -23,6 +23,7 @@ function stubFirebase(overrides = {}) {
     const fns = {
         db: { name: 'db' },
         ref: vi.fn((db, path) => ({ path })),
+        set: vi.fn(async () => {}),
         update: vi.fn(async () => {}),
         get: vi.fn(async () => ({ val: () => null })),
         runTransaction: vi.fn(async (ref, fn) => fn(10)),
@@ -587,5 +588,568 @@ describe('submitLog — guard sebelum menulis', () => {
         await ctx.submitLog();
         expect(ctx.showNotification).toHaveBeenCalledWith('Admin access required to create logs', 'error');
         expect(fb.update).not.toHaveBeenCalled();
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// C-2 (S28): badan `submitLog` — logs.js 305–517
+//
+// Yang dijaga di sini bukan "modal tertutup", tapi **apa yang benar-benar
+// ditulis**: payload yang sudah disanitasi (kecuali dua field JSON yang
+// sengaja dikembalikan mentah), diff downtime yang masuk transaksi Stats,
+// pemotongan stok yang hanya terjadi sekali per part ber-id, jalur offline
+// yang tidak menyentuh RTDB, dan refresh 500 ms setelah tulis.
+// ══════════════════════════════════════════════════════════════════════════
+
+function baseForm(overrides = {}) {
+    return {
+        equipmentId: 'EQ-1',
+        date: '2026-10-01',
+        type: 'Corrective',
+        desc: 'ganti bearing',
+        tech: 'Andi',
+        downtime: 0,
+        cost: 0,
+        status: 'Completed',
+        hm: '',
+        catatan: '',
+        rca: '',
+        parts: [],
+        photos: [],
+        ...overrides,
+    };
+}
+
+function submitCtx(overrides = {}) {
+    const ctx = makeCtx({ logForm: baseForm(), ...overrides });
+    ctx.isOnline = overrides.isOnline ?? true;
+    ctx.queueOfflineOperation = vi.fn(async () => true);
+    ctx.saveToIndexedDB = vi.fn(async () => {});
+    ctx.syncPerformanceBD = vi.fn(async () => {});
+    return ctx;
+}
+
+/** Jalankan submitLog sambil memutar timer (retry 1 s/2 s + refresh 500 ms). */
+async function runSubmit(ctx) {
+    const p = ctx.submitLog();
+    let settled = false;
+    p.then(() => { settled = true; }, () => { settled = true; });
+    for (let i = 0; i < 25 && !settled; i++) await vi.advanceTimersByTimeAsync(500);
+    return p;
+}
+
+const writtenPayload = (fb) => fb.set.mock.calls[0][1];
+const refPaths = (fb) => fb.runTransaction.mock.calls.map(([r]) => r.path);
+
+describe('submitLog — jalur online: payload, Equipment, Stats', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('menulis HistoryLog/LOG-*, menutup modal, dan menaruh log di daftar lokal', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ user: { uid: 'U1' } });
+        await runSubmit(ctx);
+
+        expect(fb.set).toHaveBeenCalledTimes(1);
+        expect(fb.set.mock.calls[0][0].path).toMatch(/^HistoryLog\/LOG-\d+$/);
+        const payload = writtenPayload(fb);
+        expect(payload).toMatchObject({
+            EquipmentID: 'EQ-1',
+            Tanggal: '2026-10-01',
+            Jenis: 'Corrective',
+            Deskripsi: 'ganti bearing',
+            Technician: 'Andi',
+            Downtime: 0,
+            Cost: 0,
+            PartsUsed: '[]',
+            PhotoURLs: '[]',
+            createdBy: 'U1',
+            updatedBy: 'U1',
+        });
+        expect(typeof payload.createdAt).toBe('string');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+        expect(ctx.showLogModal).toBe(false);
+        expect(ctx.isLoading).toBe(false);
+        expect(ctx.logs[0].LogID).toBe(payload.LogID);
+    });
+
+    it('downtime > 0 → transaksi Stats/totalDowntime dengan selisihnya', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ downtime: 5 }) });
+        await runSubmit(ctx);
+
+        const call = fb.runTransaction.mock.calls.find(([r]) => r.path === 'Stats/totalDowntime');
+        expect(call).toBeTruthy();
+        expect(call[1](3)).toBe(8);
+        expect(call[1](undefined)).toBe(5);   // `curr || 0`
+        expect(call[1](-10)).toBe(0);         // Math.max(0, …)
+    });
+
+    it('downtime 0 → tidak ada transaksi Stats', async () => {
+        const fb = stubFirebase();
+        await runSubmit(submitCtx());
+        expect(refPaths(fb)).not.toContain('Stats/totalDowntime');
+    });
+
+    it('Status Completed → Equipment Active, HM ikut jadi LastHM', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ status: 'Completed', hm: '1234.5' }) });
+        await runSubmit(ctx);
+        expect(fb.update).toHaveBeenCalledWith(
+            expect.objectContaining({ path: 'Equipment/EQ-1' }),
+            { Status: 'Active', LastHM: '1234.5' },
+        );
+    });
+
+    it('Status lain → In Maintenance', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ status: 'In Progress' }) });
+        await runSubmit(ctx);
+        expect(fb.update).toHaveBeenCalledWith(
+            expect.objectContaining({ path: 'Equipment/EQ-1' }),
+            { Status: 'In Maintenance' },
+        );
+    });
+
+    it('equipment EXTERNAL → Equipment tidak disentuh', async () => {
+        const fb = stubFirebase();
+        await runSubmit(submitCtx({ logForm: baseForm({ equipmentId: 'EXTERNAL' }) }));
+        expect(fb.update).not.toHaveBeenCalled();
+    });
+
+    it('potong stok sekali per part ber-id, entri tanpa id dilewati', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            logForm: baseForm({ parts: [{ id: 'P1', qty: 2 }, { id: '', qty: 1 }, { id: 'P2', qty: 3 }] }),
+        });
+        await runSubmit(ctx);
+
+        expect(refPaths(fb)).toEqual(['SpareParts/P1/Stok', 'SpareParts/P2/Stok']);
+        expect(fb.runTransaction.mock.calls[0][1](10)).toBe(8);
+        expect(fb.runTransaction.mock.calls[1][1](undefined)).toBe(-3);
+    });
+
+    it('woNumber ada → stok tidak dipotong (dipotong saat approve)', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            logForm: baseForm({ woNumber: 'WO-7', parts: [{ id: 'P1', qty: 2 }] }),
+        });
+        await runSubmit(ctx);
+        expect(refPaths(fb).filter((p) => p.startsWith('SpareParts/'))).toEqual([]);
+    });
+
+    it('edit log → stok tidak dipotong', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            isEditingLog: true,
+            logs: [{ LogID: 'LOG-9', Downtime: 0 }],
+            logForm: baseForm({ logId: 'LOG-9', parts: [{ id: 'P1', qty: 2 }] }),
+        });
+        await runSubmit(ctx);
+        expect(refPaths(fb).filter((p) => p.startsWith('SpareParts/'))).toEqual([]);
+    });
+
+    it('satu transaksi stok gagal → part berikutnya tetap diproses', async () => {
+        const fb = stubFirebase({
+            runTransaction: vi.fn(async (ref, fn) => {
+                if (ref.path === 'SpareParts/P1/Stok') throw new Error('stok beku');
+                return fn(10);
+            }),
+        });
+        const ctx = submitCtx({
+            logForm: baseForm({ parts: [{ id: 'P1', qty: 1 }, { id: 'P2', qty: 1 }] }),
+        });
+        await runSubmit(ctx);
+
+        expect(refPaths(fb)).toEqual(['SpareParts/P1/Stok', 'SpareParts/P2/Stok']);
+        expect(console.error).toHaveBeenCalled();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+    });
+
+    it('Breakdown → syncPerformanceBD(equip, tanggal)', async () => {
+        stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ type: 'Breakdown' }) });
+        await runSubmit(ctx);
+        expect(ctx.syncPerformanceBD).toHaveBeenCalledWith('EQ-1', '2026-10-01');
+    });
+
+    it('bukan Breakdown → syncPerformanceBD dilewati', async () => {
+        stubFirebase();
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+        expect(ctx.syncPerformanceBD).not.toHaveBeenCalled();
+    });
+});
+
+describe('submitLog — sanitasi & metadata audit data', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('Deskripsi di-escape, PartsUsed & PhotoURLs dikembalikan mentah', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            logForm: baseForm({
+                desc: '<script>alert(1)</script>',
+                parts: [{ id: 'P1', qty: 2 }],
+                photos: [{ preview: 'https://cdn/a.jpg' }],
+            }),
+        });
+        await runSubmit(ctx);
+
+        const payload = writtenPayload(fb);
+        // sanitizeInput: escape `< > " ' /`, buang kata "script" & `on…=`
+        expect(payload.Deskripsi).not.toContain('<');
+        expect(payload.Deskripsi).not.toMatch(/script/i);
+        expect(payload.Deskripsi).toContain('&lt;&gt;alert(1)&lt;');
+        expect(payload.PartsUsed).toBe('[{"id":"P1","qty":2}]');
+        expect(payload.PhotoURLs).toBe('["https://cdn/a.jpg"]');
+    });
+
+    it('buat baru tanpa user → createdBy/updatedBy "unknown"', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ user: null });
+        await runSubmit(ctx);
+        const payload = writtenPayload(fb);
+        expect(payload.createdBy).toBe('unknown');
+        expect(payload.updatedBy).toBe('unknown');
+    });
+
+    it('edit: createdBy/createdAt lama dipertahankan, diff downtime dikurangi downtime lama', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            isEditingLog: true,
+            logs: [{ LogID: 'LOG-9', Downtime: 4, createdBy: 'U9', createdAt: '2020-01-01T00:00:00.000Z' }],
+            logForm: baseForm({ logId: 'LOG-9', downtime: 6 }),
+        });
+        await runSubmit(ctx);
+
+        const payload = writtenPayload(fb);
+        expect(payload.createdBy).toBe('U9');
+        expect(payload.createdAt).toBe('2020-01-01T00:00:00.000Z');
+        const call = fb.runTransaction.mock.calls.find(([r]) => r.path === 'Stats/totalDowntime');
+        expect(call[1](0)).toBe(2);
+        expect(payload.updatedBy).toBe('unknown');
+    });
+
+    it('edit tanpa log lama → createdBy tidak diisi', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            isEditingLog: true,
+            logs: [],
+            logForm: baseForm({ logId: 'LOG-X', downtime: 3 }),
+        });
+        await runSubmit(ctx);
+
+        const payload = writtenPayload(fb);
+        expect('createdBy' in payload).toBe(false);
+        const call = fb.runTransaction.mock.calls.find(([r]) => r.path === 'Stats/totalDowntime');
+        expect(call[1](0)).toBe(3);
+    });
+
+    it('field opsional kosong memakai nilai default', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            logForm: baseForm({ woNumber: '', woPriority: '', estimatedHours: 'x', actualHours: null }),
+        });
+        await runSubmit(ctx);
+
+        const payload = writtenPayload(fb);
+        expect(payload.woPriority).toBe('Normal');
+        expect(payload.requestSource).toBe('Production');
+        expect(payload.estimatedHours).toBe(0);
+        expect(payload.actualHours).toBe(0);
+        expect(payload.externalEquipName).toBe('');
+    });
+
+    it('parts bukan array → PartsUsed "[]"', async () => {
+        const fb = stubFirebase();
+        await runSubmit(submitCtx({ logForm: baseForm({ parts: 'rusak' }) }));
+        expect(writtenPayload(fb).PartsUsed).toBe('[]');
+    });
+
+    it('qty bukan angka → 1; Alpine.raw melempar → pakai objek apa adanya', async () => {
+        const fb = stubFirebase();
+        vi.stubGlobal('Alpine', { raw: vi.fn(() => { throw new Error('proxy'); }) });
+        const ctx = submitCtx({
+            logForm: baseForm({ parts: [{ id: 'P1', qty: 'abc' }, { id: 'P2', qty: '4' }] }),
+        });
+        await runSubmit(ctx);
+
+        expect(writtenPayload(fb).PartsUsed).toBe('[{"id":"P1","qty":1},{"id":"P2","qty":4}]');
+    });
+});
+
+describe('submitLog — foto', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('URL remote dipertahankan tanpa upload', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ photos: [{ preview: 'https://cdn/a.jpg' }] }) });
+        ctx.uploadImage = vi.fn(async () => 'https://cdn/baru.jpg');
+        await runSubmit(ctx);
+
+        expect(ctx.uploadImage).not.toHaveBeenCalled();
+        expect(writtenPayload(fb).PhotoURLs).toBe('["https://cdn/a.jpg"]');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Uploading photos...', 'info');
+    });
+
+    it('blob + file → uploadImage dipanggil, URL hasilnya disimpan', async () => {
+        const fb = stubFirebase();
+        const file = { name: 'a.jpg' };
+        const ctx = submitCtx({ logForm: baseForm({ photos: [{ preview: 'blob:x', file }] }) });
+        ctx.uploadImage = vi.fn(async () => 'https://cdn/hasil.jpg');
+        await runSubmit(ctx);
+
+        expect(ctx.uploadImage).toHaveBeenCalledWith(file);
+        expect(writtenPayload(fb).PhotoURLs).toBe('["https://cdn/hasil.jpg"]');
+    });
+
+    it('base64 legacy tanpa file → disimpan apa adanya', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            logForm: baseForm({ photos: [{ base64: 'data:image/png;base64,AAA' }] }),
+        });
+        ctx.uploadImage = vi.fn(async () => 'https://cdn/x.jpg');
+        await runSubmit(ctx);
+
+        expect(ctx.uploadImage).not.toHaveBeenCalled();
+        expect(writtenPayload(fb).PhotoURLs).toBe('["data:image/png;base64,AAA"]');
+    });
+
+    it('upload melempar → foto dibuang + peringatan, log tetap tersimpan', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ photos: [{ preview: 'blob:x', file: { name: 'a' } }] }) });
+        ctx.uploadImage = vi.fn(async () => { throw new Error('cloudinary down'); });
+        await runSubmit(ctx);
+
+        expect(writtenPayload(fb).PhotoURLs).toBe('[]');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Sebagian foto gagal diupload — coba lagi', 'warning');
+        expect(console.warn).toHaveBeenCalledWith('[SubmitLog] photo upload failed:', 'cloudinary down');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+    });
+
+    it('upload mengembalikan string kosong → foto baru dibuang', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({
+            logForm: baseForm({ photos: [{ base64: 'data:image/png;base64,AAA', file: { name: 'a' } }] }),
+        });
+        ctx.uploadImage = vi.fn(async () => '');
+        await runSubmit(ctx);
+
+        expect(writtenPayload(fb).PhotoURLs).toBe('[]');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Sebagian foto gagal diupload — coba lagi', 'warning');
+    });
+
+    it('uploadImage bukan fungsi → foto baru dibuang', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ photos: [{ base64: 'data:image/png;base64,AAA', file: {} }] }) });
+        delete ctx.uploadImage;
+        await runSubmit(ctx);
+
+        expect(writtenPayload(fb).PhotoURLs).toBe('[]');
+    });
+
+    it('entri null dilewati tanpa melempar', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ photos: [null, { preview: 'https://cdn/b.jpg' }] }) });
+        await runSubmit(ctx);
+        expect(writtenPayload(fb).PhotoURLs).toBe('["https://cdn/b.jpg"]');
+    });
+
+    it('photos berupa objek Alpine → di-unwrap lewat Alpine.raw', async () => {
+        const fb = stubFirebase();
+        vi.stubGlobal('Alpine', { raw: vi.fn((o) => o.list) });
+        const ctx = submitCtx({ logForm: baseForm({ photos: { list: [{ preview: 'https://cdn/c.jpg' }] } }) });
+        await runSubmit(ctx);
+
+        expect(writtenPayload(fb).PhotoURLs).toBe('["https://cdn/c.jpg"]');
+    });
+
+    it('photos objek tapi Alpine.raw tidak tersedia → daftar kosong', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ logForm: baseForm({ photos: { list: [{ preview: 'https://cdn/c.jpg' }] } }) });
+        await runSubmit(ctx);
+
+        expect(writtenPayload(fb).PhotoURLs).toBe('[]');
+        expect(ctx.showNotification).not.toHaveBeenCalledWith('Uploading photos...', 'info');
+    });
+});
+
+describe('submitLog — jalur offline (queue + IndexedDB)', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('queue berhasil → RTDB tidak disentuh, log masuk daftar lokal', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ isOnline: false });
+        await runSubmit(ctx);
+
+        expect(fb.set).not.toHaveBeenCalled();
+        expect(fb.update).not.toHaveBeenCalled();
+        expect(ctx.queueOfflineOperation).toHaveBeenCalledWith('logs', expect.objectContaining({ EquipmentID: 'EQ-1' }));
+        expect(ctx.saveToIndexedDB).toHaveBeenCalledTimes(1);
+        expect(ctx.logs).toHaveLength(1);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log saved offline, will sync when online');
+        expect(ctx.showLogModal).toBe(false);
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('queue berhasil saat edit → baris lama diganti di tempat', async () => {
+        const ctx = submitCtx({
+            isOnline: false,
+            isEditingLog: true,
+            logs: [{ LogID: 'LOG-9', Deskripsi: 'lama' }, { LogID: 'LOG-8' }],
+            logForm: baseForm({ logId: 'LOG-9', desc: 'baru' }),
+        });
+        await runSubmit(ctx);
+
+        expect(ctx.logs).toHaveLength(2);
+        expect(ctx.logs[0].LogID).toBe('LOG-9');
+        expect(ctx.logs[0].Deskripsi).toBe('baru');
+    });
+
+    it('queue gagal → jatuh ke jalur online', async () => {
+        const fb = stubFirebase();
+        const ctx = submitCtx({ isOnline: false });
+        ctx.queueOfflineOperation = vi.fn(async () => false);
+        await runSubmit(ctx);
+
+        expect(fb.set).toHaveBeenCalledTimes(1);
+        expect(ctx.saveToIndexedDB).not.toHaveBeenCalled();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+    });
+
+    it('saveToIndexedDB melempar → error ditangkap, isLoading kembali false', async () => {
+        const ctx = submitCtx({ isOnline: false });
+        ctx.saveToIndexedDB = vi.fn(async () => { throw new Error('idb penuh'); });
+        await runSubmit(ctx);
+
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: idb penuh', 'error');
+        expect(ctx.isLoading).toBe(false);
+    });
+});
+
+describe('submitLog — retry, audit trail, refresh 500 ms', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('gagal sekali karena jaringan → notifikasi retrying lalu sukses', async () => {
+        const fb = stubFirebase({
+            set: vi.fn()
+                .mockRejectedValueOnce(new Error('network timeout'))
+                .mockResolvedValueOnce(undefined),
+        });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+
+        expect(fb.set).toHaveBeenCalledTimes(2);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Network error, retrying...', 'info');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+    });
+
+    it('gagal sekali karena error non-jaringan → tanpa notifikasi retrying', async () => {
+        const fb = stubFirebase({
+            set: vi.fn()
+                .mockRejectedValueOnce(new Error('permission denied'))
+                .mockResolvedValueOnce(undefined),
+        });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+
+        expect(fb.set).toHaveBeenCalledTimes(2);
+        expect(ctx.showNotification).not.toHaveBeenCalledWith('Network error, retrying...', 'info');
+    });
+
+    it('tiga percobaan gagal → notifikasi Error, modal tetap terbuka', async () => {
+        const fb = stubFirebase({ set: vi.fn(async () => { throw new Error('boom'); }) });
+        const ctx = submitCtx({ showLogModal: true });
+        await runSubmit(ctx);
+
+        expect(fb.set).toHaveBeenCalledTimes(3);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: boom', 'error');
+        expect(ctx.showLogModal).toBe(true);
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('audit "Create Log/WO" dipanggil dengan id/equip/jenis', async () => {
+        stubFirebase();
+        const logAudit = vi.fn();
+        vi.stubGlobal('auditModule', { logAudit });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+
+        expect(logAudit).toHaveBeenCalledWith('Create Log/WO', {
+            id: expect.stringMatching(/^LOG-\d+$/),
+            equip: 'EQ-1',
+            jenis: 'Corrective',
+        });
+    });
+
+    it('audit "Update Log/WO" saat edit', async () => {
+        stubFirebase();
+        const logAudit = vi.fn();
+        vi.stubGlobal('auditModule', { logAudit });
+        const ctx = submitCtx({
+            isEditingLog: true,
+            logs: [{ LogID: 'LOG-9' }],
+            logForm: baseForm({ logId: 'LOG-9' }),
+        });
+        await runSubmit(ctx);
+
+        expect(logAudit.mock.calls[0][0]).toBe('Update Log/WO');
+    });
+
+    it('audit melempar → diabaikan, log tetap tersimpan', async () => {
+        const fb = stubFirebase();
+        vi.stubGlobal('auditModule', { logAudit: vi.fn(() => { throw new Error('audit mati'); }) });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+
+        expect(fb.set).toHaveBeenCalledTimes(1);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+    });
+
+    it('auditModule tidak ada → tidak melempar', async () => {
+        stubFirebase();
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Log entry successfully saved!');
+    });
+
+    it('refresh 500 ms mengganti daftar log dengan hasil RTDB terurut menurun', async () => {
+        const fb = stubFirebase({
+            get: vi.fn(async () => ({
+                val: () => ({
+                    'LOG-1': { EquipmentID: 'EQ-1' },
+                    'LOG-2': { EquipmentID: 'EQ-1' },
+                }),
+            })),
+        });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(fb.get).toHaveBeenCalledWith(expect.objectContaining({ path: 'HistoryLog' }));
+        expect(ctx.logs.map((l) => l.LogID)).toEqual(['LOG-2', 'LOG-1']);
+    });
+
+    it('refresh: snapshot kosong → daftar lokal tidak berubah', async () => {
+        stubFirebase({ get: vi.fn(async () => ({ val: () => null })) });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(ctx.logs).toHaveLength(1);
+    });
+
+    it('refresh: get melempar → diabaikan tanpa mengubah daftar', async () => {
+        stubFirebase({ get: vi.fn(async () => { throw new Error('rtdb putus'); }) });
+        const ctx = submitCtx();
+        await runSubmit(ctx);
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(ctx.logs).toHaveLength(1);
+        expect(ctx.showLogModal).toBe(false);
     });
 });
