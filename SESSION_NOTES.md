@@ -1,3 +1,97 @@
+## 📝 Session 27 (S27, 2026-10-18) — coverage `charts.js` 8,5% → 97,36% (kartu C-1)
+
+### Kenapa `charts.js` terakhir
+S26 menutup lapisan persistensi/listener/aritmetika PM. `charts.js` (576 baris) sengaja
+ditinggal sampai akhir karena butuh `vi.mock('chart.js')` — dan karena seluruh isinya
+**perhitungan data**, bukan sekadar pemanggilan library. Yang diuji di sini bukan "chart
+terbentuk", tapi angka yang masuk ke chart: MTBF/MTTR per bulan, availability, reliability
+`e^(-t/MTBF)`, Pareto kumulatif, cost per bulan, health/WO/PM trend.
+
+### `tests/charts-module.test.js` (48 tes) — 8,5% → **97,36%** lines
+Chart.js di-mock di level **library** (`vi.hoisted` + `vi.mock('chart.js')` dengan
+`Chart`/`registerables` palsu), jadi modulnya dieksekusi apa adanya. `Object.create(chartModule)`
+untuk isolasi state (spread `{...chartModule}` membekukan method lewat getter).
+
+- **Helper murni**: `safeDeepClone` (salinan dalam, jalur `catch` untuk objek sirkular/`toJSON`
+  yang melempar), `_monthKey` (valid/invalid/null), `_rgba` (hex 6 & 3 digit), `_gradFill`
+  (dua stop alpha, `createLinearGradient(0,0,0,300)`), `_equipLabel` (nama → fallback id →
+  fallback `Unknown Asset`), `_chartIdleKind` (offline/empty).
+- **`loadChartJS`**: `Chart.register(...registerables)` sekali, lalu cache `window._chartJS`.
+  `safeCreateChart`: instance baru · destroy chart lama di kanvas sama · `null` kalau Chart.js
+  tidak ada · `catch` → `console.error` + `showNotification('Chart render failed','error')`.
+- **`setChartState`/`clearChartState`**: tiga preset ikon (`wifi_off`/`warning`/`show_chart`)
+  + tone token, jenis tak dikenal jatuh ke `empty`, kanvas hilang tidak melempar.
+- **`renderMTBFMTTRChart`**: 4 guard (tanpa filter, tanpa kanvas, tanpa log, error `_raw`),
+  agregasi per bulan (`wh/freq`, fallback `events.length`, fallback jumlah log `Breakdown`),
+  MTTR hanya saat ada `Repair` **dan** downtime.
+- **`renderDashboardCharts`**: guard halaman/login, destroy chart sisa (termasuk yang
+  `destroy()`-nya melempar), `dashboardStats` (overduePM/lowStock/totalDowntime), 4 overlay
+  saat equipment kosong, render 4 chart (PA harian → 7 hari terakhir, PM overdue/pending/
+  completed/cancelled, WO completion, cost trend), filter rentang tanggal WO, dan **4 cabang
+  "halaman berpindah di tengah render"** (satu tes per chart).
+- **`renderKPICharts`**: 9 chart. MTBF = `hari × 24 / kegagalan` (equipment dengan <2 titik
+  dibuang), MTTR diurut menurun, availability per bulan, reliability `e^(-t/avgMTBF)`,
+  top-5 komponen, scheduled vs unscheduled, failure type dari `equipment.Tipe`, cost
+  `Rp M`, Pareto kumulatif berakhir di 100%.
+- **`renderEnterpriseCharts`**: 6 chart (health dist, WO status, PM trend, downtime trend,
+  cost trend, ABC), `tooltipStyle` bersama, dan nilai netral `[1]` saat semua kalkulasi kosong.
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `charts.js` | 8,5% | **97,36%** (stmt 94,77 · branch 88,68 · func 93,22) |
+
+Total **60,6% → 66,3%** lines · 64,8% stmt · 56,14% branch · 65,38% func.
+Suite **848 → 896** tes (34 berkas). Ratchet `vitest.config.js` **57/50/57/60 → 63/55/63/64**.
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 80 warning** (baseline 79 → 80, satu-satunya warning baru
+  sudah dibersihkan: `const charts` yang tak dipakai di tes fallback) · `vitest` **896/896** ·
+  `test:coverage` lolos threshold baru · `build` ok · `verify:precache` **50/50**.
+- **`src/js/**` tidak disentuh** → bundle identik, `sw.js` tetap **`mtc-asset-v15`**.
+
+### Dua temuan (sengaja TIDAK diperbaiki — sesi ini hanya tes)
+1. **Tiga guard destroy di `renderDashboardCharts` tidak pernah tercapai.** Baris 179 menimpa
+   `window._appCharts` dengan `{reliability: null, woCompletion: null, costTrend: null, …}`
+   tepat sebelum `renderCharts()` jalan, jadi `if (window._appCharts.reliability)` (baris 251),
+   `.woCompletion` (302), dan `.costTrend` (318) **selalu false** — termasuk blok `catch`
+   `console.warn('Chart destroy failed')` di dalamnya. Hanya `safeCreateChart` yang benar-benar
+   menghancurkan chart lama. Ini yang membuat 3 baris itu tetap merah di laporan coverage.
+2. **`renderMTBFMTTRChart` menghancurkan chart yang sama dua kali**: guard lokal
+   (`Chart.getChart(canvas)` → `destroy()`, baris 100–101) lalu `safeCreateChart` melakukan
+   hal yang sama lagi. Tidak berbahaya (Chart.js mengabaikan destroy kedua), tapi satu
+   pemanggilan `getChart` + `destroy` bisa dihapus. Dikunci tes dengan ekspektasi **2**.
+
+### Jebakan baru (catat biar tidak diulang)
+- **jsdom tidak punya layout**: `offsetParent` **selalu null** dan `clientHeight` **0**, jadi
+  `waitForCanvas()` tidak pernah resolve lewat jalur sukses. Obatnya kanvas palsu lewat
+  `vi.spyOn(document,'getElementById')` yang mengembalikan
+  `{offsetParent:{}, clientHeight:120, parentElement:null, style:{}}`.
+- **`JSON.stringify(undefined)` tidak melempar** — yang melempar adalah `JSON.parse(undefined)`
+  di dalam `try` yang sama. Jadi `safeDeepClone(undefined)` = `{}` sedangkan
+  `safeDeepClone(null)` = **`null`** (jalur sukses, bukan fallback).
+- **`renderDashboardCharts` tidak mengembalikan promise render-nya** — ia hanya menjadwalkan
+  lewat `$nextTick` → `requestAnimationFrame`. Untuk menunggu, stub `$nextTick` jadi
+  `fn => fn()`, stub `requestAnimationFrame` jadi penangkap (`scheduled = fn()`), lalu
+  `await scheduled`.
+- **`vi.useFakeTimers()` + `advanceTimersByTimeAsync` harus menutup anggaran retry SEMUA
+  kanvas**, bukan satu. Dashboard 4 × 1.500 ms, KPI 8 × 5.500 ms (= 44 s) — angka 20.000
+  membuat tes menggantung sampai timeout 5 s (bukan gagal assertion).
+- **`vi.restoreAllMocks()` juga me-reset implementasi `vi.fn()`**, jadi `Chart.getChart` dan
+  `Chart.register` (dibuat di `vi.hoisted`) harus dipasang ulang di `beforeEach`.
+- **Jangan meng-assert method pada objek yang propertinya ditimpa chart baru** —
+  `window._appCharts.woStatus` diganti instance Chart, jadi `prev.woStatus.destroy` bukan spy
+  lagi saat assertion. Pegang `vi.fn()`-nya di variabel dulu.
+
+### Sisa
+- `charts.js` 97,36%: yang merah hanya 3 guard mati di atas + beberapa cabang parsial.
+- Kandidat berikutnya: badan `submitLog` (`logs.js` 305–517, kartu C-2) · `ui.js` 32,98% ·
+  `equipment.js` 46,57% · `parts.js` 54,83% · `kpi-engine.js` 43,92% · `export.js` 45,5% ·
+  `app.js` 20,9% (2591 baris, butuh harness Alpine).
+- Kartu C-3 (Lighthouse) & D-5 (gap AA tema gelap) tetap terbuka; D-5 butuh keputusan user.
+
+---
+
 ## 📝 Session 26 (S26, 2026-10-18) — lanjutan coverage: `indexeddb.js` · `data.js` · `pm-schedule.js`
 
 ### Titik awal

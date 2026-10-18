@@ -25,13 +25,17 @@ export default defineConfig({
             // pm-schedule.js (7.9 → 62.61% — helper tanggal/kalender/Gantt).
             // Lalu pm-schedule.js lengkap (submitPM/bulkCompletePM/deletePM) → 99.69%,
             // lalu bootstrap.js (1.06 → 100%), total 57.97/50.08/57.13/60.6. Suite 683 → 848.
+            // S27 (kartu C-1): charts.js 8.5 → 97.36% lines (unit test dengan
+            // `vi.mock('chart.js')` — seluruh perhitungan MTBF/MTTR/availability/
+            // reliability/Pareto/cost benar-benar dieksekusi), total
+            // 64.8/56.14/65.38/66.3. Suite 848 → 896.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 57,
-                branches: 50,
-                functions: 57,
-                lines: 60,
+                statements: 63,
+                branches: 55,
+                functions: 63,
+                lines: 64,
             },
         },
     },
