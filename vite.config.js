@@ -122,6 +122,9 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       open: true,
       allowedHosts: true,
+      // `vitest --coverage` menulis ribuan berkas HTML di coverage/ dan test-results/;
+      // tanpa ini Vite me-reload halaman tiap laporan ditulis ulang.
+      watch: { ignored: ['**/coverage/**', '**/test-results/**', '**/.lighthouseci/**'] },
     },
     optimizeDeps: {
       exclude: ['jspdf', 'jspdf-autotable']
