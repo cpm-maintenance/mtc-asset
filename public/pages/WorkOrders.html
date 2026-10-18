@@ -350,14 +350,14 @@
           <button type="button" @click="logForm.type = 'PM'"
             :aria-pressed="logForm.type !== 'Breakdown' ? 'true' : 'false'"
             class="min-h-[96px] flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98]"
-            :class="logForm.type !== 'Breakdown' ? 'bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">
+            :class="logForm.type !== 'Breakdown' ? 'bg-tac-primary-container text-tac-on-primary-container' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">
             <span class="material-symbols-outlined text-[28px]">check_circle</span>
             <span class="font-headline-md tracking-widest uppercase">Ready</span>
           </button>
           <button type="button" @click="logForm.type = 'Breakdown'"
             :aria-pressed="logForm.type === 'Breakdown' ? 'true' : 'false'"
             class="min-h-[96px] flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98]"
-            :class="logForm.type === 'Breakdown' ? 'bg-[#93000A] text-white' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-[#93000A]/70 hover:text-white'">
+            :class="logForm.type === 'Breakdown' ? 'bg-tac-error-container text-tac-on-error-container' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-error-container/70 hover:text-tac-on-error-container'">
             <span class="material-symbols-outlined text-[28px]">warning</span>
             <span class="font-headline-md tracking-widest uppercase">Breakdown</span>
           </button>
@@ -366,13 +366,13 @@
 
       <!-- Failure report block — full-bleed, only when unit is down -->
       <template x-if="logForm.type === 'Breakdown'">
-        <div class="bg-[#93000A] p-5" role="alert">
+        <div class="bg-tac-error-container p-5" role="alert">
           <div class="flex items-center gap-3 mb-2">
-            <span class="material-symbols-outlined text-[20px] text-white">error</span>
-            <p class="font-headline-md text-white uppercase tracking-tight">Failure Report Active</p>
+            <span class="material-symbols-outlined text-[20px] text-tac-on-error-container">error</span>
+            <p class="font-headline-md text-tac-on-error-container uppercase tracking-tight">Failure Report Active</p>
           </div>
-          <p class="text-[#ffdad6] text-xs leading-relaxed">
-            This entry is logged as a <strong class="text-white">Breakdown</strong> — it feeds unit health, MTBF, and backlog priority scoring.
+          <p class="text-tac-on-error-container text-xs leading-relaxed">
+            This entry is logged as a <strong class="text-tac-on-error-container">Breakdown</strong> — it feeds unit health, MTBF, and backlog priority scoring.
             Record downtime and root cause below before submitting.
           </p>
         </div>
@@ -385,19 +385,19 @@
           <button type="button" @click="logForm.woPriority = 'Emergency'"
             :aria-pressed="logForm.woPriority === 'Emergency' ? 'true' : 'false'"
             class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Emergency' ? 'bg-[#93000A] text-white' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Emergency</button>
+            :class="logForm.woPriority === 'Emergency' ? 'bg-tac-error-container text-tac-on-error-container' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Emergency</button>
           <button type="button" @click="logForm.woPriority = 'Urgent'"
             :aria-pressed="logForm.woPriority === 'Urgent' ? 'true' : 'false'"
             class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Urgent' ? 'bg-amber-500 text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Urgent</button>
+            :class="logForm.woPriority === 'Urgent' ? 'bg-tac-primary-container text-tac-on-primary-container' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Urgent</button>
           <button type="button" @click="logForm.woPriority = 'Normal'"
             :aria-pressed="logForm.woPriority === 'Normal' ? 'true' : 'false'"
             class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Normal' ? 'bg-tac-on-surface text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Normal</button>
+            :class="logForm.woPriority === 'Normal' ? 'bg-tac-surface-container-highest text-tac-on-surface' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Normal</button>
           <button type="button" @click="logForm.woPriority = 'Planned'"
             :aria-pressed="logForm.woPriority === 'Planned' ? 'true' : 'false'"
             class="min-h-[64px] font-headline-md uppercase tracking-widest transition-all active:scale-[0.98]"
-            :class="logForm.woPriority === 'Planned' ? 'bg-sky-500 text-black' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Planned</button>
+            :class="logForm.woPriority === 'Planned' ? 'bg-tac-secondary-container text-tac-on-secondary-container' : 'bg-tac-surface-container-high text-tac-on-surface-variant hover:bg-tac-surface-container-highest'">Planned</button>
         </div>
       </div>
 
@@ -419,12 +419,12 @@
               class="bg-transparent w-full p-3 text-tac-on-surface text-sm font-bold border-none focus:outline-none placeholder:text-tac-on-surface-variant/40">
           </div>
           <div x-show="logForm.equipmentId && getLastHM(logForm.equipmentId) !== '-'"
-            class="flex items-center gap-2 px-2 py-1 bg-[#93000A]/20 text-[#ffb4ab] text-[10px] font-bold uppercase tracking-tight">
+            class="flex items-center gap-2 px-2 py-1 bg-tac-error-container/20 text-tac-on-error-container text-[10px] font-bold uppercase tracking-tight">
             <span class="material-symbols-outlined text-[14px]">warning</span>
             <span x-text="'Last recorded HM: ' + getLastHM(logForm.equipmentId)"></span>
           </div>
           <div x-show="logForm.equipmentId && getLastHM(logForm.equipmentId) !== '-' && logForm.hm && Number(String(logForm.hm).replace(/[^0-9.]/g, '')) <= Number(String(getLastHM(logForm.equipmentId)).replace(/[^0-9.]/g, ''))"
-            class="flex items-center gap-2 px-2 py-1 bg-[#93000A] text-white text-[10px] font-bold uppercase tracking-tight">
+            class="flex items-center gap-2 px-2 py-1 bg-tac-error-container text-tac-on-error-container text-[10px] font-bold uppercase tracking-tight">
             <span class="material-symbols-outlined text-[14px]">error</span>
             <span>Entry must be higher than previous</span>
           </div>
@@ -494,7 +494,7 @@
             </div>
 
             <button type="button" @click="removePartFromLog(index)" aria-label="Remove component"
-              class="col-span-1 min-h-[64px] bg-tac-surface-container-high text-rose-400/70 hover:text-rose-300 hover:bg-[#93000A]/30 transition-colors flex items-center justify-center">
+              class="col-span-1 min-h-[64px] bg-tac-surface-container-high text-tac-status-emergency/70 hover:text-tac-status-emergency hover:bg-tac-error-container/30 transition-colors flex items-center justify-center">
               <span class="material-symbols-outlined text-[18px]">close</span>
             </button>
           </div>
@@ -512,7 +512,7 @@
               <div class="relative aspect-square bg-tac-surface-container-lowest border border-tac-border-subtle overflow-hidden">
                 <img :src="p.preview" loading="lazy" alt="Photo evidence" class="w-full h-full object-cover">
                 <button type="button" @click="removeLogPhoto(idx)" aria-label="Remove photo"
-                  class="absolute top-0 right-0 min-w-[44px] min-h-[44px] bg-[#93000A] text-white flex items-center justify-center">
+                  class="absolute top-0 right-0 min-w-[44px] min-h-[44px] bg-tac-error-container text-tac-on-error-container flex items-center justify-center">
                   <span class="material-symbols-outlined text-[18px]">close</span>
                 </button>
               </div>
@@ -535,7 +535,7 @@
 
       <!-- Final action -->
       <button type="submit"
-        class="w-full min-h-[80px] bg-gradient-to-br from-[#FFD700] to-[#E9C400] text-black font-headline-md tracking-[0.2em] uppercase active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_10px_30px_rgba(255,215,0,0.2)]">
+        class="w-full min-h-[80px] bg-tac-primary-container text-tac-on-primary-container font-headline-md tracking-[0.2em] uppercase active:scale-[0.99] transition-all flex items-center justify-center gap-4 shadow-[0_10px_30px_rgba(255,215,0,0.2)]">
         <span class="material-symbols-outlined text-[18px]">cloud_done</span>
         <span x-text="isEditingLog ? 'Execute Update' : 'Submit Log to Command'"></span>
       </button>

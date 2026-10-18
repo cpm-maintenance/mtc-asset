@@ -682,17 +682,17 @@ describe('validatePerformanceForm', () => {
 
 describe('getLifetimeColor', () => {
   it('should return correct colors', () => {
-    expect(getLifetimeColor('overdue')).toBe('text-rose-500');
-    expect(getLifetimeColor('warning')).toBe('text-amber-500');
-    expect(getLifetimeColor('ok')).toBe('text-emerald-500');
+    expect(getLifetimeColor('overdue')).toBe('text-tac-status-emergency');
+    expect(getLifetimeColor('warning')).toBe('text-tac-status-repair');
+    expect(getLifetimeColor('ok')).toBe('text-tac-status-operational');
   });
 });
 
 describe('getLifetimeBgColor', () => {
   it('should return correct bg colors', () => {
-    expect(getLifetimeBgColor('overdue')).toContain('bg-rose-500');
-    expect(getLifetimeBgColor('warning')).toContain('bg-amber-500');
-    expect(getLifetimeBgColor('ok')).toContain('bg-emerald-500');
+    expect(getLifetimeBgColor('overdue')).toContain('bg-tac-status-emergency');
+    expect(getLifetimeBgColor('warning')).toContain('bg-tac-status-repair');
+    expect(getLifetimeBgColor('ok')).toContain('bg-tac-status-operational');
   });
 });
 

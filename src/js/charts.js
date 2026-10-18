@@ -130,9 +130,9 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         host.querySelectorAll('[data-chart-state]').forEach((el) => el.remove());
 
         const presets = /** @type {Record<string, {icon: string, tone: string}>} */ ({
-            offline: { icon: 'wifi_off', tone: 'text-amber-400' },
-            error: { icon: 'warning', tone: 'text-rose-400' },
-            empty: { icon: 'show_chart', tone: 'text-slate-400' },
+            offline: { icon: 'wifi_off', tone: 'text-tac-status-repair' },
+            error: { icon: 'warning', tone: 'text-tac-status-emergency' },
+            empty: { icon: 'show_chart', tone: 'text-tac-on-surface-variant' },
         });
         const cfg = presets[kind] || presets.empty;
 
@@ -143,11 +143,12 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         box.className = 'absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 px-4 text-center pointer-events-none';
 
         const ic = document.createElement('i');
-        ic.className = `fas ${cfg.icon} text-xl ${cfg.tone}`;
+        ic.className = `material-symbols-outlined icon-22 ${cfg.tone}`;
+        ic.textContent = cfg.icon;
         ic.setAttribute('aria-hidden', 'true');
 
         const p = document.createElement('p');
-        p.className = 'text-[11px] font-bold text-slate-400 max-w-[22ch] leading-snug';
+        p.className = 'text-[11px] font-bold text-tac-on-surface-variant max-w-[22ch] leading-snug';
         p.textContent = message;
 
         box.appendChild(ic);

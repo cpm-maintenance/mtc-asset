@@ -491,7 +491,7 @@
     </div>
   </div>
 
-  <!-- Sidebar (Desktop) — gaya design system Stitch (bg #080f18, item aktif = pill emas) -->
+  <!-- Sidebar (Desktop) — Tactical Slate: bg-tac-surface-container-lowest, item aktif = pill emas -->
   <nav x-show="isLoggedIn" x-cloak
     :class="sidebarCollapsed ? 'w-20' : 'w-64'"
     class="fixed left-0 top-0 bottom-10 bg-tac-surface-container-lowest hidden lg:flex flex-col py-space-md z-50 shadow-[4px_0_16px_rgba(0,0,0,0.4)] transition-all duration-300">
@@ -1278,9 +1278,9 @@
         <div class="md:col-span-2">
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Visual Signature</label>
           <div class="flex items-center gap-6 bg-tac-surface-card/60 border border-tac-border-tactical p-6 rounded-3xl border-tac-gold-bright/10"
-            @dragover.prevent="$el.classList.add('border-amber-400')"
-            @dragleave.prevent="$el.classList.remove('border-amber-400')"
-            @drop.prevent="$el.classList.remove('border-amber-400'); const f = $event.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) { equipForm.foto = URL.createObjectURL(f); tempEquipFile = f; showCropModal(equipForm.foto, (croppedBlob) => { tempEquipFile = croppedBlob; equipForm.foto = URL.createObjectURL(croppedBlob); }); } else { showNotification('Only image files allowed','error'); }">
+            @dragover.prevent="$el.classList.add('border-tac-status-repair')"
+            @dragleave.prevent="$el.classList.remove('border-tac-status-repair')"
+            @drop.prevent="$el.classList.remove('border-tac-status-repair'); const f = $event.dataTransfer.files[0]; if(f && f.type.startsWith('image/')) { equipForm.foto = URL.createObjectURL(f); tempEquipFile = f; showCropModal(equipForm.foto, (croppedBlob) => { tempEquipFile = croppedBlob; equipForm.foto = URL.createObjectURL(croppedBlob); }); } else { showNotification('Only image files allowed','error'); }">
             <div class="w-28 h-28 rounded-2xl bg-tac-surface-container-low overflow-hidden border-2 border-dashed border-tac-gold-bright/20 flex items-center justify-center relative group">
               <template x-if="equipForm.foto">
                 <img :src="equipForm.foto" loading="lazy" class="w-full h-full object-cover">
@@ -1779,9 +1779,9 @@
             <!-- Add Button (shows only if < 4) -->
             <label x-show="logForm.photos.length < 4"
               class="cursor-pointer bg-tac-surface-card/60 border border-tac-border-tactical hover:border-tac-gold-bright text-tac-gold-bright/20 aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all"
-              @dragover.prevent="$el.classList.add('border-amber-400')"
-              @dragleave.prevent="$el.classList.remove('border-amber-400')"
-              @drop.prevent="$el.classList.remove('border-amber-400'); [...$event.dataTransfer.files].filter(f => f.type.startsWith('image/')).slice(0, 4 - logForm.photos.length).forEach(f => { handleLogPhotoDrop(f); });">
+              @dragover.prevent="$el.classList.add('border-tac-status-repair')"
+              @dragleave.prevent="$el.classList.remove('border-tac-status-repair')"
+              @drop.prevent="$el.classList.remove('border-tac-status-repair'); [...$event.dataTransfer.files].filter(f => f.type.startsWith('image/')).slice(0, 4 - logForm.photos.length).forEach(f => { handleLogPhotoDrop(f); });">
               <span class="material-symbols-outlined text-xl">add</span>
               <span class="text-[8px] font-black uppercase tracking-widest">Drop / Add Photo</span>
               <input type="file" @change="handleLogPhoto($event)" class="hidden" accept="image/*" multiple>

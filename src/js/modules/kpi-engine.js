@@ -49,7 +49,7 @@ export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>
      */
     calculateHealthScore(equipId) {
         // Guard - safe defaults
-        if (!equipId) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
+        if (!equipId) return { score: 100, color: 'text-tac-status-operational', status: 'Optimal', breakdowns: 0 };
 
         const key = this._kpiKey('h' + equipId);
         if (this._kpiCache && this._kpiCache.key === key && this._kpiCache.h.has(equipId)) {
@@ -63,11 +63,11 @@ export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>
         const equipment = /** @type {any[]} */ (this._raw(this.equipment) || []);
 
         // Guard - validate equipment array
-        if (!Array.isArray(equipment)) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
+        if (!Array.isArray(equipment)) return { score: 100, color: 'text-tac-status-operational', status: 'Optimal', breakdowns: 0 };
 
         const assetLogs = logs.filter(l => l && l.EquipmentID === equipId);
         const asset = equipment.find(e => e && e.EquipmentID === equipId);
-        if (!asset) return { score: 100, color: 'text-emerald-500', status: 'Optimal', breakdowns: 0 };
+        if (!asset) return { score: 100, color: 'text-tac-status-operational', status: 'Optimal', breakdowns: 0 };
 
         let score = 100;
         const now = new Date();
@@ -93,7 +93,7 @@ export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>
         if (mtbf > 0 && mtbf < 168) score -= 10; // Less than a week MTBF is critical
 
         score = Math.max(0, Math.min(100, score));
-        const color = score > 80 ? 'text-emerald-500' : score > 50 ? 'text-amber-500' : 'text-rose-500';
+        const color = score > 80 ? 'text-tac-status-operational' : score > 50 ? 'text-tac-status-repair' : 'text-tac-status-emergency';
         const status = /** @type {'Optimal'|'Warning'|'Critical'} */ (score > 80 ? 'Optimal' : score > 50 ? 'Warning' : 'Critical');
 
         const result = { score, color, status, breakdowns: breakdowns.length };

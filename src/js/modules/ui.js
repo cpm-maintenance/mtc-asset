@@ -41,10 +41,10 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     showNotification(message, type = 'success', duration = 4500) {
         const id = Date.now() + Math.random();
         const config = /** @type {Record<string, any>} */ ({
-            success: { icon: 'check_circle', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400', glow: 'shadow-emerald-500/20', bar: 'bg-emerald-400' },
-            error: { icon: 'cancel', color: 'border-rose-500/40 bg-rose-500/10 text-rose-400', glow: 'shadow-rose-500/20', bar: 'bg-rose-400' },
-            warning: { icon: 'warning', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
-            info: { icon: 'info', color: 'border-amber-500/40 bg-amber-500/10 text-amber-400', glow: 'shadow-amber-500/20', bar: 'bg-amber-400' },
+            success: { icon: 'check_circle', color: 'border-tac-status-operational/40 bg-tac-status-operational/10 text-tac-status-operational', glow: 'shadow-tac-status-operational/20', bar: 'bg-tac-status-operational' },
+            error: { icon: 'error', color: 'border-tac-status-emergency/40 bg-tac-status-emergency/10 text-tac-status-emergency', glow: 'shadow-tac-status-emergency/20', bar: 'bg-tac-status-emergency' },
+            warning: { icon: 'warning', color: 'border-tac-status-repair/40 bg-tac-status-repair/10 text-tac-status-repair', glow: 'shadow-tac-status-repair/20', bar: 'bg-tac-status-repair' },
+            info: { icon: 'info', color: 'border-tac-sync-cyan/40 bg-tac-sync-cyan/10 text-tac-sync-cyan', glow: 'shadow-tac-sync-cyan/20', bar: 'bg-tac-sync-cyan' },
         });
         const c = config[type] || config.info;
         this.notifications.push({
@@ -229,57 +229,59 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // Helpers
     statusColor(s) {
         const colors = /** @type {Record<string, string>} */ ({
-            'Active': 'text-emerald-400 border border-emerald-500/30 bg-emerald-500/10',
-            'In Maintenance': 'text-amber-400 border border-amber-500/30 bg-amber-500/10',
-            'Decommissioned': 'text-slate-400 border border-slate-500/30 bg-slate-500/10'
+            'Active': 'text-tac-status-operational border border-tac-status-operational/30 bg-tac-status-operational/10',
+            'In Maintenance': 'text-tac-status-repair border border-tac-status-repair/30 bg-tac-status-repair/10',
+            'Decommissioned': 'text-tac-status-standby border border-tac-status-standby/30 bg-tac-status-standby/10'
         });
-        return colors[s] || 'text-rose-400 border border-rose-500/30 bg-rose-500/10';
+        return colors[s] || 'text-tac-status-emergency border border-tac-status-emergency/30 bg-tac-status-emergency/10';
     },
 
     critColor(c) {
-        return c === 'High' ? 'text-rose-400 font-bold' : c === 'Medium' ? 'text-amber-400' : 'text-emerald-400';
+        return c === 'High' ? 'text-tac-status-emergency font-bold' : c === 'Medium' ? 'text-tac-status-repair' : 'text-tac-status-operational';
     },
 
     logColor(type) {
         const colors = /** @type {Record<string, string>} */ ({
-            'PM': 'border-green-500',
-            'Repair': 'border-blue-500',
-            'Inspection': 'border-yellow-500',
-            'Breakdown': 'border-red-500'
+            'PM': 'border-tac-status-operational',
+            'Repair': 'border-tac-sync-cyan',
+            'Inspection': 'border-tac-status-repair',
+            'Breakdown': 'border-tac-status-emergency'
         });
-        return colors[type] || 'border-blue-500';
+        return colors[type] || 'border-tac-sync-cyan';
     },
 
     logStatusColor(status) {
         const colors = /** @type {Record<string, string>} */ ({
-            'Completed': 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5',
-            'In Progress': 'border-blue-500/20 text-blue-400 bg-blue-500/5',
-            'Pending': 'border-amber-500/20 text-amber-400 bg-amber-500/5',
-            'Cancelled': 'border-slate-500/20 text-slate-400 bg-slate-500/5',
-            'Approved': 'border-teal-500/20 text-teal-400 bg-teal-500/5',
-            'Draft': 'border-purple-500/20 text-purple-400 bg-purple-500/5'
+            'Completed': 'border-tac-status-operational/20 text-tac-status-operational bg-tac-status-operational/5',
+            'In Progress': 'border-tac-sync-cyan/20 text-tac-sync-cyan bg-tac-sync-cyan/5',
+            'Pending': 'border-tac-status-repair/20 text-tac-status-repair bg-tac-status-repair/5',
+            'Cancelled': 'border-tac-status-standby/20 text-tac-status-standby bg-tac-status-standby/5',
+            'Approved': 'border-tac-status-operational/20 text-tac-status-operational bg-tac-status-operational/5',
+            'Draft': 'border-tac-border-tactical text-tac-on-surface-variant bg-tac-surface-container-low'
         });
-        return colors[status] || 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5';
+        return colors[status] || 'border-tac-status-operational/20 text-tac-status-operational bg-tac-status-operational/5';
     },
 
     woPriorityColor(priority) {
         const colors = /** @type {Record<string, string>} */ ({
-            'Emergency': 'border-rose-500/20 text-rose-400 bg-rose-500/10',
-            'Urgent': 'border-orange-500/20 text-orange-400 bg-orange-500/10',
-            'Normal': 'border-amber-500/20 text-amber-400 bg-amber-500/10',
-            'Planned': 'border-emerald-500/20 text-emerald-400 bg-emerald-500/10'
+            'Emergency': 'border-tac-status-emergency/20 text-tac-status-emergency bg-tac-status-emergency/10',
+            'Urgent': 'border-tac-status-repair/20 text-tac-status-repair bg-tac-status-repair/10',
+            'Normal': 'border-tac-sync-cyan/20 text-tac-sync-cyan bg-tac-sync-cyan/10',
+            'Planned': 'border-tac-status-operational/20 text-tac-status-operational bg-tac-status-operational/10'
         });
-        return colors[priority] || 'border-slate-500/20 text-slate-400';
+        return colors[priority] || 'border-tac-status-standby/20 text-tac-status-standby';
     },
 
     getStatColor(c) {
         const mapping = /** @type {Record<string, string>} */ ({
-            'border-blue-500': '#3B82F6',
-            'border-red-500': '#EF4444',
-            'border-yellow-500': '#F59E0B',
-            'border-green-500': '#10B981'
+            'border-tac-status-operational': 'rgb(var(--tac-status-operational))',
+            'border-tac-status-repair': 'rgb(var(--tac-status-repair))',
+            'border-tac-status-emergency': 'rgb(var(--tac-status-emergency))',
+            'border-tac-status-standby': 'rgb(var(--tac-status-standby))',
+            'border-tac-sync-cyan': 'rgb(var(--tac-sync-cyan))',
+            'border-tac-secondary': 'rgb(var(--tac-secondary))',
         });
-        return mapping[c] || '#D4AF37';
+        return mapping[c] || 'rgb(var(--tac-gold-bright))';
     },
 
     // Image Compression Helper

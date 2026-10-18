@@ -1,3 +1,120 @@
+## 📝 Session 22 (S22, 2026-10-18) — sapu string kelas lama di `src/js/**` (kartu A)
+
+### Premis yang diuji lebih dulu — dan ternyata catatan S21 kurang
+S21 mencatat sisa: `text-slate-400` di `app.js` (9), `charts.js` (2), `ui.js` (6) +
+`bg-rose-500 text-white` di `app.js`. Setelah dipindai ulang dengan pola yang
+mencakup **semua** prefiks utility (`bg|text|border|border-l|from|to|ring|shadow|fill|stroke|divide|…`)
+dan **seluruh** palet Tailwind (`slate|gray|zinc|red|orange|amber|yellow|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|pink|rose`), angkanya:
+
+| cakupan | hit | berkas |
+|---|---|---|
+| `src/js/**` | **101** | 7 (`app.js` 29 · `ui.js` 40 · `notification.js` 12 · `utils.js` 8 · `kpi-engine.js` 6 · `charts.js` 4 · `logs.js` 2) |
+| `index.html` + `public/pages/**` | **23** kelas palet + **37** `border-white/N` + **6** hex | 5 berkas |
+
+Jadi klaim S21 "0 `rose|amber|emerald`" hanya benar untuk **prefiks `text-`/`bg-`** di `index.html`:
+`border-amber-400` (dropzone foto), `hover:bg-emerald-700`, dan blok "emergency red"
+`#93000A` di `WorkOrders.html` semuanya lolos.
+
+### Tiga bug mati yang ikut ketemu (bukan sekadar kosmetik)
+1. **`charts.js:146` memakai `fas`** — kelas FontAwesome yang dibuang sejak S15, dan `<i>`-nya
+   tidak pernah diberi `textContent`. Jadi **ikon state chart (offline/error/empty) tidak pernah
+   tampil sama sekali** sejak S15. Sekarang `material-symbols-outlined icon-22` + ligatur.
+2. **`notification.js` mengirim 8 nama FontAwesome** (`fa-box`, `fa-hourglass-half`, …) ke
+   `pushInAppNotif`, padahal `index.html` merender `note.icon` lewat
+   `<span class="material-symbols-outlined" x-text="note.icon">`. Yang tampil adalah **teks
+   `fa-hourglass-half`**, bukan ikon. (Ini kartu B — dikerjakan sekalian karena satu berkas.)
+3. **`enterprise-kpi.js` setengah migrasi** — 7 entri masih `icon: 'fa-…'` sedangkan HTML membaca
+   `kpi.ms || 'monitoring'` / `ins.ms || 'smart_toy'`. Akibatnya **7 dari 8 kartu KPI tampil dengan
+   ikon fallback yang sama**. Sekarang semua `ms:` dengan ligatur yang sudah ada di subset.
+4. Bonus: `icon: 'cancel'` (3 berkas) dan `icon: 'help_outline'` **tidak ada di `icon-subset.txt`**
+   (yang ada `block`/`error` dan `help`) → tampil sebagai teks. Ikut diganti.
+
+### Kopling yang hampir jadi regresi senyap
+`EquipmentDetail.html:174` memakai
+`:style="'border-left-color: ' + getStatColor(logColor(log.Jenis))"`.
+`logColor()` mengembalikan nama kelas, `getStatColor()` menerjemahkannya ke **hex**. Kalau hanya
+`logColor()` yang dipindah ke `tac-*`, keempat jenis log jatuh ke fallback `#D4AF37` — semua border
+kiri jadi emas, tanpa satu pun error. Sekarang `getStatColor()` memetakan ke
+`rgb(var(--tac-…))` sehingga ikut tema saat paint. Dikunci tes perilaku (3 tes).
+
+### Pemetaan yang dipakai
+| lama | baru | alasan |
+|---|---|---|
+| `emerald-*` | `tac-status-operational` | semantik |
+| `amber-*` / `orange-*` / `yellow-*` | `tac-status-repair` | satu hue peringatan (D-2: emas bukan warning) |
+| `rose-*` / `red-*` | `tac-status-emergency` | semantik |
+| `slate-*` | `tac-status-standby` / `tac-on-surface-variant` | teks vs penanda |
+| `blue-*` / `sky-*` | `tac-sync-cyan` | info |
+| `purple-*` | `tac-secondary` | draft |
+| `teal-*` | `tac-status-operational` | nyaris sama dengan emerald |
+| `border-white/5` · `/10` | `border-tac-border-subtle` · `border-tac-border-tactical` | sesuai tabel S21 |
+| `bg-red-500 text-white` (badge) | `bg-tac-error-container text-tac-on-error-container` | **AA di 4 tema** (7,24:1 / 6,93:1); teks terang di atas `#ef4444` hanya 3,76:1 |
+| `bg-amber-500/90 text-nexus-black` | `bg-tac-primary-container text-tac-on-primary-container` | 4,58:1 / 6,79:1 |
+| `bg-[#93000A] text-white` | `bg-tac-error-container text-tac-on-error-container` | hex = nilai night token itu |
+| `from-[#FFD700] to-[#E9C400] text-black` | `bg-tac-primary-container text-tac-on-primary-container` | CTA emas, sama seperti S21 |
+
+Satu tingkat umur WO (3–7 hari) dulu `orange-500`; tidak ada token oranye, jadi dibedakan lewat
+intensitas amber (`/20` + border `/40`) — bukan meminjam emas, supaya aturan D-2 tetap utuh.
+
+### Dihapus (dead code, 0 referensi)
+`constants.ts`: `STATUS_COLORS` + `StatusColorKey` (tabel kelas→hex yang tidak pernah diimpor) dan
+`WO_PRIORITY_COLORS` (tabel hex yang juga 0 referensi). Keduanya sumber palet lama/hardcoded.
+
+### Penjaga baru — `tests/legacy-palette.test.js` (10 tes)
+Memindai **`src/js/**` + `index.html` + `public/pages/**`**:
+1. tidak ada kelas palet Tailwind bawaan · 2. tidak ada `text-white`/`bg-white`/`white/N`
+(pengecualian eksplisit & dieja persis: kanvas QR `bg-white p-8 rounded-[2.5rem]`) ·
+3. tidak ada FontAwesome (nama `'fa-…'` maupun kelas `fas`) · 4. tidak ada hex di markup
+(kecuali `<meta theme-color>`) · 5. setiap ligatur `ms:`/`icon:` ada di `icon-subset.txt` ·
+6. nama ligatur bukan path berkas · 7–9. `logColor()` → `getStatColor()` saling cocok, theme-aware,
+dan menghasilkan 4 warna berbeda.
+
+**Kontrol negatif dijalankan** (`scratch/negative-control.mjs`): 11 pola pelanggaran semuanya
+tertangkap, 6 kasus sah lolos — termasuk `// Check if date is not too far in past/future` yang
+sempat jadi positif palsu karena `fa[srbl]?` polos cocok dengan kata "far".
+
+### Verifikasi (angka riil)
+- `tsc --noEmit` **0** · `eslint` **0 error / 79 warning** (baseline, tidak naik) ·
+  `vitest` **457/457** (24 berkas; 447 → 457) · `vite build` ok · `verify:precache` **50/50**.
+- `check-page.mjs`: `index.html` **402 ekspresi / 0 error** (identik baseline) ·
+  `WorkOrders` 243 · `Dashboard` 136 · `RequestPart` 114 · `EquipmentDetail` 70 — semua **0 error**.
+- Kelas baru yang dipakai dari string JS **benar-benar ter-emit** di `dist/assets/*.css`
+  (dicek satu per satu: `bg-tac-error-container`, `text-tac-on-error-container`,
+  `bg-tac-primary-container`, `border-l-tac-status-*`, `shadow-tac-status-operational/20`,
+  `bg-tac-status-standby/15`, `bg-tac-sync-cyan/10`, `bg-tac-secondary-container`,
+  `divide-tac-border-subtle`, `hover:brightness-110`, …).
+- **Ikon benar-benar glyph, bukan teks** (browser, font 10.048 byte): 18 ligatur baru semua
+  berlebar **22 px** (= 1 em); kontrol negatif `zzz_bukan_ikon` berlebar **275 px**.
+- **Kontras diukur di 4 tema** (bukan dihitung di atas kertas): badge sidebar
+  `error-container` **7,24 / 7,24 / 7,24 / 6,93** dan `primary-container` **4,58 / 4,58 / 4,58 / 6,79**;
+  chip prioritas WorkOrders: Emergency 7,24 → 6,93 · Urgent 4,58 → 6,79 · Normal 9,59 → 13,78 ·
+  Planned 4,53 → 5,52; alert failure report 7,24 → 6,93; badge HM 12,84 → 9,30. **Semua ≥ 4,5:1.**
+- `getStatColor` resolve per tema: night `239 68 68`, light `185 28 28` (dst.) — 6 token, 4 tema,
+  0 fallback emas.
+- `sw.js` `CACHE_NAME` → **`mtc-asset-v14`** (dikonfirmasi ada di `dist/sw.js`).
+
+### Jebakan baru (hemat waktu)
+- **Headroom memampatkan output tool** jadi `<<ccr:HASH,…>>`; isi aslinya lewat
+  `mcp__headroom__headroom_retrieve({hash})`. Kalau hash hilang, jalankan ulang perintahnya.
+  Untuk data besar, tulis ke berkas `scratch/` lalu baca potongan kecil.
+- **`html.dark` mengalahkan `[data-theme='light']`** (spesifisitas 0,1,1 vs 0,1,0). Saat menguji
+  tema terang lewat DevTools, **hapus kelas `dark` dulu**, jangan hanya set `data-theme`.
+  (Bukan bug app — `applyTheme()` sudah melakukan keduanya.)
+- `document.fonts.check()` tetap `false` di layar login (tidak ada ikon terlihat) — jebakan S20,
+  masih berlaku. Uji glyph di harness terpisah, bukan di app shell pra-login.
+- Regex `fa[srbl]?` polos **cocok dengan kata biasa** ("far", "fab"). Butuh konteks `class=`/`className=`.
+
+### Sisa (belum dikerjakan, sengaja)
+- **Hex di `charts.js` (53) dan `enterprise-kpi.js` (15)**: `charts.js` memang butuh string warna
+  untuk Chart.js (bukan kelas), jadi tidak bisa ditokenkan sebagai kelas. `kpi.color` di
+  `enterprise-kpi.js` masih hex dan dipakai `:style="'color: ' + kpi.color"` di
+  `EnterpriseDashboard.html` — mengubahnya berarti mengubah `:style` → `:class` di HTML. Kandidat
+  sesi berikutnya (butuh keputusan desain untuk warna seri).
+- `RequestPart.html` sudah memakai `rgb(var(--tac-…))` untuk border status, tapi sisa hex di berkas
+  lain (kalau ada) belum disapu — tes hex sekarang menjaganya.
+
+---
+
 ## 📝 Session 21 (S21, 2026-10-17) — index.html diporting ke Tactical Slate
 
 ### Premis yang dikonfirmasi lebih dulu

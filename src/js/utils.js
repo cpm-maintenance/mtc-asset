@@ -582,11 +582,11 @@ export function calculatePartLifetime(lastReplaceDate, avgLifetimeDays) {
  * @returns {string} Kelas Tailwind warna teks.
  */
 export function getLifetimeColor(status) {
-  if (!status) return 'text-emerald-500';
+  if (!status) return 'text-tac-status-operational';
   switch (status) {
-    case 'overdue': return 'text-rose-500';
-    case 'warning': return 'text-amber-500';
-    default: return 'text-emerald-500';
+    case 'overdue': return 'text-tac-status-emergency';
+    case 'warning': return 'text-tac-status-repair';
+    default: return 'text-tac-status-operational';
   }
 }
 
@@ -597,11 +597,11 @@ export function getLifetimeColor(status) {
  * @returns {string} Kelas Tailwind warna background + border.
  */
 export function getLifetimeBgColor(status) {
-  if (!status) return 'bg-emerald-500/20 border-emerald-500';
+  if (!status) return 'bg-tac-status-operational/20 border-tac-status-operational';
   switch (status) {
-    case 'overdue': return 'bg-rose-500/20 border-rose-500';
-    case 'warning': return 'bg-amber-500/20 border-amber-500';
-    default: return 'bg-emerald-500/20 border-emerald-500';
+    case 'overdue': return 'bg-tac-status-emergency/20 border-tac-status-emergency';
+    case 'warning': return 'bg-tac-status-repair/20 border-tac-status-repair';
+    default: return 'bg-tac-status-operational/20 border-tac-status-operational';
   }
 }
 

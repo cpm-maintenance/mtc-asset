@@ -131,7 +131,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                             type: 'Work Order',
                             message: msg,
                             icon: 'schedule',
-                            color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                            color: 'bg-tac-status-repair/20 text-tac-status-repair border-tac-status-repair/30',
                             exiting: false
                         });
                     }
@@ -146,7 +146,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                                 type: 'Work Order',
                                 message: msg,
                                 icon: 'schedule',
-                                color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                                color: 'bg-tac-status-repair/20 text-tac-status-repair border-tac-status-repair/30',
                                 exiting: false
                             });
                         }

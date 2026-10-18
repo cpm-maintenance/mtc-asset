@@ -182,7 +182,7 @@
   <section x-show="!reqLoading && reqGetFilteredList().length > 0" aria-label="Daftar request" class="flex flex-col gap-space-sm">
     <template x-for="(req, idx) in reqGetFilteredList()" :key="req.id || idx">
       <article class="relative bg-tac-surface-card rounded-lg border border-tac-border-subtle overflow-hidden [content-visibility:auto] [contain-intrinsic-size:auto_180px]"
-        :style="'border-left: 4px solid ' + (req.status === 'pending' ? '#f59e0b' : req.status === 'approved' ? '#06b6d4' : req.status === 'arrived' ? '#10b981' : '#64748b')">
+        :style="'border-left: 4px solid ' + (req.status === 'pending' ? 'rgb(var(--tac-status-repair))' : req.status === 'approved' ? 'rgb(var(--tac-sync-cyan))' : req.status === 'arrived' ? 'rgb(var(--tac-status-operational))' : 'rgb(var(--tac-status-standby))')">
 
         <!-- Header - Click to expand -->
         <div @click="selectedRequisition = selectedRequisition?.id === req.id ? null : req; if(selectedRequisition?.id === req.id) reqShowDetail = true; else reqShowDetail = false" class="p-3 cursor-pointer hover:bg-tac-surface-elevated/40 transition-colors">

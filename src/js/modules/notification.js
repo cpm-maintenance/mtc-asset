@@ -225,7 +225,7 @@ export function setupForegroundListener() {
  * Push a notification into the in-app notification panel (lonceng).
  * This makes alerts visible in the bell badge + notification modal.
  */
-function pushInAppNotif(type, message, icon, color = 'border-amber-500 bg-amber-500/20 text-amber-400') {
+function pushInAppNotif(type, message, icon, color = 'border-tac-status-repair bg-tac-status-repair/20 text-tac-status-repair') {
   const app = window.app;
   if (!app || !Array.isArray(app.notifications)) return;
   const id = Date.now() + Math.random();
@@ -273,7 +273,7 @@ function checkLowStockParts() {
       `${zeroStock.length} part dengan stok 0: ${names}${zeroStock.length > 3 ? ` +${zeroStock.length - 3} lainnya` : ''}`,
       { tag: 'low-stock-zero', data: { type: 'low_stock' } }
     );
-    pushInAppNotif('Low Stock', `${zeroStock.length} part stok 0: ${names}${zeroStock.length > 3 ? ` +${zeroStock.length-3}` : ''}`, 'fa-box', 'border-red-500 bg-red-500/20 text-red-400');
+    pushInAppNotif('Low Stock', `${zeroStock.length} part stok 0: ${names}${zeroStock.length > 3 ? ` +${zeroStock.length-3}` : ''}`, 'inventory_2', 'border-tac-status-emergency bg-tac-status-emergency/20 text-tac-status-emergency');
   }
 
   const lowStock = parts.filter(p => {
@@ -289,7 +289,7 @@ function checkLowStockParts() {
       `${lowStock.length} part mendekati minimum: ${names}${lowStock.length > 3 ? ` +${lowStock.length - 3} lainnya` : ''}`,
       { tag: 'low-stock-warn', data: { type: 'low_stock' } }
     );
-    pushInAppNotif('Low Stock', `${lowStock.length} part di bawah minimum: ${names}${lowStock.length > 3 ? ` +${lowStock.length-3}` : ''}`, 'fa-boxes', 'border-yellow-500 bg-yellow-500/20 text-yellow-400');
+    pushInAppNotif('Low Stock', `${lowStock.length} part di bawah minimum: ${names}${lowStock.length > 3 ? ` +${lowStock.length-3}` : ''}`, 'inventory', 'border-tac-status-repair bg-tac-status-repair/20 text-tac-status-repair');
   }
 }
 
@@ -313,7 +313,7 @@ function checkPendingWorkOrders() {
       `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length - 3} lainnya` : ''}`,
       { tag: 'wo-urgent', data: { type: 'pending_wo' } }
     );
-    pushInAppNotif('Work Order', `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length-3}` : ''}`, 'fa-clipboard-exclamation', 'border-orange-500 bg-orange-500/20 text-orange-400');
+    pushInAppNotif('Work Order', `${urgentWO.length} WO urgent: ${list}${urgentWO.length > 3 ? ` +${urgentWO.length-3}` : ''}`, 'assignment_late', 'border-tac-status-repair bg-tac-status-repair/20 text-tac-status-repair');
   }
 
   // Aging unapproved WO — pending > 3 hari (SLA), berapa lama menunggu
@@ -336,7 +336,7 @@ function checkPendingWorkOrders() {
       `${aging.length} WO menunggu > 3 hari: ${list}${aging.length > 3 ? ` +${aging.length-3} lainnya` : ''}`,
       { tag: 'wo-aging', data: { type: 'wo_aging' } }
     );
-    pushInAppNotif('WO Aging', `${aging.length} WO pending > 3 hari: ${list}${aging.length > 3 ? ` +${aging.length-3}` : ''}`, 'fa-hourglass-half', 'border-amber-500 bg-amber-500/20 text-amber-400');
+    pushInAppNotif('WO Aging', `${aging.length} WO pending > 3 hari: ${list}${aging.length > 3 ? ` +${aging.length-3}` : ''}`, 'hourglass_bottom', 'border-tac-status-repair bg-tac-status-repair/20 text-tac-status-repair');
   }
 }
 
@@ -359,7 +359,7 @@ function checkPMOverdue() {
       `${overdue.length} PM task overdue: ${names}${overdue.length > 3 ? ` +${overdue.length - 3} lainnya` : ''}`,
       { tag: 'pm-overdue', data: { type: 'pm_overdue' } }
     );
-    pushInAppNotif('PM Overdue', `${overdue.length} task lewat jadwal: ${names}${overdue.length > 3 ? ` +${overdue.length-3}` : ''}`, 'fa-calendar-times', 'border-red-500 bg-red-500/20 text-red-400');
+    pushInAppNotif('PM Overdue', `${overdue.length} task lewat jadwal: ${names}${overdue.length > 3 ? ` +${overdue.length-3}` : ''}`, 'event_busy', 'border-tac-status-emergency bg-tac-status-emergency/20 text-tac-status-emergency');
   }
 
   // H-3 upcoming
@@ -374,7 +374,7 @@ function checkPMOverdue() {
       `${upcoming.length} PM task due in 3 days: ${names}${upcoming.length > 3 ? ` +${upcoming.length - 3} lainnya` : ''}`,
       { tag: 'pm-upcoming', data: { type: 'pm_overdue' } }
     );
-    pushInAppNotif('PM Due Soon', `${upcoming.length} task jatuh tempo H-3: ${names}${upcoming.length > 3 ? ` +${upcoming.length-3}` : ''}`, 'fa-calendar-day', 'border-amber-500 bg-amber-500/20 text-amber-400');
+    pushInAppNotif('PM Due Soon', `${upcoming.length} task jatuh tempo H-3: ${names}${upcoming.length > 3 ? ` +${upcoming.length-3}` : ''}`, 'event', 'border-tac-status-repair bg-tac-status-repair/20 text-tac-status-repair');
   }
 }
 
@@ -398,6 +398,6 @@ function checkWarrantyExpiry() {
       `${expired.length} part melewati lifetime: ${names}${expired.length > 3 ? ` +${expired.length-3} lainnya` : ''}`,
       { tag: 'warranty-expired', data: { type: 'warranty_expired' } }
     );
-    pushInAppNotif('Lifetime Check', `${expired.length} part lewat umur pakai: ${names}${expired.length > 3 ? ` +${expired.length-3}` : ''}`, 'fa-hourglass-end', 'border-purple-500 bg-purple-500/20 text-purple-400');
+    pushInAppNotif('Lifetime Check', `${expired.length} part lewat umur pakai: ${names}${expired.length > 3 ? ` +${expired.length-3}` : ''}`, 'hourglass_top', 'border-tac-secondary bg-tac-secondary/20 text-tac-secondary');
   }
 }

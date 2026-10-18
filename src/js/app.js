@@ -785,16 +785,16 @@ if (confirm('Are you sure you want to logout?')) {
             return '7d+';
         },
         woAgeColor(days) {
-            if (days <= 1) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-            if (days <= 3) return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-            if (days <= 7) return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-            return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+            if (days <= 1) return 'text-tac-status-operational bg-tac-status-operational/10 border-tac-status-operational/20';
+            if (days <= 3) return 'text-tac-status-repair bg-tac-status-repair/10 border-tac-status-repair/20';
+            if (days <= 7) return 'text-tac-status-repair bg-tac-status-repair/20 border-tac-status-repair/40';
+            return 'text-tac-status-emergency bg-tac-status-emergency/10 border-tac-status-emergency/20';
         },
         woAgeClass(days) {
-            if (days <= 1) return 'border-l-emerald-500';
-            if (days <= 3) return 'border-l-amber-500';
-            if (days <= 7) return 'border-l-orange-500';
-            return 'border-l-rose-500';
+            if (days <= 1) return 'border-l-tac-status-operational';
+            if (days <= 3) return 'border-l-tac-status-repair';
+            if (days <= 7) return 'border-l-tac-status-repair';
+            return 'border-l-tac-status-emergency';
         },
         get backlogAging() {
             const wos = (this.logs || []).filter(l => l && (l.woNumber || l.Status === 'Pending' || l.Status === 'Approved' || l.Status === 'In Progress'));
@@ -1057,9 +1057,9 @@ if (confirm('Are you sure you want to logout?')) {
             return Math.min(9, Math.round(this.woPrioScore(wo) + this.criticalityScore(wo.EquipmentID) + this.healthRiskScore(wo.EquipmentID)));
         },
         backlogScoreColor(score) {
-            if (score >= 7) return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
-            if (score >= 4) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-            return 'bg-slate-500/15 text-slate-400 border-slate-500/20';
+            if (score >= 7) return 'bg-tac-status-emergency/20 text-tac-status-emergency border-tac-status-emergency/30';
+            if (score >= 4) return 'bg-tac-status-repair/20 text-tac-status-repair border-tac-status-repair/30';
+            return 'bg-tac-status-standby/15 text-tac-status-standby border-tac-status-standby/20';
         },
         // ── R7: MTTR per technician ──
         mttrByTech() {
@@ -1161,14 +1161,17 @@ if (confirm('Are you sure you want to logout?')) {
             return c > 0 ? c : '';
         },
         /**
-         * U-1: warna badge per menu — merah/rose untuk yang benar-benar mendesak
-         * (PM overdue & stok kritis), amber untuk beban kerja biasa.
+         * U-1: warna badge per menu — `error-container` untuk yang benar-benar mendesak
+         * (PM overdue & stok kritis), `primary-container` untuk beban kerja biasa.
+         *
+         * Pasangan container/on-container dipakai, bukan `bg-tac-status-emergency` solid +
+         * teks terang: pasangan itu lolos AA di keempat tema (7,2:1 night · 6,9:1 light),
+         * sedangkan teks terang di atas #ef4444 hanya ~3,8:1.
          */
         badgeClass(itemId) {
             if (!this.badgeCount(itemId)) return '';
-            if (itemId === 'pms') return 'bg-red-500 text-white';
-            if (itemId === 'parts') return 'bg-rose-500 text-white';
-            return 'bg-amber-500/90 text-nexus-black';
+            if (itemId === 'pms' || itemId === 'parts') return 'bg-tac-error-container text-tac-on-error-container';
+            return 'bg-tac-primary-container text-tac-on-primary-container';
         },
         /** U-1: label aksesibel, mis. "3 open work orders" */
         badgeLabel(itemId, itemName) {
@@ -1773,7 +1776,7 @@ if (confirm('Are you sure you want to logout?')) {
 
                 // Tactical Slate Helpers for PM Schedule
                 pmStatusTac(pm) {
-                    if (!pm) return { label: 'UNKNOWN', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'help_outline' };
+                    if (!pm) return { label: 'UNKNOWN', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'help' };
                     const today = new Date().toISOString().split('T')[0];
                     if (pm.status === 'pending' && pm.date < today) {
                         return { label: 'OVERDUE', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40', marker: 'bg-tac-status-emergency', icon: 'warning' };
@@ -1784,7 +1787,7 @@ if (confirm('Are you sure you want to logout?')) {
                     if (pm.status === 'completed') {
                         return { label: 'COMPLETED', badge: 'bg-tac-status-operational/15 text-tac-status-operational border-tac-status-operational/40', marker: 'bg-tac-status-operational', icon: 'check_circle' };
                     }
-                    return { label: 'CANCELLED', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'cancel' };
+                    return { label: 'CANCELLED', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'block' };
                 },
 
                 pmPriorityTac(priority) {
@@ -2153,8 +2156,8 @@ if (confirm('Are you sure you want to logout?')) {
         },
         planningPriorityColor(priority) {
             /** @type {Record<string, string>} */
-            const map = { 'Emergency': 'bg-red-500/20 text-red-400', 'Urgent': 'bg-orange-500/20 text-orange-400', 'Normal': 'bg-yellow-500/20 text-yellow-400', 'Planned': 'bg-emerald-500/20 text-emerald-400' };
-            return map[priority] || 'bg-slate-500/20 text-slate-400';
+            const map = { 'Emergency': 'bg-tac-status-emergency/20 text-tac-status-emergency', 'Urgent': 'bg-tac-status-repair/20 text-tac-status-repair', 'Normal': 'bg-tac-sync-cyan/20 text-tac-sync-cyan', 'Planned': 'bg-tac-status-operational/20 text-tac-status-operational' };
+            return map[priority] || 'bg-tac-status-standby/20 text-tac-status-standby';
         },
         planningDragStart(id) { this.planningDragging = id; },
         planningDragEnd() { this.planningDragging = null; this.planningDragOver = null; },
@@ -2385,8 +2388,8 @@ if (confirm('Are you sure you want to logout?')) {
         },
         mpPriorityColor(priority) {
             /** @type {Record<string, string>} */
-            const map = { Emergency: 'bg-rose-500/20 text-rose-400', Urgent: 'bg-orange-500/20 text-orange-400', Normal: 'bg-blue-500/20 text-blue-400', Planned: 'bg-emerald-500/20 text-emerald-400' };
-            return map[priority] || 'bg-slate-500/20 text-slate-400';
+            const map = { Emergency: 'bg-tac-status-emergency/20 text-tac-status-emergency', Urgent: 'bg-tac-status-repair/20 text-tac-status-repair', Normal: 'bg-tac-sync-cyan/20 text-tac-sync-cyan', Planned: 'bg-tac-status-operational/20 text-tac-status-operational' };
+            return map[priority] || 'bg-tac-status-standby/20 text-tac-status-standby';
         },
         async mpExportPDF() {
             this.mpLoading = true;

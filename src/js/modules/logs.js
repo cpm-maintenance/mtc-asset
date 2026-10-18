@@ -594,7 +594,7 @@ async approveWO(logId) {
                 type: 'Work Order',
                 message: notifyMsg,
                 icon: 'check_circle',
-                color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                color: 'bg-tac-sync-cyan/20 text-tac-sync-cyan border-tac-sync-cyan/30',
                 exiting: false
             });
             
@@ -607,7 +607,7 @@ async approveWO(logId) {
                     type: 'Work Order',
                     message: notifyMsg,
                     icon: 'check_circle',
-                    color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                    color: 'bg-tac-sync-cyan/20 text-tac-sync-cyan border-tac-sync-cyan/30',
                     exiting: false
                 });
             }
@@ -669,8 +669,8 @@ async approveWO(logId) {
                 id: Date.now(),
                 type: 'Work Order',
                 message: notifyMsg,
-                icon: 'cancel',
-                color: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+                icon: 'block',
+                color: 'bg-tac-status-emergency/20 text-tac-status-emergency border-tac-status-emergency/30',
                 exiting: false
             });
             if (globalApp && globalApp.logs) {
@@ -710,7 +710,7 @@ async approveWO(logId) {
                 type: 'Work Order',
                 message: notifyMsg,
                 icon: 'play_arrow',
-                color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                color: 'bg-tac-sync-cyan/20 text-tac-sync-cyan border-tac-sync-cyan/30',
                 exiting: false
             });
             
@@ -722,7 +722,7 @@ async approveWO(logId) {
                     type: 'Work Order',
                     message: notifyMsg,
                     icon: 'play_arrow',
-                    color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                    color: 'bg-tac-sync-cyan/20 text-tac-sync-cyan border-tac-sync-cyan/30',
                     exiting: false
                 });
             }

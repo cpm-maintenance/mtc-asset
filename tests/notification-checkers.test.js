@@ -394,8 +394,10 @@ describe('notification.js — checkAllNotifications: perilaku umum', () => {
         checkAllNotifications();
 
         const notif = findNotif('Low Stock');
-        expect(notif.icon).toBe('fa-box');
-        expect(notif.color).toContain('border-red-500');
+        // Dulu `fa-box` + `border-red-500` — FontAwesome sudah dibuang, jadi
+        // ikonnya tidak pernah tampil. Sekarang ligatur Material Symbols lokal.
+        expect(notif.icon).toBe('inventory_2');
+        expect(notif.color).toContain('border-tac-status-emergency');
         expect(notif.exiting).toBe(false);
         expect(typeof notif.id).toBe('number');
     });

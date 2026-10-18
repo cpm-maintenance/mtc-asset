@@ -329,7 +329,7 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
       ins.push({ type: 'warning', ms: 'show_chart', msg: `Avg MTBF ${summary.avgMTBF}h — di bawah threshold 200h. Review maintenance strategy.` });
     }
     if (summary.avgAvail < 90) {
-      ins.push({ type: 'critical', icon: 'fa-heartbeat', msg: `Availability ${summary.avgAvail}% — di bawah target 90%. Immediate action required.` });
+      ins.push({ type: 'critical', ms: 'troubleshoot', msg: `Availability ${summary.avgAvail}% — di bawah target 90%. Immediate action required.` });
     }
     return ins.slice(0, 6);
   },
@@ -358,14 +358,14 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     this.enterpriseCritical = this.calcCriticalEquip(10);
     this.enterpriseInsights = this.calcInsights();
     this.enterpriseKPIList = [
-      { key: 'totalAssets', label: 'Total Assets', value: s.totalAssets, icon: 'fa-industry', color: '#3b82f6', trend: 0 },
-      { key: 'running', label: 'Running', value: s.running, icon: 'fa-play-circle', color: '#22c55e', trend: 0 },
-      { key: 'breakdown', label: 'Breakdown', value: s.breakdown, icon: 'fa-exclamation-triangle', color: '#ef4444', trend: 0 },
-      { key: 'pmc', label: 'PM Compliance', value: s.pmc.pct + '%', icon: 'fa-clipboard-check', color: s.pmc.color === 'green' ? '#22c55e' : '#f59e0b', trend: s.pmc.pct },
+      { key: 'totalAssets', label: 'Total Assets', value: s.totalAssets, ms: 'factory', color: '#3b82f6', trend: 0 },
+      { key: 'running', label: 'Running', value: s.running, ms: 'play_arrow', color: '#22c55e', trend: 0 },
+      { key: 'breakdown', label: 'Breakdown', value: s.breakdown, ms: 'warning', color: '#ef4444', trend: 0 },
+      { key: 'pmc', label: 'PM Compliance', value: s.pmc.pct + '%', ms: 'fact_check', color: s.pmc.color === 'green' ? '#22c55e' : '#f59e0b', trend: s.pmc.pct },
       { key: 'openWO', label: 'Open WO', value: s.openWO, ms: 'troubleshoot', color: '#f59e0b', trend: 0 },
-      { key: 'completedWO', label: 'Completed WO', value: s.completedWO, icon: 'fa-check-circle', color: '#22c55e', trend: 0 },
-      { key: 'avgAvail', label: 'Availability', value: s.avgAvail + '%', icon: 'fa-heartbeat', color: s.avgAvail >= 95 ? '#22c55e' : '#f59e0b', trend: s.avgAvail },
-      { key: 'avgHealth', label: 'Health Index', value: s.avgHealth + '%', icon: 'fa-shield-alt', color: s.avgHealth >= 80 ? '#22c55e' : '#f59e0b', trend: s.avgHealth },
+      { key: 'completedWO', label: 'Completed WO', value: s.completedWO, ms: 'task_alt', color: '#22c55e', trend: 0 },
+      { key: 'avgAvail', label: 'Availability', value: s.avgAvail + '%', ms: 'trending_up', color: s.avgAvail >= 95 ? '#22c55e' : '#f59e0b', trend: s.avgAvail },
+      { key: 'avgHealth', label: 'Health Index', value: s.avgHealth + '%', ms: 'verified_user', color: s.avgHealth >= 80 ? '#22c55e' : '#f59e0b', trend: s.avgHealth },
     ];
     const pm = this._raw(this.pmList) || [];
     const today = new Date().toISOString().split('T')[0];

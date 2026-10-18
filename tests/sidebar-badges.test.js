@@ -103,14 +103,16 @@ describe('U-1 · Sidebar badge counters', () => {
       expect(s.badgeCount('pms')).toBe(1);
     });
 
-    it('badgeClass: merah untuk PM overdue, rose untuk stok kritis, amber untuk beban kerja biasa', () => {
+    it('badgeClass: `error-container` untuk PM overdue & stok kritis, `primary-container` untuk beban kerja biasa', () => {
       const s = app();
       s.pmList = [{ pmId: 'A', status: 'pending', basis: 'date', date: '2000-01-01' }];
       s.logs = [{ Status: 'Pending' }];
       s.allParts = [{ PartID: 'P1', Stok: 1, MinStock: 5 }];
-      expect(s.badgeClass('pms')).toContain('red');
-      expect(s.badgeClass('parts')).toContain('rose');
-      expect(s.badgeClass('wo')).toContain('amber');
+      // PM overdue dan stok kritis dulu dibedakan `red-500` vs `rose-500` (dua merah
+      // yang praktis sama) — sekarang satu pasangan token yang lolos AA di 4 tema.
+      expect(s.badgeClass('pms')).toBe('bg-tac-error-container text-tac-on-error-container');
+      expect(s.badgeClass('parts')).toBe('bg-tac-error-container text-tac-on-error-container');
+      expect(s.badgeClass('wo')).toBe('bg-tac-primary-container text-tac-on-primary-container');
     });
 
     it('badgeClass kosong ketika tidak ada badge', () => {

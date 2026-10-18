@@ -234,7 +234,7 @@
           </div>
           <div class="text-right shrink-0">
             <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby block">STOCK</span>
-            <span class="font-headline-md text-headline-md font-bold" :class="isLowStock(p.Stok, p.MinStock) ? 'text-rose-500' : 'text-amber-400'" x-text="p.Stok"></span>
+            <span class="font-headline-md text-headline-md font-bold" :class="isLowStock(p.Stok, p.MinStock) ? 'text-tac-status-emergency' : 'text-tac-status-repair'" x-text="p.Stok"></span>
           </div>
         </article>
       </template>
@@ -253,16 +253,16 @@
     <!-- 🔧 TAB: PM SCHEDULE -->
     <div x-show="activeTab === 'pm'" class="flex flex-col gap-space-sm">
       <template x-for="pm in pmList.filter(l => l.equipmentId === selectedEquip?.EquipmentID).sort((a,b) => (a.date||'').localeCompare(b.date||''))" :key="pm.pmId">
-        <article class="bg-tac-surface-card rounded-lg border border-tac-border-subtle border-l-4 p-3" :class="pm.status === 'completed' ? 'border-l-emerald-500/50' : (isPMOverdue(pm) ? 'border-l-rose-500/50' : 'border-l-amber-500/50')">
+        <article class="bg-tac-surface-card rounded-lg border border-tac-border-subtle border-l-4 p-3" :class="pm.status === 'completed' ? 'border-l-tac-status-operational/50' : (isPMOverdue(pm) ? 'border-l-tac-status-emergency/50' : 'border-l-tac-status-repair/50')">
           <div class="flex items-start justify-between gap-space-sm">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-1">
                 <span class="px-2 py-0.5 rounded border border-tac-border-subtle bg-tac-surface-container-high font-label-mono-sm text-label-mono-sm text-tac-on-surface" x-text="pm.date"></span>
                 <span class="px-2 py-0.5 rounded-full border border-tac-border-subtle font-label-mono-sm text-label-mono-sm uppercase font-semibold"
                   :class="{
-                    'bg-amber-500/20 text-amber-400': pm.status === 'pending',
-                    'bg-emerald-500/20 text-emerald-400': pm.status === 'completed',
-                    'bg-slate-500/20 text-slate-400': pm.status === 'skipped',
+                    'bg-tac-status-repair/20 text-tac-status-repair': pm.status === 'pending',
+                    'bg-tac-status-operational/20 text-tac-status-operational': pm.status === 'completed',
+                    'bg-tac-status-standby/20 text-tac-status-standby': pm.status === 'skipped',
                   }" x-text="pm.status"></span>
                 <span x-show="isPMOverdue(pm)" class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-tac-status-emergency/20 text-tac-status-emergency font-label-mono-sm text-label-mono-sm uppercase font-semibold">
                   <span class="material-symbols-outlined text-[14px]">warning</span><span>OVERDUE</span>

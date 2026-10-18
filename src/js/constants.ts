@@ -8,15 +8,6 @@ export const CONSTANTS = {
   NOTIFICATION_DURATION: 4000,
 } as const;
 
-export const STATUS_COLORS = {
-  'border-blue-500': '#3B82F6',
-  'border-red-500': '#EF4444',
-  'border-yellow-500': '#F59E0B',
-  'border-green-500': '#10B981',
-} as const;
-
-export type StatusColorKey = keyof typeof STATUS_COLORS;
-
 export const EQUIPMENT_TYPES = ['Crusher', 'Ball Mill', 'Thickener', 'Furnace', 'Pump', 'Conveyor', 'Generator', 'Other'];
 export const EQUIPMENT_STATUS = ['Active', 'In Maintenance', 'Idle', 'Decommissioned'];
 export const CRITICALITY_LEVELS = ['High', 'Medium', 'Low'];
@@ -31,14 +22,6 @@ export const WO_STATUS = ['Draft', 'Pending', 'Approved', 'In Progress', 'Comple
 
 // Work Order Source/Department
 export const WO_DEPARTMENTS = ['Production', 'Maintenance', 'Safety', 'Quality', 'Engineering', 'Operations', 'DTMF', 'MineGEO', 'GeoDEV', 'Mining', 'External', 'Other'];
-
-// Work Order Priority Colors
-export const WO_PRIORITY_COLORS = {
-  'Emergency': '#EF4444',
-  'Urgent': '#F97316', 
-  'Normal': '#EAB308',
-  'Planned': '#22C55E'
-};
 
 export const RCA_OPTIONS = ['PM', 'Human Error', 'Fatigue/Wear', 'External Factor', 'Design/Quality', 'Operational Misuse'];
 export const BD_CATEGORIES = ['Mechanical', 'Electrical', 'Operational'];

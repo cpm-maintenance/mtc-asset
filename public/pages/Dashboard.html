@@ -19,11 +19,11 @@
 <div class="w-full flex flex-col gap-space-lg pb-12">
 
   <!-- ═══ 1. PWA / OFFLINE / TELEMETRY BANNER ═══════════════════════════ -->
-  <section class="w-full bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 relative overflow-hidden">
+  <section class="w-full bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-64 h-64 bg-tac-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
     <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md relative z-10">
       <div class="flex items-center gap-space-md flex-wrap">
-        <div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-tac-surface-recessed shadow-inner border border-white/5">
+        <div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-tac-surface-recessed shadow-inner border border-tac-border-subtle">
           <span class="relative flex h-2.5 w-2.5">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                   :class="isOnline ? 'bg-tac-sync-cyan' : 'bg-tac-status-emergency'"></span>
@@ -39,7 +39,7 @@
         </div>
       </div>
       <div class="flex items-center gap-space-sm flex-wrap self-end lg:self-auto">
-        <div class="flex items-center bg-tac-surface-recessed p-1 rounded-lg border border-white/5 shadow-inner">
+        <div class="flex items-center bg-tac-surface-recessed p-1 rounded-lg border border-tac-border-subtle shadow-inner">
           <template x-for="t in [['night', 'GOLD'], ['navy', 'NAVY'], ['purple', 'PURPLE'], ['light', 'LIGHT']]" :key="t[0]">
             <button type="button" @click="setTheme(t[0])"
                     class="px-2.5 py-1 rounded font-label-mono-sm text-label-mono-sm transition-all"
@@ -65,7 +65,7 @@
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
 
     <!-- KPI 1 — FLEET INTEGRITY -->
-    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
       <div class="flex items-start justify-between">
         <div>
           <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">FLEET INTEGRITY</span>
@@ -77,7 +77,7 @@
           <span class="material-symbols-outlined icon-22">precision_manufacturing</span>
         </div>
       </div>
-      <div class="mt-4 pt-3 border-t border-white/5 space-y-2">
+      <div class="mt-4 pt-3 border-t border-tac-border-subtle space-y-2">
         <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
           <span class="text-tac-on-surface-variant">Active Assets:</span>
           <span class="text-tac-status-operational font-bold"
@@ -95,7 +95,7 @@
     </div>
 
     <!-- KPI 2 — ACTUAL PA% vs TARGET (sparkline 7 hari) -->
-    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
       <div class="flex items-start justify-between">
         <div>
           <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">ACTUAL PA% vs TARGET</span>
@@ -111,7 +111,7 @@
           <span class="material-symbols-outlined icon-22">monitoring</span>
         </div>
       </div>
-      <div class="mt-4 pt-3 border-t border-white/5">
+      <div class="mt-4 pt-3 border-t border-tac-border-subtle">
         <div class="h-8 w-full flex items-end gap-1">
           <template x-for="i in [6, 5, 4, 3, 2, 1, 0]" :key="i">
             <div class="flex-1 rounded-t transition-all hover:bg-tac-gold-bright"
@@ -129,7 +129,7 @@
     </div>
 
     <!-- KPI 3 — TOTAL RUNNING HM / MTBF -->
-    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
       <div class="flex items-start justify-between">
         <div>
           <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">TOTAL RUNNING HM / MTBF</span>
@@ -142,7 +142,7 @@
           <span class="material-symbols-outlined icon-22">timer</span>
         </div>
       </div>
-      <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+      <div class="mt-4 pt-3 border-t border-tac-border-subtle flex items-center justify-between font-label-mono-sm text-label-mono-sm">
         <div>
           <span class="text-tac-status-standby block">MTBF ESTIMATE</span>
           <span class="text-tac-on-surface font-bold" x-text="heroHUD.reliability.mtbf + ' hrs'"></span>
@@ -156,7 +156,7 @@
     </div>
 
     <!-- KPI 4 — MISSION STATUS (WOs) -->
-    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
+    <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle flex flex-col justify-between relative hover:bg-tac-surface-elevated transition-colors">
       <div class="flex items-start justify-between">
         <div>
           <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-widest text-tac-status-standby">MISSION STATUS (WOs)</span>
@@ -172,7 +172,7 @@
           <span class="material-symbols-outlined icon-22">assignment_late</span>
         </div>
       </div>
-      <div class="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-1 font-label-mono-sm text-label-mono-sm text-center">
+      <div class="mt-4 pt-3 border-t border-tac-border-subtle grid grid-cols-3 gap-1 font-label-mono-sm text-label-mono-sm text-center">
         <div class="bg-tac-surface-recessed p-1.5 rounded shadow-inner">
           <span class="text-tac-status-standby block text-[9px]">PENDING</span>
           <span class="text-tac-primary font-bold" x-text="heroHUD.wo.pending"></span>
@@ -207,7 +207,7 @@
           <div class="relative hidden sm:block">
             <span class="material-symbols-outlined icon-16 absolute left-2.5 top-1/2 -translate-y-1/2 text-tac-status-standby">filter_list</span>
             <input type="text" x-model="dashWoFilter" placeholder="Filter WOs / Assets..."
-                   class="pl-8 pr-3 py-1 bg-tac-surface-recessed rounded text-on-surface border border-white/5 focus:outline-none focus:border-tac-primary-container text-xs w-48 shadow-inner placeholder:text-tac-status-standby">
+                   class="pl-8 pr-3 py-1 bg-tac-surface-recessed rounded text-on-surface border border-tac-border-subtle focus:outline-none focus:border-tac-primary-container text-xs w-48 shadow-inner placeholder:text-tac-status-standby">
           </div>
           <button type="button" @click="openLogModal(false)" x-show="isAdminOrSupervisor"
                   class="flex items-center gap-1 px-3 py-1 bg-tac-primary-container hover:bg-tac-gold-bright text-tac-on-primary-container rounded font-label-mono-md text-label-mono-md shadow-md transition-all active:scale-95">
@@ -220,13 +220,13 @@
       <div class="space-y-space-md">
         <template x-for="item in actionableWOs.filter(i => !dashWoFilter || (i.woNumber + ' ' + i.equipName + ' ' + i.desc).toLowerCase().includes(dashWoFilter.toLowerCase()))" :key="item.woNumber + (item.log.LogID || '')">
           <article class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t flex flex-col gap-space-md relative overflow-hidden transition-all"
-                   :class="item.priority === 'Emergency' ? 'border-tac-status-emergency/40' : 'border-white/10 hover:border-tac-gold-bright/30'">
+                   :class="item.priority === 'Emergency' ? 'border-tac-status-emergency/40' : 'border-tac-border-tactical hover:border-tac-gold-bright/30'">
             <div class="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl pointer-events-none"
                  :class="item.priority === 'Emergency' ? 'bg-tac-status-emergency/5' : 'bg-tac-gold-glow'"></div>
 
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-white/5 pb-space-sm relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm border-b border-tac-border-subtle pb-space-sm relative z-10">
               <div class="flex items-center gap-space-sm flex-wrap">
-                <span class="px-2 py-0.5 rounded bg-tac-surface-recessed border border-white/5 font-label-mono-md text-label-mono-md shadow-inner"
+                <span class="px-2 py-0.5 rounded bg-tac-surface-recessed border border-tac-border-subtle font-label-mono-md text-label-mono-md shadow-inner"
                       :class="item.priority === 'Emergency' ? 'text-tac-status-emergency' : 'text-tac-gold-bright'"
                       x-text="'WO #' + item.woNumber"></span>
                 <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm uppercase font-bold flex items-center gap-1"
@@ -255,7 +255,7 @@
               <div class="space-y-2">
                 <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">TARGET ASSET</span>
                 <div class="flex items-start gap-space-sm">
-                  <div class="w-12 h-12 rounded-lg bg-tac-surface-recessed overflow-hidden relative flex-shrink-0 border border-white/10 flex items-center justify-center">
+                  <div class="w-12 h-12 rounded-lg bg-tac-surface-recessed overflow-hidden relative flex-shrink-0 border border-tac-border-tactical flex items-center justify-center">
                     <span class="material-symbols-outlined icon-22"
                           :class="item.priority === 'Emergency' ? 'text-tac-status-emergency' : 'text-tac-status-standby'"
                           x-text="item.priority === 'Emergency' ? 'warning' : 'precision_manufacturing'"></span>
@@ -275,7 +275,7 @@
                 <template x-if="item.log.Catatan">
                   <div>
                     <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">FIELD RCA (PRIMARY)</span>
-                    <div class="p-2 rounded bg-tac-surface-recessed border border-white/5">
+                    <div class="p-2 rounded bg-tac-surface-recessed border border-tac-border-subtle">
                       <span class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright block font-semibold" x-text="'Temuan: ' + (item.log.Kategori || item.log.Jenis || '—')"></span>
                       <p class="font-body-sm text-[12px] text-tac-on-surface-variant mt-0.5" x-text="item.log.Catatan"></p>
                     </div>
@@ -296,7 +296,7 @@
                 </div>
               </div>
 
-              <div class="bg-tac-surface-recessed p-2.5 rounded-lg border border-white/5 space-y-1.5 shadow-inner">
+              <div class="bg-tac-surface-recessed p-2.5 rounded-lg border border-tac-border-subtle space-y-1.5 shadow-inner">
                 <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
                   <span class="text-tac-status-standby">LINKED SPARE:</span>
                   <span class="text-tac-secondary font-bold"
@@ -319,7 +319,7 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between pt-2 border-t border-white/5 flex-wrap gap-2 relative z-10">
+            <div class="flex items-center justify-between pt-2 border-t border-tac-border-subtle flex-wrap gap-2 relative z-10">
               <div class="flex items-center gap-2">
                 <button type="button" @click="openLogModal(true, item.log)"
                         class="px-2.5 py-1 rounded bg-tac-surface-container hover:bg-tac-surface-container-high text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors">
@@ -347,7 +347,7 @@
                 </template>
                 <template x-if="item.status === 'In Progress'">
                   <button type="button" @click="completeWO(item.log.LogID)"
-                          class="px-3 py-1 rounded bg-tac-status-operational hover:bg-emerald-700 dark:hover:bg-emerald-400 text-tac-surface-container-lowest font-label-mono-md text-label-mono-md font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                          class="px-3 py-1 rounded bg-tac-status-operational hover:brightness-110 text-tac-surface-container-lowest font-label-mono-md text-label-mono-md font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]">
                     Mark Mission Completed
                   </button>
                 </template>
@@ -357,7 +357,7 @@
         </template>
 
         <template x-if="actionableWOs.filter(i => !dashWoFilter || (i.woNumber + ' ' + i.equipName + ' ' + i.desc).toLowerCase().includes(dashWoFilter.toLowerCase())).length === 0">
-          <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 text-center">
+          <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle text-center">
             <span class="material-symbols-outlined icon-36 text-tac-status-operational">task_alt</span>
             <p class="font-headline-md text-[15px] text-tac-on-surface mt-1"
                x-text="dashWoFilter ? 'Tidak ada WO yang cocok dengan filter' : 'Tidak ada work order terbuka'"></p>
@@ -367,7 +367,7 @@
         </template>
       </div>
 
-      <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-md mt-2">
+      <div class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle space-y-space-md mt-2">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined icon-20 text-tac-secondary">troubleshoot</span>
@@ -375,7 +375,7 @@
           </div>
           <div class="flex items-center gap-2 font-label-mono-sm text-label-mono-sm">
             <span class="text-tac-status-standby">RECORDS:</span>
-            <span class="px-2 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface border border-white/5"
+            <span class="px-2 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface border border-tac-border-subtle"
                   x-text="(performanceData || []).length + ' ENTRI'"></span>
           </div>
         </div>
@@ -383,7 +383,7 @@
         <div class="w-full overflow-x-auto">
           <table class="w-full text-left font-label-mono-sm text-label-mono-sm">
             <thead>
-              <tr class="bg-tac-surface-recessed text-tac-status-standby uppercase border-b border-white/5">
+              <tr class="bg-tac-surface-recessed text-tac-status-standby uppercase border-b border-tac-border-subtle">
                 <th class="py-2.5 px-3">Asset Index</th>
                 <th class="py-2.5 px-3">Ops Area</th>
                 <th class="py-2.5 px-3">HM (Running)</th>
@@ -394,7 +394,7 @@
                 <th class="py-2.5 px-3 text-right">Target PA%</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5 font-body-sm text-[13px]">
+            <tbody class="divide-y divide-tac-border-subtle font-body-sm text-[13px]">
               <template x-for="e in equipment.slice(0, 6)" :key="e.EquipmentID">
                 <tr class="hover:bg-tac-surface-container/50 transition-colors">
                   <td class="py-2.5 px-3 font-label-mono-sm text-label-mono-sm text-tac-on-surface font-bold"
@@ -418,7 +418,7 @@
           </table>
         </div>
 
-        <div class="space-y-2 pt-2 border-t border-white/5">
+        <div class="space-y-2 pt-2 border-t border-tac-border-subtle">
           <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm">
             <span class="text-tac-status-standby uppercase">DISTRIBUSI JENIS LOG (30 HARI)</span>
             <span class="text-tac-on-surface-variant"
@@ -449,8 +449,8 @@
     <!-- ── KANAN: 4 kolom ── -->
     <aside class="xl:col-span-4 flex flex-col gap-space-md">
 
-      <section class="bg-tac-surface-card rounded-2xl p-6 shadow-2xl border-t border-white/10 flex flex-col items-center text-center relative overflow-hidden">
-        <div class="w-16 h-16 rounded-2xl bg-tac-surface-recessed border border-white/5 shadow-inner flex items-center justify-center p-2 mb-3">
+      <section class="bg-tac-surface-card rounded-2xl p-6 shadow-2xl border-t border-tac-border-tactical flex flex-col items-center text-center relative overflow-hidden">
+        <div class="w-16 h-16 rounded-2xl bg-tac-surface-recessed border border-tac-border-subtle shadow-inner flex items-center justify-center p-2 mb-3">
           <span class="material-symbols-outlined icon-36 text-tac-gold-bright">public</span>
         </div>
         <h3 class="font-headline-lg text-headline-lg text-tac-on-surface">System Access</h3>
@@ -461,7 +461,7 @@
             <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase mb-1">AUTHENTICATION ID</label>
             <div class="relative">
               <input type="text" readonly :value="(user && user.email) || 'Belum ada sesi'"
-                     class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-white/5 focus:outline-none focus:border-tac-gold-bright shadow-inner">
+                     class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-tac-border-subtle focus:outline-none focus:border-tac-gold-bright shadow-inner">
               <span class="material-symbols-outlined icon-16 absolute right-3 top-1/2 -translate-y-1/2 text-tac-status-standby">fingerprint</span>
             </div>
           </div>
@@ -469,12 +469,12 @@
             <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase mb-1">ROLE / ACCESS LEVEL</label>
             <div class="relative">
               <input type="text" readonly :value="(userRole || 'user').toUpperCase()"
-                     class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-white/5 focus:outline-none focus:border-tac-gold-bright shadow-inner">
+                     class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-tac-border-subtle focus:outline-none focus:border-tac-gold-bright shadow-inner">
               <span class="material-symbols-outlined icon-16 absolute right-3 top-1/2 -translate-y-1/2 text-tac-status-standby">badge</span>
             </div>
           </div>
           <button type="button" @click="setDashboardPreset(0)"
-                  class="w-full py-3 px-4 rounded-xl bg-tac-surface-card hover:bg-tac-surface-elevated text-tac-gold-bright font-label-mono-md text-label-mono-md uppercase tracking-wider font-bold shadow-[12px_16px_28px_rgba(0,0,0,0.6),-4px_-4px_14px_rgba(255,255,255,0.03)] border-t border-white/10 active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)] transition-all mt-2">
+                  class="w-full py-3 px-4 rounded-xl bg-tac-surface-card hover:bg-tac-surface-elevated text-tac-gold-bright font-label-mono-md text-label-mono-md uppercase tracking-wider font-bold shadow-[12px_16px_28px_rgba(0,0,0,0.6),-4px_-4px_14px_rgba(255,255,255,0.03)] border-t border-tac-border-tactical active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8)] transition-all mt-2">
             INITIALIZE DASHBOARD
           </button>
         </div>
@@ -482,7 +482,7 @@
               x-text="isOnline ? 'SESSION VERIFIED · ONLINE' : 'SESSION LOCAL · OFFLINE QUEUE'"></span>
       </section>
 
-      <section class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-sm">
+      <section class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle space-y-space-sm">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined icon-18 text-tac-sync-cyan">qr_code_scanner</span>
@@ -493,7 +493,7 @@
                 x-text="isOnline ? 'NODE READY' : 'OFFLINE MODE'"></span>
         </div>
         <p class="font-body-sm text-body-sm text-tac-status-standby">Align terminal viewfinder with physical machine asset QR node tag for rapid HM check.</p>
-        <div @click="openQR()" class="w-full h-36 bg-tac-surface-recessed rounded-lg border border-dashed border-white/10 relative flex flex-col items-center justify-center overflow-hidden shadow-inner group cursor-pointer">
+        <div @click="openQR()" class="w-full h-36 bg-tac-surface-recessed rounded-lg border border-dashed border-tac-border-tactical relative flex flex-col items-center justify-center overflow-hidden shadow-inner group cursor-pointer">
           <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-tac-sync-cyan shadow-[0_0_10px_rgba(6,182,212,0.8)] animate-pulse"></div>
           <span class="material-symbols-outlined icon-36 text-tac-sync-cyan opacity-70 group-hover:scale-110 transition-transform">center_focus_strong</span>
           <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant mt-2 tracking-wide">ALIGNING WITH ASSET QR NODE</span>
@@ -508,7 +508,7 @@
         </div>
       </section>
 
-      <section class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-white/5 space-y-space-sm">
+      <section class="bg-tac-surface-card rounded-xl p-space-md shadow-xl border-t border-tac-border-subtle space-y-space-sm">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined icon-18 text-tac-gold-bright">inventory_2</span>
@@ -519,7 +519,7 @@
         </div>
         <div class="space-y-2 pt-1">
           <template x-for="p in (allParts || []).filter(x => Number(x.Stok) <= Number(x.MinStock)).slice(0, 3)" :key="p.PartID">
-            <div class="p-2.5 rounded-lg bg-tac-surface-recessed border border-white/5 flex items-center justify-between shadow-inner">
+            <div class="p-2.5 rounded-lg bg-tac-surface-recessed border border-tac-border-subtle flex items-center justify-between shadow-inner">
               <div class="min-w-0">
                 <div class="flex items-center gap-1.5">
                   <span class="font-label-mono-md text-label-mono-md text-tac-on-surface font-bold" x-text="p.PartNumber || p.PartID"></span>
@@ -537,7 +537,7 @@
             </div>
           </template>
           <template x-if="lowStockCount === 0">
-            <div class="p-2.5 rounded-lg bg-tac-surface-recessed border border-white/5 text-center">
+            <div class="p-2.5 rounded-lg bg-tac-surface-recessed border border-tac-border-subtle text-center">
               <span class="font-label-mono-sm text-label-mono-sm text-tac-status-operational uppercase">Semua stok di atas minimum</span>
             </div>
           </template>
@@ -553,7 +553,7 @@
   <!-- ═══ 4. DRAWER MTC AI DIAGNOSTICS ═════════════════════════════════ -->
   <div x-show="aiDrawerOpen" x-transition
        class="fixed right-6 bottom-14 z-50 w-96 max-w-[calc(100vw-2rem)] bg-tac-surface-card rounded-2xl p-5 shadow-2xl border-t border-tac-secondary/30 flex flex-col gap-3 backdrop-blur-xl">
-    <div class="flex items-center justify-between pb-2 border-b border-white/5">
+    <div class="flex items-center justify-between pb-2 border-b border-tac-border-subtle">
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-lg bg-tac-secondary/15 text-tac-secondary flex items-center justify-center shadow-[0_0_10px_rgba(76,215,246,0.3)]">
           <span class="material-symbols-outlined icon-18">neurology</span>
@@ -574,7 +574,7 @@
 
     <div class="space-y-1">
       <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">ACTIVE LLM PROVIDER</label>
-      <div class="grid grid-cols-3 gap-1 bg-tac-surface-recessed p-1 rounded-lg border border-white/5 text-center font-label-mono-sm text-label-mono-sm shadow-inner">
+      <div class="grid grid-cols-3 gap-1 bg-tac-surface-recessed p-1 rounded-lg border border-tac-border-subtle text-center font-label-mono-sm text-label-mono-sm shadow-inner">
         <template x-for="pv in [['openai', 'OpenAI'], ['claude', 'Claude'], ['openrouter', 'OpenRouter']]" :key="pv[0]">
           <button type="button" @click="aiProvider = pv[0]"
                   class="py-1 rounded transition-colors"
@@ -585,7 +585,7 @@
       <span class="font-label-mono-sm text-[10px] text-tac-status-standby block" x-text="'Model aktif: ' + (apiModel || '—')"></span>
     </div>
 
-    <div class="p-3 rounded-lg bg-tac-surface-recessed border border-white/5 space-y-1 shadow-inner max-h-48 overflow-y-auto">
+    <div class="p-3 rounded-lg bg-tac-surface-recessed border border-tac-border-subtle space-y-1 shadow-inner max-h-48 overflow-y-auto">
       <span class="font-label-mono-sm text-label-mono-sm text-tac-secondary font-bold flex items-center gap-1">
         <span class="material-symbols-outlined icon-13">lightbulb</span> Telemetry Recommendation
       </span>
