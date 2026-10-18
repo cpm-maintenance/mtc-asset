@@ -78,13 +78,49 @@ Sisa 2 baris merah = `319-320` (guard `CLOUDINARY_CLOUD`/`CLOUDINARY_PRESET`
 kosong) — konstanta hardcoded non-kosong, cabang tak bisa dijangkau tanpa
 mengubah sumber. Dibiarkan.
 
-Total **72,66% → 74,96%** lines · 73,39% stmt · 62,65% branch · 71,47% func.
-Suite **999 → 1050** tes (36 berkas). Ratchet `vitest.config.js`
-**69/59/66/70 → 71/60/69/72** (margin ~2 poin).
+### Lanjutan S30 — `ai.js` 76,31% → **100%** lines (+27 tes di `tests/ai-module.test.js`)
+Sisa 81 baris merah semuanya jalur yang belum pernah dieksekusi: catch luar,
+rotasi key di rekomendasi, error HTTP Claude, body OpenRouter bukan JSON,
+`generatePPT` + laporan cetak, dan siklus simpan/muat Firebase.
+
+- **`analyzeKPI`** catch luar: `getKPIContext` melempar → `console.error` +
+  `Error: <msg>`, `isAnalyzing` tetap balik `false`.
+- **`generateRecommendations`**: rate limit → `rotateApiKey` 5× lalu `[]` ·
+  app tanpa `rotateApiKey` → tidak crash · hasil `'{}'` (bukan array berisi) →
+  loop 5× lalu `[]` · `rotateApiKey` melempar → catch luar, `[]`.
+- **`callAI`** key eksplisit tanpa `window.app` → provider dari `localStorage`.
+- **`callClaude`** HTTP gagal → pesan dari `error.message`.
+- **`callOpenRouter`** body sukses bukan JSON → `Invalid response: <100 char>`.
+- **`generatePPT`**: tanpa `analysisResult` → notifikasi error · delegasi ke
+  `exportModule.generateKPIPPT` · fallback `generateSimpleReport` · export
+  melempar → `Failed to generate PPT`, `isGenerating` balik `false`.
+- **`generateSimpleReport`**: `window.open('', '_blank')` → `document.write`
+  (HTML memuat metrik + hasil AI) → `close` → `onload` memanggil `print`.
+- **`loadAIFromFirebase`**: guard admin/db · `apiKeys` array (5 input terisi) ·
+  satu key tunggal dibungkus array · snapshot kosong · RTDB melempar.
+- **`saveAIToFirebase`**: payload lengkap (`updatedAt`/`updatedBy`) ·
+  `updatedBy` jatuh ke `'admin'` · guard tanpa db/admin · RTDB melempar.
+- **`saveAIWithCustomModel`**: input kosong disaring, model `__custom__` →
+  `customModelInput` di-trim, semua kunci `localStorage` ditulis, model
+  non-custom dibiarkan.
+- **setter `aiApiKey`**: isi slot pertama bila kosong, tidak menimpa yang ada.
+
+Sisa yang **tidak** dikejar: 41 cabang parsial (`||` default, optional
+chaining) — branch 87,42%, lines sudah 100%.
+
+### Hasil akhir S30 (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `ui.js` | 32,98% | **98,96%** (stmt 99,12 · branch 90,19 · func 100) |
+| `ai.js` | 76,31% | **100%** (stmt 98,46 · branch 87,42 · func 100) |
+
+Total **72,66% → 76,42%** lines · 74,68% stmt · 63,59% branch · 72,01% func.
+Suite **999 → 1077** tes (36 berkas). Ratchet `vitest.config.js`
+**69/59/66/70 → 71/60/69/72 → 72/61/70/74** (margin ~2 poin).
 
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
-  **1050/1050** · `test:coverage` lolos threshold baru · `build` ok ·
+  **1077/1077** · `test:coverage` lolos threshold baru · `build` ok ·
   `verify:precache` **50/50**.
 - **`src/**` tidak disentuh** → bundle identik, `sw.js` tetap `mtc-asset-v15`
   (tidak naik versi).
