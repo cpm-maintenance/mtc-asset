@@ -1,4 +1,80 @@
-## 📝 Session 28 (S28, 2026-10-18) — badan `submitLog` 68,62% → 97,65% (kartu C-2)
+## 📝 Session 29 (S29, 2026-10-18) — coverage `kpi-engine.js` 43,92% → 100% lines
+
+### Kenapa `kpi-engine.js` duluan
+Modul ini murni aritmetika (health score, MTBF, prediksi kegagalan) tanpa DOM —
+paling murah per poin. Yang belum diuji justru bagian yang dipakai halaman KPI:
+cache `_kpiCache`, pemilihan interval HM vs kalender, dan penggabungan event
+`HistoryLog` + `Performance`. Sebelumnya hanya 3 guard yang tersentuh lewat
+`tests/utils.test.js`.
+
+### `tests/kpi-engine-module.test.js` baru — 49 tes · 43,92% → **100%** lines
+Harness `Object.create(kpiEngineModule)` per tes (bukan spread — spread membekukan
+getter), `makeEngine(overrides)` menerapkan override **setelah** default.
+
+- **`_raw`**: `Alpine.raw` dipakai · fallback `__v_raw` · nilai non-objek lewat
+  apa adanya · `Alpine.raw` melempar → array disalin, objek dikembalikan apa adanya.
+- **`calculateHealthScore`**: default untuk id kosong / equipment bukan array /
+  aset tak ditemukan · −15 per breakdown 90 hari (breakdown tua, tanpa `Tanggal`,
+  jenis lain, dan log aset lain diabaikan) · −2/hari PM terlambat, dibatasi −30 ·
+  PM belum jatuh tempo & tanggal invalid tanpa denda · MTBF < 168 jam → −10 ·
+  clamp 0 + `Critical` · band `Warning` (70) dan `Critical` (30) · hit cache
+  lewat entri yang sudah ada.
+- **`_hmIntervalHours`**: delta HM bila keduanya > 0 · HM mundur → 0 · fallback
+  jam kalender · tanggal invalid/null → 0.
+- **`_breakdownEvents`**: event dari log dinormalkan (`HM` string → angka) ·
+  `Performance.events` dipecah per kegagalan · `freq` numerik · `freq` 0 dilewati ·
+  record aset lain & `null` dilewati · urut naik untuk event bertanggal ·
+  state `null` → array kosong.
+- **`calculateMTBF`**: 0 untuk id kosong / logs bukan array / < 2 event · delta HM
+  (`'168.0'`) · rata-rata campuran HM dan kalender (`'48.0'`) · cache `m` terisi ·
+  cache dibangun ulang saat key berubah.
+- **`predictNextFailure`**: `'N/A'` · `'Insufficient Data'` (MTBF 0, dan logs
+  bukan array walau MTBF ter-cache) · `'No failures recorded'` (MTBF dari
+  Performance saja; breakdown tanpa `Tanggal`) · `'Invalid date data'` · jalur
+  sukses = tanggal breakdown terakhir + MTBF.
+- **`getEquipName`**: id kosong → `'Unknown Asset'` · equipment bukan array → `id` ·
+  exact match menang atas case-insensitive · case-insensitive · tidak ketemu.
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `kpi-engine.js` | 43,92% | **100%** (stmt 100 · branch 96,87 · func 100) |
+
+Total **68,08% → 69,16%** lines · 67,67% stmt · 59,63% branch · 66,84% func.
+Suite **938 → 987** tes (35 berkas). Ratchet `vitest.config.js`
+**65/56/65/66 → 65/57/65/67** (branch & lines naik; statements 65 dan functions 65
+tetap karena margin < 2 poin).
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
+  **987/987** · `test:coverage` lolos threshold baru · `build` ok ·
+  `verify:precache` **50/50**.
+- **`src/js/**` tidak disentuh** (`git show --name-only 0c9c798` = 2 berkas tes +
+  config) → bundle identik, `sw.js` tetap **`mtc-asset-v15`**.
+
+### Temuan perilaku (bukan diperbaiki — di luar cakupan kartu)
+- **`_kpiCache` cuma punya satu slot `key`.** `calculateHealthScore` memanggil
+  `calculateMTBF` di tengah jalan, dan `calculateMTBF` menulis ulang `key` jadi
+  `'m<id>'` → cache health score **tidak pernah kena**; setiap panggilan menghitung
+  ulang. Dikunci tes `menghitung ulang pada panggilan kedua…`. Perbaikan butuh
+  memisahkan slot (`hKey`/`mKey`) — menyentuh `src/js/**`, jadi ditunda.
+- **`_breakdownEvents` berhenti mengurutkan kalau ada event tanpa `Tanggal`.**
+  Comparator mengembalikan 0 saat salah satu sisi kosong, sehingga pasangan
+  bertanggal di sekitarnya tak pernah dibandingkan. Dikunci tes
+  `berhenti mengurutkan begitu ada event tanpa tanggal`.
+- Cabang yang masih merah di modul ini (`58-63`, `144`, `170`) hanya sisi lain dari
+  ternary/`||` — bukan jalur logika yang hilang.
+
+### Sisa
+- Kandidat berikutnya: `ui.js` 32,98% · `equipment.js` 46,57% · `export.js` 45,5% ·
+  `parts.js` 54,83% · `push-client.js` 25% · `requisition.js` 67,16% ·
+  `app.js` 20,9% (butuh harness Alpine).
+- Kartu C-3 (Lighthouse) & D-5 (gap AA tema gelap) tetap terbuka; D-5 butuh
+  keputusan user.
+
+---
+
+
 
 ### Kenapa `submitLog` duluan
 `logs.js` 68,62% dan hampir semua sisa merahnya ada di satu fungsi: `submitLog`
