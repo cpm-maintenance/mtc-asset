@@ -118,10 +118,49 @@ Total **72,66% → 76,42%** lines · 74,68% stmt · 63,59% branch · 72,01% func
 Suite **999 → 1077** tes (36 berkas). Ratchet `vitest.config.js`
 **69/59/66/70 → 71/60/69/72 → 72/61/70/74** (margin ~2 poin).
 
+### Lanjutan S30 — layar login "Secure Gateway" (redesign)
+Login lama: kartu `max-w-md` di tengah, email + password, tanpa identitas visual.
+Sekarang: shell penuh (header + grid 7/5 + footer) bergaya HUD SCADA, semuanya dari
+token `tac-*` — jadi ikut 4 tema.
+
+- **Struktur** (`index.html`): header "MTC ASSET SECURE GATEWAY" + pill
+  "CHALLENGE ENCRYPTED"; panel kiri (HUD, `hidden lg:flex`) dengan latar
+  **CSS murni** (grid 48px + dua radial glow) — bukan foto/CDN, supaya layar login
+  tidak bergantung jaringan; panel kanan konsol akses; footer TLS/instansi.
+- **Form tetap fungsional**: `x-model="loginForm.email"` / `.password`,
+  `@submit.prevent="login()"`, tombol `:disabled="isLoading"` + spinner `x-html`
+  lama dipertahankan. Ditambah **toggle secure key** (`showLoginKey`, ikon
+  `visibility`/`visibility_off`, `aria-pressed`) dan **centang simpan sesi**.
+- **Centang "simpan sesi" itu nyata**, bukan hiasan: `auth.js` memilih
+  `browserLocalPersistence` saat dicentang, `browserSessionPersistence` saat tidak
+  (default lama). Butuh plumbing baru: `browserLocalPersistence` diekspor
+  `db.js` → `firebase-config.js` (`window.browserLocalPersistence`) →
+  `globals.d.ts`.
+- **Mode strip EMAIL / PIN / SSO**: hanya EMAIL yang aktif. PIN dan SSO
+  dirender `opacity-50` + `title` "belum diaktifkan" — sengaja **bukan** tombol
+  mati yang bisa diklik, karena tidak ada backend PIN/SSO di repo ini.
+- **Yang dibuang dari desain sumber**: foto tambang eksternal, angka telemetri
+  palsu (SAG Mill / Ball Mill), kredensial contoh ("TECH-7402-RC"), tombol
+  profil role palsu, dan klaim sertifikasi yang tidak dipegang app ini
+  (FIPS 140-3 / ISO 27001). Diganti kartu modul statis + status yang benar.
+- **Ikon**: 4 ligatur baru (`lock`, `login`, `visibility`, `visibility_off`) →
+  `icon-subset.txt` 82 → **86** entri, font diregenerasi
+  `node scripts/download-material-symbols.mjs` → **10.0 KB** (plafon 50 KB).
+- **`sw.js` naik `v15` → `v16`** karena `src/**` dan `public/**` berubah.
+
+Diukur di browser (build produksi, `vite preview`):
+- desktop 1264×569 → panel kiri 697×600, kanan 491×600, **0 clipping**
+  (blok kiri berakhir 306 / 704 di dalam 104–704), tanpa overflow horizontal.
+- mobile 390×844 → panel kiri `display:none`, kanan 342×548, tanpa clipping,
+  tanpa overflow-X.
+- ikon: 15 ligatur terpasang semua 24×24 (tidak ada yang jatuh jadi teks).
+- kontras AA per tema (teks utama / label / checkbox / wordmark):
+  dark 10,15–15,01 · light 5,97–17,85 · navy 10,17–15,74 · purple 10,87–17,08.
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
-  **1077/1077** · `test:coverage` lolos threshold baru · `build` ok ·
-  `verify:precache` **50/50**.
+  **1078/1078** · `test:coverage` lolos threshold · `build` ok ·
+  `verify:precache` **50/50** (3225,12 KiB).
 - **`src/**` tidak disentuh** → bundle identik, `sw.js` tetap `mtc-asset-v15`
   (tidak naik versi).
 
