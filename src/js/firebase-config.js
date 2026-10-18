@@ -10,7 +10,7 @@ import {
   get, query, limitToLast, runTransaction,
   orderByChild, endAt, equalTo, endBefore,
   signOut, onAuthStateChanged, signInWithEmailAndPassword,
-  setPersistence, browserSessionPersistence, createUserWithEmailAndPassword,
+  setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
   sendPasswordResetEmail
 } from './db.js';
 
@@ -41,6 +41,7 @@ window.onAuthStateChanged = onAuthStateChanged;
 window.signInWithEmailAndPassword = signInWithEmailAndPassword;
 window.setPersistence = setPersistence;
 window.browserSessionPersistence = browserSessionPersistence;
+window.browserLocalPersistence = browserLocalPersistence;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
 window.sendPasswordResetEmail = sendPasswordResetEmail;
 

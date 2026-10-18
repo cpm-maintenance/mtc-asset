@@ -22,6 +22,7 @@ function stubFirebase(overrides = {}) {
         db: { name: 'db' },
         auth: { name: 'auth' },
         browserSessionPersistence: 'session',
+        browserLocalPersistence: 'local',
         ref: vi.fn((db, path) => ({ path })),
         get: vi.fn(async () => ({ exists: () => false, val: () => null })),
         update: vi.fn(async () => {}),
@@ -146,6 +147,19 @@ describe('login', () => {
         expect(fb.signInWithEmailAndPassword).toHaveBeenCalledWith(fb.auth, 'a@b.c', 'rahasia');
         expect(ctx.userRole).toBe('planner');
         expect(ctx.showNotification).toHaveBeenCalledWith('Welcome back!');
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('centang "simpan sesi" memakai local persistence, bukan session', async () => {
+        const fb = stubFirebase({
+            get: vi.fn(async () => snap({ uid: 'u1', email: 'a@b.c', role: 'planner' })),
+            signInWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'u1', email: 'a@b.c' } })),
+        });
+        const ctx = makeCtx({ loginForm: { email: 'a@b.c', password: 'rahasia', keepSession: true } });
+
+        await ctx.login();
+
+        expect(fb.setPersistence).toHaveBeenCalledWith(fb.auth, fb.browserLocalPersistence);
         expect(ctx.isLoading).toBe(false);
     });
 

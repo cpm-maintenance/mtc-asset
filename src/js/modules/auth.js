@@ -9,7 +9,9 @@ import { logger } from '../logger.js';
 // Tidak ada lagi pemetaan role hardcoded by email — lihat ensureUserProfile (P0-2).
 
 export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
-    loginForm: { email: '', password: '' },
+    loginForm: { email: '', password: '', keepSession: false },
+    // Toggle "tampilkan secure key" di layar login (bukan rahasia — hanya UI state).
+    showLoginKey: false,
 
     async ensureUserProfile(user) {
         if (!user?.uid) return;
@@ -60,7 +62,13 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         }
         this.isLoading = true;
         try {
-            await window.setPersistence(window.auth, window.browserSessionPersistence);
+            // Persistensi mengikuti centang "simpan sesi": shift bawah tanah sering
+            // kehilangan sinyal, jadi operator butuh sesi yang bertahan melewati
+            // reload. Default tetap session-only (perilaku lama).
+            await window.setPersistence(
+                window.auth,
+                form.keepSession ? window.browserLocalPersistence : window.browserSessionPersistence,
+            );
             const cred = await window.signInWithEmailAndPassword(window.auth, form.email, form.password);
             
             const userData = await this.ensureUserProfile(cred.user);

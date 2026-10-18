@@ -91,36 +91,222 @@
   "
   class="selection:bg-tac-gold-bright/30">
 
-  <!-- 🛡️ LOGIN SCREEN OVERLAY — Tactical Slate (dulu neumorphic `.neu-*`) -->
-  <div x-show="!isLoggedIn" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-tac-surface-base">
-    <div class="tac-plate tac-rim w-full max-w-md space-y-8 p-10 rounded-2xl">
-      <div class="text-center">
-        <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden bg-tac-surface-recessed border border-tac-border-tactical">
-          <img src="/logo.png" alt="MTC" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerText='MTC'">
+  <!-- 🛡️ LOGIN SCREEN OVERLAY — "Secure Gateway" HUD (S30) -->
+  <!-- Layout 12 kolom: HUD kiri (desktop) + konsol akses kanan. Semua warna dari
+       token `tac-*` (theme-aware), tanpa aset eksternal → tetap utuh offline. -->
+  <div x-show="!isLoggedIn" class="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-tac-surface-base">
+
+    <!-- Header -->
+    <header class="w-full shrink-0 bg-tac-surface-container-lowest/80 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
+      <div class="w-full px-gutter-desktop h-16 flex items-center justify-between">
+        <div class="flex items-center gap-space-md">
+          <div class="w-8 h-8 rounded-lg bg-tac-surface-recessed flex items-center justify-center">
+            <span class="material-symbols-outlined text-tac-primary text-[20px]">verified_user</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-label-mono-md text-label-mono-md tracking-wider text-tac-on-surface">MTC ASSET SECURE GATEWAY</span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">TERMINAL NODE ID: MTC-CORE-01</span>
+          </div>
         </div>
-        <h2 class="text-3xl font-black tracking-tight text-tac-on-surface">System Access</h2>
-        <p class="mt-2 font-bold uppercase tracking-[0.2em] text-xs text-tac-gold-bright">MTC ASSET | INTERFACE</p>
+        <div class="flex items-center gap-space-lg">
+          <div class="hidden sm:flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-tac-surface-card">
+            <span class="w-2 h-2 rounded-full bg-tac-status-operational shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface">CHALLENGE ENCRYPTED</span>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-tac-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-tac-on-primary text-[18px]">person</span>
+          </div>
+        </div>
       </div>
-      <form @submit.prevent="login()" class="space-y-6">
-        <div>
-          <label for="login-id" class="font-label-mono-sm uppercase text-tac-on-surface-variant ml-1 mb-2 block">Authentication ID</label>
-          <input type="email" x-model="loginForm.email" required id="login-id" placeholder="name@planner.com"
-            class="tac-well w-full p-4 text-tac-on-surface placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
-        </div>
-        <div>
-          <label for="login-key" class="font-label-mono-sm uppercase text-tac-on-surface-variant ml-1 mb-2 block">Secure Key</label>
-          <input type="password" x-model="loginForm.password" required id="login-key" placeholder="••••••••"
-            class="tac-well w-full p-4 text-tac-on-surface placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
-        </div>
-        <button type="submit" :disabled="isLoading"
-          class="tac-btn-primary w-full disabled:cursor-not-allowed"
-          x-html="isLoading ? '<span class=\'flex items-center justify-center gap-3\'><svg class=\'animate-spin w-5 h-5\' viewBox=\'0 0 24 24\' fill=\'none\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>INITIALIZING...</span>' : 'Initialize Dashboard'">
-        </button>
-      </form>
-      <div class="text-center pt-4">
-        <p class="font-label-mono-sm uppercase tracking-[0.1em] text-tac-on-surface-variant">Quantum Encryption Active</p>
+    </header>
+
+    <!-- Main -->
+    <main class="w-full flex-1 flex flex-col justify-center items-center px-gutter-desktop py-space-xl">
+      <div class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-stretch">
+
+        <!-- LEFT PANEL: HUD -->
+        <section class="hidden lg:flex lg:col-span-7 relative flex-col justify-between rounded-xl overflow-hidden bg-tac-surface-card tac-rim min-h-[600px]">
+          <!-- Latar HUD: grid + glow. Sengaja CSS murni (tanpa foto/CDN) supaya
+               layar login tidak bergantung jaringan. -->
+          <div class="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
+            <div class="absolute inset-0 opacity-40"
+              style="background-image:linear-gradient(rgba(255,255,255,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.045) 1px,transparent 1px);background-size:48px 48px;"></div>
+            <div class="absolute -top-28 -left-28 w-[440px] h-[440px] rounded-full"
+              style="background:radial-gradient(circle,rgba(251,191,36,0.16),transparent 65%);"></div>
+            <div class="absolute -bottom-36 -right-20 w-[400px] h-[400px] rounded-full"
+              style="background:radial-gradient(circle,rgba(6,182,212,0.12),transparent 65%);"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-tac-surface-canvas via-transparent to-tac-surface-canvas/70"></div>
+          </div>
+
+          <!-- Baris status -->
+          <div class="relative z-10 p-space-lg flex flex-col gap-space-md">
+            <div class="flex flex-wrap items-center justify-between gap-space-sm">
+              <div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-tac-surface-recessed/80 backdrop-blur-md">
+                <span class="w-2 h-2 rounded-full bg-tac-status-operational shadow-[0_0_10px_rgba(16,185,129,0.7)] animate-pulse"></span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface tracking-widest">RELIABILITY OPERATIONS</span>
+              </div>
+              <div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-tac-surface-container-high/80 backdrop-blur-md">
+                <span class="material-symbols-outlined text-tac-secondary text-[14px]">wifi_tethering</span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-secondary font-semibold">PWA TELEMETRY LINK</span>
+              </div>
+            </div>
+
+            <!-- Wordmark -->
+            <div class="mt-space-md">
+              <div class="flex items-center gap-space-xs">
+                <span class="material-symbols-outlined text-tac-primary text-[28px]">precision_manufacturing</span>
+                <span class="font-label-mono-md text-label-mono-md text-tac-primary">CORE TELEMETRY OS</span>
+              </div>
+              <h1 class="font-display-hero text-display-hero text-tac-gold-bright tracking-tight mt-space-xs">MTC ASSET</h1>
+              <div class="font-label-mono-sm text-label-mono-sm tracking-wider text-tac-on-surface-variant mt-space-xs">
+                RELIABILITY ENGINEERING · SCADA TELEMETRY GATEWAY v4.2
+              </div>
+            </div>
+          </div>
+
+          <!-- Kartu modul (statis: menjelaskan isi sistem, bukan angka palsu) -->
+          <div class="relative z-10 p-space-lg flex flex-col gap-space-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+              <div class="p-space-md rounded-lg bg-tac-surface-container-lowest/80 backdrop-blur-md shadow-lg">
+                <div class="flex items-center justify-between">
+                  <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">Asset Registry</span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-operational font-bold">ACTIVE</span>
+                </div>
+                <div class="mt-space-sm font-headline-md text-headline-md text-tac-on-surface font-semibold">Equipment</div>
+                <div class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">Spare parts · BOM · QR label</div>
+              </div>
+              <div class="p-space-md rounded-lg bg-tac-surface-container-lowest/80 backdrop-blur-md shadow-lg">
+                <div class="flex items-center justify-between">
+                  <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">Maintenance Ledger</span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-primary font-bold">SYNC</span>
+                </div>
+                <div class="mt-space-sm font-headline-md text-headline-md text-tac-on-surface font-semibold">Work Orders</div>
+                <div class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">PM schedule · logs · KPI</div>
+              </div>
+            </div>
+
+            <div class="p-space-sm rounded-lg bg-tac-surface-recessed/90 backdrop-blur-md flex items-center justify-between">
+              <div class="flex items-center gap-space-xs">
+                <span class="material-symbols-outlined text-tac-status-operational text-[18px]">verified_user</span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">OFFLINE-FIRST · CACHE LOKAL TETAP JALAN TANPA SINYAL</span>
+              </div>
+              <span class="font-label-mono-sm text-label-mono-sm px-space-xs py-0.5 rounded bg-tac-surface-container text-tac-secondary font-semibold">PWA READY</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT PANEL: konsol akses -->
+        <section class="lg:col-span-5 flex flex-col justify-between rounded-xl p-space-lg bg-tac-surface-card border border-tac-border-tactical">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-space-xs">
+              <span class="material-symbols-outlined text-tac-primary text-[18px]">settings</span>
+              <span class="font-label-mono-md text-label-mono-md tracking-wider text-tac-on-surface font-semibold">KIOSK-NODE-01</span>
+            </div>
+            <div class="flex items-center gap-space-xs">
+              <span class="w-2 h-2 rounded-full bg-tac-secondary shadow-[0_0_8px_rgba(76,215,246,0.6)]"></span>
+              <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">LOCAL CACHE ACTIVE</span>
+            </div>
+          </div>
+
+          <div class="mt-space-md">
+            <h2 class="font-headline-lg text-headline-lg text-tac-on-surface">System Access</h2>
+            <p class="font-body-sm text-body-sm text-tac-on-surface-variant mt-1">Kredensial operator dikelola admin lewat User Management.</p>
+          </div>
+
+          <!-- Mode strip: hanya EMAIL yang aktif di build ini. -->
+          <div class="grid grid-cols-3 gap-1 p-1 bg-tac-surface-recessed rounded-lg mt-space-md" role="group" aria-label="Access mode">
+            <span class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 bg-tac-primary text-tac-on-primary font-bold shadow-md"
+              aria-current="true">
+              <span class="material-symbols-outlined text-[14px]">person</span> EMAIL
+            </span>
+            <span class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 text-tac-status-standby opacity-50"
+              title="Mode PIN belum diaktifkan untuk node ini">
+              <span class="material-symbols-outlined text-[14px]">fingerprint</span> PIN
+            </span>
+            <span class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 text-tac-status-standby opacity-50"
+              title="SSO / IdP belum diaktifkan untuk node ini">
+              <span class="material-symbols-outlined text-[14px]">public</span> SSO
+            </span>
+          </div>
+
+          <form @submit.prevent="login()" class="flex flex-col gap-space-md mt-space-md">
+            <!-- Operator email -->
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between items-center">
+                <label class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant tracking-wider" for="login-id">Operator ID / Email</label>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">ADMIN-MANAGED</span>
+              </div>
+              <div class="tac-well flex items-center gap-2 px-3">
+                <span class="material-symbols-outlined text-tac-status-standby text-[18px]">person</span>
+                <input type="email" x-model="loginForm.email" required id="login-id" autocomplete="username"
+                  placeholder="name@planner.com"
+                  class="w-full bg-transparent border-0 outline-none py-2.5 font-label-mono-md text-label-mono-md tracking-wider text-tac-on-surface placeholder:text-tac-status-standby/60">
+              </div>
+            </div>
+
+            <!-- Secure key -->
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between items-center">
+                <label class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant tracking-wider" for="login-key">Secure Key</label>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">MIN 6 CHARS</span>
+              </div>
+              <div class="tac-well flex items-center gap-2 px-3">
+                <span class="material-symbols-outlined text-tac-status-standby text-[18px]">fingerprint</span>
+                <input :type="showLoginKey ? 'text' : 'password'" x-model="loginForm.password" required id="login-key"
+                  autocomplete="current-password" placeholder="••••••••"
+                  class="w-full bg-transparent border-0 outline-none py-2.5 font-label-mono-md text-label-mono-md text-tac-on-surface placeholder:text-tac-status-standby/60">
+                <button type="button" @click="showLoginKey = !showLoginKey"
+                  :aria-label="showLoginKey ? 'Sembunyikan secure key' : 'Tampilkan secure key'"
+                  :aria-pressed="showLoginKey ? 'true' : 'false'"
+                  class="text-tac-status-standby hover:text-tac-on-surface transition-colors">
+                  <span class="material-symbols-outlined text-[18px]" x-text="showLoginKey ? 'visibility_off' : 'visibility'"></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sesi -->
+            <div class="flex items-center gap-space-xs mt-1">
+              <input type="checkbox" id="keep-session" x-model="loginForm.keepSession"
+                class="w-4 h-4 rounded-sm bg-tac-surface-recessed border border-tac-border-tactical accent-tac-primary cursor-pointer">
+              <label for="keep-session" class="font-body-sm text-body-sm text-tac-on-surface-variant cursor-pointer select-none">
+                Simpan sesi di perangkat ini (shift bawah tanah / sinyal terputus)
+              </label>
+            </div>
+
+            <!-- CTA -->
+            <button type="submit" :disabled="isLoading"
+              class="tac-btn-primary w-full disabled:cursor-not-allowed"
+              x-html="isLoading ? '<span class=\'flex items-center justify-center gap-3\'><svg class=\'animate-spin w-5 h-5\' viewBox=\'0 0 24 24\' fill=\'none\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>VERIFYING ENCLAVE…</span>' : '<span class=\'flex items-center justify-center gap-2\'><span class=\'material-symbols-outlined text-[20px]\'>login</span>AUTHENTICATE &amp; ENTER COMMAND CENTER</span>'">
+            </button>
+          </form>
+
+          <div class="mt-space-md pt-space-sm border-t border-tac-border-tactical flex items-center justify-between text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm">
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-tac-status-operational text-[14px]">lock</span> TLS 1.3 HARDWARE TUNNEL
+            </span>
+            <span class="text-tac-status-standby">DEFENSE MATRIX ACTIVE</span>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full shrink-0 bg-tac-surface-container-lowest/90 backdrop-blur-md shadow-[0_-1px_8px_rgba(0,0,0,0.3)]">
+      <div class="w-full px-gutter-desktop py-space-md flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+        <div class="flex items-center gap-space-md">
+          <div class="flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-tac-status-operational text-[16px]">lock</span>
+            <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">TLS 1.3 / SESSION VERIFIED</span>
+          </div>
+          <span class="text-tac-status-standby font-label-mono-sm text-label-mono-sm hidden md:inline">|</span>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby hidden md:inline">RESTRICTED — AUTHORIZED PERSONNEL ONLY</span>
+        </div>
+        <div class="flex items-center gap-space-lg">
+          <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">PT CITRA PALU MINERALS</span>
+          <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">© 2026 MTC ASSET</span>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <!-- 🍞 Toast Notification Stack -->

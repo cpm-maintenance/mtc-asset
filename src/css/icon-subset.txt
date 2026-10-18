@@ -37,6 +37,8 @@ inventory
 inventory_2
 lightbulb
 link
+lock
+login
 logout
 manage_accounts
 menu
@@ -76,6 +78,8 @@ trending_up
 troubleshoot
 verified_user
 view_kanban
+visibility
+visibility_off
 warehouse
 warning
 wifi_off

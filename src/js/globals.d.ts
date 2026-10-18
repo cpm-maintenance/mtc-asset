@@ -64,6 +64,7 @@ declare global {
     signInWithEmailAndPassword?: any;
     setPersistence?: any;
     browserSessionPersistence?: any;
+    browserLocalPersistence?: any;
     createUserWithEmailAndPassword?: any;
     /** Resolver promise `_firebaseReady` (di-set main.js). */
     _firebaseReadyResolve?: (() => void) | null;

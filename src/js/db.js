@@ -15,7 +15,7 @@ import { getStorage, ref as refStorage, uploadBytes, getDownloadURL } from 'fire
 import {
   getAuth, signOut, onAuthStateChanged,
   signInWithEmailAndPassword, setPersistence,
-  browserSessionPersistence, createUserWithEmailAndPassword,
+  browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
   sendPasswordResetEmail
 } from 'firebase/auth'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
@@ -47,6 +47,6 @@ export { ref, onValue, onChildAdded, set, update, remove, get, query, limitToLas
 // Storage functions
 export { refStorage, uploadBytes, getDownloadURL }
 // Auth functions
-export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, createUserWithEmailAndPassword, sendPasswordResetEmail }
+export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword, sendPasswordResetEmail }
 // Messaging functions
 export { getToken, onMessage }
