@@ -1,3 +1,107 @@
+## 📝 Session 23 (S23, 2026-10-18) — palet chart ke token CSS + sisa kecil `style.css` (kartu A + C)
+
+### Kenapa hex di JS tidak bisa disapu seperti kelas
+Chart.js menggambar ke `<canvas>`: ia butuh **string warna**, bukan kelas, jadi `charts.js`
+menyimpan 53 hex + 6 `rgba()` literal. Hex tidak ikut tema saat paint — tema `light` tetap
+memakai palet malam — dan menambah tema berarti menambah satu tabel hex lagi
+(`themeAccent()` memang sudah berbentuk tabel per tema). Sapuan kelas S22 tidak menyentuhnya
+karena ini bukan kelas.
+
+### Solusi: token `--tac-chart-*` + satu pembaca
+- `src/css/tactical.css` dapat **17 token** `--tac-chart-*` (triple channel RGB, sama seperti
+  token `tac-*` lain). Nilai `:root` **identik dengan hex lama**, jadi tema malam tidak berubah
+  sedikit pun; yang bergeser per tema hanya `accent`, `accent-soft`, `grid`, `tick`, `title`,
+  `tooltip`. Blok tema ditaruh **setelah** `:root` — spesifisitas sama, urutan menang.
+- `src/js/chart-palette.js` (baru, 3.9 KB): `chartColor(name, alpha)` membaca token lewat
+  `getComputedStyle()` → `rgb(r, g, b)` / `rgba(r, g, b, a)` untuk canvas; `chartToken(name)`
+  → `rgb(var(--tac-chart-x))` untuk `:style` (browser yang menghitung, jadi gauge OEE ikut tema
+  tanpa resolve di JS).
+- `themeAccent()/themeAccentSoft()/themeGrid()` jadi tiga baris yang memanggil palette;
+  `charts.js` dapat method `chartColor` (dideklarasikan di `appstate.ts`).
+- Cache palette per tanda tema (`data-theme|dark`): `getComputedStyle` memaksa recalc, dan satu
+  dashboard merender belasan warna sekaligus. Kalau token belum ada (jsdom/SSR) hasilnya abu-abu
+  netral dan **tidak** di-cache — fallback hex di JS justru menghidupkan palet kedua.
+
+### Angka hex di `src/js/**`
+| berkas | sebelum | sesudah |
+|---|---|---|
+| `charts.js` | 53 | **0** |
+| `modules/enterprise-kpi.js` | 15 | **0** |
+| `app.js` | 7 | **1** (di dalam komentar) |
+| `modules/ai.js` | 5 | 5 (**sengaja**) |
+| `modules/ui.js` | 4 | 4 (**sengaja**) |
+| total | **84** | **10** |
+
+Dua pengecualian itu bukan UI bertema dan dieja per berkas di tes: warna kanvas QRCode (`ui.js`
+— pemindai butuh hitam/putih murni) dan stylesheet laporan HTML tercetak (`ai.js` — kertas
+selalu terang, tanpa `var()` app).
+
+### Temuan yang ikut ketemu
+1. **`colorHex` di `app.js` (5 kartu dashboard) = data mati** — ditulis, tidak dibaca siapa pun
+   (0 konsumen di `src/`, `public/`, `index.html`). Dihapus.
+2. **`hexColor` OEE** (`enterpriseOEE.hexColor`) dipakai `EnterpriseDashboard.html` di `:style`
+   untuk gauge radial + angka OEE. Nilainya sekarang ekspresi `rgb(var(--tac-chart-…))`, dan
+   namanya dibuat jujur: **`toneColor`** (3 tempat: kpi + app + 2 di HTML).
+3. **Grid chart KPI punya warna sendiri tanpa alasan** — `renderKPICharts` memakai
+   `gc = darkMode ? rgba(245,158,11,.05) : rgba(0,0,0,.05)`, terpisah dari `themeGrid()`.
+   Sekarang semua lewat `themeGrid()`. Konsekuensi kecil: di navy/purple garis grid ikut hue
+   tema (dulu selalu amber); di tema malam tidak terlihat.
+4. **Klaim S22 "5 ligatur allowlist tidak dipakai" salah 3 dari 5** — `help` dipakai
+   `pmStatusTac()` (`app.js:1779`), `info` dipakai config toast (`ui.js`), `menu` dipakai
+   sebagai fallback ikon sidebar (`index.html` ×3). Yang benar-benar mati hanya
+   **`account_circle`** dan **`home`** → allowlist 84 → **82**, font 10.048 → **9.868 byte**.
+
+### Penjaga baru (6 tes; `tests/legacy-palette.test.js` 10 → 16)
+1. tidak ada hex warna di `src/js/**` (kecuali 2 berkas yang dieja + beralasan)
+2. tidak ada `rgb()`/`rgba()` bernilai literal — `rgb(var(--tac-…))` tetap sah
+3. setiap `--tac-*` yang disebut JS **ada** di `tactical.css`
+4. setiap nama seri di `chartColor()`/`chartToken()` ada di `CHART_SERIES`
+5–6. sanitas: `chart-palette.js` ikut dipindai, `CHART_SERIES` ≥ 10 dan memuat `accent`/`warn`
+
+### Verifikasi (angka riil)
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline, tidak naik) · `vitest` **463/463**
+  (24 berkas; 457 → 463) · `build` ok · `verify:precache` **50/50**.
+- **Browser, 4 tema** (`scratch/chart-palette-harness.html`, dev server): 17 seri resolve dan
+  **setiap nilai sama persis dengan hex lama** — night `rgb(255,140,26)` (=#ff8c1a),
+  `rgba(245,197,66,.05)` grid, `rgb(139,158,183)` tick, `rgb(245,245,245)` title,
+  `rgba(13,17,23,.95)` tooltip; navy `rgb(59,130,246)`; purple `rgb(168,85,247)`;
+  light `rgb(0,97,255)`, grid `rgba(0,0,0,.05)`, tick `rgb(100,116,139)`,
+  title `rgb(15,23,42)`, tooltip `rgba(255,255,255,.95)`.
+- **Chart.js benar-benar memakan string itu** (bukan cuma CSS): line + doughnut dibuat di
+  canvas lalu `getDatasetMeta()` dibaca → `border=rgb(255,140,26)`,
+  `fill=rgba(245,197,66,0.1)`, arc `rgb(34,197,94)` / `rgb(245,158,11)`; piksel kanvas
+  **24 warna unik**, **0 error** window.
+- CSS hasil build memuat token: `--tac-chart-accent` **4×** (root+3 tema),
+  `--tac-chart-grid` 4×, `--tac-chart-tooltip` 2×, `--tac-chart-good` 1×.
+- `check-page.mjs public/pages/EnterpriseDashboard.html` → **syntax errors 0** (461 identifier).
+- Kelas `tac-*`: **258/258 ter-generate** (0 hilang) — `scratch/tac-usage.txt` di-regenerate
+  dulu; versi lama masih memuat `bg-tac-on-surface` yang sejak S22 tidak ada di sumber, dan
+  itulah yang membuat audit lama melaporkan "1 tidak ter-generate".
+- `sw.js` `CACHE_NAME` → **`mtc-asset-v15`**.
+
+### C (sisa kecil) — ikut selesai
+- `.gold-text` + `.nav-active` (0 referensi; keduanya masih memakai `--nexus-accent`) dihapus →
+  `style.css` **9.848 → 9.399 byte** (−449).
+- 2 ligatur mati dihapus → font **−180 B**; `tactical.css` +2.090 B (17 token baru).
+
+### Jebakan baru
+- **`getComputedStyle` mengembalikan token apa adanya** (`255 140 26`, bukan `rgb(...)`) —
+  custom property tidak di-resolve kecuali didaftarkan `@property`. Pembungkus `rgb()` harus
+  dibuat sendiri, plus cache per tema.
+- **Jangan pakai `rgb(r g b / a)` (CSS Color 4) untuk Chart.js** — Chart.js mem-parse string
+  sendiri, bukan lewat CSS parser; pakai `rgba(r, g, b, a)`.
+- **`check-tac-generated.py` membaca snapshot `scratch/tac-usage.txt`** — kalau hasilnya aneh,
+  regenerate daftarnya dulu. Itu bukan regresi kode.
+- **`npm run lint` naik 1 warning** kalau `catch (e)` tidak memakai `e` → pakai `catch {`
+  (optional catch binding) di berkas baru.
+
+### Sisa
+- `ai.js` (5 hex) & `ui.js` (4 hex) tetap: dokumen cetak & kanvas QR — keduanya disengaja.
+- Gap AA tema gelap (`KNOWN_DARK_GAPS`) masih menunggu keputusan user.
+- Coverage modul 0–10% belum disentuh (kandidat B).
+
+---
+
 ## 📝 Session 22 (S22, 2026-10-18) — sapu string kelas lama di `src/js/**` (kartu A)
 
 ### Premis yang diuji lebih dulu — dan ternyata catatan S21 kurang
