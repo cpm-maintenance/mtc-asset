@@ -85,6 +85,17 @@ selalu terang, tanpa `var()` app).
 - 2 ligatur mati dihapus → font **−180 B**; `tactical.css` +2.090 B (17 token baru).
 
 ### Jebakan baru
+- **`git push` "gantung" — penyebab SEBENARNYA bukan dialog auth (koreksi catatan S22).**
+  `-c credential.helper=store` **menambah** helper ke daftar yang sudah ada, jadi helper sistem
+  `helper-selector` tetap dipanggil lebih dulu — dan ia menjalankan `git config --system -e`,
+  yaitu membuka **editor** di terminal non-tty → blokir ~39 detik, hening, sebelum akhirnya
+  `credential-store get` jalan. Buktinya ada di `GIT_TRACE=1`: `git credential-helper-selector get`
+  → `git config --system -e` → (39 s tanpa output) → `git credential-store get`. Obatnya **reset
+  daftar helper** dengan nilai kosong lebih dulu:
+  `git -c credential.helper= -c credential.helper=store push --verbose origin main`
+  → langsung `POST git-receive-pack (20887 bytes)` dan `main -> main`.
+  `GIT_TERMINAL_PROMPT=0`, `GIT_EDITOR=true`, `http.version=HTTP/1.1`, dan `http.postBuffer` besar
+  **tidak** menyembuhkan — retry juga tidak (itu sebabnya S22 butuh 2–3 percobaan).
 - **`getComputedStyle` mengembalikan token apa adanya** (`255 140 26`, bukan `rgb(...)`) —
   custom property tidak di-resolve kecuali didaftarkan `@property`. Pembungkus `rgb()` harus
   dibuat sendiri, plus cache per tema.
