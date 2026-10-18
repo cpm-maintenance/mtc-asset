@@ -44,13 +44,20 @@ export default defineConfig({
             // `exportToPDF` (tabel log/PM/parts, placeholder, error path).
             // Total 71.2/61.59/68.92/72.66. Suite 987 → 999.
             // Threshold 65/57/65/67 → 69/59/66/70 (margin ~2 poin).
+            // S30: unit test sisa `ui.js` — tema (setTheme/applyTheme), notifikasi +
+            // timer (progress/exiting/auto-remove), scanner kamera (openQR/stopScanner),
+            // helper warna (status/crit/log/logStatus/woPriority/getStat), kompresi
+            // gambar (landscape/portrait/error), upload Cloudinary (ok/HTTP gagal/
+            // network), uploadImage, blobToBase64, systemReset (SW + Cache Storage).
+            // ui.js 32.98 → 98.96% lines. Total 73.39/62.65/71.47/74.96. Suite 999 → 1050.
+            // Threshold 69/59/66/70 → 71/60/69/72 (margin ~2 poin).
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 69,
-                branches: 59,
-                functions: 66,
-                lines: 70,
+                statements: 71,
+                branches: 60,
+                functions: 69,
+                lines: 72,
             },
         },
     },
