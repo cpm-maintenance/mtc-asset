@@ -1,3 +1,75 @@
+## 📝 Session 24 (S24, 2026-10-18) — coverage modul 0–10%: `auth.js` · `audit.js` · `wo-pdf-template.js` (kartu A)
+
+### Kenapa tiga berkas ini, dan urutannya
+Angka S17 (`auth.js` 0,8% · `audit.js` 0% · `wo-pdf-template.js` 0%) **diukur ulang dulu**
+sebelum dipercaya: baseline hari ini **28,40 / 26,87 / 30,14 / 29,62** (463 tes / 24 berkas) —
+sedikit di atas catatan S17 karena tes `chart-palette.js` di S23. Urutan tetap menurut risiko,
+bukan menurut angka: `auth.js` adalah jalur login/role/`isAdmin` — berkas yang melahirkan bug
+P0 privilege escalation — jadi utang keamanannya dibayar lebih dulu.
+
+### `tests/auth-module.test.js` (38 tes) — dua invarian P0 dikunci
+`auth.js` memakai `window.ref/db/get/set/...` (bukan import SDK), jadi cukup `vi.stubGlobal`;
+tidak ada Firebase yang perlu di-mock.
+1. **`ensureUserProfile()` tidak pernah menulis `role`.** Profil lama: hanya `email` + `lastLogin`
+   yang di-update, `role` lama dipertahankan (assert `Object.keys(updates).sort()` =
+   `['email','lastLogin']`). Profil baru: dibuat **tanpa** field `role`, jadi `login()` jatuh ke
+   `userRole = 'user'` walaupun state sebelumnya `admin`.
+2. **Setiap jalur tulis-admin dijaga `this.isAdmin` sebelum menyentuh RTDB** —
+   `createUser` (dan urutannya: validasi email/password **dulu**, baru guard admin), `saveEditUser`,
+   `loadAllUsers`, `deleteUser`. Semua diuji dengan `expect(fb.set/remove).not.toHaveBeenCalled()`.
+
+Ikut diuji: login form kosong / sukses (persistence sesi + role dari RTDB) / gagal (`isLoading`
+selalu direset), logout batal/sukses/gagal, `showUID`, `getUserRole` (kosong & error → `user`),
+`sendPasswordReset` (user tak dikenal, batal, sukses, gagal), modal create/edit, `createdBy`
+fallback `'admin'`, merge profil lama saat `saveEditUser`, dan sinkronisasi `allUsers`.
+
+### `tests/audit-module.test.js` (14 tes) — `db.js` yang di-mock, bukan Firebase-nya
+`audit.js` mengimpor `../db.js` yang men-inisialisasi Firebase nyata → `vi.mock('../src/js/db.js')`
+dengan `{ db, ref, set }`. Yang diuji: bentuk entri (`uid/email/role/page/details`, fallback
+`unknown`/`user`/`-`), `details` string vs JSON, pemotongan **200 char + `…`** (panjang akhir 201),
+key `AuditTrail/<Date.now()>_<4 char>`, guard audit-off & belum-login, dan yang terpenting:
+**kegagalan tulis tidak boleh menjatuhkan aplikasi** — `PERMISSION_DENIED` ditelan tanpa
+`console.warn`, error lain hanya di-warn, `logAudit()` selalu resolve.
+`setupAuditHooks()` terbukti idempoten (`__auditPatched` / `__auditLogoutPatched`), audit
+`Logout` ditulis **sebelum** `signOut`, `app.signOut` dipakai kalau `app.logout` tidak ada, dan
+`window.auditModule` yang sudah ada tidak ditimpa.
+
+### `tests/wo-pdf-template.test.js` (24 tes) — `jspdf` di-mock, `doc.text` tetap jalan
+`vi.hoisted()` untuk `jsPDF` (dipakai lewat `await import('jspdf')`), jadi seluruh template
+benar-benar dieksekusi dan bisa diperiksa: dokumen A4 portrait, nama berkas
+`WorkOrder_<no>.pdf` + fallback `DRAFT`, badge prioritas ×4 dan status ×4 (assert `setFillColor`),
+cabang equipment internal vs `EXTERNAL`, `PartsUsed` string JSON / array / JSON rusak / kosong
+dengan batas **5 baris** (`SP-6` tidak boleh muncul), rupiah ribuan (`Rp 1.500.000`; `Cost: '0'`
+→ `Rp 0` karena string truthy), dan **page-break** saat 5 baris parts + blok biaya melewati
+`pageHeight - 50`. Deskripsi panjang dipotong 4 baris (`splitTextToSize` → `slice(0,4)`).
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `auth.js` | 0,81% | **100%** |
+| `audit.js` | 0% | **97,05%** |
+| `wo-pdf-template.js` | 0% | **100%** |
+
+Total **29,62% → 37,47%** lines · 34,95% stmt · 29,65% branch · 32,38% func.
+Suite **463 → 539** tes (24 → 27 berkas). Ratchet `vitest.config.js` **27/25/28/28 → 34/29/31/36**.
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline; 0 warning baru — `catch` tanpa
+  binding dipakai di berkas baru) · `vitest` **539/539** · `build` ok · `verify:precache` **50/50**.
+- **`src/js/**` tidak disentuh sama sekali** → bundle identik, `sw.js` tetap **`mtc-asset-v15`**.
+  Deploy dijalankan hanya karena dokumentasi ikut berubah, bukan karena ada perubahan runtime.
+
+### Sisa
+- Baris yang tidak tercakup: `audit.js:86` (cabang `DOMContentLoaded`, tidak mungkin dijalankan
+  di jsdom karena `readyState` sudah `complete`), `auth.js` 2 cabang parsial (fallback email
+  profil lama & `idx === -1`).
+- Kandidat berikutnya (belum ada kartu): `enterprise-kpi.js` 4,08% · `pm-schedule.js` 7,9% ·
+  `charts.js` 8,5% · `logs.js` 9,09% · `indexeddb.js` 9,49% · `performance.js` 10,19% ·
+  `bootstrap.js` 1,06%.
+- Gap AA tema gelap (`KNOWN_DARK_GAPS`) & H-1/H-2 masih **menunggu keputusan user**.
+
+---
+
 ## 📝 Session 23 (S23, 2026-10-18) — palet chart ke token CSS + sisa kecil `style.css` (kartu A + C)
 
 ### Kenapa hex di JS tidak bisa disapu seperti kelas
