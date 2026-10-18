@@ -1,4 +1,4 @@
-## 📝 Session 29 (S29, 2026-10-18) — coverage `kpi-engine.js` 43,92% → 100% lines
+## 📝 Session 29 (S29, 2026-10-18) — coverage `kpi-engine.js` + `export.js` → 100% lines
 
 ### Kenapa `kpi-engine.js` duluan
 Modul ini murni aritmetika (health score, MTBF, prediksi kegagalan) tanpa DOM —
@@ -35,22 +35,50 @@ getter), `makeEngine(overrides)` menerapkan override **setelah** default.
 - **`getEquipName`**: id kosong → `'Unknown Asset'` · equipment bukan array → `id` ·
   exact match menang atas case-insensitive · case-insensitive · tidak ketemu.
 
+### `export.js` 45,5% → **100%** lines (+12 tes di `tests/export-module.test.js`)
+Tiga jalur ekspor sebelumnya tidak tersentuh sama sekali karena menabrak
+jsPDF/DOM. Harness lama dipakai ulang (`makeCtx` + mock `xlsx`/`jspdf`), cuma
+ditambah `book_new`/`book_append_sheet`/`aoa_to_sheet`/`write` ke mock xlsx,
+`setFont`/`setDrawColor`/`autoTable`/`lastAutoTable`/`internal.getNumberOfPages`
+ke mock jsPDF, dan `vi.mock('jspdf-autotable')`.
+
+- **`exportExcelFull`**: 7 sheet (`Equipment`, `SpareParts`, `HistoryLog`,
+  `Performance`, `PM_Schedule`, `Requisitions`, `Summary`) · `EquipmentIDs`
+  array → `'EQ-1, EQ-2'`, string dibiarkan · `PartsUsed` objek → JSON, string
+  apa adanya, `null` → `'[]'` · `events` sama · Summary menjumlah `Cost` +
+  `Downtime` (string di-`Number`, `null` → 0) · state kosong → sheet `[{}]` ·
+  `Alpine.raw` dipakai bila ada · nama unduhan `MTC_Asset_Full_<tanggal>.xlsx`.
+- **`exportPMSchedulePDF`**: `pmList` kosong → notifikasi warning, jsPDF tidak
+  dibuat · sort overdue dulu lalu tanggal · `frequency: 'none'` → `'—'` ·
+  equipment tak dikenal → `equipmentId` apa adanya · warna status
+  Overdue/completed/pending/lainnya · 30 baris → `addPage` + header diulang
+  (label `Task` muncul 2×) · error → `Failed to export PDF: <msg>` · `isLoading`
+  selalu balik `false`.
+- **`exportToPDF`**: guard tanpa `EquipmentID` · 3 tabel (log/PM/parts) ·
+  deskripsi dipotong 40 char, taskName 35, nama part 25 · parts lewat
+  `EquipmentIDs` **atau** `EquipmentID` · `Stok <= MinStock` → `⚠️ LOW` ·
+  placeholder `No maintenance logs recorded` / `No PM schedule…` /
+  `No parts linked…` · tanpa helper KPI → `N/A% - -`, `N/A hrs` · field panjang
+  → dipotong 25 char + `…` (butuh `getTextWidth` besar) · error → notifikasi
+  + `isLoading` balik `false`.
+
 ### Hasil (angka riil)
 | modul | lines sebelum | lines sesudah |
 |---|---|---|
 | `kpi-engine.js` | 43,92% | **100%** (stmt 100 · branch 96,87 · func 100) |
+| `export.js` | 45,5% | **100%** (stmt 99,07 · branch 79,65 · func 96) |
 
-Total **68,08% → 69,16%** lines · 67,67% stmt · 59,63% branch · 66,84% func.
-Suite **938 → 987** tes (35 berkas). Ratchet `vitest.config.js`
-**65/56/65/66 → 65/57/65/67** (branch & lines naik; statements 65 dan functions 65
-tetap karena margin < 2 poin).
+Total **68,08% → 72,66%** lines · 71,2% stmt · 61,59% branch · 68,92% func.
+Suite **938 → 999** tes (35 berkas). Ratchet `vitest.config.js`
+**65/56/65/66 → 69/59/66/70** (margin ~2 poin di semua kategori).
 
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
-  **987/987** · `test:coverage` lolos threshold baru · `build` ok ·
+  **999/999** · `test:coverage` lolos threshold baru · `build` ok ·
   `verify:precache` **50/50**.
-- **`src/js/**` tidak disentuh** (`git show --name-only 0c9c798` = 2 berkas tes +
-  config) → bundle identik, `sw.js` tetap **`mtc-asset-v15`**.
+- **`src/js/**` tidak disentuh** (`git show --name-only 0c9c798` dan `9335deb`
+  = hanya berkas tes + `vitest.config.js`) → bundle identik, `sw.js` tetap
+  **`mtc-asset-v15`**.
 
 ### Temuan perilaku (bukan diperbaiki — di luar cakupan kartu)
 - **`_kpiCache` cuma punya satu slot `key`.** `calculateHealthScore` memanggil
@@ -66,9 +94,10 @@ tetap karena margin < 2 poin).
   ternary/`||` — bukan jalur logika yang hilang.
 
 ### Sisa
-- Kandidat berikutnya: `ui.js` 32,98% · `equipment.js` 46,57% · `export.js` 45,5% ·
-  `parts.js` 54,83% · `push-client.js` 25% · `requisition.js` 67,16% ·
-  `app.js` 20,9% (butuh harness Alpine).
+- Kandidat berikutnya: `ui.js` 32,98% (130 baris merah) · `ai.js` 76,31% (81) ·
+  `requisition.js` 67,16% (66) · `equipment.js` 46,57% (39) · `notification.js`
+  77,02% (34) · `parts.js` 54,83% (28) · `push-client.js` 25% (14) ·
+  `app.js` 20,9% (1010 baris, butuh harness Alpine — paling mahal, paling besar).
 - Kartu C-3 (Lighthouse) & D-5 (gap AA tema gelap) tetap terbuka; D-5 butuh
   keputusan user.
 
