@@ -325,19 +325,23 @@
                 Masuk dengan akun Google organisasi. Role tetap dibaca dari RTDB
                 <span class="font-mono">Users/{uid}/role</span> — SSO tidak menambah hak akses.
               </p>
-              <div class="p-space-sm rounded-lg bg-tac-surface-recessed flex items-start gap-space-xs">
-                <span class="material-symbols-outlined text-tac-status-repair text-[18px]">info</span>
-                <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
-                  Provider Google harus aktif di Firebase Console → Authentication → Sign-in method.
-                  Kalau belum, pesan error Firebase akan tampil apa adanya.
-                </span>
-              </div>
             </div>
 
             <!-- CTA -->
             <button type="submit" :disabled="isLoading"
-              class="tac-btn-primary w-full disabled:cursor-not-allowed"
-              x-html="isLoading ? '<span class=\'flex items-center justify-center gap-3\'><svg class=\'animate-spin w-5 h-5\' viewBox=\'0 0 24 24\' fill=\'none\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>VERIFYING ENCLAVE…</span>' : '<span class=\'flex items-center justify-center gap-2\'><span class=\'material-symbols-outlined text-[20px]\'>login</span>AUTHENTICATE &amp; ENTER COMMAND CENTER</span>'">
+              class="tac-btn-primary w-full disabled:cursor-not-allowed">
+              <span x-show="!isLoading" class="flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[20px]"
+                  x-text="loginMode === 'sso' ? 'public' : 'login'"></span>
+                <span x-text="loginMode === 'sso' ? 'LANJUTKAN DENGAN GOOGLE' : (loginMode === 'pin' ? 'MASUK DENGAN PIN' : 'AUTHENTICATE &amp; ENTER COMMAND CENTER')"></span>
+              </span>
+              <span x-show="isLoading" class="flex items-center justify-center gap-3">
+                <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>VERIFYING ENCLAVE…</span>
+              </span>
             </button>
           </form>
 

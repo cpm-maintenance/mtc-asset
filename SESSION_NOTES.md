@@ -148,9 +148,15 @@ token `tac-*` — jadi ikut 4 tema.
     password Firebase. Tanpa email tersimpan → peringatan + balik ke EMAIL
     (tidak pernah menebak email). Input PIN `inputmode=numeric`, `maxlength=6`.
   - `SSO` — `signInWithPopup(auth, new GoogleAuthProvider())`; role tetap dari
-    RTDB `Users/{uid}/role`, jadi SSO tidak menambah hak akses. Provider harus
-    diaktifkan di Firebase Console; kalau belum, pesan error Firebase tampil
-    apa adanya (tidak ditelan).
+    RTDB `Users/{uid}/role`, jadi SSO tidak menambah hak akses. Provider Google
+    sudah **Enabled** di Firebase Console (diverifikasi Manuel), jadi banner
+    peringatan statis di panel SSO **dihapus** — ia muncul tiap kali tab dibuka
+    dan terbaca sebagai error padahal bukan. Kegagalan nyata tetap tampil lewat
+    notifikasi (`SSO gagal: <message>`).
+- **Label CTA mengikuti mode** (`AUTHENTICATE & ENTER COMMAND CENTER` /
+  `MASUK DENGAN PIN` / `LANJUTKAN DENGAN GOOGLE`). `x-html` + string ber-escape
+  dibuang; spinner dan label sekarang dua `<span>` dengan `x-show`, jadi teks
+  tombol tidak lagi membawa nama ligatur ikon di `textContent`.
 - **Input non-aktif di-`disabled`**, bukan cuma disembunyikan: field `required`
   yang `display:none` tetap memblokir submit, jadi `:disabled="loginMode !==
   'email'"` / `'pin'` wajib.
