@@ -126,16 +126,18 @@
 
         <!-- LEFT PANEL: HUD -->
         <section class="hidden lg:flex lg:col-span-7 relative flex-col justify-between rounded-xl overflow-hidden bg-tac-surface-card tac-rim min-h-[600px]">
-          <!-- Latar HUD: grid + glow. Sengaja CSS murni (tanpa foto/CDN) supaya
-               layar login tidak bergantung jaringan. -->
+          <!-- Latar HUD: foto mill + overlay gelap + grid. Overlay dibuat tetap
+               gelap di semua tema supaya teks di atasnya selalu terbaca. -->
+          <img src="/img/login-mill-1600.jpg" alt="" aria-hidden="true" decoding="async"
+            class="absolute inset-0 z-0 w-full h-full object-cover select-none pointer-events-none"
+            style="filter:brightness(0.42) saturate(0.85) contrast(1.05);">
           <div class="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-            <div class="absolute inset-0 opacity-40"
-              style="background-image:linear-gradient(rgba(255,255,255,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.045) 1px,transparent 1px);background-size:48px 48px;"></div>
+            <div class="absolute inset-0 opacity-25"
+              style="background-image:linear-gradient(rgba(255,255,255,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.06) 1px,transparent 1px);background-size:48px 48px;"></div>
+            <div class="absolute inset-0"
+              style="background:linear-gradient(to top, rgba(8,12,18,0.96) 0%, rgba(8,12,18,0.55) 45%, rgba(8,12,18,0.25) 100%);"></div>
             <div class="absolute -top-28 -left-28 w-[440px] h-[440px] rounded-full"
-              style="background:radial-gradient(circle,rgba(251,191,36,0.16),transparent 65%);"></div>
-            <div class="absolute -bottom-36 -right-20 w-[400px] h-[400px] rounded-full"
-              style="background:radial-gradient(circle,rgba(6,182,212,0.12),transparent 65%);"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-tac-surface-canvas via-transparent to-tac-surface-canvas/70"></div>
+              style="background:radial-gradient(circle,rgba(251,191,36,0.14),transparent 65%);"></div>
           </div>
 
           <!-- Baris status -->
@@ -213,23 +215,31 @@
             <p class="font-body-sm text-body-sm text-tac-on-surface-variant mt-1">Kredensial operator dikelola admin lewat User Management.</p>
           </div>
 
-          <!-- Mode strip: hanya EMAIL yang aktif di build ini. -->
-          <div class="grid grid-cols-3 gap-1 p-1 bg-tac-surface-recessed rounded-lg mt-space-md" role="group" aria-label="Access mode">
-            <span class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 bg-tac-primary text-tac-on-primary font-bold shadow-md"
-              aria-current="true">
+          <!-- Mode strip: tiga jalur nyata — EMAIL, PIN (kiosk), SSO Google. -->
+          <div class="grid grid-cols-3 gap-1 p-1 bg-tac-surface-recessed rounded-lg mt-space-md" role="tablist" aria-label="Access mode">
+            <button type="button" role="tab" @click="setLoginMode('email')"
+              :aria-selected="loginMode === 'email' ? 'true' : 'false'"
+              :class="loginMode === 'email' ? 'bg-tac-primary text-tac-on-primary font-bold shadow-md' : 'text-tac-on-surface-variant hover:text-tac-on-surface'"
+              class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-all">
               <span class="material-symbols-outlined text-[14px]">person</span> EMAIL
-            </span>
-            <span class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 text-tac-status-standby opacity-50"
-              title="Mode PIN belum diaktifkan untuk node ini">
+            </button>
+            <button type="button" role="tab" @click="setLoginMode('pin')"
+              :aria-selected="loginMode === 'pin' ? 'true' : 'false'"
+              :class="loginMode === 'pin' ? 'bg-tac-primary text-tac-on-primary font-bold shadow-md' : 'text-tac-on-surface-variant hover:text-tac-on-surface'"
+              class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-all">
               <span class="material-symbols-outlined text-[14px]">fingerprint</span> PIN
-            </span>
-            <span class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 text-tac-status-standby opacity-50"
-              title="SSO / IdP belum diaktifkan untuk node ini">
+            </button>
+            <button type="button" role="tab" @click="setLoginMode('sso')"
+              :aria-selected="loginMode === 'sso' ? 'true' : 'false'"
+              :class="loginMode === 'sso' ? 'bg-tac-primary text-tac-on-primary font-bold shadow-md' : 'text-tac-on-surface-variant hover:text-tac-on-surface'"
+              class="py-space-xs px-2 rounded font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-all">
               <span class="material-symbols-outlined text-[14px]">public</span> SSO
-            </span>
+            </button>
           </div>
 
-          <form @submit.prevent="login()" class="flex flex-col gap-space-md mt-space-md">
+          <form @submit.prevent="submitLogin()" class="flex flex-col gap-space-md mt-space-md">
+            <!-- === MODE EMAIL === -->
+            <div x-show="loginMode === 'email'" class="flex flex-col gap-space-md">
             <!-- Operator email -->
             <div class="flex flex-col gap-1">
               <div class="flex justify-between items-center">
@@ -239,6 +249,7 @@
               <div class="tac-well flex items-center gap-2 px-3">
                 <span class="material-symbols-outlined text-tac-status-standby text-[18px]">person</span>
                 <input type="email" x-model="loginForm.email" required id="login-id" autocomplete="username"
+                  :disabled="loginMode !== 'email'"
                   placeholder="name@planner.com"
                   class="w-full bg-transparent border-0 outline-none py-2.5 font-label-mono-md text-label-mono-md tracking-wider text-tac-on-surface placeholder:text-tac-status-standby/60">
               </div>
@@ -253,6 +264,7 @@
               <div class="tac-well flex items-center gap-2 px-3">
                 <span class="material-symbols-outlined text-tac-status-standby text-[18px]">fingerprint</span>
                 <input :type="showLoginKey ? 'text' : 'password'" x-model="loginForm.password" required id="login-key"
+                  :disabled="loginMode !== 'email'"
                   autocomplete="current-password" placeholder="••••••••"
                   class="w-full bg-transparent border-0 outline-none py-2.5 font-label-mono-md text-label-mono-md text-tac-on-surface placeholder:text-tac-status-standby/60">
                 <button type="button" @click="showLoginKey = !showLoginKey"
@@ -271,6 +283,55 @@
               <label for="keep-session" class="font-body-sm text-body-sm text-tac-on-surface-variant cursor-pointer select-none">
                 Simpan sesi di perangkat ini (shift bawah tanah / sinyal terputus)
               </label>
+            </div>
+
+            </div><!-- /mode email -->
+
+            <!-- === MODE PIN (kiosk cepat) === -->
+            <div x-show="loginMode === 'pin'" class="flex flex-col gap-space-md">
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-center">
+                  <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant tracking-wider">Operator</span>
+                  <button type="button" @click="setLoginMode('email')"
+                    class="font-label-mono-sm text-label-mono-sm text-tac-primary hover:underline">GANTI</button>
+                </div>
+                <div class="tac-well flex items-center gap-2 px-3">
+                  <span class="material-symbols-outlined text-tac-status-standby text-[18px]">badge</span>
+                  <span class="w-full py-2.5 font-label-mono-md text-label-mono-md tracking-wider text-tac-on-surface truncate"
+                    x-text="rememberedEmail || '—'"></span>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-center">
+                  <label class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant tracking-wider" for="login-pin">PIN</label>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">4–6 DIGIT</span>
+                </div>
+                <div class="tac-well flex items-center gap-2 px-3">
+                  <span class="material-symbols-outlined text-tac-status-standby text-[18px]">fingerprint</span>
+                  <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="login-pin"
+                    x-model="loginForm.pin" :disabled="loginMode !== 'pin'" autocomplete="off" placeholder="••••"
+                    class="w-full bg-transparent border-0 outline-none py-2.5 font-label-mono-md text-label-mono-md tracking-[0.4em] text-tac-on-surface placeholder:text-tac-status-standby/60">
+                </div>
+                <p class="font-body-sm text-body-sm text-tac-on-surface-variant">
+                  PIN dipakai sebagai password Firebase untuk akun operator yang emailnya sudah tersimpan di perangkat ini.
+                </p>
+              </div>
+            </div>
+
+            <!-- === MODE SSO === -->
+            <div x-show="loginMode === 'sso'" class="flex flex-col gap-space-md">
+              <p class="font-body-sm text-body-sm text-tac-on-surface-variant">
+                Masuk dengan akun Google organisasi. Role tetap dibaca dari RTDB
+                <span class="font-mono">Users/{uid}/role</span> — SSO tidak menambah hak akses.
+              </p>
+              <div class="p-space-sm rounded-lg bg-tac-surface-recessed flex items-start gap-space-xs">
+                <span class="material-symbols-outlined text-tac-status-repair text-[18px]">info</span>
+                <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
+                  Provider Google harus aktif di Firebase Console → Authentication → Sign-in method.
+                  Kalau belum, pesan error Firebase akan tampil apa adanya.
+                </span>
+              </div>
             </div>
 
             <!-- CTA -->

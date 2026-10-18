@@ -513,3 +513,154 @@ describe('deleteUser', () => {
         expect(ctx.allUsers).toEqual([{ uid: 'u1' }]);
     });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// S30 — mode akses login: PIN (kiosk cepat) + SSO Google.
+// `loginMode` cuma UI state; jalur kredensial tetap Firebase Auth. Yang dikunci
+// di sini: PIN tidak pernah menebak email, SSO tidak menaikkan role.
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('login — mode akses (email / pin / sso)', () => {
+    beforeEach(() => {
+        // `mtc_last_login_email` bocor antar-tes kalau tidak dibersihkan.
+        localStorage.removeItem('mtc_last_login_email');
+    });
+
+    it('setLoginMode menolak mode tak dikenal', () => {
+        const ctx = makeCtx({ loginMode: 'email' });
+        ctx.setLoginMode('magic');
+        expect(ctx.loginMode).toBe('email');
+    });
+
+    it('setLoginMode("pin") tanpa email tersimpan: peringatan, tetap di email', () => {
+        const ctx = makeCtx({ loginMode: 'email' });
+        ctx.setLoginMode('pin');
+        expect(ctx.loginMode).toBe('email');
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            'Mode PIN butuh satu kali login email di perangkat ini dulu',
+            'warning'
+        );
+    });
+
+    it('setLoginMode("pin") dengan email tersimpan: pindah + isi rememberedEmail', () => {
+        localStorage.setItem('mtc_last_login_email', 'op@plant.id');
+        const ctx = makeCtx({ loginMode: 'email' });
+        ctx.setLoginMode('pin');
+        expect(ctx.loginMode).toBe('pin');
+        expect(ctx.rememberedEmail).toBe('op@plant.id');
+    });
+
+    it('setLoginMode("sso") langsung pindah', () => {
+        const ctx = makeCtx({ loginMode: 'email' });
+        ctx.setLoginMode('sso');
+        expect(ctx.loginMode).toBe('sso');
+    });
+
+    it('submitLogin meneruskan ke jalur sesuai mode', async () => {
+        const ctx = makeCtx({ loginMode: 'pin' });
+        ctx.loginWithPin = vi.fn(async () => {});
+        ctx.login = vi.fn(async () => {});
+        ctx.loginWithSSO = vi.fn(async () => {});
+
+        await ctx.submitLogin();
+        expect(ctx.loginWithPin).toHaveBeenCalledTimes(1);
+
+        ctx.loginMode = 'sso';
+        await ctx.submitLogin();
+        expect(ctx.loginWithSSO).toHaveBeenCalledTimes(1);
+
+        ctx.loginMode = 'email';
+        await ctx.submitLogin();
+        expect(ctx.login).toHaveBeenCalledTimes(1);
+    });
+
+    it('loginWithPin tanpa email tersimpan: error dan balik ke mode email', async () => {
+        const ctx = makeCtx({ loginMode: 'pin', loginForm: { pin: '1234' } });
+        await ctx.loginWithPin();
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            'Email operator belum tersimpan di perangkat ini',
+            'error'
+        );
+        expect(ctx.loginMode).toBe('email');
+    });
+
+    it('loginWithPin menolak PIN yang bukan 4–6 digit', async () => {
+        localStorage.setItem('mtc_last_login_email', 'op@plant.id');
+        const ctx = makeCtx({ loginMode: 'pin', rememberedEmail: 'op@plant.id', loginForm: { pin: '12' } });
+        ctx.login = vi.fn(async () => {});
+        await ctx.loginWithPin();
+        expect(ctx.showNotification).toHaveBeenCalledWith('PIN harus 4–6 digit angka', 'error');
+        expect(ctx.login).not.toHaveBeenCalled();
+    });
+
+    it('loginWithPin memakai email tersimpan + PIN sebagai password', async () => {
+        const ctx = makeCtx({ loginMode: 'pin', rememberedEmail: 'op@plant.id', loginForm: { pin: '8492' } });
+        ctx.login = vi.fn(async () => {});
+        await ctx.loginWithPin();
+        expect(ctx.loginForm.email).toBe('op@plant.id');
+        expect(ctx.loginForm.password).toBe('8492');
+        expect(ctx.login).toHaveBeenCalledTimes(1);
+    });
+
+    it('login() yang sukses mengingat email untuk mode PIN', async () => {
+        stubFirebase({
+            get: vi.fn(async () => snap({ uid: 'u1', email: 'op@plant.id', role: 'planner' })),
+            signInWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'u1', email: 'op@plant.id' } })),
+        });
+        const ctx = makeCtx({ loginForm: { email: 'op@plant.id', password: 'rahasia' } });
+        await ctx.login();
+        expect(localStorage.getItem('mtc_last_login_email')).toBe('op@plant.id');
+        expect(ctx.rememberedEmail).toBe('op@plant.id');
+    });
+
+    it('rememberLogin mengabaikan email kosong', () => {
+        const ctx = makeCtx();
+        ctx.rememberLogin('');
+        expect(localStorage.getItem('mtc_last_login_email')).toBeNull();
+    });
+
+    it('loginWithSSO tanpa provider terpasang: notifikasi, bukan crash', async () => {
+        const ctx = makeCtx({ loginMode: 'sso' });
+        await ctx.loginWithSSO();
+        expect(ctx.showNotification).toHaveBeenCalledWith('SSO belum tersedia di build ini', 'error');
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('loginWithSSO sukses: role dari RTDB, email diingat, welcome', async () => {
+        vi.stubGlobal('GoogleAuthProvider', class {});
+        vi.stubGlobal('signInWithPopup', vi.fn(async () => ({ user: { uid: 'g1', email: 'op@plant.id' } })));
+        stubFirebase({ get: vi.fn(async () => snap({ uid: 'g1', email: 'op@plant.id', role: 'supervisor' })) });
+
+        const ctx = makeCtx({ loginMode: 'sso' });
+        await ctx.loginWithSSO();
+
+        expect(ctx.userRole).toBe('supervisor');
+        expect(localStorage.getItem('mtc_last_login_email')).toBe('op@plant.id');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Welcome back!');
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('loginWithSSO gagal: pesan Firebase diteruskan apa adanya', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.stubGlobal('GoogleAuthProvider', class {});
+        vi.stubGlobal('signInWithPopup', vi.fn(async () => { throw new Error('auth/operation-not-allowed'); }));
+
+        const ctx = makeCtx({ loginMode: 'sso' });
+        await ctx.loginWithSSO();
+
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            'SSO gagal: auth/operation-not-allowed',
+            'error'
+        );
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('loginWithSSO tidak menumpuk saat sudah loading', async () => {
+        const signInWithPopup = vi.fn();
+        vi.stubGlobal('GoogleAuthProvider', class {});
+        vi.stubGlobal('signInWithPopup', signInWithPopup);
+        const ctx = makeCtx({ loginMode: 'sso', isLoading: true });
+        await ctx.loginWithSSO();
+        expect(signInWithPopup).not.toHaveBeenCalled();
+    });
+});

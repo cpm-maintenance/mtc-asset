@@ -111,7 +111,7 @@ export default defineConfig(({ mode }) => {
         strategies: 'injectManifest',
         srcDir: '.',
         filename: 'sw.js',
-        includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js', 'icons/*.png', 'fonts/*.woff2'],
+        includeAssets: ['favicon.ico', 'logo.png', 'firebase-messaging-sw.js', 'icons/*.png', 'fonts/*.woff2', 'img/*.jpg'],
         // Manifest dimiliki oleh public/manifest.json (satu sumber kebenaran).
         // Dinonaktifkan agar VitePWA tidak membuat <link rel="manifest"> kedua
         // yang bertabrakan (dulu menghasilkan manifest.webmanifest dengan brand lama).

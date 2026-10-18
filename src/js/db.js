@@ -16,6 +16,7 @@ import {
   getAuth, signOut, onAuthStateChanged,
   signInWithEmailAndPassword, setPersistence,
   browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
+  GoogleAuthProvider, signInWithPopup,
   sendPasswordResetEmail
 } from 'firebase/auth'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
@@ -47,6 +48,6 @@ export { ref, onValue, onChildAdded, set, update, remove, get, query, limitToLas
 // Storage functions
 export { refStorage, uploadBytes, getDownloadURL }
 // Auth functions
-export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword, sendPasswordResetEmail }
+export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail }
 // Messaging functions
 export { getToken, onMessage }

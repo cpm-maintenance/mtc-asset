@@ -140,6 +140,16 @@ export interface AppState {
   kpiFilterDate?: any;
   logForm?: any;
   loginForm: Record<string, any>;
+  /** Mode akses layar login: 'email' | 'pin' | 'sso'. */
+  loginMode?: string;
+  /** Email operator terakhir yang sukses di perangkat ini (dipakai mode PIN). */
+  rememberedEmail?: string;
+  /** Simpan email terakhir untuk mode PIN — hanya email, bukan kredensial. */
+  rememberLogin?: (email?: string) => void;
+  setLoginMode?: (mode?: string) => void;
+  submitLogin?: () => Promise<any>;
+  loginWithPin?: () => Promise<any>;
+  loginWithSSO?: () => Promise<any>;
   logs: HistoryLog[];
   logsHasMore: boolean;
   logsLastKey?: any;

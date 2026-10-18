@@ -9,9 +9,92 @@ import { logger } from '../logger.js';
 // Tidak ada lagi pemetaan role hardcoded by email — lihat ensureUserProfile (P0-2).
 
 export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
-    loginForm: { email: '', password: '', keepSession: false },
+    loginForm: { email: '', password: '', pin: '', keepSession: false },
     // Toggle "tampilkan secure key" di layar login (bukan rahasia — hanya UI state).
     showLoginKey: false,
+    // Mode akses di layar login: 'email' (default) · 'pin' (kiosk cepat) · 'sso'.
+    loginMode: 'email',
+    // PIN cepat: email operator yang terakhir sukses di perangkat ini.
+    rememberedEmail: '',
+
+    /**
+     * Ganti mode akses. `pin` butuh email tersimpan — kalau belum ada, tolak.
+     * @param {string} mode
+     */
+    setLoginMode(mode) {
+        if (!['email', 'pin', 'sso'].includes(mode)) return;
+        if (mode === 'pin') {
+            const saved = localStorage.getItem('mtc_last_login_email') || '';
+            this.rememberedEmail = saved;
+            if (!saved) {
+                this.showNotification(
+                    'Mode PIN butuh satu kali login email di perangkat ini dulu',
+                    'warning',
+                );
+                this.loginMode = 'email';
+                return;
+            }
+        }
+        this.loginMode = mode;
+    },
+
+    /** Titik masuk tunggal tombol submit — memilih jalur sesuai mode aktif. */
+    async submitLogin() {
+        if (this.loginMode === 'pin') return this.loginWithPin?.();
+        if (this.loginMode === 'sso') return this.loginWithSSO?.();
+        return this.login();
+    },
+
+    /** PIN cepat: pakai email tersimpan + PIN sebagai password Firebase. */
+    async loginWithPin() {
+        const pin = String(this.loginForm.pin || '').trim();
+        const email = this.rememberedEmail || localStorage.getItem('mtc_last_login_email') || '';
+        if (!email) {
+            this.showNotification('Email operator belum tersimpan di perangkat ini', 'error');
+            this.loginMode = 'email';
+            return;
+        }
+        if (!/^\d{4,6}$/.test(pin)) {
+            this.showNotification('PIN harus 4–6 digit angka', 'error');
+            return;
+        }
+        this.loginForm.email = email;
+        this.loginForm.password = pin;
+        await this.login();
+    },
+
+    /** SSO Google lewat popup Firebase. Provider harus aktif di Firebase Console. */
+    async loginWithSSO() {
+        if (this.isLoading) return;
+        if (!window.signInWithPopup || !window.GoogleAuthProvider) {
+            this.showNotification('SSO belum tersedia di build ini', 'error');
+            return;
+        }
+        this.isLoading = true;
+        try {
+            const provider = new window.GoogleAuthProvider();
+            const cred = await window.signInWithPopup(window.auth, provider);
+            const userData = await this.ensureUserProfile(cred.user);
+            this.userRole = userData?.role || 'user';
+            this.rememberLogin?.(cred.user?.email);
+            this.showNotification('Welcome back!');
+        } catch (/** @type {any} */ error) {
+            console.error(error);
+            this.showNotification('SSO gagal: ' + (error?.message || error), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    },
+
+    /**
+     * Simpan email terakhir untuk mode PIN. Hanya email, bukan kredensial.
+     * @param {string} [email]
+     */
+    rememberLogin(email) {
+        if (!email) return;
+        localStorage.setItem('mtc_last_login_email', email);
+        this.rememberedEmail = email;
+    },
 
     async ensureUserProfile(user) {
         if (!user?.uid) return;
@@ -73,6 +156,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             
             const userData = await this.ensureUserProfile(cred.user);
             this.userRole = userData?.role || 'user';
+            this.rememberLogin?.(form.email);
             
             this.showNotification("Welcome back!");
         } catch (/** @type {any} */ error) {

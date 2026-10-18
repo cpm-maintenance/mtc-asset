@@ -11,6 +11,7 @@ import {
   orderByChild, endAt, equalTo, endBefore,
   signOut, onAuthStateChanged, signInWithEmailAndPassword,
   setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
+  GoogleAuthProvider, signInWithPopup,
   sendPasswordResetEmail
 } from './db.js';
 
@@ -42,6 +43,8 @@ window.signInWithEmailAndPassword = signInWithEmailAndPassword;
 window.setPersistence = setPersistence;
 window.browserSessionPersistence = browserSessionPersistence;
 window.browserLocalPersistence = browserLocalPersistence;
+window.GoogleAuthProvider = GoogleAuthProvider;
+window.signInWithPopup = signInWithPopup;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
 window.sendPasswordResetEmail = sendPasswordResetEmail;
 
