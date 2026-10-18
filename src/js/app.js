@@ -13,6 +13,7 @@ import { aiModule } from './modules/ai.js';
 import { pmScheduleModule } from './modules/pm-schedule.js';
 import { requisitionModule } from './modules/requisition.js';
 import { chartModule } from './charts.js';
+import { chartToken } from './chart-palette.js';
 import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
@@ -588,7 +589,7 @@ if (confirm('Are you sure you want to logout?')) {
         enterpriseCriticalWO: [],
         enterpriseLowStock: [],
         enterpriseInsights: [],
-        enterpriseOEE: { oee: 0, status: 'N/A', availability: 0, performance: 0, quality: 0, hexColor: '#6b7280' },
+        enterpriseOEE: { oee: 0, status: 'N/A', availability: 0, performance: 0, quality: 0, toneColor: chartToken('neutral') },
         expandedEquip: null,
         plantFilter: '', deptFilter: '', kpiDateFrom: '', kpiDateTo: '',
         aiLoading: false,
@@ -1365,11 +1366,11 @@ if (confirm('Are you sure you want to logout?')) {
             });
             const avgHealth = healthCount > 0 ? Math.round(healthSum / healthCount) : 0;
             return {
-                totalEquip: { label: 'Total Assets', value: equips.length || 0, colorHex: '#3b82f6', ms: 'factory', pct: 100 },
-                woCompletionRate: { label: 'WO Completion', value: woRate + '%', colorHex: '#10b981', ms: 'check_circle', pct: woRate },
-                avgHealthScore: { label: 'Avg Health', value: avgHealth + '%', colorHex: '#f59e0b', ms: 'monitoring', pct: avgHealth },
-                lowStock: { label: 'Low Stock', value: this.lowStockCount, colorHex: '#eab308', ms: 'inventory_2', pct: 70 },
-                pmCompliance: { label: 'PM Compliance', value: (this.calcPMCompliance?.().pct ?? 0) + '%', colorHex: '#a855f7', ms: 'fact_check', pct: this.calcPMCompliance?.().pct ?? 0 },
+                totalEquip: { label: 'Total Assets', value: equips.length || 0, ms: 'factory', pct: 100 },
+                woCompletionRate: { label: 'WO Completion', value: woRate + '%', ms: 'check_circle', pct: woRate },
+                avgHealthScore: { label: 'Avg Health', value: avgHealth + '%', ms: 'monitoring', pct: avgHealth },
+                lowStock: { label: 'Low Stock', value: this.lowStockCount, ms: 'inventory_2', pct: 70 },
+                pmCompliance: { label: 'PM Compliance', value: (this.calcPMCompliance?.().pct ?? 0) + '%', ms: 'fact_check', pct: this.calcPMCompliance?.().pct ?? 0 },
             };
         },
 

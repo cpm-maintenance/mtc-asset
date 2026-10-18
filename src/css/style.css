@@ -106,22 +106,6 @@ h1, h2, h3, h4 {
   font-weight: 700;
 }
 
-
-.gold-text {
-  background: linear-gradient(135deg, var(--nexus-accent) 0%, var(--nexus-accent-2) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 5px var(--nexus-accent-glow));
-}
-
-/* Navigation */
-.nav-active { 
-  color: var(--nexus-accent) !important; 
-  background: var(--nexus-accent-glow) !important; 
-  font-weight: 600;
-  border-left: 3px solid var(--nexus-accent);
-}
-
 /* Inputs Refinement — token Tactical Slate (theme-aware).
  * !important dipakai karena banyak input memasang utility `bg-*`/`text-*` sendiri;
  * tanpa ini bentuk kontrol jatuh ke style lama (rgba putih 3%, aksen #ffd700). */

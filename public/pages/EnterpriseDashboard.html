@@ -65,7 +65,7 @@
     <button type="button" @click="kpiClick('oee')"
       class="text-left relative overflow-hidden bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md hover:bg-tac-surface-elevated/60 transition-all active:scale-[0.99]">
       <div class="absolute inset-0 opacity-10 pointer-events-none"
-        :style="'background: radial-gradient(circle at 30% 30%, ' + enterpriseOEE.hexColor + ' 0%, transparent 70%)'"></div>
+        :style="'background: radial-gradient(circle at 30% 30%, ' + enterpriseOEE.toneColor + ' 0%, transparent 70%)'"></div>
       <div class="relative flex flex-col gap-space-sm">
         <div class="flex items-center justify-between">
           <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Overall OEE</span>
@@ -76,7 +76,7 @@
 
         <div class="flex items-baseline gap-1">
           <span class="font-display-hero text-display-hero transition-colors duration-500"
-            :style="'color: ' + enterpriseOEE.hexColor" x-text="enterpriseOEE.oee + '%'"></span>
+            :style="'color: ' + enterpriseOEE.toneColor" x-text="enterpriseOEE.oee + '%'"></span>
         </div>
 
         <div class="grid grid-cols-3 gap-2 pt-2 border-t border-tac-border-subtle font-label-mono-sm text-label-mono-sm">

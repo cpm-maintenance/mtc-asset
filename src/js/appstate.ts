@@ -655,6 +655,8 @@ export interface AppState {
   themeAccent: (...args: any[]) => any;
   themeAccentSoft: (...args: any[]) => any;
   themeGrid: (...args: any[]) => any;
+  /** Warna seri chart dari token `--tac-chart-*` (lihat chart-palette.js). */
+  chartColor: (name: string, alpha?: number) => string;
   toggleEquipDetail: (...args: any[]) => any;
   toggleSidebarGroup: (...args: any[]) => any;
   get topOverdueWO(): any;

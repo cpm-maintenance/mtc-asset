@@ -112,6 +112,32 @@
   --tac-rim-b: rgba(255, 255, 255, 0);
   --tac-well-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.04);
   --tac-rail-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.6);
+
+  /* ── Palet chart ───────────────────────────────────────────────────────
+   * Chart.js butuh STRING warna, bukan kelas, jadi angka di sini dibaca
+   * `src/js/chart-palette.js` lewat getComputedStyle() — bukan tabel hex di
+   * dalam JS. Nilai `night` sengaja identik dengan warna yang dipakai sebelum
+   * token ini ada, supaya tema malam tidak berubah sedikit pun.
+   * Hanya varian per tema yang tinggal di blok bawah; warna seri (good/info/
+   * warn/…) sama di semua tema dan cukup dideklarasikan sekali di sini. */
+  --tac-chart-accent: 255 140 26;
+  --tac-chart-accent-soft: 245 197 66;
+  --tac-chart-grid: 245 197 66;
+  --tac-chart-tick: 139 158 183;
+  --tac-chart-title: 245 245 245;
+  --tac-chart-tooltip: 13 17 23;
+
+  --tac-chart-good: 34 197 94;
+  --tac-chart-emerald: 16 185 129;
+  --tac-chart-info: 59 130 246;
+  --tac-chart-warn: 245 158 11;
+  --tac-chart-crit: 239 68 68;
+  --tac-chart-violet: 139 92 246;
+  --tac-chart-magenta: 188 19 254;
+  --tac-chart-cyan: 6 182 212;
+  --tac-chart-muted: 100 116 139;
+  --tac-chart-neutral: 107 114 128;
+  --tac-chart-deep: 51 65 85;
 }
 
 /* ── NAVY: slate digeser ke biru, senada `--nexus-bg` navy #0a0f1e ────────── */
@@ -457,4 +483,29 @@
   .tac-well {
     transition: none;
   }
+}
+
+/* ── Palet chart per tema ────────────────────────────────────────────────────
+ * Hanya token yang memang bergeser antar tema; warna seri tetap di `:root`.
+ * Diletakkan setelah blok `:root` supaya tema terang (spesifisitas sama,
+ * urutan menang) benar-benar menimpa nilai malamnya. */
+[data-theme='navy'] {
+  --tac-chart-accent: 59 130 246;
+  --tac-chart-accent-soft: 59 130 246;
+  --tac-chart-grid: 59 130 246;
+}
+
+[data-theme='purple'] {
+  --tac-chart-accent: 168 85 247;
+  --tac-chart-accent-soft: 168 85 247;
+  --tac-chart-grid: 168 85 247;
+}
+
+[data-theme='light'] {
+  --tac-chart-tooltip: 255 255 255;
+  --tac-chart-accent: 0 97 255;
+  --tac-chart-accent-soft: 0 97 255;
+  --tac-chart-grid: 0 0 0;
+  --tac-chart-tick: 100 116 139;
+  --tac-chart-title: 15 23 42;
 }

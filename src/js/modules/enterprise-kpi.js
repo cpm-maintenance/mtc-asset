@@ -1,9 +1,26 @@
 // @ts-check
 /** @typedef {import('../appstate').AppState} AppState */
+import { chartToken } from '../chart-palette.js';
 /**
  * Enterprise KPI Engine — Decision Support Analytics
  * Industry standards: ISO 14224, SAE JA1011, SMRP
  */
+/**
+ * Nama tone → warna. Nilainya ekspresi `rgb(var(--tac-chart-…))`, bukan hex:
+ * `EnterpriseDashboard.html` memakaikannya lewat `:style`, dan `var()` di inline
+ * style dihitung browser — jadi kartu/gauge ikut tema tanpa resolve di JS.
+ * Kunci `'green'`/`'blue'`/`'orange'`/`'red'`/`'gray'` tetap dipakai untuk
+ * MEMILIH status; hanya nilainya yang berpindah dari hex ke token.
+ * Lihat `src/js/chart-palette.js`.
+ */
+const TONE = {
+  green: chartToken('good'),
+  blue: chartToken('info'),
+  orange: chartToken('warn'),
+  red: chartToken('crit'),
+  gray: chartToken('neutral'),
+};
+
 export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
   // ─── Availability ───
   calcAvailability(equipId) {
@@ -89,9 +106,9 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     const oee = Math.round((availability * performance * quality) / 10000);
     const status = oee >= 85 ? 'Optimal' : oee >= 70 ? 'Good' : oee >= 50 ? 'Warning' : 'Critical';
     const color = oee >= 85 ? 'green' : oee >= 70 ? 'blue' : oee >= 50 ? 'orange' : 'red';
-    const hexColor = oee >= 85 ? '#22c55e' : oee >= 70 ? '#3b82f6' : oee >= 50 ? '#f59e0b' : '#ef4444';
+    const toneColor = oee >= 85 ? TONE.green : oee >= 70 ? TONE.blue : oee >= 50 ? TONE.orange : TONE.red;
     return {
-      oee, status, color, hexColor,
+      oee, status, color, toneColor,
       availability: Math.round(availability),
       performance: Math.round(performance),
       quality: Math.round(quality),
@@ -358,14 +375,14 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     this.enterpriseCritical = this.calcCriticalEquip(10);
     this.enterpriseInsights = this.calcInsights();
     this.enterpriseKPIList = [
-      { key: 'totalAssets', label: 'Total Assets', value: s.totalAssets, ms: 'factory', color: '#3b82f6', trend: 0 },
-      { key: 'running', label: 'Running', value: s.running, ms: 'play_arrow', color: '#22c55e', trend: 0 },
-      { key: 'breakdown', label: 'Breakdown', value: s.breakdown, ms: 'warning', color: '#ef4444', trend: 0 },
-      { key: 'pmc', label: 'PM Compliance', value: s.pmc.pct + '%', ms: 'fact_check', color: s.pmc.color === 'green' ? '#22c55e' : '#f59e0b', trend: s.pmc.pct },
-      { key: 'openWO', label: 'Open WO', value: s.openWO, ms: 'troubleshoot', color: '#f59e0b', trend: 0 },
-      { key: 'completedWO', label: 'Completed WO', value: s.completedWO, ms: 'task_alt', color: '#22c55e', trend: 0 },
-      { key: 'avgAvail', label: 'Availability', value: s.avgAvail + '%', ms: 'trending_up', color: s.avgAvail >= 95 ? '#22c55e' : '#f59e0b', trend: s.avgAvail },
-      { key: 'avgHealth', label: 'Health Index', value: s.avgHealth + '%', ms: 'verified_user', color: s.avgHealth >= 80 ? '#22c55e' : '#f59e0b', trend: s.avgHealth },
+      { key: 'totalAssets', label: 'Total Assets', value: s.totalAssets, ms: 'factory', color: TONE.blue, trend: 0 },
+      { key: 'running', label: 'Running', value: s.running, ms: 'play_arrow', color: TONE.green, trend: 0 },
+      { key: 'breakdown', label: 'Breakdown', value: s.breakdown, ms: 'warning', color: TONE.red, trend: 0 },
+      { key: 'pmc', label: 'PM Compliance', value: s.pmc.pct + '%', ms: 'fact_check', color: s.pmc.color === 'green' ? TONE.green : TONE.orange, trend: s.pmc.pct },
+      { key: 'openWO', label: 'Open WO', value: s.openWO, ms: 'troubleshoot', color: TONE.orange, trend: 0 },
+      { key: 'completedWO', label: 'Completed WO', value: s.completedWO, ms: 'task_alt', color: TONE.green, trend: 0 },
+      { key: 'avgAvail', label: 'Availability', value: s.avgAvail + '%', ms: 'trending_up', color: s.avgAvail >= 95 ? TONE.green : TONE.orange, trend: s.avgAvail },
+      { key: 'avgHealth', label: 'Health Index', value: s.avgHealth + '%', ms: 'verified_user', color: s.avgHealth >= 80 ? TONE.green : TONE.orange, trend: s.avgHealth },
     ];
     const pm = this._raw(this.pmList) || [];
     const today = new Date().toISOString().split('T')[0];

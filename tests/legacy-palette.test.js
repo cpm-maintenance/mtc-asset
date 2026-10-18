@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { uiModule } from '../src/js/modules/ui.js';
+import { CHART_SERIES } from '../src/js/chart-palette.js';
 
 /**
  * Kontrak "tidak ada palet lama / ikon mati di dalam string JS".
@@ -223,6 +224,94 @@ describe('sapu string kelas lama di src/js/**', () => {
     expect(names.size).toBeGreaterThan(15);
     // `/logo.png` pada ikon push-notification bukan ligatur dan tidak boleh masuk.
     expect([...names].some((n) => n.includes('.'))).toBe(false);
+  });
+});
+
+/**
+ * Sumber warna JS harus SATU: `--tac-chart-*` / token `tac-*` di CSS.
+ * Hex dan `rgba(…)` bernilai literal tidak ikut tema saat paint (tema `light`
+ * tetap memakai palet malam), dan itulah sisa terakhir "0 hex hardcoded"
+ * setelah S22 menyapu string kelas.
+ */
+describe('palet JS — tidak ada warna literal di src/js/**', () => {
+  // Pengecualian disengaja, dieja PER BERKAS dan beralasan. Keduanya bukan UI
+  // bertema: kanvas QR harus hitam/putih murni, dan laporan di ai.js adalah
+  // dokumen tercetak (kertas selalu terang, tanpa `var()` app).
+  const ALLOWED = new Map([
+    ['src/js/modules/ui.js', 'warna kanvas QRCode — pemindai butuh kontras absolut'],
+    ['src/js/modules/ai.js', 'stylesheet laporan HTML tercetak (bukan UI bertema)'],
+  ]);
+
+  const HEX = /#[0-9a-fA-F]{3,8}\b/;
+  // `rgb(var(--tac-…))` sah (browser yang menghitung); yang dilarang adalah
+  // kanal angka literal: `rgb(34,197,94)`, `rgba(0,0,0,.5)`.
+  const LITERAL_RGB = /rgba?\(\s*\d/;
+
+  it('memindai berkas JS yang benar (sanitas)', () => {
+    expect(JS_FILES).toContain('src/js/charts.js');
+    expect(JS_FILES).toContain('src/js/chart-palette.js');
+    expect(JS_FILES.length).toBeGreaterThan(20);
+  });
+
+  it('tidak ada hex warna di string JS', () => {
+    const hits = [];
+    for (const rel of JS_FILES) {
+      if (ALLOWED.has(rel)) continue;
+      for (const { text, line } of codeLines(rel)) {
+        const m = text.match(HEX);
+        if (m) hits.push(`${rel}:${line} → ${m[0]}`);
+      }
+    }
+    expect(hits, 'hex tidak bisa theme-aware — pakai token `--tac-chart-*` lewat chart-palette.js').toEqual([]);
+  });
+
+  it('tidak ada `rgb()`/`rgba()` bernilai literal di string JS', () => {
+    const hits = [];
+    for (const rel of JS_FILES) {
+      if (ALLOWED.has(rel)) continue;
+      for (const { text, line } of codeLines(rel)) {
+        if (LITERAL_RGB.test(text)) hits.push(`${rel}:${line}: ${text.trim().slice(0, 80)}`);
+      }
+    }
+    expect(hits, 'kanal warna literal mengunci palet di dalam JS').toEqual([]);
+  });
+
+  it('setiap token `--tac-*` yang disebut JS benar-benar ada di tactical.css', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'src/css/tactical.css'), 'utf8');
+    const declared = new Set([...css.matchAll(/(--tac-[a-z0-9-]+)\s*:/g)].map((m) => m[1]));
+    const missing = new Map();
+    for (const rel of JS_FILES) {
+      for (const { text, line } of codeLines(rel)) {
+        for (const m of text.matchAll(/--tac-[a-z0-9-]+/g)) {
+          if (!declared.has(m[0]) && !missing.has(m[0])) missing.set(m[0], `${rel}:${line}`);
+        }
+      }
+    }
+    expect(
+      [...missing.entries()].map(([tok, where]) => `${tok} (${where})`),
+      'token yang tidak dideklarasikan akan membuat warna jatuh ke transparan'
+    ).toEqual([]);
+  });
+
+  it('setiap nama seri yang dipakai charts.js/enterprise-kpi.js ada di CHART_SERIES', () => {
+    const known = new Set(CHART_SERIES);
+    const used = new Map();
+    for (const rel of ['src/js/charts.js', 'src/js/modules/enterprise-kpi.js']) {
+      const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+      for (const m of text.matchAll(/(?:chartColor|chartToken)\(\s*'([a-z-]+)'/g)) {
+        if (!known.has(m[1])) used.set(m[1], rel);
+      }
+    }
+    expect(
+      [...used.entries()].map(([name, where]) => `${name} (${where})`),
+      'nama seri yang tidak dikenal akan menghasilkan `rgb()` kosong'
+    ).toEqual([]);
+  });
+
+  it('CHART_SERIES non-kosong dan mencakup seri yang dipakai (sanitas)', () => {
+    expect(CHART_SERIES.length).toBeGreaterThanOrEqual(10);
+    expect(CHART_SERIES).toContain('accent');
+    expect(CHART_SERIES).toContain('warn');
   });
 });
 
