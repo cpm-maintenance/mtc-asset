@@ -135,9 +135,10 @@ Suite **683 → 848** tes (30 → 34 berkas). Ratchet `vitest.config.js` **45/40
   `vi.fn()`-nya dulu kalau mau di-assert.
 
 ### Sisa
-- Kandidat berikutnya: `charts.js` 8,5% (butuh `vi.mock('chart.js')` — 576 baris, banyak
-  `renderX`), badan `submitLog` (`logs.js` 305–517).
-- Gap AA tema gelap (`KNOWN_DARK_GAPS`) & H-1/H-2 masih **menunggu keputusan user**.
+- **Board kanban dirapikan di sesi ini**: 22 kartu `done` diarsip + purge permanen; dibuat 4 kartu `blocked` baru — C-1 `t_4dc085bd` (`charts.js`), C-2 `t_f5bf046e` (`submitLog`), C-3 `t_c6d1c766` (Lighthouse), D-5 `t_369342cd` (gap AA, butuh keputusan). Jangan `unblock`; kerjakan manual lalu `complete --force`.
+- Kandidat berikutnya: `charts.js` 8,5% (576 baris, `vi.mock('chart.js')`), badan `submitLog` (`logs.js` 305–517).
+- Gap AA tema gelap (`KNOWN_DARK_GAPS`) masih **menunggu keputusan user**.
+- **Dev server**: `server.watch.ignored` ditambahkan (`coverage/`, `test-results/`, `.lighthouseci/`) karena `vitest --coverage` memicu badai reload (commit `66e3e3e`). Dev-only, build tidak berubah.
 
 ---
 
