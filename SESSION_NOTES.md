@@ -136,13 +136,28 @@ token `tac-*` — jadi ikut 4 tema.
   (default lama). Butuh plumbing baru: `browserLocalPersistence` diekspor
   `db.js` → `firebase-config.js` (`window.browserLocalPersistence`) →
   `globals.d.ts`.
-- **Mode strip EMAIL / PIN / SSO**: hanya EMAIL yang aktif. PIN dan SSO
-  dirender `opacity-50` + `title` "belum diaktifkan" — sengaja **bukan** tombol
-  mati yang bisa diklik, karena tidak ada backend PIN/SSO di repo ini.
-- **Yang dibuang dari desain sumber**: foto tambang eksternal, angka telemetri
-  palsu (SAG Mill / Ball Mill), kredensial contoh ("TECH-7402-RC"), tombol
-  profil role palsu, dan klaim sertifikasi yang tidak dipegang app ini
-  (FIPS 140-3 / ISO 27001). Diganti kartu modul statis + status yang benar.
+- **Latar panel kiri = foto mill asli** (`public/img/login-mill-1600.jpg`,
+  1925×956 → 1600×795, JPEG q78, **215 KB**), `filter:brightness(.42)` +
+  overlay `rgba(8,12,18)` bertingkat + grid 48px di atasnya. Overlay sengaja
+  **tetap gelap di semua tema** supaya teks di atas foto selalu terbaca.
+  Masuk precache lewat `includeAssets: ['img/*.jpg']` → **51** entri.
+- **Mode strip EMAIL / PIN / SSO — ketiganya nyata**:
+  - `EMAIL` — jalur lama (email + password Firebase), default.
+  - `PIN` — kiosk cepat: email operator yang **terakhir sukses** disimpan di
+    `localStorage.mtc_last_login_email`, lalu PIN 4–6 digit dipakai sebagai
+    password Firebase. Tanpa email tersimpan → peringatan + balik ke EMAIL
+    (tidak pernah menebak email). Input PIN `inputmode=numeric`, `maxlength=6`.
+  - `SSO` — `signInWithPopup(auth, new GoogleAuthProvider())`; role tetap dari
+    RTDB `Users/{uid}/role`, jadi SSO tidak menambah hak akses. Provider harus
+    diaktifkan di Firebase Console; kalau belum, pesan error Firebase tampil
+    apa adanya (tidak ditelan).
+- **Input non-aktif di-`disabled`**, bukan cuma disembunyikan: field `required`
+  yang `display:none` tetap memblokir submit, jadi `:disabled="loginMode !==
+  'email'"` / `'pin'` wajib.
+- **Yang dibuang dari desain sumber**: angka telemetri palsu (SAG Mill / Ball
+  Mill), kredensial contoh ("TECH-7402-RC"), tombol profil role palsu, dan klaim
+  sertifikasi yang tidak dipegang app ini (FIPS 140-3 / ISO 27001). Diganti
+  kartu modul statis + status yang benar.
 - **Ikon**: 4 ligatur baru (`lock`, `login`, `visibility`, `visibility_off`) →
   `icon-subset.txt` 82 → **86** entri, font diregenerasi
   `node scripts/download-material-symbols.mjs` → **10.0 KB** (plafon 50 KB).
@@ -159,8 +174,9 @@ Diukur di browser (build produksi, `vite preview`):
 
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
-  **1078/1078** · `test:coverage` lolos threshold · `build` ok ·
-  `verify:precache` **50/50** (3225,12 KiB).
+  **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
+  `build` ok · `verify:precache` **50/50** berkas build (precache **51** entri,
+  3445 KiB — foto mill ikut).
 - **`src/**` tidak disentuh** → bundle identik, `sw.js` tetap `mtc-asset-v15`
   (tidak naik versi).
 
