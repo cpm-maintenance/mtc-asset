@@ -17,13 +17,16 @@ export default defineConfig({
             // S24 (kartu A): 28.40/26.87/30.14/29.62 → 34.95/29.65/32.38/37.47
             // setelah unit test auth.js (0.81 → 100% lines), audit.js (0 → 97%),
             // wo-pdf-template.js (0 → 100% lines). Suite 463 → 539.
+            // S25 (lanjutan kartu A): → 45.51/41.03/44.17/47.84 setelah unit test
+            // enterprise-kpi.js (4.08 → 100% lines), logs.js (9.09 → 68.62%),
+            // performance.js (10.19 → 98.08%). Suite 539 → 683.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 34,
-                branches: 29,
-                functions: 31,
-                lines: 36,
+                statements: 45,
+                branches: 40,
+                functions: 43,
+                lines: 47,
             },
         },
     },

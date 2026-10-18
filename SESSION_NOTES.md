@@ -1,3 +1,101 @@
+## 📝 Session 25 (S25, 2026-10-18) — lanjutan coverage: `enterprise-kpi.js` · `logs.js` · `performance.js`
+
+### Titik awal
+S24 menutup `auth.js`/`audit.js`/`wo-pdf-template.js` (29,62% → 37,47% lines). Sisa kandidat
+menurut angka: `enterprise-kpi.js` 4,08% · `pm-schedule.js` 7,9% · `charts.js` 8,5% ·
+`logs.js` 9,09% · `indexeddb.js` 9,49% · `performance.js` 10,19% · `bootstrap.js` 1,06%.
+Tiga yang diambil adalah yang **logikanya menentukan angka di layar atau menentukan data
+tersimpan**: metrik enterprise, transisi status WO, dan aritmetika KPI performance.
+
+### `tests/enterprise-kpi-module.test.js` (59 tes)
+Seluruh modul murni terhadap state — cukup `_raw: (x) => x`. Yang dikunci:
+- **ambang tiap metrik** (Optimal/Good/Warning/Critical + warna) untuk availability,
+  reliability, OEE, PM compliance, dan health score;
+- **definisi availability**: `(wh − bd − stb) / wh`, dengan `wh` kosong dihitung 24 jam —
+  bukan `(total − down)/total` seperti dugaan awal (dua percobaan pertama tes ini gagal
+  karena asumsi itu, bukan karena kode);
+- **downtime R6**: hanya `bd`; `stb` tidak dihitung breakdown (diuji terpisah);
+- **`mtbf`/`mttr` null** saat data kurang (bukan 0 — 0 akan lolos ke rata-rata summary);
+- **health score**: −15 per breakdown 90 hari, −2/hari PM overdue (maks 30), −10 bila MTBF < 168,
+  dijepit 0..100;
+- **OEE**: quality = (completed − rework)/completed, dan `toneColor` **wajib** token
+  `rgb(var(--tac-chart-…))` — bukan hex (S23);
+- **`computeEnterpriseData()`**: 8 kartu KPI berurutan, `due` relatif (`today`/`tomorrow`),
+  WO kritis diurut Emergency → Urgent, low stock ≤ MinStock, dan **tidak menghitung apa pun
+  kalau `currentPage !== 'enterprise'`**.
+
+### `tests/logs-module.test.js` (47 tes)
+`data.js` di-mock (ia menarik `indexeddb.js` + `db.js`); `utils.js` dipakai **asli** karena
+`checkPartAvailability`/`computeBDFromLogs` adalah kontraknya.
+- **`parsePartsUsed`** tiga bentuk: string JSON, array (referensi sama), JSON rusak → `[]`.
+- **`openLogModal`**: nomor WO berikutnya dari `MTC-xxx` yang ada (`MTC-007` → `MTC-008`,
+  `MTC-abc` → diabaikan), `fromDetail` mengisi equipment dari `selectedEquip`; mode edit
+  memetakan 20+ field, mem-parse `PartsUsed` (string/array/**objek hasil RTDB**/rusak),
+  dan menormalkan foto (JSON string, array, `PhotoURL` tunggal, string bukan-JSON).
+  `oldLogParts` adalah **salinan** (bukan referensi) — itu yang membuat diff part saat edit benar.
+- **`handleLogPhoto`**: >4 file ditolak; hanya file **pertama** yang membuka crop; callback crop
+  berhenti di 4; `photos` non-array direset dulu.
+- **`getLastHM`**: HM terbaru menurut `Tanggal`, diformat ribuan, dan cache-nya **dibuang saat
+  referensi `this.logs` berubah** (mutasi array tidak membuang cache — perilaku ini yang diuji).
+- **`syncPerformanceBD`**: tanpa record Performance untuk tanggal itu → **tidak menulis**
+  (entri manual tidak boleh ditimpa); kalau ada, `bd`/`freq`/`bdSource: 'wo'` ditulis + objek
+  lokal di-`Object.assign`.
+- **Transisi WO**: `approveWO` (guard `isAdminOrSupervisor`, shortage → `confirm`, pemotongan
+  stok per part via `runTransaction` **melewati part tanpa id**, sinkron `window.app`),
+  `rejectWO` (alasan wajib, status `Rejected`), `startWO` (`In Progress`), `completeWO`
+  (**Cost = Downtime × DowntimeCostPerHour**, fallback Cost lama bila tarif 0/tidak ada,
+  `actualHours` dari `estimatedHours`).
+- **`submitLog` guard**: validasi form dulu, lalu hak akses — dua jalur yang tidak boleh menulis.
+
+### `tests/performance-module.test.js` (38 tes)
+- **`updatePerfHours`**: `wh = 24 − bd − stb`; event `Operational` masuk **stb**, sisanya bd;
+  `freq` hanya event non-Operational; `field === 'stb'` menghormati input manual; total >24 jam
+  dijepit (`wh = 0`, stb disisakan).
+- **`calculateKPI`**: MA/PA/UA/MTBF/MTTR/gap + `events` lebih diutamakan daripada `freq`
+  tersimpan; nol semua → tidak ada NaN.
+- **`getFilteredPerfData`**: filter equipment/area, lalu `daily`/`weekly` (Senin–Minggu)/
+  `monthly`/`yearly`; tanggal acuan tidak valid → filter tanggal dilewati; filter tak dikenal
+  diperlakukan sebagai monthly.
+- **`submitPerformance`**: guard form kosong → validasi → hak akses; jalur **offline**
+  (`queueOfflineOperation` + `saveToIndexedDB`, RTDB tidak disentuh) dan jalur RTDB
+  (`PERF-<ts>`, `bd`/`freq` dari events, `createdBy` disalin saat edit, audit `Create/Update Performance`);
+  antrean offline gagal → tetap mencoba RTDB.
+- **`recomputeBD`**: guard admin, tanpa data → info, hitung per equipment+tanggal, satu record
+  gagal tidak menghentikan sisanya.
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `enterprise-kpi.js` | 4,08% | **100%** |
+| `logs.js` | 9,09% | **68,62%** |
+| `performance.js` | 10,19% | **98,08%** |
+
+Total **37,47% → 47,84%** lines · 45,51% stmt · 41,03% branch · 44,17% func.
+Suite **539 → 683** tes (27 → 30 berkas). Ratchet `vitest.config.js` **34/29/31/36 → 45/40/43/47**.
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline) · `vitest` **683/683** ·
+  `test:coverage` lolos threshold baru · `build` ok · `verify:precache` **50/50**.
+- `src/js/**` tidak disentuh → bundle identik, `sw.js` tetap **`mtc-asset-v15`**.
+
+### Jebakan yang terulang (catat biar tidak diulang)
+- **`makeCtx()` yang menghapus `window.app`/`window.auditModule` harus dipanggil DULU**, baru
+  stub global-nya dipasang. Dua tes sempat gagal (`Cannot read properties of undefined`) hanya
+  karena urutan itu terbalik.
+- **`calcAvailability` membagi dengan `wh`, bukan dengan `wh + bd + stb`.** Menulis ekspektasi
+  dari intuisi (bukan dari kode) langsung memerahkan 5 tes; yang salah ekspektasinya, bukan kodenya.
+- `calcHealthScore` memotong **2 poin/hari** PM overdue dengan plafon 30 → 30 hari overdue = 70,
+  bukan 40. Ember `calcHealthDist` jadi perlu breakdown, bukan tanggal PM, untuk mencapai `warning`.
+
+### Sisa
+- `logs.js` 68,62%: yang belum tersentuh adalah badan `submitLog` (baris 305–517: unggah foto,
+  sanitasi, retry, refresh 500 ms) dan `approveWO` sinkron `window.app` (790–793).
+- Kandidat berikutnya: `indexeddb.js` 9,49% · `bootstrap.js` 1,06% · `pm-schedule.js` 7,9% ·
+  `charts.js` 8,5% (butuh mock Chart.js) · `data.js` 48,68%.
+- Gap AA tema gelap (`KNOWN_DARK_GAPS`) & H-1/H-2 masih **menunggu keputusan user**.
+
+---
+
 ## 📝 Session 24 (S24, 2026-10-18) — coverage modul 0–10%: `auth.js` · `audit.js` · `wo-pdf-template.js` (kartu A)
 
 ### Kenapa tiga berkas ini, dan urutannya
