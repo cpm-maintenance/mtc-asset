@@ -1,3 +1,98 @@
+## 📝 Session 30 (S30, 2026-10-18) — coverage `ui.js` 32,98% → 98,96% lines
+
+### Kenapa `ui.js`
+Kartu (a) di handoff: modul terbesar yang belum tersentuh setelah `app.js`. 419
+baris, 419 → mayoritas DOM-lewat-state, jadi jsdom + mock LIBRARY cukup — tidak
+butuh harness Alpine seperti `app.js`. `tests/ui-qr.test.js` sudah menutup jalur
+QR (generateQR/downloadQR/downloadAllQRs/handleScanResult/submitManualScan),
+sisanya 130 baris merah: tema, notifikasi, kamera, helper warna, kompresi,
+Cloudinary, reset.
+
+### `tests/ui-module.test.js` baru — 51 tes · 32,98% → **98,96%** lines
+Harness `makeCtx(overrides)` dengan `Object.assign(default, overrides)` — override
+diterapkan **setelah** default (jebakan S29). Mock: `html5-qrcode` + `qrcode` +
+`../src/js/logger.js`; state mock lewat `vi.hoisted` karena factory `vi.mock`
+di-hoist ke atas import.
+
+- **`setTheme` / `applyTheme`**: tema valid → `localStorage.themeMode` +
+  `applyTheme()` · tema asing jatuh ke `night` · `night` → `data-theme="dark"` +
+  kelas `dark` + `darkMode true` · `navy` → atribut `navy` tetap gelap ·
+  `light` → kelas `dark` dilepas.
+- **`showNotification`**: konfigurasi per tipe (icon/bar/glow) · tipe asing →
+  fallback `info` · durasi default 4500 · progress menyusut (50% di tengah) →
+  `exiting` → dibuang 400 ms kemudian · interval berhenti saat entri hilang atau
+  sudah `exiting` · auto-remove aman saat entri sudah dibuang.
+- **`openQR` / `stopScanner`**: `$nextTick` menangkap promise agar pekerjaan async
+  bisa di-`await` · instance `Html5Qrcode('reader')` + `start({facingMode})` +
+  config `fps/qrbox` · callback decode diteruskan ke `handleScanResult`, callback
+  error tidak melempar · konstruktor melempar dan `start()` menolak sama-sama →
+  notifikasi "Failed to access camera" + panel ditutup · `stopScanner` tanpa
+  instance / dengan instance / `stop()` melempar (instance sengaja **tidak**
+  dilepas di jalur gagal — perilaku apa adanya, dikunci tes).
+- **Helper warna**: `statusColor` (3 status + fallback emergency) · `critColor`
+  (High/Medium/lainnya) · `logColor` (4 tipe + fallback) · `logStatusColor`
+  (6 status + fallback) · `woPriorityColor` (4 prioritas + fallback) ·
+  `getStatColor` (6 token + fallback gold).
+- **`compressImage`**: file null / `size 0` → null · landscape 1200×600 → 600×300 ·
+  landscape 500×250 apa adanya · portrait 300×1200 → 150×600 · portrait 200×400
+  apa adanya · `img.onerror` → null · `reader.onerror` → null · `toBlob` dipanggil
+  `'image/jpeg', 0.5`.
+- **`uploadBase64Image`**: base64 kosong → null tanpa `fetch` · sukses →
+  `secure_url`, endpoint `g3lkh1pu`, `FormData` berisi `upload_preset` +
+  `file` · respons tanpa `secure_url` → null · HTTP gagal → pesan dari
+  `j.error.message` atau `HTTP 500` · jaringan melempar → null.
+- **`uploadImage`**: tanpa file → null tanpa notifikasi · jalur sukses
+  (compress → base64 → upload) mengembalikan URL · kompresi gagal → notifikasi
+  error · upload ditolak → "Image upload failed — coba lagi" (tanpa fallback
+  base64) · exception → notifikasi warning + null.
+- **`blobToBase64`**: null → `''` · sukses · `onerror` → `''`.
+- **`systemReset`**: konfirmasi ditolak → tidak terjadi apa pun · sukses →
+  `localStorage`/`sessionStorage` bersih, notifikasi info, `location.reload(true)`
+  setelah 1500 ms · registrasi SW di-`unregister` + tiap nama cache dihapus ·
+  `getRegistrations` melempar → dicatat, tetap reload langsung.
+- **`generateQR` (jalur gagal)**: encoder melempar → notifikasi "Failed to
+  generate QR Code", modal tidak dibuka, `isLoading` balik `false`.
+
+### Jebakan yang ditemukan (masuk HANDOFF S31)
+1. **`window.location.reload` tidak bisa di-`spyOn`** — properti anak `location`
+   non-configurable. Yang configurable adalah `window.location` itu sendiri:
+   `Object.defineProperty(window, 'location', { value: { reload }, configurable: true, writable: true })`,
+   lalu pulihkan objek asli di `afterEach`.
+2. **`img.onload` dipasang SETELAH `img.src = …`** — setter `src` pada stub harus
+   menunda callback ke `queueMicrotask`, kalau tidak handler belum terpasang dan
+   promise `compressImage` menggantung sampai timeout 5 dtk. Sama untuk
+   `FileReader.readAsDataURL` → `onload`/`onerror`/`onloadend`.
+3. **jsdom tidak punya `caches` maupun `navigator.serviceWorker`** — `'caches' in
+   window` bernilai `false` di sana; pakai `vi.stubGlobal('caches', …)` dan
+   `Object.defineProperty(navigator, 'serviceWorker', …)`, bersihkan dengan
+   `vi.unstubAllGlobals()`.
+4. **`vi.mock` di-hoist** — array/flag yang dipakai factory harus dari
+   `vi.hoisted(() => …)`, bukan `const` di body modul (TDZ).
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `ui.js` | 32,98% | **98,96%** (stmt 99,12 · branch 90,19 · func 100) |
+
+Sisa 2 baris merah = `319-320` (guard `CLOUDINARY_CLOUD`/`CLOUDINARY_PRESET`
+kosong) — konstanta hardcoded non-kosong, cabang tak bisa dijangkau tanpa
+mengubah sumber. Dibiarkan.
+
+Total **72,66% → 74,96%** lines · 73,39% stmt · 62,65% branch · 71,47% func.
+Suite **999 → 1050** tes (36 berkas). Ratchet `vitest.config.js`
+**69/59/66/70 → 71/60/69/72** (margin ~2 poin).
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
+  **1050/1050** · `test:coverage` lolos threshold baru · `build` ok ·
+  `verify:precache` **50/50**.
+- **`src/**` tidak disentuh** → bundle identik, `sw.js` tetap `mtc-asset-v15`
+  (tidak naik versi).
+
+---
+
+
+
 ## 📝 Session 29 (S29, 2026-10-18) — coverage `kpi-engine.js` + `export.js` → 100% lines
 
 ### Kenapa `kpi-engine.js` duluan
