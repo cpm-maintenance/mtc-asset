@@ -59,6 +59,24 @@ Backend (if applicable)
 * Add basic error handling
 * Log meaningful debug information
 
+🔒 Verification Before Claiming Done
+Klaim "selesai / hijau / sudah di-push" hanya boleh keluar setelah perintahnya
+dijalankan **di turn itu** dan output-nya dibaca. Jalankan berurutan:
+
+```bash
+npm run typecheck && npm run lint && npm run test:run
+npm run test:coverage && npm run build && npm run verify:precache
+```
+
+Aturan: (1) jangan menurunkan threshold ratchet `vitest.config.js`;
+(2) angka dilaporkan apa adanya dari tool, bukan perkiraan;
+(3) perubahan yang hanya menyentuh `tests/**` + `vitest.config.js` tidak boleh
+mengubah `src/js/**` — buktikan dengan `git show --name-only <commit>`;
+(4) `sw.js` hanya naik versi kalau `src/**` atau `public/**` berubah.
+
+**REQUIRED SUB-SKILL:** `superpowers:verification-before-completion` sebelum
+commit, push, atau menjawab "selesai".
+
 🧩 Task Execution Strategy
 When given a task:
 1. Understand the requirement
