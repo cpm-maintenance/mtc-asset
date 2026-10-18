@@ -7,7 +7,7 @@
  *  - dataModule methods with a mocked Firebase `window.*` surface
  *    (listeners, pagination, offline queue, conflict resolution, delete)
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock side-effect modules so importing data.js has no network/IDB cost.
 vi.mock('../src/js/modules/indexeddb.js', () => ({
@@ -33,6 +33,8 @@ vi.mock('../src/js/modules/push-client.js', () => ({
 
 import { safeProcessFirebaseData, dataModule } from '../src/js/modules/data.js';
 import { idbManager } from '../src/js/modules/indexeddb.js';
+import { sendBrowserNotification } from '../src/js/modules/notification.js';
+import { sendPushViaProxy } from '../src/js/modules/push-client.js';
 
 // ---------------------------------------------------------------------------
 // Test harness
@@ -439,5 +441,671 @@ describe('dataModule.loadFromIndexedDB', () => {
         idbManager.getPendingOpsCount.mockResolvedValue(3);
         await ctx.loadFromIndexedDB();
         expect(ctx.showNotification).toHaveBeenCalledWith(expect.stringContaining('3 pending'), 'info');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// setupFirebaseListeners() — listener wiring & payload handling
+// ---------------------------------------------------------------------------
+
+const pathOf = (ref) => ref?.path ?? ref?.ref?.path;
+
+/** Replace the Firebase stubs with recorders so callbacks can be invoked by hand. */
+function captureListeners() {
+    const values = [];
+    const children = [];
+    window.onValue = vi.fn((ref, cb, err) => {
+        values.push({ path: pathOf(ref), cb, err });
+        return vi.fn();
+    });
+    window.onChildAdded = vi.fn((ref, cb, err) => {
+        children.push({ path: pathOf(ref), cb, err });
+        return vi.fn();
+    });
+    return {
+        values,
+        children,
+        first: (path) => values.filter((v) => v.path === path)[0],
+        last: (path) => values.filter((v) => v.path === path).slice(-1)[0],
+        child: (path) => children.find((c) => c.path === path),
+    };
+}
+
+describe('dataModule.setupFirebaseListeners', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('does nothing when the user is not logged in', () => {
+        const ctx = makeCtx({ isLoggedIn: false });
+        const load = vi.spyOn(ctx, 'loadFromIndexedDB');
+        ctx.setupFirebaseListeners();
+        expect(load).not.toHaveBeenCalled();
+        expect(window.onValue).not.toHaveBeenCalled();
+    });
+
+    it('resets pagination, hydrates from IDB and checks pending work', () => {
+        const ctx = makeCtx({
+            logsPage: 5,
+            equipPage: 3,
+            logsHasMore: false,
+            equipHasMore: false,
+            logsLastKey: 'x',
+            equipLastKey: 'y',
+        });
+        const load = vi.spyOn(ctx, 'loadFromIndexedDB').mockResolvedValue();
+        const pending = vi.spyOn(ctx, 'checkPendingWorkOrders').mockResolvedValue();
+        const ops = vi.spyOn(ctx, 'checkPendingOperations').mockResolvedValue();
+        captureListeners();
+
+        ctx.setupFirebaseListeners();
+
+        expect([ctx.logsPage, ctx.equipPage]).toEqual([1, 1]);
+        expect([ctx.logsHasMore, ctx.equipHasMore]).toEqual([true, true]);
+        expect([ctx.logsLastKey, ctx.equipLastKey]).toEqual([null, null]);
+        expect(load).toHaveBeenCalledOnce();
+        expect(pending).toHaveBeenCalledOnce();
+        expect(ops).toHaveBeenCalledOnce();
+    });
+
+    it('forces isLoading=false after the 10s safety timeout', () => {
+        const ctx = makeCtx({ isLoading: true });
+        captureListeners();
+        ctx.setupFirebaseListeners();
+        expect(ctx.isLoading).toBe(true);
+        vi.advanceTimersByTime(10000);
+        expect(ctx.isLoading).toBe(false);
+        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('loading timeout'));
+    });
+
+    it('registers a listener for every data node', () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        expect(l.values.map((v) => v.path)).toEqual([
+            'Users/uid-user',
+            '.info/connected',
+            'Equipment',
+            'HistoryLog',
+            'Stats',
+            'Equipment',
+            'SpareParts',
+        ]);
+        expect(l.children.map((c) => c.path)).toEqual([
+            'SpareParts',
+            'HistoryLog',
+            'Performance',
+        ]);
+    });
+
+    it('derives userRole from the Users node, defaulting to user', () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const { cb, err } = l.first('Users/uid-user');
+        cb({ val: () => ({ role: 'admin' }) });
+        expect(ctx.userRole).toBe('admin');
+        cb({ val: () => null });
+        expect(ctx.userRole).toBe('user');
+        err(new Error('denied'));
+        expect(console.error).toHaveBeenCalledWith('User Role Listener:', expect.any(Error));
+    });
+
+    it('tracks the RTDB connection state', () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const { cb } = l.first('.info/connected');
+        cb({ val: () => true });
+        expect(ctx.isOnline).toBe(true);
+        cb({ val: () => false });
+        expect(ctx.isOnline).toBe(false);
+    });
+
+    it('maps Equipment snapshots, cleans photo URLs and refreshes the selection', async () => {
+        const ctx = makeCtx({ equipLimit: 1, selectedEquip: { EquipmentID: 'EQ1', nama: 'old' } });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const ready = vi.fn();
+        window._firebaseReadyResolve = ready;
+
+        l.first('Equipment').cb({
+            val: () => ({
+                EQ1: { nama: 'new', FotoURL: 'https://x.com%2Fa.jpg' },
+                EQ2: { EquipmentID: 'EQ-2' },
+            }),
+        });
+
+        expect(ctx.equipment).toEqual([
+            { nama: 'new', FotoURL: 'https://x.com/a.jpg', EquipmentID: 'EQ1' },
+            { EquipmentID: 'EQ-2', FotoURL: '' },
+        ]);
+        expect(ctx.equipHasMore).toBe(true);
+        expect(ctx.selectedEquip).toEqual(ctx.equipment[0]);
+        expect(ready).toHaveBeenCalledOnce();
+        expect(window._firebaseReadyResolve).toBeNull();
+
+        await vi.advanceTimersByTimeAsync(250);
+        expect(idbManager.putBulk).toHaveBeenCalledWith('equipment', expect.any(Array));
+    });
+
+    it('handles an empty Equipment snapshot', () => {
+        const ctx = makeCtx({ equipment: [{ EquipmentID: 'OLD' }] });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        l.first('Equipment').cb({ val: () => null });
+        expect(ctx.equipment).toEqual([]);
+    });
+
+    it('falls back to localStorage when the IDB cache write fails', async () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        idbManager.putBulk.mockRejectedValueOnce(new Error('idb down'));
+        l.first('Equipment').cb({ val: () => ({ EQ1: { EquipmentID: 'EQ1' } }) });
+        await vi.advanceTimersByTimeAsync(250);
+        expect(localStorage.getItem('cache_equipment')).toContain('EQ1');
+    });
+
+    it('falls back to localStorage when putBulk throws synchronously', async () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        idbManager.putBulk.mockImplementationOnce(() => {
+            throw new Error('sync boom');
+        });
+        l.first('Equipment').cb({ val: () => ({ EQ1: { EquipmentID: 'EQ1' } }) });
+        await vi.advanceTimersByTimeAsync(250);
+        expect(localStorage.getItem('cache_equipment')).toContain('EQ1');
+    });
+
+    it('prepends new parts and updates existing ones in place', () => {
+        const ctx = makeCtx({ allParts: [{ PartID: 'P1', Nama: 'lama' }] });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const { cb, err } = l.child('SpareParts');
+
+        cb({ val: () => null, key: 'k0' });
+        cb({ val: () => ({ PartID: 'P2' }), key: 'k2' });
+        expect(ctx.allParts.map((p) => p.PartID)).toEqual(['P2', 'P1']);
+
+        cb({ val: () => ({ PartID: 'P1', Nama: 'baru' }), key: 'k1' });
+        expect(ctx.allParts.map((p) => p.Nama ?? null)).toEqual([null, 'baru']);
+
+        cb({ val: () => ({ Nama: 'tanpa id' }), key: 'k9' });
+        expect(ctx.allParts[0].PartID).toBe('k9');
+
+        err(new Error('denied'));
+        expect(console.error).toHaveBeenCalledWith('Spare Parts Listener Error:', expect.any(Error));
+    });
+
+    it('seeds _woSeenIds from cached logs', () => {
+        const ctx = makeCtx({ logs: [{ LogID: 'L1' }, { LogID: null }] });
+        captureListeners();
+        ctx.setupFirebaseListeners();
+        expect([...ctx._woSeenIds]).toEqual(['L1']);
+    });
+
+    it('applies HistoryLog children, sorts them and clears the loading flag', () => {
+        const ctx = makeCtx({ logs: [], isLoading: true });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const { cb } = l.child('HistoryLog');
+
+        cb({ val: () => null });
+        cb({ val: () => ({ Deskripsi: 'tanpa LogID' }) });
+        cb({ val: () => ({ LogID: 'L2', woNumber: 'WO-2' }) });
+        cb({ val: () => ({ LogID: 'L5', woNumber: 'WO-5' }) });
+
+        expect(ctx.logs.map((x) => x.LogID)).toEqual(['L5', 'L2']);
+        expect(ctx.activeWorkOrders).toHaveLength(2);
+        expect(ctx.logsHasMore).toBe(false);
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('notifies once for a new unapproved work order after the initial load', async () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const { cb } = l.child('HistoryLog');
+
+        await vi.advanceTimersByTimeAsync(1500);
+        cb({ val: () => ({ LogID: 'L9', woNumber: 'WO-9', Status: 'Pending', Technician: 'Budi' }) });
+
+        expect(sendBrowserNotification).toHaveBeenCalledWith(
+            '🔧 New Work Order',
+            expect.stringContaining('Budi')
+        );
+        expect(sendPushViaProxy).toHaveBeenCalledOnce();
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            expect.stringContaining('created WO'),
+            'info'
+        );
+
+        cb({ val: () => ({ LogID: 'L9', woNumber: 'WO-9', Status: 'Pending' }) });
+        expect(sendBrowserNotification).toHaveBeenCalledOnce();
+    });
+
+    it('does not notify for work orders already in the seen set', async () => {
+        const ctx = makeCtx({ logs: [{ LogID: 'L1' }] });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        await vi.advanceTimersByTimeAsync(1500);
+        l.child('HistoryLog').cb({
+            val: () => ({ LogID: 'L1', woNumber: 'WO-1', Status: 'Pending' }),
+        });
+        expect(sendBrowserNotification).not.toHaveBeenCalled();
+    });
+
+    it('clears logs when the HistoryLog listener errors', () => {
+        const ctx = makeCtx({ logs: [{ LogID: 'L1' }], activeWorkOrders: [{ LogID: 'L1' }] });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        l.child('HistoryLog').err(new Error('permission denied'));
+        expect(ctx.logs).toEqual([]);
+        expect(ctx.activeWorkOrders).toEqual([]);
+    });
+
+    it('normalises Performance children (events JSON, id fallback, cap 200)', () => {
+        const prev = Array.from({ length: 200 }, (_, i) => ({
+            id: 'P' + i,
+            date: '2026-01-' + String((i % 28) + 1).padStart(2, '0'),
+        }));
+        const ctx = makeCtx({ performanceData: prev });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        const { cb, err } = l.child('Performance');
+
+        cb({ val: () => null, key: 'k0' });
+        cb({ val: () => ({ date: '2026-12-31', events: '[{"type":"oil"}]' }), key: 'PERF-NEW' });
+        expect(ctx.performanceData).toHaveLength(200);
+        expect(ctx.performanceData[0].id).toBe('PERF-NEW');
+        expect(ctx.performanceData[0].events).toEqual([{ type: 'oil' }]);
+
+        err(new Error('denied'));
+        expect(console.error).toHaveBeenCalledWith('Performance Listener:', expect.any(Error));
+    });
+
+    it('falls back to [] when a Performance events string is not JSON', () => {
+        const ctx = makeCtx({ performanceData: [] });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        l.child('Performance').cb({ val: () => ({ id: 'X', events: 'not-json' }), key: 'k' });
+        expect(ctx.performanceData[0].events).toEqual([]);
+    });
+
+    it('updates Stats, overdue PM count and low-stock count', () => {
+        const ctx = makeCtx();
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+
+        l.first('Stats').cb({ val: () => ({ totalEquip: 7, totalDowntime: 12 }) });
+        expect(ctx.dashboardStats).toMatchObject({ totalEquip: 7, totalDowntime: 12 });
+        l.first('Stats').cb({ val: () => null });
+        expect(ctx.dashboardStats).toMatchObject({ totalEquip: 0, totalDowntime: 0 });
+
+        const overdue = l.last('Equipment');
+        overdue.cb({
+            forEach: (fn) => {
+                [{ NextPMDate: '2026-01-01' }, { NextPMDate: '' }, {}].forEach((v) =>
+                    fn({ val: () => v })
+                );
+            },
+        });
+        expect(ctx.dashboardStats.overduePM).toBe(1);
+
+        const lowStock = l.first('SpareParts');
+        lowStock.cb({ exists: () => true, size: 4 });
+        expect(ctx.dashboardStats.lowStock).toBe(4);
+        lowStock.cb({ exists: () => false, size: 0 });
+        expect(ctx.dashboardStats.lowStock).toBe(0);
+    });
+
+    it('skips dashboard updates when dashboardStats is absent', () => {
+        const ctx = makeCtx({ dashboardStats: null });
+        const l = captureListeners();
+        ctx.setupFirebaseListeners();
+        expect(() => l.first('Stats').cb({ val: () => ({ totalEquip: 1 }) })).not.toThrow();
+        expect(() => l.last('Equipment').cb({ forEach: () => {} })).not.toThrow();
+        expect(() => l.first('SpareParts').cb({ exists: () => false, size: 0 })).not.toThrow();
+    });
+
+    it('re-syncs pending operations when the browser goes online', () => {
+        const ctx = makeCtx();
+        const sync = vi.spyOn(ctx, 'syncPendingOperations').mockResolvedValue();
+        const addEventListener = vi.spyOn(window, 'addEventListener');
+        captureListeners();
+        ctx.setupFirebaseListeners();
+
+        const onlineCall = addEventListener.mock.calls.find((c) => c[0] === 'online');
+        expect(onlineCall).toBeTruthy();
+        onlineCall[1]();
+        expect(sync).toHaveBeenCalledOnce();
+    });
+
+    it('surfaces a notification when listener setup throws', () => {
+        const ctx = makeCtx();
+        captureListeners();
+        window.ref = vi.fn(() => {
+            throw new Error('bad db');
+        });
+        ctx.setupFirebaseListeners();
+        expect(console.error).toHaveBeenCalledWith(
+            'Firebase listeners setup error:',
+            expect.any(Error)
+        );
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            'Error loading data, please refresh',
+            'error'
+        );
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Remaining pagination / cache / sync branches
+// ---------------------------------------------------------------------------
+
+describe('dataModule listener cleanup', () => {
+    it('calls every unsubscribe and swallows its errors', () => {
+        const ctx = makeCtx({ _listeners: [vi.fn(), () => { throw new Error('x'); }] });
+        ctx._cleanupFirebaseListeners();
+        expect(ctx._listeners).toEqual([]);
+    });
+});
+
+describe('dataModule pagination guards', () => {
+    it('loadMoreLogs returns early while another page is loading', async () => {
+        const ctx = makeCtx({ logsLoadingMore: true });
+        await ctx.loadMoreLogs();
+        expect(window.get).not.toHaveBeenCalled();
+    });
+
+    it('loadMoreLogs resets the flag when logs is not an array', async () => {
+        const ctx = makeCtx({ logs: null });
+        await ctx.loadMoreLogs();
+        expect(ctx.logsLoadingMore).toBe(false);
+        expect(window.get).not.toHaveBeenCalled();
+    });
+
+    it('loadMoreLogs pages with endBefore when a cursor exists', async () => {
+        const ctx = makeCtx({ logs: [{ LogID: 'L9' }], logsLastKey: 'L9' });
+        window.get = vi.fn(async () => ({ val: () => null }));
+        await ctx.loadMoreLogs();
+        expect(window.endBefore).toHaveBeenCalledWith('L9');
+        expect(ctx.logsHasMore).toBe(false);
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('loadMoreLogs reports a failure and clears the loading flag', async () => {
+        const ctx = makeCtx({ logs: [] });
+        window.get = vi.fn(async () => {
+            throw new Error('offline');
+        });
+        await ctx.loadMoreLogs();
+        expect(ctx.logsLoadingMore).toBe(false);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Failed to load more logs', 'error');
+    });
+
+    it('loadMoreEquipment ignores calls while loading, exhausted, or without data', async () => {
+        const loading = makeCtx({ equipLoadingMore: true });
+        await loading.loadMoreEquipment();
+        const exhausted = makeCtx({ equipHasMore: false });
+        await exhausted.loadMoreEquipment();
+        const noData = makeCtx({ equipment: null });
+        await noData.loadMoreEquipment();
+        expect(loading.equipLastKey).toBeNull();
+        expect(exhausted.equipLastKey).toBeNull();
+        expect(noData.equipLastKey).toBeNull();
+    });
+
+    // TEMUAN: `filteredEquip.slice(currentLength, currentLength + equipLimit)` selalu
+    // kosong karena currentLength = filteredEquip.length → cabang `else` praktis mati
+    // selama equipLimit >= 1 (semua pemanggilan nyata). Dikunci lewat equipLimit 0.
+    it('loadMoreEquipment only takes the cursor branch when the page is not short', async () => {
+        const equipment = Array.from({ length: 5 }, (_, i) => ({ EquipmentID: 'EQ' + i }));
+        const ctx = makeCtx({
+            equipment,
+            filteredEquip: equipment.slice(0, 3),
+            equipLimit: 0,
+            equipHasMore: true,
+        });
+        await ctx.loadMoreEquipment();
+        expect(ctx.equipLastKey).toBeUndefined();
+        expect(ctx.equipHasMore).toBe(true);
+        expect(ctx.equipLoadingMore).toBe(false);
+    });
+
+    it('paginatedEquip and canLoadMoreEquip tolerate missing data', () => {
+        expect(makeCtx({ equipment: null }).paginatedEquip).toEqual([]);
+        expect(makeCtx({ equipment: null }).canLoadMoreEquip).toBe(false);
+        const searching = makeCtx({ equipment: [], search: 'pump', filteredEquip: [{ EquipmentID: 'EQ1' }] });
+        expect(searching.paginatedEquip).toEqual([{ EquipmentID: 'EQ1' }]);
+        expect(searching.canLoadMoreEquip).toBe(false);
+    });
+});
+
+describe('dataModule cache & sync branches', () => {
+    it('loadFromIndexedDB reads IDB when available and falls back to localStorage', async () => {
+        const ctx = makeCtx();
+        idbManager.getAll.mockImplementation(async (store) => {
+            if (store === 'performance') return [{ id: 'P1', date: '2026-01-02' }, { id: 'P2', date: '2026-01-05' }];
+            return [];
+        });
+        localStorage.setItem('cache_equipment', JSON.stringify([{ EquipmentID: 'CACHED' }]));
+        localStorage.setItem('cache_parts', JSON.stringify([{ PartID: 'P1' }]));
+        localStorage.setItem('cache_logs', JSON.stringify([{ LogID: 'L1' }, { LogID: 'L3' }]));
+        localStorage.setItem('cache_performance', JSON.stringify([{ id: 'OLD', date: '2025-01-01' }]));
+
+        await ctx.loadFromIndexedDB();
+
+        expect(ctx.equipment).toEqual([{ EquipmentID: 'CACHED' }]);
+        expect(ctx.allParts).toEqual([{ PartID: 'P1' }]);
+        expect(ctx.logs.map((l) => l.LogID)).toEqual(['L3', 'L1']);
+        expect(ctx.performanceData.map((p) => p.id)).toEqual(['P2', 'P1']);
+        expect(localStorage.getItem('cache_equipment')).not.toBeNull();
+    });
+
+    it('loadFromIndexedDB swallows IDB errors', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx();
+        idbManager.getAll.mockRejectedValue(new Error('idb broken'));
+        await expect(ctx.loadFromIndexedDB()).resolves.toBeUndefined();
+        expect(console.error).toHaveBeenCalledWith('IndexedDB Load Error:', expect.any(Error));
+        vi.restoreAllMocks();
+    });
+
+    it('saveToIndexedDB persists all four stores via Alpine.raw', async () => {
+        const ctx = makeCtx({
+            equipment: [{ EquipmentID: 'EQ1' }],
+            allParts: [{ PartID: 'P1' }],
+            logs: [{ LogID: 'L1' }],
+            performanceData: [{ id: 'PF1' }],
+        });
+        await ctx.saveToIndexedDB();
+        expect(idbManager.putBulk).toHaveBeenCalledWith('equipment', ctx.equipment);
+        expect(idbManager.putBulk).toHaveBeenCalledWith('parts', ctx.allParts);
+        expect(idbManager.putBulk).toHaveBeenCalledWith('logs', ctx.logs);
+        expect(idbManager.putBulk).toHaveBeenCalledWith('performance', ctx.performanceData);
+    });
+
+    it('saveToIndexedDB swallows failures', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx();
+        idbManager.putBulk.mockRejectedValue(new Error('quota'));
+        await expect(ctx.saveToIndexedDB()).resolves.toBeUndefined();
+        expect(console.error).toHaveBeenCalledWith('IndexedDB Save Error:', expect.any(Error));
+        vi.restoreAllMocks();
+    });
+
+    it('queueOfflineOperation returns false when the IDB write fails', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ isOnline: false });
+        idbManager.addPendingOp.mockRejectedValueOnce(new Error('idb down'));
+        await expect(ctx.queueOfflineOperation('equipment', { EquipmentID: 'EQ1' })).resolves.toBe(false);
+        expect(console.error).toHaveBeenCalledWith('Queue Error:', expect.any(Error));
+        vi.restoreAllMocks();
+    });
+
+    it('checkPendingOperations syncs only when online with a queue', async () => {
+        const ctx = makeCtx();
+        const sync = vi.spyOn(ctx, 'syncPendingOperations').mockResolvedValue();
+        idbManager.getPendingOps.mockResolvedValueOnce([]);
+        await ctx.checkPendingOperations();
+        expect(sync).not.toHaveBeenCalled();
+
+        idbManager.getPendingOps.mockResolvedValueOnce([{ id: 1 }]);
+        await ctx.checkPendingOperations();
+        expect(sync).toHaveBeenCalledOnce();
+
+        const offline = makeCtx({ isOnline: false });
+        const syncOffline = vi.spyOn(offline, 'syncPendingOperations').mockResolvedValue();
+        idbManager.getPendingOps.mockResolvedValueOnce([{ id: 2 }]);
+        await offline.checkPendingOperations();
+        expect(syncOffline).not.toHaveBeenCalled();
+    });
+
+    it('syncPendingOperations dispatches logs, performance and unknown types', async () => {
+        const { set } = setupFirebaseMock();
+        const ctx = makeCtx();
+        idbManager.getPendingOps.mockResolvedValue([
+            { id: 10, type: 'logs', data: { LogID: 'L1' } },
+            { id: 11, type: 'performance', data: { id: 'PF1' } },
+            { id: 12, type: 'mystery', data: {} },
+        ]);
+        window.get = vi.fn(async () => ({ exists: () => false, val: () => null }));
+
+        await ctx.syncPendingOperations();
+
+        expect(set).toHaveBeenCalledTimes(2);
+        expect(idbManager.removePendingOp).toHaveBeenCalledTimes(3);
+        expect(ctx.showNotification).toHaveBeenCalledWith('All pending operations synced!', 'success');
+    });
+
+    it('syncPendingOperations keeps going when one op throws', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const { set } = setupFirebaseMock();
+        const ctx = makeCtx();
+        idbManager.getPendingOps.mockResolvedValue([
+            { id: 20, type: 'equipment', data: { EquipmentID: 'EQ1' } },
+            { id: 21, type: 'parts', data: { PartID: 'P1' } },
+        ]);
+        window.get = vi.fn(async () => {
+            throw new Error('network');
+        });
+
+        await ctx.syncPendingOperations();
+
+        // Conflict check gagal → op dilewati (tidak ditulis, tidak dihapus dari antrean)
+        expect(set).not.toHaveBeenCalled();
+        expect(idbManager.removePendingOp).not.toHaveBeenCalled();
+        expect(console.error).toHaveBeenCalledTimes(2);
+        vi.restoreAllMocks();
+    });
+});
+
+describe('dataModule.deleteItem branches', () => {
+    it('removes rows locally for parts, logs and performance', async () => {
+        const ctx = makeCtx({
+            allParts: [{ PartID: 'P1' }, { PartID: 'P2' }],
+            logs: [{ LogID: 'L1' }, { LogID: 'L2' }],
+            performanceData: [{ id: 'PF1' }, { id: 'PF2' }],
+        });
+        await ctx.deleteItem('SpareParts', 'P1');
+        await ctx.deleteItem('HistoryLog', 'L1');
+        await ctx.deleteItem('Performance', 'PF1');
+        expect(ctx.allParts.map((p) => p.PartID)).toEqual(['P2']);
+        expect(ctx.logs.map((l) => l.LogID)).toEqual(['L2']);
+        expect(ctx.performanceData.map((p) => p.id)).toEqual(['PF2']);
+    });
+
+    it('returns to the equipment list after deleting the open detail', async () => {
+        const ctx = makeCtx({ currentPage: 'detail', equipment: [{ EquipmentID: 'EQ1' }] });
+        await ctx.deleteItem('Equipment', 'EQ1');
+        expect(ctx.currentPage).toBe('equip');
+    });
+
+    it('falls through to the online path when the offline queue write fails', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const { remove } = setupFirebaseMock();
+        const ctx = makeCtx({ isOnline: false, equipment: [{ EquipmentID: 'EQ1' }] });
+        idbManager.addPendingOp.mockRejectedValueOnce(new Error('idb down'));
+
+        await ctx.deleteItem('Equipment', 'EQ1');
+
+        expect(remove).toHaveBeenCalledOnce();
+        expect(ctx.equipment).toEqual([]);
+        vi.restoreAllMocks();
+    });
+
+    it('still deletes when fetching the log snapshot fails', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const { remove } = setupFirebaseMock();
+        const ctx = makeCtx({ logs: [{ LogID: 'L1' }] });
+        window.get = vi.fn(async () => {
+            throw new Error('permission denied');
+        });
+
+        await ctx.deleteItem('HistoryLog', 'L1');
+
+        expect(remove).toHaveBeenCalledOnce();
+        expect(ctx.logs).toEqual([]);
+        vi.restoreAllMocks();
+    });
+
+    it('parses every PartsUsed shape when restoring stock', async () => {
+        const shapes = [
+            { raw: '[]', parts: 0 },
+            { raw: '', parts: 0 },
+            { raw: 'bukan-json', parts: 0 },
+            { raw: [{ id: 'P1', qty: 2 }], parts: 1 },
+            { raw: '[{\\"id\\":\\"P1\\",\\"qty\\":3}]', parts: 1 },
+            { raw: '[{&quot;id&quot;:&quot;P1&quot;,&quot;qty&quot;:4}]', parts: 1 },
+            { raw: '[{rusak', parts: 0 },
+        ];
+
+        for (const shape of shapes) {
+            vi.clearAllMocks();
+            const { runTransaction } = setupFirebaseMock();
+            const ctx = makeCtx({ logs: [{ LogID: 'L1' }] });
+            window.get = vi.fn(async () => ({ val: () => ({ LogID: 'L1', PartsUsed: shape.raw }) }));
+            await ctx.deleteItem('HistoryLog', 'L1');
+            expect(runTransaction).toHaveBeenCalledTimes(shape.parts);
+        }
+    });
+
+    it('decrements total downtime when the deleted log has Downtime', async () => {
+        const { runTransaction } = setupFirebaseMock();
+        const ctx = makeCtx({ logs: [{ LogID: 'L1', Downtime: 5 }] });
+        window.get = vi.fn(async () => ({ val: () => ({ LogID: 'L1', PartsUsed: '[]' }) }));
+
+        await ctx.deleteItem('HistoryLog', 'L1');
+
+        const paths = window.ref.mock.calls.map((c) => c[1]);
+        expect(paths).toContain('Stats/totalDowntime');
+        expect(runTransaction).toHaveBeenCalled();
+    });
+
+    it('reports a failure when remove keeps throwing', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const { remove } = setupFirebaseMock();
+        remove.mockRejectedValue(new Error('denied'));
+        const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ1' }] });
+
+        await ctx.deleteItem('Equipment', 'EQ1');
+
+        expect(ctx.isLoading).toBe(false);
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            expect.stringContaining('Failed to delete'),
+            'error'
+        );
+        vi.restoreAllMocks();
     });
 });

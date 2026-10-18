@@ -1,3 +1,126 @@
+## 📝 Session 26 (S26, 2026-10-18) — lanjutan coverage: `indexeddb.js` · `data.js` · `pm-schedule.js`
+
+### Titik awal
+S25 menutup `enterprise-kpi.js`/`logs.js`/`performance.js` (37,47% → 47,84% lines).
+Sisa terbesar: `bootstrap.js` 1,06% · `pm-schedule.js` 7,9% · `charts.js` 8,5% ·
+`indexeddb.js` 9,49% · `data.js` 48,68%. Urutan diambil dari **risiko data hilang**,
+bukan dari angka: lapisan persistensi offline dulu, lalu sinkronisasi listener, lalu
+aritmetika tanggal PM. `charts.js` (butuh `vi.mock('chart.js')`) tetap terakhir.
+
+### `tests/indexeddb-module.test.js` (32 tes) — 9,49% → **88,6%** lines
+jsdom tidak punya IndexedDB, jadi harness kecil meniru `open → request`, `db.transaction →
+tx`, `store.* → request` dengan **injeksi gagal per operasi** (`faults.getAll = 'error'`,
+`faults.transaction = 'throw' | 'null' | 'error'`). `CAN_USE_IDB` dihitung sekali saat
+import → tiap kelompok tes memakai `vi.resetModules()` + `import()` dinamis.
+- **Tanpa IDB**: `CAN_USE_IDB` false, `initDB` → null, `ensureReady` memperingatkan,
+  semua baca mengembalikan kosong, semua tulis jadi no-op, dan `localStorage` yang
+  melempar tidak menjatuhkan modul.
+- **Skema**: `open('mtc-nexus-db', 1)`; 5 store dengan keyPath benar (`equipment.EquipmentID`,
+  `parts.PartID`, `logs.LogID`, `performance.id`, `pendingOps.id` autoIncrement) + 3 index
+  (`logs.EquipmentID`, `pendingOps.type`, `pendingOps.timestamp`); store yang sudah ada
+  tidak dibuat ulang; `open` gagal → `dbReady` menolak dengan error aslinya.
+- **CRUD & antrean**: `getAll`/`get`/`put`/`putBulk`/`delete`/`clear` di jalur sukses,
+  request-error, transaksi `null`, dan `addPendingOp` menambah `timestamp` + `retries: 0`;
+  `getPendingOps` membaca **index `timestamp`**; `getPendingOpsCount` = panjang antrean.
+
+### `tests/data.test.js` (20 → 79 tes) — 48,68% → **93,79%** lines
+Harness lama (mock `indexeddb.js`/`notification.js`/`push-client.js` + `window.*` Firebase)
+dipakai ulang; ditambah `captureListeners()` yang merekam `onValue`/`onChildAdded` supaya
+callback-nya bisa dipanggil manual.
+- **`setupFirebaseListeners()`**: guard `isLoggedIn`, reset pagination, panggil
+  `checkPendingWorkOrders` + `loadFromIndexedDB` + `checkPendingOperations`, timeout 10 s
+  memaksa `isLoading=false`, dan urutan listener yang terdaftar
+  (`Users/…`, `.info/connected`, `Equipment`, `HistoryLog` onlyOnce, `Stats`, overdue
+  `Equipment`, low-stock `SpareParts`; children: `SpareParts`, `HistoryLog`, `Performance`).
+- **Payload tiap listener**: role dari RTDB (fallback `user`), status koneksi, mapping
+  Equipment (`EquipmentID` dari key, `FotoURL` dibersihkan, `selectedEquip` disegarkan,
+  `_firebaseReadyResolve` dipanggil sekali), SpareParts (prepend/update di tempat/fallback
+  `snapshot.key`), HistoryLog (sort desc, `_woSeenIds`, notifikasi WO baru **hanya** setelah
+  load awal, error → `logs=[]`), Performance (`events` string → array, cap 200), Stats,
+  overdue PM, low stock.
+- **`saveCache` debounce 250 ms**: `putBulk` dipanggil sekali; kalau `putBulk` menolak
+  **atau** melempar sinkron → fallback `localStorage.setItem('cache_<key>')`.
+- **`deleteItem`**: pembersihan lokal untuk 4 node, `currentPage` kembali ke `equip`,
+  jalur offline yang gagal menulis antrean tetap menurunkan ke jalur online, snapshot log
+  gagal dibaca tetap menghapus, **7 bentuk `PartsUsed`** (string `'[]'`, kosong, bukan JSON,
+  array, double-encoded `\"`, entitas `&quot;`, JSON rusak) memulihkan stok 0/1 kali,
+  `Stats/totalDowntime` ikut dikurangi, dan `remove` yang terus gagal → notifikasi error.
+- **Sinkronisasi antrean**: `logs`/`performance`/tipe tak dikenal, satu op gagal tidak
+  menghentikan sisanya (tapi op itu **tidak** ditulis dan **tidak** dihapus dari antrean).
+
+### `tests/pm-schedule-module.test.js` (36 tes) — 7,9% → **62,61%** lines
+Waktu dibekukan (`vi.setSystemTime`) supaya tanggal deterministik; `Object.create(module)`
+untuk isolasi state.
+- `openPMModal` (form kosong bertanggal hari ini + pemetaan 13 field dengan fallback),
+  `loadPMSchedule` (tanpa `window.db` → return, mapping `pmId`, auto-generate PM berikutnya
+  untuk task completed berfrekuensi **recent 30 hari**, skip kalau pending sudah ada,
+  skip `none`/frekuensi tak dikenal/lebih tua dari 30 hari/tanpa `user.uid`, error
+  auto-generate & error baca hanya `console.warn`).
+- Filter: pencarian 4 kolom, filter equipment/status/priority (priority kosong = `Medium`),
+  sort **overdue pending dulu** lalu tanggal; `pmUpcomingList`, `pmOverdueCount`.
+- Overdue: basis `hours` (meter ≥ `targetHM`) dan basis tanggal; `isPMDueSoon` = hari ini..+3.
+- `_pmHMMap`/`pmCurrentHM`: meter menang atas log, log terbaru menang antar-log, cache
+  dibuang saat referensi `logs`/`equipment` berubah.
+- Kalender: label bulan ikut `pmMonthOffset`, event per tanggal dengan flag
+  overdue/dueSoon/completed + filter equipment, grid selalu kelipatan 7 dengan penanda
+  hari ini/akhir pekan/bulan lain.
+- Statistik & Gantt: `pmGetStats` (overdue/this month/30 hari/completed), 7 bulan Gantt
+  (-2..+4), hari Gantt (geser oleh `pmGanttScroll`), baris Gantt dikelompokkan per
+  equipment dengan rollup status `Overdue`→`Due Soon`→`Scheduled`, nama dari
+  `window.app.equipment` (fallback id) dan cache `_ganttEqMap`.
+
+### Hasil (angka riil)
+| modul | lines sebelum | lines sesudah |
+|---|---|---|
+| `indexeddb.js` | 9,49% | **88,6%** |
+| `data.js` | 48,68% | **93,79%** |
+| `pm-schedule.js` | 7,9% | **62,61%** |
+
+Total **47,84% → 56,73%** lines · 54,11% stmt · 47,38% branch · 52,73% func.
+Suite **683 → 796** tes (30 → 32 berkas). Ratchet `vitest.config.js` **45/40/43/47 → 54/47/52/56**.
+
+### Verifikasi
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline, tidak naik) · `vitest` **796/796** ·
+  `test:coverage` lolos threshold baru · `build` ok · `verify:precache` **50/50**.
+- **`src/js/**` tidak disentuh** → bundle identik, `sw.js` tetap **`mtc-asset-v15`**
+  (deploy hanya karena dokumentasi berubah).
+
+### Dua temuan (sengaja TIDAK diperbaiki — sesi ini hanya tes)
+1. **`catch` mati di 6 method `indexeddb.js`.** `db.transaction()` dipanggil **di dalam**
+   executor `new Promise`, jadi lemparannya berubah menjadi *rejection promise*; blok
+   `catch` di sekelilingnya tidak pernah tercapai. Perilaku nyata: `getAll`/`get`/`put`/
+   `putBulk`/`delete`/`clear` **menolak** kalau transaksi melempar (bukan menelan). Aman
+   untuk saat ini karena `loadFromIndexedDB()` membungkus `Promise.all` dengan try/catch,
+   tapi `catch` itu menipu pembaca.
+2. **Cabang `else` `loadMoreEquipment` praktis mati.** `filteredEquip.slice(currentLength,
+   currentLength + equipLimit)` selalu kosong karena `currentLength = filteredEquip.length`
+   → `nextPage.length < equipLimit` selalu benar untuk `equipLimit ≥ 1`. Dikunci lewat
+   `equipLimit: 0` supaya perilakunya tetap teruji kalau nanti diperbaiki.
+
+### Jebakan baru (catat biar tidak diulang)
+- **`// @vitest-environment jsdom` wajib per berkas** — `vitest.config.js` tidak menyetel
+  `environment`, default-nya **node** (tidak ada `window`). 31 tes langsung gagal
+  `ReferenceError: window is not defined`.
+- **Di jsdom vitest, `window` BUKAN `globalThis`** (environment menyalin properti ke
+  `globalThis`, `window` tetap objek jsdom). Modul yang membaca `window.indexedDB` lalu
+  memanggil `indexedDB.open` polos butuh stub di **keduanya**:
+  `vi.stubGlobal(name, v)` + `Object.defineProperty(window, name, {value, configurable:true})`.
+- **`vi.restoreAllMocks()` juga me-reset implementasi `vi.fn()`** (bukan cuma `vi.spyOn`),
+  jadi mock modul yang di-set di `beforeEach` harus dipasang ulang sesudahnya.
+- Request palsu harus **async** (`queueMicrotask`) karena kode memasang `onsuccess`
+  *setelah* memanggil `store.getAll()`; kalau dipanggil sinkron, promise menggantung.
+- `window._firebaseReadyResolve` **di-null-kan** setelah dipanggil — pegang referensi
+  `vi.fn()`-nya dulu kalau mau di-assert.
+
+### Sisa
+- `pm-schedule.js` 123–375: `submitPM` (validasi + RTDB + audit), `bulkCompletePM`,
+  `pmToggleSelectAll` — belum disentuh.
+- Kandidat berikutnya: `charts.js` 8,5% (`vi.mock('chart.js')`), `bootstrap.js` 1,06%,
+  badan `submitLog` (`logs.js` 305–517).
+- Gap AA tema gelap (`KNOWN_DARK_GAPS`) & H-1/H-2 masih **menunggu keputusan user**.
+
+---
+
 ## 📝 Session 25 (S25, 2026-10-18) — lanjutan coverage: `enterprise-kpi.js` · `logs.js` · `performance.js`
 
 ### Titik awal
