@@ -22,15 +22,16 @@ export default defineConfig({
             // performance.js (10.19 → 98.08%). Suite 539 → 683.
             // S26 (lanjutan kartu A): → 54.11/47.38/52.73/56.73 setelah unit test
             // indexeddb.js (9.49 → 88.6%), data.js (48.68 → 93.79%),
-            // pm-schedule.js (7.9 → 62.61% — hanya helper tanggal/kalender/Gantt;
-            // submitPM/bulkCompletePM belum). Suite 683 → 796.
+            // pm-schedule.js (7.9 → 62.61% — helper tanggal/kalender/Gantt).
+            // Lalu pm-schedule.js lengkap (submitPM/bulkCompletePM/deletePM) → 99.69%,
+            // lalu bootstrap.js (1.06 → 100%), total 57.97/50.08/57.13/60.6. Suite 683 → 848.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 54,
-                branches: 47,
-                functions: 52,
-                lines: 56,
+                statements: 57,
+                branches: 50,
+                functions: 57,
+                lines: 60,
             },
         },
     },

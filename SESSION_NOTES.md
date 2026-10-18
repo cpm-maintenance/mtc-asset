@@ -69,18 +69,35 @@ untuk isolasi state.
   equipment dengan rollup status `Overdue`→`Due Soon`→`Scheduled`, nama dari
   `window.app.equipment` (fallback id) dan cache `_ganttEqMap`.
 
+### Lanjutan di sesi yang sama — `pm-schedule.js` lengkap + `bootstrap.js`
+- **`pm-schedule.js` 62,61% → 99,69%** (65 tes di berkas ini). Ditambah: `submitPM`
+  (3 guard validasi, id `PM_<ts>_<rand>`, default field, `createdBy` dari `user.uid` /
+  `'unknown'`, `createdAt` dipertahankan saat edit, audit `Create/Update PM Task` yang
+  gagal senyap, `Missing PM ID`, error tulis), `completePM` (+ auto-generate bila
+  berfrekuensi), `generateNextPM` (`targetHM = max(HM log terakhir, meter) + intervalHours`,
+  skip frekuensi tak dikenal & duplikat), `deletePM` (confirm), `pmToggleSelect`/
+  `pmToggleSelectAll`, `bulkCompletePM` (lewati yang sudah completed & id tak dikenal,
+  regenerasi yang berfrekuensi, `pmSelectedIds` dikosongkan, referensi `pmList` diganti),
+  dan `logPMFromSchedule` (pre-fill `logForm`).
+- **`bootstrap.js` 1,06% → 100%**: handler global `error`/`unhandledrejection`
+  (JSON ditelan, masalah Alpine/proxy → notifikasi), auth state (logout membersihkan sesi;
+  login mengisi Sentry + 5 loader + sweep notifikasi 3 s→6 s), `$watch` lengkap
+  (debounce 500 ms dashboard/KPI, guard halaman terlarang, destroy chart saat pindah
+  halaman, compute enterprise + render 800 ms), `loadModalsCSS` idempoten, `checkUserRole`.
+
 ### Hasil (angka riil)
 | modul | lines sebelum | lines sesudah |
 |---|---|---|
 | `indexeddb.js` | 9,49% | **88,6%** |
 | `data.js` | 48,68% | **93,79%** |
-| `pm-schedule.js` | 7,9% | **62,61%** |
+| `pm-schedule.js` | 7,9% | **99,69%** |
+| `bootstrap.js` | 1,06% | **100%** |
 
-Total **47,84% → 56,73%** lines · 54,11% stmt · 47,38% branch · 52,73% func.
-Suite **683 → 796** tes (30 → 32 berkas). Ratchet `vitest.config.js` **45/40/43/47 → 54/47/52/56**.
+Total **47,84% → 60,6%** lines · 57,97% stmt · 50,08% branch · 57,13% func.
+Suite **683 → 848** tes (30 → 34 berkas). Ratchet `vitest.config.js` **45/40/43/47 → 57/50/57/60**.
 
 ### Verifikasi
-- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline, tidak naik) · `vitest` **796/796** ·
+- `tsc` **0** · `eslint` **0 error / 79 warning** (baseline, tidak naik) · `vitest` **848/848** ·
   `test:coverage` lolos threshold baru · `build` ok · `verify:precache` **50/50**.
 - **`src/js/**` tidak disentuh** → bundle identik, `sw.js` tetap **`mtc-asset-v15`**
   (deploy hanya karena dokumentasi berubah).
@@ -107,16 +124,19 @@ Suite **683 → 796** tes (30 → 32 berkas). Ratchet `vitest.config.js` **45/40
   `vi.stubGlobal(name, v)` + `Object.defineProperty(window, name, {value, configurable:true})`.
 - **`vi.restoreAllMocks()` juga me-reset implementasi `vi.fn()`** (bukan cuma `vi.spyOn`),
   jadi mock modul yang di-set di `beforeEach` harus dipasang ulang sesudahnya.
+- **Stub di `makeCtx()` menutupi method yang sedang diuji** — `checkUserRole`/`loadModalsCSS`
+  yang di-stub sebagai `vi.fn()` membuat tes "hijau" tanpa mengeksekusi apa pun. Untuk menguji
+  method aslinya: `delete ctx.namaMethod` (properti prototype kembali terlihat).
+- **`vi.waitFor` tidak jalan di bawah `vi.useFakeTimers()`** (ia menunggu timer) — pakai
+  `await Promise.resolve()` dua kali untuk promise chain pendek.
 - Request palsu harus **async** (`queueMicrotask`) karena kode memasang `onsuccess`
   *setelah* memanggil `store.getAll()`; kalau dipanggil sinkron, promise menggantung.
 - `window._firebaseReadyResolve` **di-null-kan** setelah dipanggil — pegang referensi
   `vi.fn()`-nya dulu kalau mau di-assert.
 
 ### Sisa
-- `pm-schedule.js` 123–375: `submitPM` (validasi + RTDB + audit), `bulkCompletePM`,
-  `pmToggleSelectAll` — belum disentuh.
-- Kandidat berikutnya: `charts.js` 8,5% (`vi.mock('chart.js')`), `bootstrap.js` 1,06%,
-  badan `submitLog` (`logs.js` 305–517).
+- Kandidat berikutnya: `charts.js` 8,5% (butuh `vi.mock('chart.js')` — 576 baris, banyak
+  `renderX`), badan `submitLog` (`logs.js` 305–517).
 - Gap AA tema gelap (`KNOWN_DARK_GAPS`) & H-1/H-2 masih **menunggu keputusan user**.
 
 ---

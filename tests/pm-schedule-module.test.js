@@ -31,6 +31,10 @@ function makeCtx(overrides = {}) {
         logs: [],
         user: { uid: 'uid-1' },
         showPMModal: false,
+        pmShowDetail: false,
+        logForm: {},
+        showLogModal: false,
+        showNotification: vi.fn(),
         _pmHM: null,
         _pmHMRef: null,
         _pmHMEqRef: null,
@@ -45,6 +49,7 @@ function stubFirebase(impl) {
     window.ref = vi.fn((_db, path) => ({ path }));
     window.get = vi.fn(impl);
     window.set = vi.fn(async () => {});
+    window.update = vi.fn(async () => {});
     window.remove = vi.fn(async () => {});
 }
 
@@ -53,13 +58,16 @@ beforeEach(() => {
     vi.setSystemTime(TODAY);
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     stubFirebase(async () => ({ exists: () => false, val: () => null }));
+    vi.stubGlobal('confirm', vi.fn(() => true));
 });
 
 afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     delete window.db;
     delete window.app;
+    delete window.auditModule;
 });
 
 describe('pmScheduleModule.openPMModal', () => {
@@ -510,5 +518,384 @@ describe('pmScheduleModule stats & gantt', () => {
         const ctx = makeCtx({ pmList: [{ pmId: '1', equipmentId: 'EQ1', date: iso(1) }] });
         ctx.pmGetGanttDays = () => [];
         expect(ctx.pmGetGanttRows()).toEqual([]);
+    });
+});
+
+describe('pmScheduleModule.submitPM', () => {
+    const form = (over = {}) => ({
+        taskName: 'Ganti Oli',
+        equipmentId: 'EQ1',
+        date: iso(0),
+        ...over,
+    });
+
+    it('rejects an empty task name', async () => {
+        const ctx = makeCtx({ pmForm: form({ taskName: '' }) });
+        await ctx.submitPM();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Task name required', 'error');
+        expect(window.set).not.toHaveBeenCalled();
+    });
+
+    it('rejects a missing equipment and a missing date', async () => {
+        const noEquip = makeCtx({ pmForm: form({ equipmentId: '' }) });
+        await noEquip.submitPM();
+        expect(noEquip.showNotification).toHaveBeenCalledWith('Select equipment', 'error');
+
+        const noDate = makeCtx({ pmForm: form({ date: '' }) });
+        await noDate.submitPM();
+        expect(noDate.showNotification).toHaveBeenCalledWith('PM date required', 'error');
+        expect(window.set).not.toHaveBeenCalled();
+    });
+
+    it('creates a task with generated id, defaults and audit entry', async () => {
+        const ctx = makeCtx({ pmForm: form(), pmList: [] });
+        const logAudit = vi.fn();
+        window.auditModule = { logAudit };
+
+        await ctx.submitPM();
+
+        const [ref, saved] = window.set.mock.calls[0];
+        expect(ref.path).toMatch(/^PM_Schedule\/PM_\d+_[a-z0-9]{1,7}$/);
+        expect(saved).toMatchObject({
+            taskName: 'Ganti Oli',
+            equipmentId: 'EQ1',
+            description: '',
+            frequency: 'none',
+            basis: 'calendar',
+            intervalHours: 0,
+            assignedTo: 'Maintenance Team',
+            status: 'pending',
+            priority: 'Medium',
+            completionDate: '',
+            completionNote: '',
+            createdBy: 'uid-1',
+        });
+        expect(typeof saved.createdAt).toBe('string');
+        expect(ctx.pmList[0]).toBe(saved);
+        expect(ctx.showNotification).toHaveBeenCalledWith('PM Task created!');
+        expect(logAudit).toHaveBeenCalledWith('Create PM Task', expect.objectContaining({ equip: 'EQ1' }));
+        expect(ctx.showPMModal).toBe(false);
+        expect(ctx.pmLoading).toBe(false);
+    });
+
+    it('falls back to unknown/0 when optional inputs are missing', async () => {
+        const ctx = makeCtx({
+            pmForm: { taskName: 'A', equipmentId: 'EQ1', date: iso(0), intervalHours: 'abc' },
+            user: null,
+        });
+        await ctx.submitPM();
+        const saved = window.set.mock.calls[0][1];
+        expect(saved.createdBy).toBe('unknown');
+        expect(saved.intervalHours).toBe(0);
+    });
+
+    it('survives an audit module that throws', async () => {
+        const ctx = makeCtx({ pmForm: form() });
+        window.auditModule = {
+            logAudit() {
+                throw new Error('audit down');
+            },
+        };
+        await expect(ctx.submitPM()).resolves.toBeUndefined();
+        expect(ctx.showNotification).toHaveBeenCalledWith('PM Task created!');
+    });
+
+    it('updates an existing task and preserves createdAt/createdBy', async () => {
+        const ctx = makeCtx({
+            isEditingPM: true,
+            pmForm: form({ pmId: 'PM-1' }),
+            pmList: [{ pmId: 'PM-1', createdBy: 'admin', createdAt: '2026-01-01T00:00:00Z', taskName: 'lama' }],
+        });
+        const logAudit = vi.fn();
+        window.auditModule = { logAudit };
+
+        await ctx.submitPM();
+
+        const [ref, saved] = window.update.mock.calls[0];
+        expect(ref.path).toBe('PM_Schedule/PM-1');
+        expect(saved).toMatchObject({ createdBy: 'admin', createdAt: '2026-01-01T00:00:00Z', pmId: 'PM-1' });
+        expect(ctx.pmList[0].taskName).toBe('Ganti Oli');
+        expect(ctx.showNotification).toHaveBeenCalledWith('PM Task updated!');
+        expect(logAudit).toHaveBeenCalledWith('Update PM Task', expect.objectContaining({ id: 'PM-1' }));
+    });
+
+    it('reports a missing PM id when editing', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ isEditingPM: true, pmForm: form({ pmId: '' }) });
+        await ctx.submitPM();
+        expect(console.error).toHaveBeenCalledWith('[PM] Submit error:', expect.any(Error));
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: Missing PM ID', 'error');
+        expect(window.update).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed write', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ pmForm: form() });
+        window.set.mockRejectedValueOnce(new Error('permission denied'));
+        await ctx.submitPM();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: permission denied', 'error');
+        expect(ctx.pmLoading).toBe(false);
+    });
+});
+
+describe('pmScheduleModule.completePM', () => {
+    it('marks the task completed and generates the next occurrence', async () => {
+        const ctx = makeCtx({
+            pmList: [{ pmId: 'PM-1', taskName: 'A', equipmentId: 'EQ1', frequency: 'monthly', status: 'pending' }],
+            pmShowDetail: true,
+        });
+        const gen = vi.spyOn(ctx, 'generateNextPM').mockResolvedValue();
+
+        await ctx.completePM('PM-1', 'selesai');
+
+        expect(window.update).toHaveBeenCalledWith(expect.objectContaining({ path: 'PM_Schedule/PM-1' }), {
+            status: 'completed',
+            completionDate: iso(0),
+            completionNote: 'selesai',
+            updatedAt: expect.any(String),
+        });
+        expect(ctx.pmList[0]).toMatchObject({ status: 'completed', completionNote: 'selesai' });
+        expect(ctx.showNotification).toHaveBeenCalledWith('✅ PM marked completed');
+        expect(gen).toHaveBeenCalledOnce();
+        expect(ctx.pmShowDetail).toBe(false);
+    });
+
+    it('skips generation for non-recurring tasks and unknown ids', async () => {
+        const ctx = makeCtx({
+            pmList: [{ pmId: 'PM-1', taskName: 'A', frequency: 'none', status: 'pending' }],
+        });
+        const gen = vi.spyOn(ctx, 'generateNextPM').mockResolvedValue();
+        await ctx.completePM('PM-1');
+        await ctx.completePM('PM-404');
+        expect(gen).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed update', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ pmList: [] });
+        window.update.mockRejectedValueOnce(new Error('offline'));
+        await ctx.completePM('PM-1');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: offline', 'error');
+    });
+});
+
+describe('pmScheduleModule.generateNextPM', () => {
+    it('ignores unknown frequencies', async () => {
+        const ctx = makeCtx();
+        await ctx.generateNextPM({ taskName: 'A', equipmentId: 'EQ1', frequency: 'harian' });
+        expect(window.set).not.toHaveBeenCalled();
+    });
+
+    it('creates the next calendar occurrence', async () => {
+        const ctx = makeCtx({ pmList: [] });
+        await ctx.generateNextPM({
+            taskName: 'A',
+            equipmentId: 'EQ1',
+            frequency: 'weekly',
+            priority: 'High',
+            assignedTo: 'Tim B',
+        });
+
+        const saved = window.set.mock.calls[0][1];
+        expect(saved).toMatchObject({
+            taskName: 'A',
+            equipmentId: 'EQ1',
+            date: iso(7),
+            frequency: 'weekly',
+            status: 'pending',
+            priority: 'High',
+            assignedTo: 'Tim B',
+            basis: 'calendar',
+            intervalHours: 0,
+            targetHM: null,
+            createdBy: 'uid-1',
+        });
+        expect(ctx.pmList[0]).toBe(saved);
+    });
+
+    it('skips when the next occurrence already exists', async () => {
+        const ctx = makeCtx({
+            pmList: [{ taskName: 'A', equipmentId: 'EQ1', date: iso(7), status: 'pending' }],
+        });
+        await ctx.generateNextPM({ taskName: 'A', equipmentId: 'EQ1', frequency: 'weekly' });
+        expect(window.set).not.toHaveBeenCalled();
+    });
+
+    it('annotates targetHM for hours-based PM from meter and log', async () => {
+        const ctx = makeCtx({
+            equipment: [{ EquipmentID: 'EQ1', CurrentHM: 900 }],
+            logs: [
+                { EquipmentID: 'EQ1', HM: 800, Tanggal: '2026-09-01' },
+                { EquipmentID: 'EQ1', HM: 1200, Tanggal: '2026-10-01' },
+                { EquipmentID: 'EQ2', HM: 9999, Tanggal: '2026-10-02' },
+            ],
+        });
+        await ctx.generateNextPM({
+            taskName: 'Ganti Oli',
+            equipmentId: 'EQ1',
+            frequency: 'monthly',
+            basis: 'hours',
+            intervalHours: 250,
+        });
+        expect(window.set.mock.calls[0][1].targetHM).toBe(1450);
+    });
+
+    it('uses the equipment meter when there is no log history', async () => {
+        const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ1', CurrentHM: 100 }], logs: [] });
+        await ctx.generateNextPM({
+            taskName: 'A',
+            equipmentId: 'EQ1',
+            frequency: 'monthly',
+            basis: 'hours',
+            intervalHours: 50,
+        });
+        expect(window.set.mock.calls[0][1].targetHM).toBe(150);
+    });
+
+    it('propagates a failed write', async () => {
+        const ctx = makeCtx();
+        window.set.mockRejectedValueOnce(new Error('denied'));
+        await expect(
+            ctx.generateNextPM({ taskName: 'A', equipmentId: 'EQ1', frequency: 'weekly' })
+        ).rejects.toThrow('denied');
+        expect(ctx.pmList).toEqual([]);
+    });
+});
+
+describe('pmScheduleModule.deletePM & selection', () => {
+    it('does nothing when the confirmation is dismissed', async () => {
+        confirm.mockReturnValue(false);
+        const ctx = makeCtx({ pmList: [{ pmId: 'PM-1' }] });
+        await ctx.deletePM('PM-1');
+        expect(window.remove).not.toHaveBeenCalled();
+        expect(ctx.pmList).toHaveLength(1);
+    });
+
+    it('removes the task from RTDB and from the list', async () => {
+        const ctx = makeCtx({ pmList: [{ pmId: 'PM-1' }, { pmId: 'PM-2' }] });
+        await ctx.deletePM('PM-1');
+        expect(window.remove).toHaveBeenCalledWith({ path: 'PM_Schedule/PM-1' });
+        expect(ctx.pmList.map((p) => p.pmId)).toEqual(['PM-2']);
+        expect(ctx.showNotification).toHaveBeenCalledWith('PM task deleted');
+    });
+
+    it('reports a failed delete', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ pmList: [{ pmId: 'PM-1' }] });
+        window.remove.mockRejectedValueOnce(new Error('denied'));
+        await ctx.deletePM('PM-1');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: denied', 'error');
+    });
+
+    it('pmToggleSelect adds then removes the id', () => {
+        const ctx = makeCtx();
+        ctx.pmToggleSelect('PM-1');
+        expect(ctx.pmSelectedIds).toEqual(['PM-1']);
+        ctx.pmToggleSelect('PM-1');
+        expect(ctx.pmSelectedIds).toEqual([]);
+    });
+
+    it('pmToggleSelectAll selects every pending row, then clears them', () => {
+        const ctx = makeCtx({
+            pmList: [
+                { pmId: 'PM-1', status: 'pending', date: iso(1) },
+                { pmId: 'PM-2', status: 'pending', date: iso(2) },
+                { pmId: 'PM-3', status: 'completed', date: iso(3) },
+            ],
+            pmSelectedIds: ['PM-3'],
+        });
+        ctx.pmToggleSelectAll();
+        expect(ctx.pmSelectedIds.sort()).toEqual(['PM-1', 'PM-2', 'PM-3']);
+        ctx.pmToggleSelectAll();
+        expect(ctx.pmSelectedIds).toEqual(['PM-3']);
+    });
+});
+
+describe('pmScheduleModule.bulkCompletePM', () => {
+    it('warns when nothing is selected', async () => {
+        const ctx = makeCtx({ pmSelectedIds: [] });
+        await ctx.bulkCompletePM();
+        expect(ctx.showNotification).toHaveBeenCalledWith('No tasks selected', 'error');
+        expect(confirm).not.toHaveBeenCalled();
+    });
+
+    it('returns early when the confirmation is dismissed', async () => {
+        confirm.mockReturnValue(false);
+        const ctx = makeCtx({ pmList: [{ pmId: 'PM-1', status: 'pending' }], pmSelectedIds: ['PM-1'] });
+        await ctx.bulkCompletePM();
+        expect(window.update).not.toHaveBeenCalled();
+    });
+
+    it('completes selected rows, regenerates recurring ones and clears the selection', async () => {
+        const ctx = makeCtx({
+            pmList: [
+                { pmId: 'PM-1', taskName: 'A', equipmentId: 'EQ1', status: 'pending', frequency: 'monthly' },
+                { pmId: 'PM-2', taskName: 'B', equipmentId: 'EQ2', status: 'pending', frequency: 'none' },
+                { pmId: 'PM-3', taskName: 'C', equipmentId: 'EQ3', status: 'completed' },
+            ],
+            pmSelectedIds: ['PM-1', 'PM-2', 'PM-3', 'PM-404'],
+        });
+        const gen = vi.spyOn(ctx, 'generateNextPM').mockResolvedValue();
+        const before = ctx.pmList;
+
+        await ctx.bulkCompletePM();
+
+        expect(window.update).toHaveBeenCalledTimes(2); // PM-3 completed & PM-404 unknown dilewati
+        expect(gen).toHaveBeenCalledOnce(); // hanya PM-1 yang berfrekuensi
+        expect(ctx.pmList).not.toBe(before); // referensi baru → Alpine re-render
+        expect(ctx.pmList[0]).toMatchObject({ status: 'completed', completionNote: 'Bulk completed' });
+        expect(ctx.pmSelectedIds).toEqual([]);
+        expect(ctx.showNotification).toHaveBeenCalledWith('✅ 4 PM tasks completed');
+        expect(ctx.pmLoading).toBe(false);
+    });
+
+    it('reports a failed bulk update', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({
+            pmList: [{ pmId: 'PM-1', taskName: 'A', equipmentId: 'EQ1', status: 'pending' }],
+            pmSelectedIds: ['PM-1'],
+        });
+        window.update.mockRejectedValueOnce(new Error('denied'));
+        await ctx.bulkCompletePM();
+        expect(ctx.showNotification).toHaveBeenCalledWith('Error: denied', 'error');
+        expect(ctx.pmLoading).toBe(false);
+    });
+});
+
+describe('pmScheduleModule.logPMFromSchedule', () => {
+    it('ignores a missing task', () => {
+        const ctx = makeCtx();
+        ctx.logPMFromSchedule(null);
+        expect(ctx.showLogModal).toBe(false);
+    });
+
+    it('completes the PM and pre-fills the log form', async () => {
+        const ctx = makeCtx({ logForm: {}, showLogModal: false });
+        const complete = vi.spyOn(ctx, 'completePM').mockResolvedValue();
+
+        ctx.logPMFromSchedule({
+            pmId: 'PM-1',
+            equipmentId: 'EQ1',
+            taskName: 'Ganti Oli',
+            description: 'mesin 1',
+            assignedTo: 'Tim A',
+        });
+
+        expect(complete).toHaveBeenCalledWith('PM-1');
+        expect(ctx.logForm).toEqual({
+            equipmentId: 'EQ1',
+            type: 'PM',
+            desc: 'Ganti Oli - mesin 1',
+            tech: 'Tim A',
+        });
+        expect(ctx.showLogModal).toBe(true);
+    });
+
+    it('omits the description suffix and falls back to the default team', async () => {
+        const ctx = makeCtx({ logForm: {}, showLogModal: false });
+        vi.spyOn(ctx, 'completePM').mockResolvedValue();
+        ctx.logPMFromSchedule({ pmId: 'PM-2', equipmentId: 'EQ2', taskName: 'Inspeksi' });
+        expect(ctx.logForm.desc).toBe('Inspeksi');
+        expect(ctx.logForm.tech).toBe('Maintenance Team');
     });
 });
