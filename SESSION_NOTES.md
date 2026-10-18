@@ -102,6 +102,12 @@ sempat jadi positif palsu karena `fa[srbl]?` polos cocok dengan kata "far".
 - `sw.js` `CACHE_NAME` → **`mtc-asset-v14`** (dikonfirmasi ada di `dist/sw.js`).
 
 ### Jebakan baru (hemat waktu)
+- **`git push` GANTUNG tanpa pesan** karena `credential.helper=helper-selector` (Git Credential
+  Manager) membuka dialog auth grafis yang **tidak terlihat** dari sesi ini. `GIT_TERMINAL_PROMPT=0`
+  tidak menolong (itu bukan prompt terminal). `git ls-remote` tetap cepat — jadi "jaringan sehat"
+  bukan bukti push akan jalan. Akali dengan mematikan helper interaktif:
+  `git -c credential.interactive=false -c credential.helper=store push origin main`.
+  Kalau masih menggantung, ulangi — percobaan ke-2/3 biasanya tembus (transfer POST-nya flaky).
 - **Headroom memampatkan output tool** jadi `<<ccr:HASH,…>>`; isi aslinya lewat
   `mcp__headroom__headroom_retrieve({hash})`. Kalau hash hilang, jalankan ulang perintahnya.
   Untuk data besar, tulis ke berkas `scratch/` lalu baca potongan kecil.
