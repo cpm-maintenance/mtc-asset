@@ -77,18 +77,6 @@
   --text-muted: #a78bfa;
 }
 
-/* Force colors for light mode compatibility */
-[data-theme='light'] .text-white,
-[data-theme='light'] .text-slate-400,
-[data-theme='light'] .text-slate-500 {
-  color: #1e293b !important;
-}
-
-[data-theme='light'] .bg-white\/5,
-[data-theme='light'] .bg-white\/40 {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
 [data-theme='light'] input,
 [data-theme='light'] select,
 [data-theme='light'] textarea {
@@ -143,13 +131,6 @@ input, select, textarea {
   color: rgb(var(--tac-on-surface)) !important;
   border-radius: 0.5rem !important;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-/* Form control text follows theme (override hardcoded text-white/slate classes) */
-input.text-white, select.text-white, textarea.text-white,
-input.text-slate-400, select.text-slate-400, textarea.text-slate-400,
-input.text-slate-500, select.text-slate-500, textarea.text-slate-500 {
-  color: rgb(var(--tac-on-surface)) !important;
 }
 
 /* Placeholders follow theme muted color */

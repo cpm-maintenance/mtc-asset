@@ -60,6 +60,14 @@ intensitas amber (`/20` + border `/40`) — bukan meminjam emas, supaya aturan D
 `constants.ts`: `STATUS_COLORS` + `StatusColorKey` (tabel kelas→hex yang tidak pernah diimpor) dan
 `WO_PRIORITY_COLORS` (tabel hex yang juga 0 referensi). Keduanya sumber palet lama/hardcoded.
 
+`style.css`: 3 blok override yang hanya ada untuk menambal kelas legacy —
+`[data-theme='light'] .text-white/.text-slate-400/.text-slate-500`,
+`[data-theme='light'] .bg-white/5, .bg-white/40`, dan
+`input.text-white/.text-slate-400/.text-slate-500`. Semuanya `!important` yang menambal kelas yang
+**sudah tidak dipakai siapa pun**; setelah dihapus, CSS hasil build memuat **0** referensi
+`text-white`/`text-slate-400`/`bg-white/5`. `style.css` 10.519 → **9.848 byte**.
+`.bg-white` (kanvas QR) tetap ter-emit — dikonfirmasi ada di `dist/assets/*.css`.
+
 ### Penjaga baru — `tests/legacy-palette.test.js` (10 tes)
 Memindai **`src/js/**` + `index.html` + `public/pages/**`**:
 1. tidak ada kelas palet Tailwind bawaan · 2. tidak ada `text-white`/`bg-white`/`white/N`
