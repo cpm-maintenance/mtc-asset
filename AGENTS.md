@@ -129,3 +129,23 @@ If you see a better approach:
 
 🚀 Final Rule
 Always act like a senior software engineerwho writes code that others can easily understand, use, and scale.
+
+🧠 Superpowers Skills — WAJIB
+Plugin `superpowers` terpasang di Hermes. Aturannya: **panggil skill sebelum bertindak**,
+bukan sesudah. Jangan mengandalkan ingatan — baca versi terbaru tiap sesi.
+
+* Mulai sesi / lanjut kerja: `skill_view("superpowers:using-superpowers")`.
+* Mau bikin fitur, komponen, atau apa pun yang belum ada: `superpowers:brainstorming` dulu.
+* Ada bug / tes merah / perilaku aneh: `superpowers:systematic-debugging` dulu, jangan menebak.
+* Nulis kode fitur atau bugfix: `superpowers:test-driven-development` (RED → GREEN → REFACTOR).
+* Sebelum bilang "selesai" / commit / push: `superpowers:verification-before-completion` —
+  jalankan perintahnya di turn itu, laporkan output tool apa adanya.
+* Menerima review atau saran perbaikan: `superpowers:receiving-code-review`.
+* Butuh rencana multi-langkah: `superpowers:writing-plans` lalu `superpowers:executing-plans`.
+* Banyak pekerjaan independen: `superpowers:dispatching-parallel-agents` / `subagent-driven-development`.
+
+Kalau `skill_view("superpowers:<nama>")` tidak ketemu, baca langsung
+`C:\Users\andi.supriadi\AppData\Local\hermes\plugins\superpowers\skills/<nama>/SKILL.md`.
+
+Aturan repo ini (bagian "Verification Before Claiming Done" di atas) **tidak** digantikan
+skill — keduanya jalan bersama: skill mengatur cara kerja, repo mengatur gerbang angkanya.
