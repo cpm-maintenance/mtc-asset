@@ -288,7 +288,7 @@
             </div><!-- /mode email -->
 
             <!-- === MODE PIN (kiosk cepat) === -->
-            <div x-show="loginMode === 'pin'" class="flex flex-col gap-space-md">
+            <div x-cloak x-show="loginMode === 'pin'" class="flex flex-col gap-space-md">
               <div class="flex flex-col gap-1">
                 <div class="flex justify-between items-center">
                   <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant tracking-wider">Operator</span>
@@ -320,7 +320,7 @@
             </div>
 
             <!-- === MODE SSO === -->
-            <div x-show="loginMode === 'sso'" class="flex flex-col gap-space-md">
+            <div x-cloak x-show="loginMode === 'sso'" class="flex flex-col gap-space-md">
               <p class="font-body-sm text-body-sm text-tac-on-surface-variant">
                 Masuk dengan akun Google organisasi. Role tetap dibaca dari RTDB
                 <span class="font-mono">Users/{uid}/role</span>, jadi SSO tidak menambah hak akses.
@@ -335,7 +335,7 @@
                   x-text="loginMode === 'sso' ? 'public' : 'login'"></span>
                 <span x-text="loginMode === 'sso' ? 'LANJUTKAN DENGAN GOOGLE' : (loginMode === 'pin' ? 'MASUK DENGAN PIN' : 'AUTHENTICATE &amp; ENTER COMMAND CENTER')"></span>
               </span>
-              <span x-show="isLoading" class="flex items-center justify-center gap-3">
+              <span x-cloak x-show="isLoading" class="flex items-center justify-center gap-3">
                 <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
