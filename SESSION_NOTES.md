@@ -1,3 +1,40 @@
+## 📝 Session 31 (S31, 2026-10-19) — C-3: Lighthouse diukur ulang, **seo 91 → 100**
+
+### Apa yang dikerjakan
+Kartu `t_c6d1c766` (C-3), dikerjakan manual (kartu `blocked`, tanpa `unblock`). Alat: **Lighthouse 12.6.1** lokal (`npx --no-install lighthouse`), Chrome headless, preset **desktop** + **mobile** default, diukur di **preview build** (`vite preview :4173`) **dan** live.
+
+### Angka riil (dari JSON Lighthouse, bukan perkiraan)
+| Target | perf | a11y | best-practices | seo |
+|---|---|---|---|---|
+| live **sebelum** | 92 | 100 | 100 | 91 |
+| live **sesudah** | **96** | **100** | **100** | **100** |
+| preview desktop sesudah | 96 | 100 | 100 | 100 |
+| preview mobile sesudah | 71 | 100 | 96 | 100 |
+
+Metrik preview desktop: FCP 0,5 s · LCP 0,9 s · TBT 20 ms · CLS **0,119**. Mobile: FCP 2,2 s · LCP 3,6 s · TBT 240 ms · CLS **0,251**.
+Fragmen `/pages/WorkOrders.html` + `/pages/EnterpriseDashboard.html`: perf **100** · CLS **0** · TBT **0 ms** keduanya.
+
+### Satu perbaikan nyata
+`/robots.txt` **tidak ada** di `public/`, jadi Firebase Hosting menyajikan `index.html` (200 `text/html`) untuk path itu → audit `robots-txt` gagal → seo tertahan 91. Ditambah `public/robots.txt` (23 byte: `User-agent: *` / `Allow: /`), commit **`7dee035`**, live terverifikasi: `curl -sI` → `Content-Type: text/plain`, body benar. Ini satu-satunya kegagalan biner di desktop.
+
+### Sisa temuan — SENGAJA tidak dikerjakan (kartu: "catat temuan saja")
+1. **CLS 0,119 desktop / 0,251 mobile** — culprit tunggal: container grid login `index.html:125` (`max-w-7xl mx-auto grid ... items-stretch`). `main` memakai `justify-center`, jadi saat font display swap mengubah tinggi konten, seluruh grid bergeser.
+2. **`public/img/login-mill-1600.jpg` 220 KB**, tanpa `srcset`, tanpa WebP → estimasi Lighthouse 140 KiB (responsive) + 82 KiB (format). Mesin ini **tidak punya** `sharp` / ImageMagick / `cwebp` (`convert` yang ada = tool filesystem Windows, bukan IM).
+3. **Unused JS 137 KiB** — `main-*.js` 69 KiB + `db-*.js` 68 KiB (Firebase SDK).
+4. **Mobile best-practices 96** — audit `font-size`: hanya **52,96%** teks legibel; `.text-label-mono-sm` **10 px**, tombol **11 px**, `.text-label-mono-md` **11 px**. Mengubah token tipografi = keputusan desain lintas 18 halaman, bukan tugas pengukuran.
+5. **Dua sinyal a11y nyata di fragmen** (sisanya artefak: tanpa `doctype`/`html-lang`/`title`/`meta`/`viewport`, jadi a11y 77 & seo 82 fragmen **bukan** temuan app):
+   - chip filter `WorkOrders.html:224-240` nama tombolnya **hanya** dari `x-text` → kosong kalau Alpine tidak jalan. Perbaikan: taruh label statis di dalam `<button>` (`ALL`, `Pending`, …) dan biarkan `x-text` menimpanya.
+   - `target-size` < 24 px pada chip filter (`px-space-sm py-1`) dan tombol view toggle.
+
+### Gate (dijalankan di sesi ini)
+`tsc --noEmit` 0 error · `eslint` **0 error / 79 warning** · **1175/1175** tes, 41 berkas · coverage **77,21 / 65,49 / 74,11 / 79,26** (ratchet 76/64/73/78 — tidak diturunkan) · `vite build` ok · `verify:precache` **50/50** · `sw.js` **tetap `mtc-asset-v17`** (robots.txt tidak di-precache; tidak ada aset cache yang berubah).
+
+### Catatan alat (jebakan baru)
+- `npx lighthouse ... >/dev/null 2>&1` **tidak** menulis JSON. Alihkan ke berkas log (`>test-results/lh/x.log 2>&1`), baru JSON-nya muncul.
+- Output terminal sesi ini melewati proxy kompresi (headroom) → pembacaan berkas panjang terpotong jadi placeholder. Pakai `grep -o`, `awk '{print substr($0,1,70)}'`, atau `node -e` dengan keluaran pendek.
+
+---
+
 ## 📝 Session 30 (S30, 2026-10-18) — coverage `ui.js` 32,98% → 98,96% lines
 
 ### Kenapa `ui.js`
