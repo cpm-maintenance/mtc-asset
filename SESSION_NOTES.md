@@ -362,9 +362,52 @@ saat idle.
 - `tsc` 0 · eslint 0 error / 79 warning · suite **1092/1092** · build ok ·
   precache 50/50 (51 entri).
 
+### Opsi 1: paket murah coverage — 5 modul, suite 1092 → 1175
+Empat berkas tes baru + satu berkas tambahan. **`src/js/**` tidak disentuh.**
+
+| Modul | Sebelum (lines) | Sesudah | Berkas tes |
+|---|---|---|---|
+| `equipment.js` | 46,57% | **100%** | `tests/equipment-module.test.js` (24) |
+| `parts.js` | 54,83% | **100%** | `tests/parts-module.test.js` (24) |
+| `notification.js` | 77,02% | **100%** | `tests/notification-fcm.test.js` (17) |
+| `push-client.js` | 25% | **100%** | `tests/push-client-module.test.js` (6) |
+| `requisition.js` | 67,16% | **89,55%** | `tests/requisition-listener.test.js` (13) |
+
+Total: **74,85 / 63,74 / 72,11 / 76,60** → **77,21 / 65,49 / 74,11 / 79,26**
+(stmt/branch/func/lines). Threshold `72/61/70/74` → **`76/64/73/78`**.
+
+Yang ditutup:
+- `equipment.js` — seluruh `submitEquipment` (validasi, unggah foto + fallback,
+  `createdBy` create/edit, jalur offline antrean sukses/gagal, `runTransaction`
+  hanya saat create, audit trail + audit melempar, `withRetry` 3× + notifikasi
+  "Network error, retrying...", catch, `finally`), `openEquipModal`,
+  `handleEquipPhoto` (termasuk callback crop), `goToDetail`.
+- `parts.js` — hal yang sama untuk spare part + guard `!partForm`, cek `isAdmin`,
+  `isLowStock`, legacy `EquipmentID` vs `EquipmentIDs` array, riwayat pemakaian.
+- `notification.js` — jalur FCM penuh: `registerFCMToken` (izin belum granted,
+  token kosong, SDK melempar, tanpa `window.db`/user), `saveFCMToken` (2 path,
+  gagal ditelan), `removeFCMToken`, `setupForegroundListener` (payload notif /
+  tanpa notif / tanpa `showNotification` / `getMessaging` melempar),
+  auto-reorder admin vs non-admin vs reject.
+- `push-client.js` — bentuk badan request (`headings`/`contents`/segmen `All`/
+  ikon), `data` diteruskan apa adanya, tanpa `app_id`, fetch gagal ditelan,
+  HTTP 500 tidak dilempar.
+- `requisition.js` — `setupRequisitionsListener` (seed snapshot pertama tanpa
+  notifikasi, request baru + label `+N others`, requester fallback
+  `createdBy`→`Someone`, tiga transisi status, transisi tak resmi, snapshot
+  rusak, callback error, unsub listener lama).
+
+**Catatan bug yang ketemu saat menulis tes (belum diperbaiki, perlu keputusan):**
+`sanitizeDataForFirebase` menjalankan `sanitizeInput` ke SEMUA string, dan
+`sanitizeInput` meng-escape `/` jadi `&#x2F;`. Akibatnya `FotoURL` tersimpan
+sebagai `https:&#x2F;&#x2F;...` di `equipment.js` dan `parts.js` — URL gambar
+Cloudinary rusak. Tes mengunci perilaku saat ini apa adanya; perbaikannya
+(kecualikan field URL dari sanitasi, atau escape saat render saja) menyentuh
+semantik data lintas modul, jadi menunggu keputusan.
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
-  **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
+  **1175/1175** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
   `build` ok · `verify:precache` **50/50** berkas build (precache **51** entri,
   3445 KiB — foto mill ikut).
 - **`src/**` tidak disentuh** → bundle identik, `sw.js` tetap `mtc-asset-v15`

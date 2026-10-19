@@ -60,13 +60,19 @@ export default defineConfig({
             // `saveAIWithCustomModel`, setter `aiApiKey`.
             // ai.js 76.31 → 100% lines (branch 87.42). Total 74.68/63.59/72.01/76.42.
             // Suite 1050 → 1077. Threshold 71/60/69/72 → 72/61/70/74 (margin ~2 poin).
+            // S30 paket murah (5 modul, 4 berkas tes baru): equipment.js
+            // 46.57 → 100% lines, parts.js 54.83 → 100%, notification.js 77.02
+            // → 100% (jalur FCM: register/save/remove/foreground), push-client.js
+            // 25 → 100%, requisition.js 67.16 → 89.55 (setupRequisitionsListener).
+            // Total 74.85/63.74/72.11/76.60 → 77.21/65.49/74.11/79.26.
+            // Suite 1092 → 1175. Threshold 72/61/70/74 → 76/64/73/78.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
             thresholds: {
-                statements: 72,
-                branches: 61,
-                functions: 70,
-                lines: 74,
+                statements: 76,
+                branches: 64,
+                functions: 73,
+                lines: 78,
             },
         },
     },
