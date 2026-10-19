@@ -282,6 +282,36 @@ Tiga yang merah itu visual, bukan teks. Perbaikannya 3 baris kalau diminta:
 `min-h-[44px]` di tab, `w-11 h-11` di tombol mata, dan
 `focus-visible:outline focus-visible:outline-2` di checkbox.
 
+### S30 opsi 0: tutup 3 gate merah login (tanpa mengubah tampilan)
+Hanya ukuran area klik + indikator fokus. Kelas visual lain tidak disentuh.
+
+| Perubahan | Sebelum | Sesudah |
+|---|---|---|
+| tab mode | 32px | **44px** (`min-h-[44px]`) |
+| tombol mata | 30px | **44px** (`w-11 h-11`) |
+| input email/key/pin | 38px | **44px** (`min-h-[44px] py-3`) |
+| baris checkbox | 20px | **44px** (`min-h-[44px]`), kotak 16→20px |
+| checkbox | tanpa indikator | `focus-visible:outline focus-visible:outline-2` |
+
+**Gate terukur (build produksi, `vite preview`):**
+- Tap target PASS: 8 kontrol, semua ≥ 44 (tab 44, input 44, mata 44, CTA 46).
+  Satu-satunya di bawah 44 adalah kotak checkbox native 20px, dan ia berada di
+  dalam baris klik 441×44.
+- Focus PASS: 8/8 elemen fokus punya indikator (tab/mata/CTA/checkbox = outline
+  emas sendiri, input = ring `.tac-well`).
+- Layout PASS: desktop 1264×569 tanpa overflow/clip; mobile 390×844 panel
+  342×580, tanpa clip/overflow.
+- Teks PASS: em dash 0. Form PASS: submit kosong diblokir.
+- Motion masih FAIL 1: `animate-pulse` pada dot dekoratif (di luar scope 0).
+
+**Temuan baru saat menyapu seluruh simpul teks (bukan dari perubahan ini):**
+label kecil berwarna `text-tac-status-standby` (`#64748b`) di atas
+`surface-card` hanya **3,56:1**, di bawah AA 4,5. Ini bukan regresi sesi ini:
+`DESIGN-TACTICAL.md` sendiri menetapkan `#64748b` untuk label, jadi berlaku di
+18 halaman. Ini tepatnya wilayah kartu **D-5 (gap AA tema gelap)** yang masih
+menunggu keputusan Manuel. 136 simpul teks lain ≥ 4,5; CTA emas 6,11–7,87:1
+(dihitung dari dua stop gradien, bukan dari `backgroundColor`).
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
   **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
