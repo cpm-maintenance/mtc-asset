@@ -324,8 +324,12 @@ export function validatePerformanceForm(form) {
 export function sanitizeDataForFirebase(data) {
   /** @type {Record<string, any>} */
   const sanitized = {};
+  // Field berakhiran URL/Url/URLs disimpan mentah — sanitizeInput meng-escape "/"
+  // jadi "&#x2F;" sehingga URL gambar rusak di RTDB (BUG FotoURL, S31).
   for (const [key, value] of Object.entries(data)) {
-    if (typeof value === 'string') {
+    if (/urls?$/i.test(key)) {
+      sanitized[key] = value;
+    } else if (typeof value === 'string') {
       sanitized[key] = sanitizeInput(value);
     } else if (Array.isArray(value)) {
       sanitized[key] = value.map(item => 

@@ -170,8 +170,8 @@ describe('equipment.js: submitEquipment — jalur online', () => {
     await self.submitEquipment();
 
     expect(self.uploadImage).toHaveBeenCalledWith(file);
-    // sanitizeDataForFirebase meng-escape "/" jadi "&#x2F;" — lihat tes BUG di bawah.
-    expect(window.set.mock.calls[0][1].FotoURL).toBe('https:&#x2F;&#x2F;cdn&#x2F;f.jpg');
+    // FotoURL adalah field URL: disimpan mentah, tidak di-escape (S31).
+    expect(window.set.mock.calls[0][1].FotoURL).toBe('https://cdn/f.jpg');
   });
 
   it('upload gagal mengembalikan string kosong: jatuh ke foto lama', async () => {
@@ -183,7 +183,7 @@ describe('equipment.js: submitEquipment — jalur online', () => {
 
     await self.submitEquipment();
 
-    expect(window.set.mock.calls[0][1].FotoURL).toBe('https:&#x2F;&#x2F;cdn&#x2F;lama.jpg');
+    expect(window.set.mock.calls[0][1].FotoURL).toBe('https://cdn/lama.jpg');
   });
 
   it('FotoURL "null" dibersihkan jadi string kosong', async () => {

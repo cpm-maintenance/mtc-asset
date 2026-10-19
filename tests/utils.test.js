@@ -624,6 +624,13 @@ describe('sanitizeDataForFirebase', () => {
   it('should handle empty object', () => {
     expect(sanitizeDataForFirebase({})).toEqual({});
   });
+  it('tidak meng-escape field berakhiran URL/Url/URLs', () => {
+    const url = 'https://res.cloudinary.com/demo/image/upload/a.jpg';
+    const result = sanitizeDataForFirebase({ FotoURL: url, PhotoURLs: [url], nama: '<b>x</b>' });
+    expect(result.FotoURL).toBe(url);
+    expect(result.PhotoURLs).toEqual([url]);
+    expect(result.nama).toBe('&lt;b&gt;x&lt;&#x2F;b&gt;');
+  });
 });
 
 describe('generateId', () => {
