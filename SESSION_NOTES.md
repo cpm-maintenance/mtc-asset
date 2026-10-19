@@ -178,6 +178,61 @@ Diukur di browser (build produksi, `vite preview`):
 - kontras AA per tema (teks utama / label / checkbox / wordmark):
   dark 10,15–15,01 · light 5,97–17,85 · navy 10,17–15,74 · purple 10,87–17,08.
 
+### Lanjutan S30 — login dirombak dengan antislop (mode DURING)
+Layar "Secure Gateway" sebelumnya lolos build tapi penuh slop. Audit menemukan 13
+pelanggaran, mayoritas di Hard Gate. Yang dibuang:
+
+| Temuan | Rule | Kenapa |
+|---|---|---|
+| 2 em dash di teks | R-02 | karakter terlarang di teks yang ditulis agen |
+| `KIOSK-NODE-01`, `TERMINAL NODE ID`, `CHALLENGE ENCRYPTED`, `DEFENSE MATRIX ACTIVE`, `TLS 1.3 HARDWARE TUNNEL` | R-36, R-38 | klaim keamanan dan ID karangan, tidak ada yang bisa diverifikasi |
+| grid 48px di atas foto | R-07 | tekstur "biar teknis" tanpa fungsi; foto sudah jadi identitas |
+| radial gold orb | R-01 | orb warna = default AI, bukan keputusan |
+| 3 dot ber-glow + `animate-pulse` | R-13, R-19 | menandai status yang tidak ada; MOTION 1 dilarang loop |
+| `backdrop-blur` di 6 permukaan | R-10 | dose cap 1-2; sekarang 0 |
+| 4 pill capsule (PWA READY, TELEMETRY LINK, dll) | R-09 | kombinasi capsule+border+dot+uppercase tanpa fungsi |
+| "CORE TELEMETRY OS", "GATEWAY v4.2" | R-16, R-17 | buzzword + nomor versi karangan |
+| mode tab bentuk pill + isi emas penuh | R-11 | pill di semua elemen; sekarang tab garis bawah 2px |
+
+Yang ditambahkan supaya tidak jatuh ke steril (R-37: arah sudah ada, `design/DESIGN-TACTICAL.md`):
+
+- **Design Read**: login gate untuk staf maintenance di tablet lapangan, bahasa
+  Tactical Slate, dial **ENERGY 2 / RHYTHM 2 / MOTION 1**.
+- **Aksen tunggal = emas**, dua tempat saja: garis bawah tab aktif dan tombol
+  utama (R-13: glow 0, shadow hanya di 4 input recessed milik design system).
+- **Identitas dari foto mill asli** milik Manuel, bukan dekorasi.
+- **Satu titik fokus**: tombol masuk. Semua label lain turun satu tingkat warna.
+- **Copy faktual**: "Registry aset, jadwal perawatan, dan riwayat work order",
+  "Tetap bisa dibuka tanpa sinyal. Perubahan tersinkron saat koneksi kembali"
+  (benar: precache SW + antrean RTDB), "Butuh akun atau reset password? Hubungi admin."
+
+Perbaikan yang ditemukan saat uji, bukan saat menulis:
+- **Tap target < 44px** (R-03): tab 34px, tombol mata 36px, link `ganti` 16px.
+  Sekarang tab `min-h-[44px]`, tombol mata `w-11 h-11`, `ganti` `min-h-[44px]`,
+  input `py-3` (46px), baris checkbox 44px.
+- **Checkbox tanpa indikator fokus** (R-32): `focus-visible:outline-2` hanya
+  menulis lebar, `outline-style` tetap `none`. Wajib `focus-visible:outline`
+  (style solid) **plus** `outline-2`.
+- **Kontras tema terang sempat terbaca 1,67:1** — itu artefak ukur: `transition-colors`
+  masih berjalan saat dibaca. Dengan transisi dimatikan, terendah **5,97:1**.
+
+**Delivery Gate (PASS):**
+- Hard Gate: em dash 0 · overflow mobile 0 (390×844, panel 342×466, tanpa clip) ·
+  angka/testimoni/klaim karangan 0 · kontrol mati 0 (3 tab, toggle mata, checkbox,
+  submit, PIN, SSO semua bereaksi) · state kosong/loading/error ada · keyboard
+  lengkap (9 elemen, semua punya indikator fokus) · 4 tema lolos AA
+  (terendah 5,97:1) · tidak ada patch via script.
+- Purpose-Gate: glow 0 · blur 0 · grid 0 · orb 0 · pill badge 0 · shadow hanya
+  input recessed · motion hanya spinner saat memuat · ikon hanya `visibility`
+  (fungsional) · tipe huruf dari DESIGN-TACTICAL (Inter + JetBrains Mono, alasan
+  tertulis di spec: keterbacaan tablet lapangan).
+- Liveliness: dial eksplisit, fokus tunggal, aksen tunggal, whitespace struktural,
+  motif identitas = foto mill + garis emas.
+- Bukti klik: tab EMAIL/PIN/SSO berpindah · PIN tanpa email tersimpan →
+  peringatan dan tetap di EMAIL · PIN dengan email → operator tampil ·
+  toggle mata `password`↔`text` + `aria-pressed` · checkbox false→true ·
+  submit kosong → validasi browser · PIN `12` → "PIN harus 4–6 digit angka".
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
   **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
