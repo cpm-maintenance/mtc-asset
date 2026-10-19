@@ -233,6 +233,55 @@ Perbaikan yang ditemukan saat uji, bukan saat menulis:
   toggle mata `password`↔`text` + `aria-pressed` · checkbox false→true ·
   submit kosong → validasi browser · PIN `12` → "PIN harus 4–6 digit angka".
 
+### Koreksi S30: tampilan dikembalikan, antislop hanya pada teks
+Instruksi Manuel: "balikin ke tampilan semula, teksnya saja yang di antislop".
+Jadi seluruh markup visual dikembalikan ke `9083a82` (`git checkout 9083a82 --
+index.html`), lalu **hanya simpul teks** yang diubah.
+
+Bukti tidak ada perubahan visual (dibandingkan `9083a82`, blok login):
+- **139 atribut `class` identik**, urutan tag identik, 19 baris berubah semua berisi teks.
+- Struktur yang dipertahankan: grid 48px, radial glow, 3 dot ber-glow + pulse,
+  `backdrop-blur` di 6 permukaan, pill capsule, tab pill isi emas, kartu modul,
+  strip footer.
+
+Teks yang diganti (19 penggantian, 0 em dash tersisa):
+
+| Sebelum | Sesudah | Alasan |
+|---|---|---|
+| `TERMINAL NODE ID: MTC-CORE-01` | `PT CITRA PALU MINERALS` | R-38 ID karangan |
+| `CHALLENGE ENCRYPTED` | `KONEKSI TERENKRIPSI` | R-36 klaim tanpa bukti |
+| `TLS 1.3 HARDWARE TUNNEL` | `KONEKSI TERENKRIPSI` | R-36 "hardware tunnel" tidak ada |
+| `DEFENSE MATRIX ACTIVE` | `AKSES DIBATASI ADMIN` | R-36 klaim fiktif |
+| `KIOSK-NODE-01` | `PANEL MASUK` | R-38 ID karangan |
+| `CORE TELEMETRY OS` | `MAINTENANCE PLANNING` | R-16 buzzword |
+| `... SCADA TELEMETRY GATEWAY v4.2` | `REGISTRY ASET · JADWAL PERAWATAN · RIWAYAT WORK ORDER` | R-16 + R-17 versi karangan |
+| `PWA TELEMETRY LINK` | `MODE OFFLINE` | tidak ada telemetri |
+| `ACTIVE` / `SYNC` (kartu) | `MODUL` | status palsu |
+| `LOCAL CACHE ACTIVE` | `CACHE LOKAL AKTIF` | benar, tapi diseragamkan |
+| `RESTRICTED — AUTHORIZED PERSONNEL ONLY` | `AKSES HANYA UNTUK AKUN TERDAFTAR` | R-02 em dash |
+| `... Users/{uid}/role — SSO tidak menambah hak akses.` | `..., jadi SSO tidak menambah hak akses.` | R-02 em dash |
+| `x-text="rememberedEmail \|\| '—'"` | `'Belum ada email tersimpan'` | R-02 em dash |
+| `ADMIN-MANAGED` | `DIBUAT ADMIN` | bahasa |
+| `MIN 6 CHARS` | `MINIMAL 6 KARAKTER` | bahasa |
+
+**Gate diukur pada build produksi (`vite preview`):**
+- Text PASS: em dash **0** di teks yang dirender.
+- Kontras PASS: terendah **5,48:1** (light, footer), 4 tema, semua ≥ 4.5.
+- Layout PASS: desktop 1264×569 tanpa overflow, 2 panel tanpa clip; mobile
+  390×844 panel 342×393, `leftHidden`, tanpa overflow.
+- Form PASS: submit kosong diblokir (`checkValidity()` false, pesan browser).
+- Klik PASS: PIN tanpa email tersimpan → peringatan dan tetap EMAIL · PIN dengan
+  email → operator tampil · SSO → teks baru tanpa em dash.
+- **Tap target FAIL (sengaja):** 7 elemen < 44px (tab 32, input 38, tombol mata 30,
+  checkbox 16). Ini ukuran asli desain yang diminta dikembalikan.
+- **Motion FAIL (sengaja):** 1 `animate-pulse` pada dot dekoratif.
+- **Focus PARTIAL (sengaja):** checkbox tanpa indikator fokus; sisanya punya
+  (tab/tombol mata/tombol masuk = outline sendiri, input = ring `.tac-well`).
+
+Tiga yang merah itu visual, bukan teks. Perbaikannya 3 baris kalau diminta:
+`min-h-[44px]` di tab, `w-11 h-11` di tombol mata, dan
+`focus-visible:outline focus-visible:outline-2` di checkbox.
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
   **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
