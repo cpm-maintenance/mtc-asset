@@ -312,6 +312,39 @@ label kecil berwarna `text-tac-status-standby` (`#64748b`) di atas
 menunggu keputusan Manuel. 136 simpul teks lain ≥ 4,5; CTA emas 6,11–7,87:1
 (dihitung dari dua stop gradien, bukan dari `backgroundColor`).
 
+### D-5: gap AA tema gelap ditutup (keputusan: opsi a, naikkan token)
+`KNOWN_DARK_GAPS` kosong. Dua token di `:root` dinaikkan; light tidak disentuh.
+
+| Token | Sebelum | Sesudah | Rasio terendah (3 tema gelap) |
+|---|---|---|---|
+| `--tac-status-standby` | `100 116 139` slate-500 | **`148 163 184` slate-400** | 3,03 → **5,63** |
+| `--tac-gold-dim` | `180 83 9` amber-700 | **`217 119 6` amber-600** | 2,88 → **4,53** |
+
+Dihitung terhadap 6 latar: `surface-card` + `surface-container-high` ×
+dark/navy/purple. Keduanya inherit dari `:root` (navy/purple tidak override),
+jadi satu perubahan menutup ketiga tema.
+
+Berkas yang ikut:
+- `src/css/tactical.css` — dua nilai token.
+- `tests/tac-theme.test.js` — `KNOWN_DARK_GAPS` jadi `new Set([])`; tes tema gelap
+  dinaikkan dari **≥3** (ambang komponen) ke **≥4,5** (AA penuh). Set kosong
+  dipertahankan sebagai jaring: entri baru = regresi.
+- `design/DESIGN-TACTICAL.md` — `status-standby: '#94a3b8'`,
+  `gold-dim: '#d97706'`, dan prosa `#64748b` → `#94a3b8`.
+- `public/offline.html` — 2× `color: #64748b` → `#94a3b8` (4,24 → **7,87** di
+  atas `#05070a`). Halaman ini hardcode, tidak ikut token.
+- `sw.js` — `mtc-asset-v16` → **`v17`** (`src/**` + `public/**` berubah).
+
+`tailwind.config.js` tidak perlu diubah: semua warna `tac-*` sudah
+`rgb(var(--tac-xxx) / <alpha-value>)`, jadi 18 halaman ikut otomatis.
+
+**Bukti terukur (build produksi):**
+- Login, 28 simpul teks × 3 tema gelap: **0 di bawah 4,5**; terendah 6,61
+  (dark/navy) dan 7,08 (purple). Sebelumnya `DIBUAT ADMIN` 3,56.
+- `offline.html`: `p`/`li` 7,87 · `h1` 9,39.
+- Tes: `tac-theme.test.js` 12/12 · suite **1092/1092** · `tsc` 0 ·
+  eslint **0 error / 79 warning** · build ok · precache 50/50 (51 entri).
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
   **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·

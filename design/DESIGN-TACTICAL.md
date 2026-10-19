@@ -53,7 +53,7 @@ colors:
   surface-card: '#161d27'
   surface-elevated: '#1e2634'
   surface-recessed: '#0a0e14'
-  gold-dim: '#b45309'
+  gold-dim: '#d97706'
   gold-bright: '#fbbf24'
   gold-glow: rgba(245, 158, 11, 0.18)
   border-tactical: '#283446'
@@ -61,7 +61,7 @@ colors:
   status-operational: '#10b981'
   status-repair: '#f59e0b'
   status-emergency: '#ef4444'
-  status-standby: '#64748b'
+  status-standby: '#94a3b8'
   sync-cyan: '#06b6d4'
   sync-cyan-glow: rgba(6, 182, 212, 0.2)
 typography:
@@ -200,7 +200,7 @@ Form input wells and interactive pills use smooth contours that balance industri
 - **Destructive (`Reject WO`, `Abort`)**: Dark slate with a deep red hairline border (`#ef4444`) and crimson status dot.
 
 ### Inputs & Selectors
-- **Tactile Recessed Fields**: Deep charcoal container (`#0a0e14`) with dual inner shadow. Text rendered in high-contrast crisp white, labels positioned above in uppercase monospace muted slate (`#64748b`). Focused state activates a sharp 1px amber or cyan outline with soft outer halo.
+- **Tactile Recessed Fields**: Deep charcoal container (`#0a0e14`) with dual inner shadow. Text rendered in high-contrast crisp white, labels positioned above in uppercase monospace muted slate (`#94a3b8`). Focused state activates a sharp 1px amber or cyan outline with soft outer halo.
 
 ### Telemetry & Asset Cards
 - **Structural Layout**: Dark slate plate (`#161d27`) with 1px top-lit chamfer border. Top header contains the Asset Node ID, machine type, and status indicator tag. Body features dual-column metrics (Running Hours vs Breakdown Risk) set in monospaced tabular numerals.

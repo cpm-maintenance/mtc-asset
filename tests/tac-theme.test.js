@@ -61,16 +61,15 @@ const CONTRAST_PAIRS = [
 ];
 
 /**
- * Gap AA yang SUDAH ADA di tema gelap sebelum D-3 (night tidak diubah oleh
- * kartu ini). Dicatat di sini supaya kelihatan, bukan disembunyikan: keduanya
- * lolos ambang komponen (3:1) tapi belum 4.5:1 untuk teks. Perbaikan =
- * keputusan desain terpisah (mis. `--tac-status-standby` → slate-400).
+ * Gap AA tema gelap. **Kosong sejak D-5**: `--tac-status-standby` dinaikkan
+ * slate-500 → slate-400 (100 116 139 → 148 163 184) dan `--tac-gold-dim`
+ * amber-700 → amber-600 (180 83 9 → 217 119 6), jadi ke-18 pasangan lolos
+ * 4.5:1 di dark/navy/purple.
+ *
+ * Set ini sengaja dipertahankan: kalau ada entri lagi, artinya palet gelap
+ * mundur dan tes di bawah akan menangkapnya. Jangan diisi tanpa alasan.
  */
-const KNOWN_DARK_GAPS = new Set([
-  'status-standby|surface-card',
-  'gold-dim|surface-card',
-  'status-standby|surface-container-high',
-]);
+const KNOWN_DARK_GAPS = new Set([]);
 
 // ── util: flatten palette ────────────────────────────────────────────────────
 function leaves(node, prefix = '') {
@@ -223,14 +222,17 @@ describe('D-3 · palette tac theme-aware', () => {
     }
   });
 
-  it('tema gelap: kontras teks fungsional ≥ 3:1 (ambang komponen)', () => {
+  it('tema gelap: kontras teks fungsional ≥ 4.5:1 (AA, D-5)', () => {
+    // D-5: dulu ambangnya 3:1 (komponen) karena tiga pasangan memang belum
+    // sampai 4.5. Setelah palette dinaikkan, ambangnya AA penuh untuk semua
+    // tema gelap, bukan cuma "lolos komponen".
     for (const theme of ['dark', 'navy', 'purple']) {
       for (const [fg, bg] of CONTRAST_PAIRS) {
         const ratio = contrast(
           channels(THEMES[theme][`tac-${fg}`], fg),
           channels(THEMES[theme][`tac-${bg}`], bg)
         );
-        expect(ratio, `${theme}: text-tac-${fg} di atas bg-tac-${bg} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+        expect(ratio, `${theme}: text-tac-${fg} di atas bg-tac-${bg} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
       }
     }
   });
