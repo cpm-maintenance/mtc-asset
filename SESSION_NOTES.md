@@ -17,6 +17,13 @@ Fragmen `/pages/WorkOrders.html` + `/pages/EnterpriseDashboard.html`: perf **100
 ### Satu perbaikan nyata
 `/robots.txt` **tidak ada** di `public/`, jadi Firebase Hosting menyajikan `index.html` (200 `text/html`) untuk path itu → audit `robots-txt` gagal → seo tertahan 91. Ditambah `public/robots.txt` (23 byte: `User-agent: *` / `Allow: /`), commit **`7dee035`**, live terverifikasi: `curl -sI` → `Content-Type: text/plain`, body benar. Ini satu-satunya kegagalan biner di desktop.
 
+### C-4 — CLS login + perf mobile (kartu `t_81c2005f`, selesai)
+**Akar masalah (dibuktikan, bukan ditebak)**: probe CDP dengan CPU 4x + slow 4G merekam rect tiap 50 ms — section kanan login **839 px → 572 px pada ~2,2 s**. Sebabnya tiga blok mode (`email`, `pin`, `sso`) semuanya `x-show` **tanpa `x-cloak`**: ketiganya ter-render sebelum Alpine boot, lalu dua disembunyikan.
+**Fix**: `x-cloak` pada blok PIN + SSO + spinner `isLoading`; blok `email` (default) sengaja TIDAK di-cloak supaya form langsung terlihat. Dikunci `tests/login-cloak.test.js` (3 tes).
+**Gambar**: `<picture>` + `<source type="image/webp">` srcset 800w/1600w, `sizes="(min-width:1024px) 58vw, 100vw"`, `<img>` fallback JPG dengan `width="1600" height="795"`. Generator `scripts/build-login-image.mjs` (sharp, devDependency baru): `login-mill-1600.jpg` 220.136 B → `login-mill-1600.webp` 154.932 B · `login-mill-800.webp` 62.610 B. `includeAssets` + `img/*.webp` → precache 51 → 53 entri.
+**Angka live**: mobile perf **71 → 91**, CLS **0,251 → 0,011**, LCP 3,6 → 2,8 s; desktop perf 96 → **99**, CLS **0,119 → 0**. best-practices mobile tetap 96 (audit `font-size` = kartu C-9, bukan kartu ini).
+**Commit**: `bd79f3a` (cloak) + `efbb690` (gambar), `sw.js` → **`mtc-asset-v20`**. Gate: `tsc` 0 · lint 0/79 · **1179** tes / 42 berkas · coverage 77,22/65,50/74,11/79,27 · precache 50/50.
+
 ### Tindak lanjut (a) — BUG `FotoURL`: **opsi 1** (dipilih Manuel)
 `sanitizeDataForFirebase()` sekarang **melewati** kunci yang berakhiran `URL`/`Url`/`URLs` (`/urls?$/i`) dan menyimpan nilainya mentah; semua kunci lain tetap lewat `sanitizeInput()`. Akibatnya `equipment.js:77` dan `parts.js:100` menulis `https://res.cloudinary.com/...` utuh, dan migrasi `app.js:1650` (`includes('https://res.cloudinary.com')`) hidup lagi untuk record baru.
 TDD: RED dulu — 1 tes baru di `tests/utils.test.js` (`tidak meng-escape field berakhiran URL/Url/URLs`) + 2 assertion `tests/equipment-module.test.js` diubah dari bentuk ter-escape ke URL mentah; ketiganya gagal karena escaping, baru implementasi 4 baris. Hijau: **1176** tes, coverage **77,22 / 65,50 / 74,11 / 79,27**, `sw.js` → **`mtc-asset-v18`**, commit **`9038829`**, live bundle `main-Cpwr_4nU.js` memuat pola `urls?$`.
