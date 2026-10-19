@@ -345,6 +345,23 @@ Berkas yang ikut:
 - Tes: `tac-theme.test.js` 12/12 · suite **1092/1092** · `tsc` 0 ·
   eslint **0 error / 79 warning** · build ok · precache 50/50 (51 entri).
 
+### Gate motion login: `animate-pulse` dibuang
+Satu-satunya animasi tanpa akhir di layar login: dot hijau di strip atas
+(`bg-tac-status-operational` + `animate-pulse`). Kelas `animate-pulse` dihapus;
+dot, warna, dan glow `shadow-[0_0_10px_rgba(16,185,129,0.7)]` tetap, jadi tampilan
+tidak berubah selain berhenti berdenyut.
+
+`animate-spin` pada spinner tombol masuk **sengaja dipertahankan**: itu umpan
+balik saat request berjalan, bukan hiasan, dan elemennya `x-show` tersembunyi
+saat idle.
+
+**Gate terukur (build produksi):**
+- Animasi tak berujung yang **terlihat** di layar login: **0** (sebelumnya 1).
+- Total elemen beranimasi: 1, yaitu spinner, `hidden: true` (lebar 0).
+- Dot: `animation-name: none`, `background: rgb(16,185,129)`, glow utuh.
+- `tsc` 0 · eslint 0 error / 79 warning · suite **1092/1092** · build ok ·
+  precache 50/50 (51 entri).
+
 ### Verifikasi
 - `tsc` **0** · `eslint` **0 error / 79 warning** (baseline tetap) · `vitest`
   **1092/1092** · `test:coverage` lolos threshold (74,85 / 63,74 / 72,11 / 76,60) ·
