@@ -17,6 +17,16 @@ Fragmen `/pages/WorkOrders.html` + `/pages/EnterpriseDashboard.html`: perf **100
 ### Satu perbaikan nyata
 `/robots.txt` **tidak ada** di `public/`, jadi Firebase Hosting menyajikan `index.html` (200 `text/html`) untuk path itu → audit `robots-txt` gagal → seo tertahan 91. Ditambah `public/robots.txt` (23 byte: `User-agent: *` / `Allow: /`), commit **`7dee035`**, live terverifikasi: `curl -sI` → `Content-Type: text/plain`, body benar. Ini satu-satunya kegagalan biner di desktop.
 
+### Migrasi data legacy URL di RTDB (kartu `t_576f26ea`, selesai)
+Fix `9038829` hanya menutup tulisan baru; baris lama masih menyimpan `https:&#x2F;&#x2F;...`.
+- **Backup dulu**: `npm run backup:firebase` → 7 node berisi data, berkas di `backups/` (gitignored).
+- **Skrip baru** `scripts/migrate-fotourl.mjs`: default **dry-run**, `--apply` untuk menulis, `--node A,B` untuk membatasi. Menelusuri rekursif, hanya field berakhiran `URL`/`Url`/`URLs` (string **dan** array `PhotoURLs`). Menulis lewat `firebase database:update … --force` yang dipanggil dengan `execFile` + argumen array (tanpa shell) — nilai dari RTDB tidak pernah diinterpretasi sebagai perintah.
+- **Hasil**: Equipment **16 field URL / 3 legacy** → `2220-CR-001`, `5060-FP-03` (i.ibb.co), `5060-PU-13` (cloudinary). HistoryLog 4 / 0 · Performance, Users, logs 0. Total **20 diperiksa, 3 legacy**.
+- **Temuan**: node **`SpareParts` tidak ada** di RTDB produksi (kosong) — kartu menyebutnya, tapi tidak ada data untuk dimigrasi.
+- **Apply**: 3 field ditulis. **Verifikasi**: dry-run ulang → **0 legacy** (idempoten terbukti) + baca langsung 3 record → semuanya `https://…` bersih.
+- **Tes**: `tests/migrate-fotourl.test.js` (11 tes) — decode entitas, filter kunci, array `PhotoURLs`, idempotensi, `chunkUpdates`.
+- **Commit** `2690914` (tanpa bump `sw.js` — tidak ada `src/**`/`public/**` yang berubah). Gate: `tsc` 0 · lint 0/79 · **1190** tes / 43 berkas · coverage 77,22/65,50/74,11/79,27.
+
 ### C-4 — CLS login + perf mobile (kartu `t_81c2005f`, selesai)
 **Akar masalah (dibuktikan, bukan ditebak)**: probe CDP dengan CPU 4x + slow 4G merekam rect tiap 50 ms — section kanan login **839 px → 572 px pada ~2,2 s**. Sebabnya tiga blok mode (`email`, `pin`, `sso`) semuanya `x-show` **tanpa `x-cloak`**: ketiganya ter-render sebelum Alpine boot, lalu dua disembunyikan.
 **Fix**: `x-cloak` pada blok PIN + SSO + spinner `isLoading`; blok `email` (default) sengaja TIDAK di-cloak supaya form langsung terlihat. Dikunci `tests/login-cloak.test.js` (3 tes).
