@@ -17,6 +17,11 @@ Fragmen `/pages/WorkOrders.html` + `/pages/EnterpriseDashboard.html`: perf **100
 ### Satu perbaikan nyata
 `/robots.txt` **tidak ada** di `public/`, jadi Firebase Hosting menyajikan `index.html` (200 `text/html`) untuk path itu → audit `robots-txt` gagal → seo tertahan 91. Ditambah `public/robots.txt` (23 byte: `User-agent: *` / `Allow: /`), commit **`7dee035`**, live terverifikasi: `curl -sI` → `Content-Type: text/plain`, body benar. Ini satu-satunya kegagalan biner di desktop.
 
+### Tindak lanjut (a) — BUG `FotoURL`: **opsi 1** (dipilih Manuel)
+`sanitizeDataForFirebase()` sekarang **melewati** kunci yang berakhiran `URL`/`Url`/`URLs` (`/urls?$/i`) dan menyimpan nilainya mentah; semua kunci lain tetap lewat `sanitizeInput()`. Akibatnya `equipment.js:77` dan `parts.js:100` menulis `https://res.cloudinary.com/...` utuh, dan migrasi `app.js:1650` (`includes('https://res.cloudinary.com')`) hidup lagi untuk record baru.
+TDD: RED dulu — 1 tes baru di `tests/utils.test.js` (`tidak meng-escape field berakhiran URL/Url/URLs`) + 2 assertion `tests/equipment-module.test.js` diubah dari bentuk ter-escape ke URL mentah; ketiganya gagal karena escaping, baru implementasi 4 baris. Hijau: **1176** tes, coverage **77,22 / 65,50 / 74,11 / 79,27**, `sw.js` → **`mtc-asset-v18`**, commit **`9038829`**, live bundle `main-Cpwr_4nU.js` memuat pola `urls?$`.
+Catatan: baris lama di RTDB **masih** ter-escape; jalur baca `data.js → cleanFirebaseUrl()` sudah mereparasinya saat load, jadi tidak ada migrasi data yang dijalankan.
+
 ### Sisa temuan — SENGAJA tidak dikerjakan (kartu: "catat temuan saja")
 1. **CLS 0,119 desktop / 0,251 mobile** — culprit tunggal: container grid login `index.html:125` (`max-w-7xl mx-auto grid ... items-stretch`). `main` memakai `justify-center`, jadi saat font display swap mengubah tinggi konten, seluruh grid bergeser.
 2. **`public/img/login-mill-1600.jpg` 220 KB**, tanpa `srcset`, tanpa WebP → estimasi Lighthouse 140 KiB (responsive) + 82 KiB (format). Mesin ini **tidak punya** `sharp` / ImageMagick / `cwebp` (`convert` yang ada = tool filesystem Windows, bukan IM).
