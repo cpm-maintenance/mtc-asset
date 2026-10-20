@@ -4,8 +4,8 @@
  * Imports centralized Firebase singleton from db.js and exposes instances & helpers to window.*
  */
 import {
-  db, storage, auth, messaging,
-  ref, refStorage, uploadBytes, getDownloadURL,
+  db, auth,
+  ref,
   onValue, onChildAdded, set, update, remove,
   get, query, limitToLast, runTransaction,
   orderByChild, endAt, equalTo, endBefore,
@@ -17,13 +17,8 @@ import {
 
 // Expose Firebase functions to global window for Alpine.js
 window.db = db;
-window.storage = storage;
 window.auth = auth;
-window.messaging = messaging;
 window.ref = ref;
-window.refStorage = refStorage;
-window.uploadBytes = uploadBytes;
-window.getDownloadURL = getDownloadURL;
 window.onValue = onValue;
 window.onChildAdded = onChildAdded;
 window.set = set;
@@ -48,4 +43,4 @@ window.signInWithPopup = signInWithPopup;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
 window.sendPasswordResetEmail = sendPasswordResetEmail;
 
-export { db, storage, auth };
+export { db, auth };

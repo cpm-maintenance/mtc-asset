@@ -17,7 +17,6 @@
  * Kirim notifikasi via FCM → butuh Firebase Cloud Functions deployment terpisah.
  */
 
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { logger } from '../logger.js';
 
 // ============================================================
@@ -138,6 +137,9 @@ export async function registerFCMToken() {
     if (!('Notification' in window)) return null;
     if (Notification.permission !== 'granted') return null;
 
+    // S33e: firebase/messaging diimpor dinamis — SDK-nya tidak perlu ikut di
+    // bundel awal halaman login (dulu ~68 KiB ikut terunduh walau tak dipakai).
+    const { getMessaging, getToken } = await import('firebase/messaging');
     const messaging = getMessaging();
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
 
@@ -197,8 +199,9 @@ export async function removeFCMToken() {
  * Listen for incoming FCM messages (foreground only).
  * This catches messages sent FROM A SERVER (Cloud Functions).
  */
-export function setupForegroundListener() {
+export async function setupForegroundListener() {
   try {
+    const { getMessaging, onMessage } = await import('firebase/messaging');
     const messaging = getMessaging();
     onMessage(messaging, (payload) => {
       logger.debug('[FCM] Foreground message received:', payload);

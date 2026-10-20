@@ -13,7 +13,6 @@ import {
   get, query, limitToLast, runTransaction,
   orderByChild, endAt, equalTo, endBefore
 } from 'firebase/database'
-import { getStorage, ref as refStorage, uploadBytes, getDownloadURL } from 'firebase/storage'
 import {
   getAuth, signOut, onAuthStateChanged,
   signInWithEmailAndPassword, setPersistence,
@@ -21,7 +20,6 @@ import {
   GoogleAuthProvider, signInWithPopup,
   sendPasswordResetEmail
 } from 'firebase/auth'
-import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -36,9 +34,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db = getDatabase(app)
-const storage = getStorage(app)
 const auth = getAuth(app)
-const messaging = getMessaging(app)
 
 // E2E: pakai Firebase Emulator (auth + database) supaya tes tidak menyentuh produksi
 // dan tidak butuh kredensial asli. Aktif hanya bila VITE_USE_EMULATORS=1.
@@ -49,14 +45,9 @@ if (import.meta.env.VITE_USE_EMULATORS === '1') {
 
 export { app }
 export { db }
-export { storage }
 export { auth }
-export { messaging }
 // DB functions
 export { ref, onValue, onChildAdded, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore }
-// Storage functions
-export { refStorage, uploadBytes, getDownloadURL }
 // Auth functions
 export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail }
-// Messaging functions
-export { getToken, onMessage }
+

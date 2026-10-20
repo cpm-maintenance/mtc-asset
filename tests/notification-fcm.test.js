@@ -128,10 +128,11 @@ describe('notification.js: removeFCMToken', () => {
 });
 
 describe('notification.js: setupForegroundListener', () => {
-  it('pesan masuk dengan payload.notification tampil sebagai notifikasi in-app', () => {
+  // S33e: `firebase/messaging` diimpor dinamis → fungsinya kini async.
+  it('pesan masuk dengan payload.notification tampil sebagai notifikasi in-app', async () => {
     window.app = { showNotification: vi.fn() };
 
-    setupForegroundListener();
+    await setupForegroundListener();
 
     expect(onMessage).toHaveBeenCalledTimes(1);
     const handler = onMessage.mock.calls[0][1];
@@ -140,27 +141,27 @@ describe('notification.js: setupForegroundListener', () => {
     expect(window.app.showNotification).toHaveBeenCalledWith('WO Baru: WO-9 dibuat', 'info');
   });
 
-  it('payload tanpa notification: tidak memanggil showNotification', () => {
+  it('payload tanpa notification: tidak memanggil showNotification', async () => {
     window.app = { showNotification: vi.fn() };
-    setupForegroundListener();
+    await setupForegroundListener();
 
     onMessage.mock.calls[0][1]({ data: { x: '1' } });
 
     expect(window.app.showNotification).not.toHaveBeenCalled();
   });
 
-  it('aplikasi global tidak punya showNotification: tidak melempar', () => {
+  it('aplikasi global tidak punya showNotification: tidak melempar', async () => {
     window.app = {};
-    setupForegroundListener();
+    await setupForegroundListener();
 
     expect(() => onMessage.mock.calls[0][1]({ notification: { title: 'a', body: 'b' } })).not.toThrow();
   });
 
-  it('getMessaging melempar: ditelan + console.warn', () => {
+  it('getMessaging melempar: ditelan + console.warn', async () => {
     getMessaging.mockImplementationOnce(() => { throw new Error('no sw'); });
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    setupForegroundListener();
+    await setupForegroundListener();
 
     expect(warn).toHaveBeenCalledWith('[FCM] Foreground listener error:', 'no sw');
   });
