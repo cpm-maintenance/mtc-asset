@@ -50,6 +50,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # Playwright menelan stderr webServer, jadi kegagalan start tidak terbaca.
+      # Jalankan emulator langsung supaya pesan aslinya masuk ke log CI.
+      - name: Diagnostik emulator
+        run: |
+          ls -l node_modules/.bin/ | grep -i firebase || echo "TIDAK ADA firebase di node_modules/.bin"
+          npx firebase --version || true
+          timeout 45 npx firebase emulators:start --only auth,database --config e2e/firebase.e2e.json --project mtc-asset > emu.log 2>&1 || true
+          tail -40 emu.log
+          grep -q "All emulators ready" emu.log
+
       - name: E2E tests (smoke)
         # Satu worker: 4 worker paralel di preview yang masih dingin membuat
         # `page.goto` menabrak timeout 30 s (terbukti lokal, 4 gagal / 1 lolos).
