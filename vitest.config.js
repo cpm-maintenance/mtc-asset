@@ -68,11 +68,17 @@ export default defineConfig({
             // Suite 1092 → 1175. Threshold 72/61/70/74 → 76/64/73/78.
             // Nilai di bawah ini sengaja sedikit di bawah hasil nyata supaya
             // refactor wajar tidak langsung memerahkan gate.
+            // S32 (kartu `t_30aa9581`): harness Alpine untuk `app.js` — 10 berkas
+            // tes baru (history/audit, work order, health+badge, dashboard+data,
+            // log tactical, planning, MTBF/MP, lifetime+photo, telemetri parts)
+            // memanggil `app()` langsung di jsdom dengan stub Firebase di `window`.
+            // app.js 20,9 → 74,54% lines. Total 90,05/79,19/87,86/91,45.
+            // Suite 1195 → 1527. Threshold 76/64/73/78 → 88/77/85/89.
             thresholds: {
-                statements: 76,
-                branches: 64,
-                functions: 73,
-                lines: 78,
+                statements: 88,
+                branches: 77,
+                functions: 85,
+                lines: 89,
             },
         },
     },
