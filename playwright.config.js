@@ -26,7 +26,10 @@ export default defineConfig({
     webServer: [
         {
             command:
-                'firebase emulators:start --only auth,database --config e2e/firebase.e2e.json --project mtc-asset',
+                // `npx` wajib: di runner CI `firebase` tidak ada di PATH (hanya
+                // node_modules/.bin), jadi perintah telanjang gagal "not found"
+                // dan webServer mati sebelum sempat listen.
+                'npx firebase emulators:start --only auth,database --config e2e/firebase.e2e.json --project mtc-asset',
             url: 'http://127.0.0.1:9000',
             reuseExistingServer: true,
             timeout: 120_000,
