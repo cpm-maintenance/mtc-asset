@@ -38,8 +38,18 @@ Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes
 
 Kontrak baru `tests/wo-filter-a11y.test.js` (4 tes, ditulis RED dulu). `sw.js` `CACHE_NAME` **v21 → v22** (`public/**` berubah). Commit `af81fd8`. Live terverifikasi: `sw.js` → `mtc-asset-v22`, marker `aria-label="Filter status Pending"` muncul di `/pages/WorkOrders.html` (~50 s setelah push). Suite 1643 → **1647**; coverage tetap 95,57/84,67/96,00/96,69.
 
+### S33c — CI `Test` HIJAU (E2E di runner)
+**Akar masalah** (dari log runner, bukan tebakan): `firebase-tools` 15.33 **menolak Java < 21**, sedangkan runner `ubuntu-latest` memasang Java 17 → emulator mati seketika (`Error: firebase-tools no longer supports Java version before 21`), dan Playwright melaporkannya sebagai `Process from config.webServer was not able to start. Exit code: 1` tanpa stderr (Playwright menelan output webServer).
+
+Perbaikan:
+1. `.github/workflows/test.yml`: tambah `actions/setup-java@v4` (temurin, `java-version: '21'`) sebelum langkah E2E.
+2. `playwright.config.js`: perintah webServer jadi **`npx firebase emulators:start …`** (biner `firebase` hanya ada di `node_modules/.bin` di runner, tidak di PATH).
+3. Langkah E2E pakai `--workers=1` (4 worker paralel = `page.goto` timeout saat preview dingin).
+
+Hasil: run `39371163886` → **Test success**, E2E **4 passed (12,8 s)**. `Build and Deploy` + `Lighthouse CI` success. Commit `9a52973`, `fa79b92` (diagnostik sementara, sudah diganti), `ebade22`.
+
 ### CI (temuan terbuka)
-Job **`Test` gagal di langkah "E2E tests (smoke)"** — sudah gagal sejak S32 (`5024f6c`), **bukan regresi S33**. Langkah lint/typecheck/unit/coverage/build di runner **hijau semua**; `Build and Deploy` + `Lighthouse CI` **success** untuk `4f176b8` maupun `d3c1df4`. Percobaan `--workers=1` di workflow (commit `d3c1df4`) belum menyelesaikan; simulasi CI lokal (`CI=true npx playwright test e2e/smoke.spec.js --workers=1`) → **4 passed, 23,9 s**. Diagnosa lanjut butuh log runner (`gh run view --log-failed` setelah `gh auth login`) — jangan menebak.
+~~Job `Test` gagal di langkah "E2E tests (smoke)"~~ — **SELESAI di S33c** (JDK 21 + `npx firebase`). Dulu gagal sejak S32 (`5024f6c`), **bukan regresi S33**. Langkah lint/typecheck/unit/coverage/build di runner **hijau semua**; `Build and Deploy` + `Lighthouse CI` **success** untuk `4f176b8` maupun `d3c1df4`. Percobaan `--workers=1` di workflow (commit `d3c1df4`) belum menyelesaikan; simulasi CI lokal (`CI=true npx playwright test e2e/smoke.spec.js --workers=1`) → **4 passed, 23,9 s**. Diagnosa lanjut butuh log runner (`gh run view --log-failed` setelah `gh auth login`) — jangan menebak.
 
 ### Status
 Tidak ada kartu kanban terbuka. Sisa temuan non-kartu masih seperti S32: font-size mobile (a11y 96), chip filter `WorkOrders.html:224-240` tanpa label statis, unused JS 137 KiB, Playwright belum masuk CI.
