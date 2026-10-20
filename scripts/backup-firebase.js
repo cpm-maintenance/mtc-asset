@@ -11,7 +11,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -53,6 +53,21 @@ function getTimestamp() {
 function formatBytes(bytes) {
   const kb = bytes / 1024;
   return kb > 1024 ? (kb / 1024).toFixed(2) + ' MB' : kb.toFixed(1) + ' KB';
+}
+
+/** Retensi backup lokal (hari). */
+export const RETENTION_DAYS = 7;
+
+/**
+ * Berkas backup yang lebih tua dari `days` hari.
+ * @param {Array<{name: string, mtimeMs: number}>} files
+ * @param {number} [nowMs]
+ * @param {number} [days]
+ * @returns {string[]} nama berkas yang harus dibuang
+ */
+export function selectExpiredBackups(files, nowMs = Date.now(), days = RETENTION_DAYS) {
+  const cutoff = nowMs - days * 24 * 60 * 60 * 1000;
+  return files.filter((f) => f.mtimeMs < cutoff).map((f) => f.name);
 }
 
 /**
@@ -185,14 +200,18 @@ function backup() {
     .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
     .sort();
 
-  if (files.length > MAX_BACKUPS) {
-    const toRemove = files.slice(0, files.length - MAX_BACKUPS);
+  const entries = files.map((name) => ({ name, mtimeMs: statSync(join(BACKUP_DIR, name)).mtimeMs }));
+  const expired = selectExpiredBackups(entries);
+  const overflow = files.length > MAX_BACKUPS ? files.slice(0, files.length - MAX_BACKUPS) : [];
+  const toRemove = [...new Set([...overflow, ...expired])];
+
+  if (toRemove.length) {
     for (const oldFile of toRemove) {
       unlinkSync(join(BACKUP_DIR, oldFile));
       console.log(`  🗑️  Removed: ${oldFile}`);
     }
   } else {
-    console.log(`  ✅ ${files.length} backups stored (max ${MAX_BACKUPS})`);
+    console.log(`  ✅ ${files.length} backups stored (retensi ${RETENTION_DAYS} hari, max ${MAX_BACKUPS})`);
   }
 
   console.log('\n✅ Backup completed successfully!');
@@ -203,9 +222,12 @@ function backup() {
 // EXECUTE
 // ========================================
 
-try {
-  backup();
-} catch (err) {
-  console.error('\n❌ Backup failed:', err.message);
-  process.exit(1);
+const invokedDirectly = process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('backup-firebase.js');
+if (invokedDirectly) {
+  try {
+    backup();
+  } catch (err) {
+    console.error('\n❌ Backup failed:', err.message);
+    process.exit(1);
+  }
 }

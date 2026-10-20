@@ -88,7 +88,7 @@ mtc-asset/
 │   ├── backup-2026-06-20_02-00-01.json    # Hasil backup harian
 │   ├── backup-2026-06-19_02-00-01.json
 │   ├── LATEST.txt                          # Menunjuk backup terbaru
-│   └── ... (max 30 file, oldest auto-deleted)
+│   └── ... (retensi 7 hari; maks 30 berkas, terlama dibuang)
 ├── scripts/
 │   ├── backup-firebase.js                  # Backup Firebase data
 │   ├── backup.js                           # Backup lengkap (firebase + git)
@@ -102,7 +102,7 @@ mtc-asset/
 ## 🔐 Security
 
 - **`.env`** tidak ikut git (API keys aman)
-- **`backups/`** folder di-commit karena berisi data aplikasi
+- **`backups/`** folder **TIDAK** di-commit (ada di `.gitignore`) — backup hanya di disk lokal + artifact GitHub Actions
 - **Firebase Token** disimpan di GitHub Secrets, bukan di code
 - File backup JSON hanya berisi **data aplikasi** (Equipment, Logs, dll), **tidak** berisi user password
 
@@ -110,23 +110,55 @@ mtc-asset/
 
 ## ⏰ Jadwal Backup Otomatis
 
-GitHub Actions backup otomatis berjalan:
-- **Setiap hari**: Jam 02:00 WIB (19:00 UTC)
-- **Menjaga**: 30 backup terakhir
-- **Notifikasi**: Email dari GitHub jika gagal
+GitHub Actions backup otomatis berjalan (`.github/workflows/backup.yml`):
+- **Setiap hari**: Jam 02:00 WIB (cron `0 19 * * *` UTC)
+- **Artifact**: `firebase-backup-<run_id>`, retensi **7 hari**
+- **Lokal**: `backups/` retensi **7 hari**, maksimum 30 berkas
+- **Notifikasi**: email dari GitHub bila gagal (plus ringkasan SMTP bila secret mail di-set)
+
+**Bukti pernah jalan** (19 Okt 2026): 124 run, tiga run terjadwal terakhir `completed/success`.
+Cek cepat tanpa `gh` login:
+
+```bash
+curl -s "https://api.github.com/repos/cpm-maintenance/mtc-asset/actions/workflows/backup.yml/runs?per_page=3" \
+  | jq -r '.workflow_runs[] | "\(.created_at) \(.status) \(.conclusion)"'
+```
 
 ---
 
-## 🔄 Restore Data
+## 🔄 Restore Data (5 langkah)
 
-Jika perlu mengembalikan data dari backup:
+⚠️ `database:set` **menimpa seluruh node** (bukan merge). Tanpa `--force` CLI minta konfirmasi.
 
+**1. Ambil berkas backup**
+- GitHub: Actions → "🔄 Auto Backup Firebase Data" → run terakhir → artifact `firebase-backup-<run_id>` (retensi 7 hari), ekstrak `backup-YYYY-MM-DD_HH-mm-ss.json`.
+- Lokal: `cat backups/LATEST.txt` lalu pakai berkas itu dari `backups/`.
+
+**2. Validasi isi berkas** (jangan restore JSON korup)
 ```bash
-# Restore satu node
-firebase database:set /Equipment backups/backup-XXXX.json --project mtc-asset
-
-# Atau via script restore (TODO)
+jq -e . backups/backup-XXXX.json > /dev/null && echo "JSON valid"
+jq -r '._metadata.exportedAt' backups/backup-XXXX.json
 ```
+
+**3. Amankan keadaan sekarang dulu**
+```bash
+npm run backup:firebase
+```
+
+**4. Restore satu node** (ulangi per node yang rusak)
+```bash
+jq '.Equipment' backups/backup-XXXX.json \
+  | firebase database:set /Equipment --project mtc-asset --force
+```
+
+**5. Verifikasi jumlah record**
+```bash
+firebase database:get /Equipment --shallow --project mtc-asset | jq 'keys | length'
+jq '.Equipment | keys | length' backups/backup-XXXX.json
+```
+Angka harus sama. Kalau restore salah node, ulangi langkah 4 dengan berkas dari langkah 3.
+
+**Cakupan**: backup GitHub Actions memuat `Equipment`, `SpareParts`, `HistoryLog`, `Performance`, `Stats`, `ImageUploads`. `Users` dan `AI_Settings` **sengaja tidak** ikut ke artifact (PII + API key) — keduanya hanya ada di backup lokal `npm run backup:firebase`.
 
 ---
 

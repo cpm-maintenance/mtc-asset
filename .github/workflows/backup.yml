@@ -96,7 +96,7 @@ jobs:
         with:
           name: firebase-backup-${{ github.run_id }}
           path: backups/
-          retention-days: 90
+          retention-days: 7
 
       # P3-6: Kirim ringkasan backup via email (Gmail SMTP).
       # Secrets yang dibutuhkan (Settings → Secrets and variables → Actions):
