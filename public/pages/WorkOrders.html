@@ -221,30 +221,30 @@
     <!-- Status tabs + sektor/prioritas + rentang tanggal -->
     <div class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-space-sm pt-1">
       <div class="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0" role="group" aria-label="Filter status">
-        <button type="button" @click="filterWOStatus = ''"
-          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+        <button type="button" aria-label="Semua status" :aria-pressed="filterWOStatus === '' ? 'true' : 'false'" @click="filterWOStatus = ''"
+          class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm transition-colors"
           :class="filterWOStatus === '' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
           x-text="'ALL (' + woCounts.all + ')'"></button>
-        <button type="button" @click="filterWOStatus = filterWOStatus === 'Pending' ? '' : 'Pending'"
-          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+        <button type="button" aria-label="Filter status Pending" :aria-pressed="filterWOStatus === 'Pending' ? 'true' : 'false'" @click="filterWOStatus = filterWOStatus === 'Pending' ? '' : 'Pending'"
+          class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm transition-colors"
           :class="filterWOStatus === 'Pending' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
           x-text="'PENDING (' + woCounts.Pending + ')'"></button>
-        <button type="button" @click="filterWOStatus = filterWOStatus === 'Approved' ? '' : 'Approved'"
-          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+        <button type="button" aria-label="Filter status Approved" :aria-pressed="filterWOStatus === 'Approved' ? 'true' : 'false'" @click="filterWOStatus = filterWOStatus === 'Approved' ? '' : 'Approved'"
+          class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm transition-colors"
           :class="filterWOStatus === 'Approved' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
           x-text="'APPROVED (' + woCounts.Approved + ')'"></button>
-        <button type="button" @click="filterWOStatus = filterWOStatus === 'In Progress' ? '' : 'In Progress'"
-          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors"
+        <button type="button" aria-label="Filter status In Progress" :aria-pressed="filterWOStatus === 'In Progress' ? 'true' : 'false'" @click="filterWOStatus = filterWOStatus === 'In Progress' ? '' : 'In Progress'"
+          class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm flex items-center gap-1 transition-colors"
           :class="filterWOStatus === 'In Progress' ? 'bg-tac-sync-cyan/15 text-tac-sync-cyan font-semibold' : 'text-tac-sync-cyan hover:bg-tac-surface-container'">
           <span class="h-1.5 w-1.5 rounded-full bg-tac-sync-cyan"></span>
           <span x-text="'IN PROGRESS (' + woCounts['In Progress'] + ')'"></span>
         </button>
-        <button type="button" @click="filterWOStatus = filterWOStatus === 'Completed' ? '' : 'Completed'"
-          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+        <button type="button" aria-label="Filter status Completed" :aria-pressed="filterWOStatus === 'Completed' ? 'true' : 'false'" @click="filterWOStatus = filterWOStatus === 'Completed' ? '' : 'Completed'"
+          class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm transition-colors"
           :class="filterWOStatus === 'Completed' ? 'bg-tac-status-operational/15 text-tac-status-operational font-semibold' : 'text-tac-status-operational hover:bg-tac-surface-container'"
           x-text="'COMPLETED (' + woCounts.Completed + ')'"></button>
-        <button type="button" @click="filterWOStatus = filterWOStatus === 'Cancelled' ? '' : 'Cancelled'"
-          class="px-space-sm py-1 rounded font-label-mono-sm text-label-mono-sm transition-colors"
+        <button type="button" aria-label="Filter status Cancelled" :aria-pressed="filterWOStatus === 'Cancelled' ? 'true' : 'false'" @click="filterWOStatus = filterWOStatus === 'Cancelled' ? '' : 'Cancelled'"
+          class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm transition-colors"
           :class="filterWOStatus === 'Cancelled' ? 'bg-tac-status-emergency/15 text-tac-status-emergency font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
           x-text="'CANCELLED (' + woCounts.Cancelled + ')'"></button>
       </div>
