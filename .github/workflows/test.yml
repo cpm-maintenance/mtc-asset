@@ -51,4 +51,6 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: E2E tests (smoke)
-        run: npx playwright test e2e/smoke.spec.js
+        # Satu worker: 4 worker paralel di preview yang masih dingin membuat
+        # `page.goto` menabrak timeout 30 s (terbukti lokal, 4 gagal / 1 lolos).
+        run: npx playwright test e2e/smoke.spec.js --workers=1
