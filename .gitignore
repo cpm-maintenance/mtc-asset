@@ -99,3 +99,6 @@ AGENT_CONTEXT.md
 TASK-REVIEW.md
 HANDOFF-*.md
 anti-slop/
+
+# Lighthouse reports (lokal, jangan di-commit)
+lighthouse/

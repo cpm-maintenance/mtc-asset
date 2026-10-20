@@ -131,7 +131,7 @@
           <picture class="absolute inset-0 z-0 block select-none pointer-events-none">
             <source type="image/webp" sizes="(min-width: 1024px) 58vw, 100vw"
               srcset="/img/login-mill-800.webp 800w, /img/login-mill-1600.webp 1600w">
-            <img src="/img/login-mill-1600.jpg" alt="" aria-hidden="true" decoding="async" width="1600" height="795"
+            <img src="/img/login-mill-1600.jpg" alt="" aria-hidden="true" decoding="async" loading="lazy" fetchpriority="low" width="1600" height="795"
               class="w-full h-full object-cover"
               style="filter:brightness(0.42) saturate(0.85) contrast(1.05);">
           </picture>
@@ -847,7 +847,7 @@
           <span class="material-symbols-outlined icon-20 text-tac-on-primary-container">precision_manufacturing</span>
         </div>
         <div class="flex items-center gap-space-sm min-w-0">
-          <img src="/logo.png" alt="MTC ASSET" class="h-8 w-auto object-contain hidden lg:block"
+          <img src="/logo.png" alt="MTC ASSET" loading="lazy" class="h-8 w-auto object-contain hidden lg:block"
             onerror="this.style.display='none'">
           <div class="flex flex-col min-w-0">
             <span class="font-headline-md text-[16px] tracking-tight uppercase text-tac-on-surface leading-none">MTC ASSET</span>
