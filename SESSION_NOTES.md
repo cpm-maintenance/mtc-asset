@@ -33,6 +33,11 @@ Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes
 7. **`npx playwright test` default 4 worker = flake** setelah cache Vite dingin: 4 smoke test gagal `page.goto` timeout 30 s (dev server masih mengompilasi), sedangkan 1 tes lolos. `npx playwright test --workers=1` → **5 passed, 49,1 s**. Jalankan serial kalau bukan CI.
 8. **Parallel subagent kena HTTP 429** (6 anak sekaligus di provider yang sama) — 4 dari 6 gagal total dan tidak menulis berkas. Pelajaran: batasi fan-out ke 2–3 anak, atau kerjakan inline (yang akhirnya dilakukan untuk 4 klaster sisa).
 
+### Tambahan S33b — a11y chip filter status WorkOrders
+`public/pages/WorkOrders.html:224-249`: 6 chip filter status sekarang punya **`aria-label` statis** (nama tidak lagi bergantung pada `x-text`/Alpine), **`:aria-pressed`** untuk status terpilih, dan **`min-h-6 min-w-6`** (24 px — WCAG 2.2 target-size 2.5.8). Terverifikasi di CSS hasil build (`min-h-6{min-height:1.5rem}`).
+
+Kontrak baru `tests/wo-filter-a11y.test.js` (4 tes, ditulis RED dulu). `sw.js` `CACHE_NAME` **v21 → v22** (`public/**` berubah). Commit `af81fd8`. Live terverifikasi: `sw.js` → `mtc-asset-v22`, marker `aria-label="Filter status Pending"` muncul di `/pages/WorkOrders.html` (~50 s setelah push). Suite 1643 → **1647**; coverage tetap 95,57/84,67/96,00/96,69.
+
 ### CI (temuan terbuka)
 Job **`Test` gagal di langkah "E2E tests (smoke)"** — sudah gagal sejak S32 (`5024f6c`), **bukan regresi S33**. Langkah lint/typecheck/unit/coverage/build di runner **hijau semua**; `Build and Deploy` + `Lighthouse CI` **success** untuk `4f176b8` maupun `d3c1df4`. Percobaan `--workers=1` di workflow (commit `d3c1df4`) belum menyelesaikan; simulasi CI lokal (`CI=true npx playwright test e2e/smoke.spec.js --workers=1`) → **4 passed, 23,9 s**. Diagnosa lanjut butuh log runner (`gh run view --log-failed` setelah `gh auth login`) — jangan menebak.
 
