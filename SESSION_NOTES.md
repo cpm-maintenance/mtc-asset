@@ -38,6 +38,19 @@ Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes
 
 Kontrak baru `tests/wo-filter-a11y.test.js` (4 tes, ditulis RED dulu). `sw.js` `CACHE_NAME` **v21 → v22** (`public/**` berubah). Commit `af81fd8`. Live terverifikasi: `sw.js` → `mtc-asset-v22`, marker `aria-label="Filter status Pending"` muncul di `/pages/WorkOrders.html` (~50 s setelah push). Suite 1643 → **1647**; coverage tetap 95,57/84,67/96,00/96,69.
 
+### S33d — skala tipografi label >= 12 px (audit `font-size` tuntas)
+Audit Lighthouse `font-size` hanya menghitung teks **>= 12 px**, jadi label 10/11 px membuat hampir separuh teks dianggap tidak legibel.
+
+| Langkah | % teks legibel |
+|---|---|
+| Baseline (S31, handoff) | 52,96% |
+| Token Tailwind saja (`label-mono-sm/md` → 12 px) | **89,97%** |
+| + `.tac-btn-*`, `.tac-label-sm/md`, `.tac-chip` → 12 px | **100%** |
+
+Berkas: `tailwind.config.js` (`label-mono-sm` 10→12/16, `label-mono-md` 11→12), `src/css/tactical.css` (5 deklarasi 10/11 px → 12 px). `sw.js` `CACHE_NAME` **v22 → v23**. Lighthouse mobile di preview build: a11y **100**, best-practices **100**, `font-size` **100% legible**.
+
+Live terverifikasi: `sw.js` = `mtc-asset-v23` (~70 s), CSS live `assets/main-4ZWAo_I9.css` memuat `.tac-chip{…font-size:12px…}`. Commit `9427fc9`. Gerbang: tsc 0, eslint 0/79, 1647 tes, coverage 95,57/84,67/96,00/96,69, build ok, precache 50/50, E2E 5 passed.
+
 ### S33c — CI `Test` HIJAU (E2E di runner)
 **Akar masalah** (dari log runner, bukan tebakan): `firebase-tools` 15.33 **menolak Java < 21**, sedangkan runner `ubuntu-latest` memasang Java 17 → emulator mati seketika (`Error: firebase-tools no longer supports Java version before 21`), dan Playwright melaporkannya sebagai `Process from config.webServer was not able to start. Exit code: 1` tanpa stderr (Playwright menelan output webServer).
 
