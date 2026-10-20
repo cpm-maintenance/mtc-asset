@@ -38,6 +38,20 @@ Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes
 
 Kontrak baru `tests/wo-filter-a11y.test.js` (4 tes, ditulis RED dulu). `sw.js` `CACHE_NAME` **v21 → v22** (`public/**` berubah). Commit `af81fd8`. Live terverifikasi: `sw.js` → `mtc-asset-v22`, marker `aria-label="Filter status Pending"` muncul di `/pages/WorkOrders.html` (~50 s setelah push). Suite 1643 → **1647**; coverage tetap 95,57/84,67/96,00/96,69.
 
+### S33f — Lighthouse **live mobile** diukur ulang (3 run, median)
+| Run | perf | a11y | bp | seo |
+|---|---|---|---|---|
+| 1 | 76 | 100 | 100 | 100 |
+| 2 | 69 | 100 | 100 | 100 |
+| 3 | 74 | 100 | 100 | 100 |
+| **median** | **74** | **100** | **100** | **100** |
+
+Baseline S31 = 91/100/96/100 → **perf turun 91 → 74**, `best-practices` naik 96 → 100 (efek S33d: font legibel).
+
+Akar masalah dari JSON: LCP **4,3 s** dengan **render delay 3.487 ms (81%)**, TTFB 797 ms. Elemen LCP = **teks** `label.font-body-sm` di form login (bukan gambar). `unused-javascript` 89–104 KiB, `offscreen-images` 77 KiB (`login-mill-800.webp` 61,1 + `logo.png` 16,0 — di luar viewport mobile), `render-blocking` = `main-*.css` 12,8 KB + `registerSW.js`. TBT 140 ms (0,95), SI 3,7 s (0,85) → masalahnya render delay, bukan main-thread.
+
+Kartu: `t_8409c23c` (ukur ulang) **selesai**; regresi dicatat di kartu baru **`t_b613af07`** (LCP/render delay, median perf ≥ 85).
+
 ### S33e — bundel awal: buang `firebase/storage` + `firebase/messaging`
 Halaman login tidak pernah memakai Firebase Storage (foto naik ke **Cloudinary**) dan tidak memanggil FCM saat boot, tapi keduanya ikut terunduh lewat chunk `db` (85,6 KiB gzip; 67 KiB di antaranya *unused* menurut Lighthouse).
 
