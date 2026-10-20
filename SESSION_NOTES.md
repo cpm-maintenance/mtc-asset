@@ -1,3 +1,42 @@
+## 📝 Session 33 (S33, 2026-10-20) — sisa `app.js` habis: **74,54% → 97,57% lines**, total **96,69% lines**
+
+### Apa yang dikerjakan
+Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes baru, 116 tes** — tanpa menyentuh `src/**` sama sekali (⇒ `CACHE_NAME` tetap `mtc-asset-v21`, tidak di-bump).
+
+| Berkas tes baru | Tes | Klaster yang ditutup |
+|---|---|---|
+| `tests/app-auth-menu.test.js` | 16 | `installApp` 62-67 · `login` 512-527 · `logout` 531-543 · `showUID` 548-550 · `filteredMenuGroups` 638-644 · `mobilePrimaryItems` 648-650 · `isSupervisor` 1211 |
+| `tests/app-wo-views.test.js` | 28 | `backlogAging` 800-805 · `woSectorOf`/`woSectorOptions` 810-822 · `woFiltered` 825-838 · `woVisible`/`canLoadMoreWO`/`loadMoreWO` 850-858 · `woSelected` 868-873 · `woNextInQueue` 876-879 · `woCounts` 882-893 · `woKpi` 896-933 · `woDowntimeSpark` 1006-1014 |
+| `tests/app-dashboard-equip.test.js` | 31 | `pmEffectiveness` 1101-1123 · `sortedByPriority`/`topOverdueWO` 1126-1137 · `dashAlerts` 1311-1318 · `dashKPIs` 1326-1344 · `calculatedStats` 1347-1367 · `predictiveAlerts` 1378-1413 · `filteredEquip` 1417-1456 · `canLoadMoreEquip` 1459-1464 · `equipCounts` 1468-1477 · `equipKpi` 1480-1491 · `equipmentTree` 1511-1522 |
+| `tests/app-migrate-images.test.js` | 10 | `migrateLegacyImages` 1620-1714 (bucket ImageUploads, Equipment.FotoURL inline, HistoryLog.PhotoURLs array/string JSON, semua cabang gagal) |
+| `tests/app-parts-planning-tw.test.js` | 26 | `filteredAllLogsAll` 1998-2022 · `filteredParts` 2100-2103 · `filteredPartsForLog` 2105-2121 · `planningTechList` 2135-2139 · `twActiveWOs`/`twTechList`/`twTotalHours`/`twOverloadCount`/`twFilteredTechs` 2305-2349 |
+| `tests/app-mp-export-pdf.test.js` | 5 | `mpExportPDF` 2395-2476 (`vi.mock('jspdf')` + `vi.mock('jspdf-autotable')`, kelas MockJsPDF) |
+
+### Angka riil (dari tool, bukan perkiraan)
+| Metrik | S32 | S33 |
+|---|---|---|
+| Coverage total (stmt/branch/func/lines) | 90,05 / 79,19 / 87,86 / 91,45 | **95,57 / 84,67 / 96,00 / 96,69** |
+| `app.js` (stmt/branch/func/lines) | 73,98 / 66,41 / 72,09 / 74,54 | **96,53 / 85,51 / 96,74 / 97,57** |
+| Threshold `vitest.config.js` | 88 / 77 / 85 / 89 | **95 / 84 / 95 / 96** |
+| Suite unit | 1527 tes / 54 berkas | **1643 tes / 60 berkas** |
+| `tsc --noEmit` | 0 error | 0 error |
+| eslint | 0 error / 79 warning | **0 error / 79 warning** |
+| Build + `verify:precache` | ok · 50/50 | ok · **50/50** |
+
+### Jebakan baru (tambahan dari S32)
+1. **`makeApp()` memberi default `isAdmin: true` + `userRole: 'admin'` sebagai nilai statis** (defineProperty) — jadi `canAccess({allowedRole:'admin'})` selalu `true` walau `userRole` di-override. Uji rantai peran: set `isAdmin: false` eksplisit, lalu andalkan getter asli `isAdminOrSupervisor`.
+2. **Getter dashboard/equipment tidak menjaga entri `null`**: `dashKPIs`, `calculatedStats`, `equipKpi`, `equipmentTree` memanggil `e.EquipmentID` langsung → fixture berisi `null` membuat getter melempar. `filteredEquip`/`equipCounts` justru aman (punya guard sendiri). Sediakan `EQUIP_VALID = EQUIP.filter(Boolean)` untuk klaster dashboard.
+3. **`dashKPIs` default wh = 24**: `Number(p.wh) || 24` membuat `wh: 0` mustahil; cabang nol hanya tercapai lewat `bd + stb` penuh.
+4. **`woKpi.mttr` menghitung `repairs` dari SELURUH `logs`**, bukan hanya yang ber-`woNumber` — satu log tanpa WO ikut jadi pembagi (9 jam / 4 = 2,3).
+5. **`migrateLegacyImages` menulis referensi di dua fase** sehingga satu entri base64 bisa menaikkan `migrated` lebih dari sekali (bucket + fase HistoryLog) — hitung ekspektasi dari seluruh fase, bukan dari bucket saja.
+6. **`vi.mock('jspdf')` + `vi.mock('jspdf-autotable')`** cukup: `doc.autoTable` dipanggil di instance, jadi kelas mock tinggal menyediakan `autoTable()` yang mengisi `lastAutoTable.finalY`.
+7. **`npx playwright test` default 4 worker = flake** setelah cache Vite dingin: 4 smoke test gagal `page.goto` timeout 30 s (dev server masih mengompilasi), sedangkan 1 tes lolos. `npx playwright test --workers=1` → **5 passed, 49,1 s**. Jalankan serial kalau bukan CI.
+8. **Parallel subagent kena HTTP 429** (6 anak sekaligus di provider yang sama) — 4 dari 6 gagal total dan tidak menulis berkas. Pelajaran: batasi fan-out ke 2–3 anak, atau kerjakan inline (yang akhirnya dilakukan untuk 4 klaster sisa).
+
+### Status
+Tidak ada kartu kanban terbuka. Sisa temuan non-kartu masih seperti S32: font-size mobile (a11y 96), chip filter `WorkOrders.html:224-240` tanpa label statis, unused JS 137 KiB, Playwright belum masuk CI.
+
+---
 ## 📝 Session 32 (S32, 2026-10-20) — Harness Alpine `app.js`: **20,9% → 74,54% lines**
 
 ### Apa yang dikerjakan

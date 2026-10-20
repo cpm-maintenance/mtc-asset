@@ -74,11 +74,18 @@ export default defineConfig({
             // memanggil `app()` langsung di jsdom dengan stub Firebase di `window`.
             // app.js 20,9 → 74,54% lines. Total 90,05/79,19/87,86/91,45.
             // Suite 1195 → 1527. Threshold 76/64/73/78 → 88/77/85/89.
+            // S33: sisa baris merah `app.js` (325 baris / 61 klaster) ditutup —
+            // 6 berkas tes baru (auth+menu+install, WO ledger views, dashboard+
+            // equipment, migrateLegacyImages, All Logs/parts/planning/workload,
+            // mpExportPDF dengan mock jspdf+autotable). 116 tes baru.
+            // app.js 74,54 → 97,57% lines (branch 66,41 → 85,51).
+            // Total 90,05/79,19/87,86/91,45 → 95,57/84,67/96,00/96,69.
+            // Suite 1527 → 1643 (60 berkas). Threshold 88/77/85/89 → 95/84/95/96.
             thresholds: {
-                statements: 88,
-                branches: 77,
-                functions: 85,
-                lines: 89,
+                statements: 95,
+                branches: 84,
+                functions: 95,
+                lines: 96,
             },
         },
     },
