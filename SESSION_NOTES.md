@@ -38,6 +38,20 @@ Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes
 
 Kontrak baru `tests/wo-filter-a11y.test.js` (4 tes, ditulis RED dulu). `sw.js` `CACHE_NAME` **v21 → v22** (`public/**` berubah). Commit `af81fd8`. Live terverifikasi: `sw.js` → `mtc-asset-v22`, marker `aria-label="Filter status Pending"` muncul di `/pages/WorkOrders.html` (~50 s setelah push). Suite 1643 → **1647**; coverage tetap 95,57/84,67/96,00/96,69.
 
+### S33g — gambar panel desktop berhenti diunduh di mobile (kartu `t_cb45e098`)
+Lighthouse live mencatat `offscreen-images` **77 KiB**: `login-mill-800.webp` 61,1 KiB + `logo.png` 16,0 KiB. Keduanya berada di dalam panel `hidden lg:*`, jadi tak pernah terlihat di layar kecil — tapi `<img>` tanpa `loading` tetap diunduh.
+
+Perbaikan: `index.html` → hero mill `loading="lazy"` + `fetchpriority="low"`, logo sidebar `loading="lazy"`. Kontrak dikunci `tests/login-image-weight.test.js` (3 tes, RED dulu). `lighthouse/` masuk `.gitignore`.
+
+| Metrik (Lighthouse preview) | Sebelum | Sesudah |
+|---|---|---|
+| `offscreen-images` | 77 KiB | **lulus (score 1)** |
+| total byte | 427 KiB | **409 KiB** |
+| LCP | 3,6 s | **2,6 s** |
+| perf | 67 | **88** |
+
+`sw.js` **v24 → v25**; live terverifikasi. Commit `ea343d1`. Gerbang: tsc 0, eslint 0/79, **1650 tes / 62 berkas**, coverage **95,60/84,67/96,00/96,73**, build ok, precache 52/52, E2E 5 passed.
+
 ### S33f — Lighthouse **live mobile** diukur ulang (3 run, median)
 | Run | perf | a11y | bp | seo |
 |---|---|---|---|---|
