@@ -17,6 +17,21 @@ Fragmen `/pages/WorkOrders.html` + `/pages/EnterpriseDashboard.html`: perf **100
 ### Satu perbaikan nyata
 `/robots.txt` **tidak ada** di `public/`, jadi Firebase Hosting menyajikan `index.html` (200 `text/html`) untuk path itu → audit `robots-txt` gagal → seo tertahan 91. Ditambah `public/robots.txt` (23 byte: `User-agent: *` / `Allow: /`), commit **`7dee035`**, live terverifikasi: `curl -sI` → `Content-Type: text/plain`, body benar. Ini satu-satunya kegagalan biner di desktop.
 
+### E2E alur kritis login → WO → PDF (kartu `t_f40464ef`, selesai — tidak lagi skip)
+**Sebelum**: spec butuh `E2E_EMAIL`/`E2E_PASSWORD` produksi (jadi selalu `skip`), dan membaca `window.app.logs` secara instan padahal listener RTDB belum terisi.
+**Sekarang**: jalan penuh di **Firebase Emulator** — `npx playwright test` → **5 passed** (4 smoke + 1 alur kritis) **7,9 s**, nol skip.
+- `e2e/firebase.e2e.json` + `e2e/database.e2e.rules.json` — emulator auth `9099` + database `9000`, rules allow-all **khusus E2E**.
+- `e2e/seed-emulator.mjs` — buat user uji (`e2e@mtc.local`, role admin) + seed `Users`/`Equipment`/`HistoryLog`; menunggu auth siap (≤30 s); idempoten (fallback `signInWithPassword` bila email sudah ada).
+- `playwright.config.js` — `webServer` jadi array: emulator + `vite dev` dengan `VITE_USE_EMULATORS=1`.
+- `src/js/db.js` — `connectDatabaseEmulator`/`connectAuthEmulator` hanya bila `VITE_USE_EMULATORS === '1'`; build produksi tidak berubah.
+**Jebakan yang ditemukan**:
+1. **Namespace RTDB emulator = host `databaseURL`** (`mtc-asset-default-rtdb`), **bukan** `projectId`. Salah namespace → `Users/{uid}/role` terbaca `null`, role jatuh ke `user`, listener data tidak jalan, `logs` kosong. Ini akar kegagalan yang paling lama dicari.
+2. Readiness URL database (9000) **tidak** menjamin auth (9099) siap → seed harus menunggu sendiri.
+3. Role harus di-seed `admin` supaya alur data berjalan.
+4. Ganti baca instan → `expect.poll` pada jumlah `logs` ber-`woNumber`.
+**Gate**: `tsc` 0 · lint **0 error** / 79 warning (butuh `/* global fetch, setTimeout, URL, process */` di berkas `.mjs` baru) · **1195** tes / 44 berkas · coverage **77,18 / 65,48 / 74,11 / 79,27** (turun 0,04 karena cabang emulator di `db.js` tak tercakup unit test; masih di atas ratchet 76/64/73/78) · build + precache OK · `sw.js` → **`mtc-asset-v21`** · commit **`ff8aafe`**, live terverifikasi.
+**Belum**: workflow CI belum menjalankan Playwright (butuh Java + emulator di runner) — kandidat kartu berikutnya.
+
 ### Backup RTDB terjadwal + retensi 7 hari (kartu `t_004f45c4`, selesai)
 **Premis kartu keliru** — backup terjadwal sudah ada di cloud: `.github/workflows/backup.yml` cron `0 19 * * *` (= 02:00 WIB), **124 run**, tiga run terjadwal terakhir (17/18/19 Okt) semuanya `completed/success` (dicek lewat API GitHub, `gh` belum login).
 - **Windows Scheduled Task TIDAK dibuat** — redundan dengan cron cloud dan bergantung laptop menyala. Kalau nanti mau backup lokal terjadwal, tinggal `schtasks /create` + wrapper `.cmd` (± 5 menit).
