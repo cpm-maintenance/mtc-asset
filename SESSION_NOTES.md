@@ -1,36 +1,38 @@
 ## 📝 S33h (2026-10-20) — SSO Google: import dinamis + jembatan global mati (kartu `t_505ab09a`)
 
-### Premis kartu TIDAK terbukti
-Kartu menyatakan layar login mengunduh `__/auth/iframe.js` (93 KiB) + `apis.google.com/js/api.js` + `gapi.loaded_0` "hanya karena `signInWithPopup` di-import statis". Diukur dengan Playwright (probe `scratch/probe-auth-network.mjs`, preview **dan** live): **0 request** ke `apis.google.com` / `__/auth/iframe` saat layar login dimuat — **pada baseline (sebelum perubahan) maupun sesudahnya**. Firebase JS SDK hanya memuat iframe + gapi ketika popup benar-benar dipanggil.
+### Premis kartu tidak terbukti
+Kartu menyatakan layar login mengunduh `__/auth/iframe.js` (93 KiB) + `apis.google.com/js/api.js` + `gapi.loaded_0` "hanya karena `signInWithPopup` di-import statis". Diukur dengan Playwright pada preview **dan** live: layar login membuat **0 request** ke `apis.google.com` maupun `__/auth/iframe` — pada baseline (sebelum perubahan) **dan** sesudahnya. Firebase JS SDK memuat iframe + gapi hanya ketika popup benar-benar dipanggil.
 
 ### Yang dikerjakan (commit `0d5701f`)
 | Berkas | Perubahan |
 |---|---|
-| `src/js/modules/auth.js` | `GoogleAuthProvider` + `signInWithPopup` via `await import('firebase/auth')` di `loginWithSSO` |
+| `src/js/modules/auth.js` | `GoogleAuthProvider` + `signInWithPopup` diambil lewat `await import('firebase/auth')` di `loginWithSSO` |
 | `src/js/db.js` | import/export `GoogleAuthProvider`, `signInWithPopup` dihapus |
 | `src/js/firebase-config.js` | `window.GoogleAuthProvider` / `window.signInWithPopup` dihapus (0 pemakai) |
 | `src/js/globals.d.ts` | dua deklarasi global dihapus |
 | `tests/auth-module.test.js` | mock modul `firebase/auth` (`vi.hoisted` + `vi.mock`), bukan `vi.stubGlobal` |
 
-### Bug nyata yang tertangkap (bukan bagian kartu)
-Percobaan pertama memakai `this.auth` — **AppState tidak punya field `auth`** → klik SSO melempar `TypeError: Cannot read properties of undefined (reading 'app')` di chunk firebase/auth. Diperbaiki ke `window.auth` (sama seperti login email di berkas itu).
-
-Tes lama ikut menyembunyikannya: assert-nya `toHaveBeenCalledWith(ctx.auth, expect.anything())` dengan `ctx.auth` undefined → lolos. Tes kini mengambil `fb.auth` dari `stubFirebase()` dan mengunci instance auth = `window.auth`.
-
 ### Byte: tidak ada penghematan
-`db` 217,4 → **132,4 KB** + chunk baru `index.esm` **85,0 KB** = total identik (~514 KB). `firebase/auth` tetap dibutuhkan `signInWithEmailAndPassword`, jadi dynamic import hanya memecah chunk, bukan menghapus payload. Manfaat nyata = jembatan global mati + SSO mandiri.
+`firebase/auth` tetap dibutuhkan login email (`signInWithEmailAndPassword`), jadi paket itu tidak bisa keluar dari bundel. Hasilnya chunk hanya terpecah: `db` 217,4 → **132,4 KB** + chunk baru `index.esm` **85,0 KB** = total identik (~514 KB).
 
-### Bukti jalur SSO masih hidup
-Klik tombol SSO di preview (`scratch/probe-sso-click2.mjs`): popup `__/auth/handler` terbuka, `apis.google.com/js/api.js` + `__/auth/iframe` termuat → jalur SSO berfungsi. Sebelum fix, klik yang sama menghasilkan error `reading 'app'` dengan 0 request.
+Nilai perubahan ini **struktural, bukan byte**: permukaan global (`window.GoogleAuthProvider`, `window.signInWithPopup`) hilang dan jalur SSO tidak lagi bergantung pada jembatan `window`. Kalau prioritasnya kode minimum, import dinamis ini justru bisa dibatalkan (import statis + hapus jembatan sudah memberi manfaat yang sama) — belum dilakukan karena kartu memintanya eksplisit.
+
+### Bug nyata yang tertangkap (bukan bagian kartu)
+Percobaan pertama memakai `this.auth` — **AppState tidak punya field `auth`** → klik SSO mati dengan `TypeError: Cannot read properties of undefined (reading 'app')` di chunk firebase/auth.
+
+Tes lama ikut menyembunyikannya: assert `toHaveBeenCalledWith(ctx.auth, expect.anything())` dengan `ctx.auth` bernilai `undefined` tetap lolos. Sekarang tes mengambil `fb.auth` dari `stubFirebase()` dan mengunci instance nyata (`window.auth`).
+
+Setelah fix, klik SSO di preview membuka popup `__/auth/handler`, gapi + iframe termuat → jalur SSO hidup.
 
 ### Gerbang
 tsc 0 · eslint 0/79 · **1650 tes / 62 berkas** · coverage **95,60/84,65/96,00/96,73** · build ok · precache **53/53** · E2E **5 passed** (1 flake `page.goto` 30 s pada cold dev server, lolos saat diulang — pola S33). `sw.js` **v25 → v26**; live terverifikasi: `mtc-asset-v26`, `main-CHfqLDv3.js` tanpa `window.signInWithPopup`, `loginWithSSO` ada.
 
 ### Jebakan baru
-1. **`vi.mock('firebase/auth', () => ({...}))` dengan objek inline tidak bisa dimutasi dari tes** — factory dievaluasi per import sehingga referensi berbeda. Pakai `vi.hoisted()` untuk satu objek bersama, lalu `vi.mock('firebase/auth', () => ssoMock)`.
-2. **State mock bocor antar tes**: tes "tanpa provider" men-set `ssoMock.GoogleAuthProvider = undefined` dan meracuni tes berikutnya. Reset di `beforeEach` (`mockReset()` + pasang ulang provider); jangan pasang `mockResolvedValueOnce` default di `beforeEach` kalau tes lain butuh `mockRejectedValueOnce` (antrean once dieksekusi berurutan).
-3. **Assert `expect.anything()` pada argumen yang sebenarnya `undefined` tetap lolos** — `toHaveBeenCalledWith(undefined, expect.anything())` cocok dengan `ctx.auth` yang tidak ada. Ambil nilai nyata dari stub, jangan `anything`.
+1. **`vi.mock('firebase/auth', () => ({...}))` dengan objek inline tidak bisa dimutasi dari tes** — factory dievaluasi per import sehingga referensinya berbeda. Pakai `vi.hoisted()` untuk satu objek bersama, lalu `vi.mock('firebase/auth', () => ssoMock)`.
+2. **State mock bocor antar tes**: tes "tanpa provider" men-set `ssoMock.GoogleAuthProvider = undefined` dan meracuni tes berikutnya. Reset di `beforeEach`; jangan pasang `mockResolvedValueOnce` default di `beforeEach` bila tes lain butuh `mockRejectedValueOnce` (antrean *once* dieksekusi berurutan).
+3. **`expect.anything()` menyembunyikan argumen `undefined`** — `toHaveBeenCalledWith(undefined, expect.anything())` lolos. Ambil nilai nyata dari stub, jangan `anything`.
 4. **Dynamic import tidak memisahkan paket yang sudah diimpor statis di tempat lain.** `firebase/auth` dipakai `db.js` untuk login email → chunk-nya tetap statis di entry; buktikan dengan membaca daftar static import di chunk `main-*.js`, bukan dari nama berkas.
+5. **Jangan percaya judul kartu perf.** Ukur baseline A/B dulu (`git stash push -- <berkas>` → build → probe → `git stash pop`); probe siap pakai: `scratch/probe-auth-network.mjs`, `scratch/probe-sso-click2.mjs`.
 
 ---
 
