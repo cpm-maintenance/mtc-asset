@@ -17,7 +17,6 @@ import {
   getAuth, signOut, onAuthStateChanged,
   signInWithEmailAndPassword, setPersistence,
   browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
-  GoogleAuthProvider, signInWithPopup,
   sendPasswordResetEmail
 } from 'firebase/auth'
 
@@ -49,5 +48,5 @@ export { auth }
 // DB functions
 export { ref, onValue, onChildAdded, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore }
 // Auth functions
-export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail }
+export { signOut, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword, sendPasswordResetEmail }
 

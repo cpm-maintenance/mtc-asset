@@ -66,17 +66,24 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     /** SSO Google lewat popup Firebase. Provider harus aktif di Firebase Console. */
     async loginWithSSO() {
         if (this.isLoading) return;
-        if (!window.signInWithPopup || !window.GoogleAuthProvider) {
-            this.showNotification('SSO belum tersedia di build ini', 'error');
-            return;
-        }
         this.isLoading = true;
         try {
-            const provider = new window.GoogleAuthProvider();
-            const cred = await window.signInWithPopup(window.auth, provider);
+            // Kartu t_505ab09a: import dinamis — `firebase/auth` (yang membawa
+            // GoogleAuthProvider + signInWithPopup, plus iframe `__/auth/iframe`
+            // dan `apis.google.com`) baru diunduh saat tombol SSO diklik, bukan
+            // saat boot. API Google keluar dari jalur kritis login.
+            const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+            if (!signInWithPopup || !GoogleAuthProvider) {
+                this.showNotification('SSO belum tersedia di build ini', 'error');
+                return;
+            }
+            const provider = new GoogleAuthProvider();
+            // `window.auth` — sama seperti login email di berkas ini; AppState
+            // tidak menyimpan instance auth.
+            const cred = await signInWithPopup(window.auth, provider);
             const userData = await this.ensureUserProfile(cred.user);
             this.userRole = userData?.role || 'user';
-            this.rememberLogin?.(cred.user?.email);
+            this.rememberLogin?.(cred.user?.email || '');
             this.showNotification('Welcome back!');
         } catch (/** @type {any} */ error) {
             console.error(error);

@@ -16,7 +16,18 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { authModule } from '../src/js/modules/auth.js';
-
+// Kartu t_505ab09a: `GoogleAuthProvider` + `signInWithPopup` di-load secara
+// dinamis lewat `import('firebase/auth')` di `loginWithSSO` — SDK Google tidak
+// lagi menempel di chunk boot. Mock modul (bukan window) membuktikan jalur
+// dynamic import benar-benar dipakai, bukan stub global.
+vi.mock('firebase/auth', () => ssoMock);
+// Satu referensi objek yang sama untuk factory mock & tes: mutasi di tes
+// (mis. menonaktifkan provider) terlihat oleh `import('firebase/auth')`
+// di dalam auth.js.
+const ssoMock = vi.hoisted(() => ({
+    GoogleAuthProvider: class {},
+    signInWithPopup: vi.fn(),
+}));
 function stubFirebase(overrides = {}) {
     const fns = {
         db: { name: 'db' },
@@ -60,6 +71,8 @@ const snap = (value) => ({ exists: () => value !== null && value !== undefined, 
 
 beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    ssoMock.GoogleAuthProvider = class {};
+    ssoMock.signInWithPopup.mockReset();
 });
 
 afterEach(() => {
@@ -620,6 +633,7 @@ describe('login — mode akses (email / pin / sso)', () => {
     });
 
     it('loginWithSSO tanpa provider terpasang: notifikasi, bukan crash', async () => {
+        ssoMock.GoogleAuthProvider = undefined;
         const ctx = makeCtx({ loginMode: 'sso' });
         await ctx.loginWithSSO();
         expect(ctx.showNotification).toHaveBeenCalledWith('SSO belum tersedia di build ini', 'error');
@@ -627,13 +641,16 @@ describe('login — mode akses (email / pin / sso)', () => {
     });
 
     it('loginWithSSO sukses: role dari RTDB, email diingat, welcome', async () => {
-        vi.stubGlobal('GoogleAuthProvider', class {});
-        vi.stubGlobal('signInWithPopup', vi.fn(async () => ({ user: { uid: 'g1', email: 'op@plant.id' } })));
-        stubFirebase({ get: vi.fn(async () => snap({ uid: 'g1', email: 'op@plant.id', role: 'supervisor' })) });
+        ssoMock.signInWithPopup.mockResolvedValueOnce({ user: { uid: 'g1', email: 'op@plant.id' } });
+        const fb = stubFirebase({ get: vi.fn(async () => snap({ uid: 'g1', email: 'op@plant.id', role: 'supervisor' })) });
 
         const ctx = makeCtx({ loginMode: 'sso' });
         await ctx.loginWithSSO();
 
+        expect(ssoMock.GoogleAuthProvider).toBeDefined();
+        // Instance auth HARUS dari jembatan window (sama seperti login email),
+        // bukan `this.auth` — AppState tidak punya field `auth`.
+        expect(ssoMock.signInWithPopup).toHaveBeenCalledWith(fb.auth, expect.anything());
         expect(ctx.userRole).toBe('supervisor');
         expect(localStorage.getItem('mtc_last_login_email')).toBe('op@plant.id');
         expect(ctx.showNotification).toHaveBeenCalledWith('Welcome back!');
@@ -642,8 +659,7 @@ describe('login — mode akses (email / pin / sso)', () => {
 
     it('loginWithSSO gagal: pesan Firebase diteruskan apa adanya', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
-        vi.stubGlobal('GoogleAuthProvider', class {});
-        vi.stubGlobal('signInWithPopup', vi.fn(async () => { throw new Error('auth/operation-not-allowed'); }));
+        ssoMock.signInWithPopup.mockRejectedValueOnce(new Error('auth/operation-not-allowed'));
 
         const ctx = makeCtx({ loginMode: 'sso' });
         await ctx.loginWithSSO();
@@ -656,11 +672,8 @@ describe('login — mode akses (email / pin / sso)', () => {
     });
 
     it('loginWithSSO tidak menumpuk saat sudah loading', async () => {
-        const signInWithPopup = vi.fn();
-        vi.stubGlobal('GoogleAuthProvider', class {});
-        vi.stubGlobal('signInWithPopup', signInWithPopup);
         const ctx = makeCtx({ loginMode: 'sso', isLoading: true });
         await ctx.loginWithSSO();
-        expect(signInWithPopup).not.toHaveBeenCalled();
+        expect(ssoMock.signInWithPopup).not.toHaveBeenCalled();
     });
 });
