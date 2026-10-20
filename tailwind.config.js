@@ -143,8 +143,10 @@ export default {
         'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }],
         'body-sm': ['12px', { lineHeight: '16px', fontWeight: '400' }],
         'label-mono-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.04em', fontWeight: '500' }],
-        'label-mono-md': ['11px', { lineHeight: '16px', letterSpacing: '0.08em', fontWeight: '600' }],
-        'label-mono-sm': ['10px', { lineHeight: '14px', letterSpacing: '0.1em', fontWeight: '500' }],
+        // S33d: naik ke 12px — audit Lighthouse `font-size` (teks legibel) hanya
+        // menghitung >=12px, jadi 10/11px membuat ~47% teks dianggap tidak legibel.
+        'label-mono-md': ['12px', { lineHeight: '16px', letterSpacing: '0.08em', fontWeight: '600' }],
+        'label-mono-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.1em', fontWeight: '500' }],
       },
       fontFamily: {
         'display-hero': ['Inter', 'system-ui', 'sans-serif'],
