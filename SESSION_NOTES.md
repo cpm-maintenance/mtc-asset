@@ -1,3 +1,41 @@
+## 📝 Session 32 (S32, 2026-10-20) — Harness Alpine `app.js`: **20,9% → 74,54% lines**
+
+### Apa yang dikerjakan
+Kartu `t_30aa9581` (Harness Alpine + tes `app.js` >=70%), dikerjakan manual — kartu `blocked`, tanpa `unblock`, tanpa worker kanban. `src/**` **tidak disentuh sama sekali** (bukti: `git show --name-only 04ee492 | grep -c '^src/'` → 0), jadi `CACHE_NAME` di `sw.js` **tidak** di-bump (tetap `mtc-asset-v21`).
+
+Pendekatan: `app()` dipanggil langsung di jsdom (tanpa Alpine), Firebase di-stub di `window` (`ref/get/set/update/remove/db/auth`) — pola "mock LIBRARY, bukan modul". Helper bersama: `tests/helpers/app-harness.js` (`makeApp()`, `stubFirebase()`).
+
+### Angka riil (dari tool, bukan perkiraan)
+| Metrik | S31 | S32 |
+|---|---|---|
+| Coverage total (stmt/branch/func/lines) | 77,18 / 65,48 / 74,11 / 79,27 | **90,05 / 79,19 / 87,86 / 91,45** |
+| `app.js` lines | 20,9% | **74,54%** (stmt 73,98 · branch 66,41 · func 72,09) |
+| Threshold `vitest.config.js` | 76 / 64 / 73 / 78 | **88 / 77 / 85 / 89** |
+| Suite unit | 1195 tes / 44 berkas | **1527 tes / 54 berkas** |
+| `tsc --noEmit` | 0 error | 0 error |
+| eslint | 0 error / 79 warning | **0 error / 79 warning** |
+| Build + `verify:precache` | ok · 50/50 | ok · **50/50** |
+| E2E Playwright | 5 passed | **5 passed** (53,6 s) |
+
+### Berkas baru (13 di commit `04ee492`)
+- `tests/helpers/app-harness.js` — `makeApp()` (defineProperty, karena getter modul tak punya setter) + `stubFirebase()`
+- `tests/app-module.test.js` (1) · `app-history-audit` (39) · `app-workorders` (47) · `app-health-badges` (72) · `app-dashboard-data` (42) · `app-logs-tac` (30) · `app-planning` (35) · `app-mtbf` (33) · `app-photo-lifetime` (16) · `app-parts-telemetry` (17) → **332 tes baru**
+- `docs/superpowers/plans/2026-10-20-app-js-test-harness.md` — rencana pembagian rentang baris
+
+### Jebakan yang ditemukan
+1. **Getter modul tidak punya setter** — `s.isAdmin = false` melempar `Cannot set property ... which has only a getter`. Override wajib lewat `makeApp({ isAdmin: false })` (defineProperty). Karena itu harness memberi default `isAdmin`/`userRole`.
+2. **Di jsdom `globalThis === window`** — men-set `globalThis.Cropper` langsung memicu jalur "Cropper sudah tersedia" di `showCropModal`, sehingga jalur lazy-load CSS/script tak pernah jalan. Set `globalThis.Cropper` **setelah** `showCropModal()` dipanggil, baru panggil `script.onload()`.
+3. **`$nextTick` adalah magic Alpine**, bukan milik `app()`. Override `$nextTick: fn => fn()` untuk menguji `showCropModal`/`mtbfRefresh`.
+4. **`formatAuditTime` jalur catch tak terjangkau lewat input biasa** — `new Date('bogus')` tidak melempar (hasilnya `Invalid Date`). Untuk menutup cabang catch, spy `Date.prototype.toLocaleDateString` agar melempar.
+5. **Output tool panjang dipotong proxy kompresi (headroom)** jadi placeholder/`<<ccr:...>>`. Baca per ~40-60 baris dan/atau `headroom_retrieve` dengan hash; jangan menebak isi kode.
+6. **Fixture `part()` dengan default `EquipmentIDs: ['EQ-1']`** menutupi cabang `EquipmentID` tunggal di `filteredAllParts` — set `EquipmentIDs: undefined` agar cabang ketiga tercapai.
+
+### Sisa yang belum ditutup di `app.js` (439 → ~330 baris merah)
+- `mpExportPDF` (`2396-2474`) + blok `2306-2348` — butuh mock `jspdf`/`jspdf-autotable` + canvas/download.
+- `migrateLegacyImages` cabang upload gagal (`1655-1687`), `installApp` (`62-67`), `loadMoreWO`/`woParts` sisa cabang (`801-933`), `badgeCount` sisa (`1103-1137`), blok dashboard/equipment (`1317-1522`).
+
+---
+
 ## 📝 Session 31 (S31, 2026-10-19) — C-3: Lighthouse diukur ulang, **seo 91 → 100**
 
 ### Apa yang dikerjakan
