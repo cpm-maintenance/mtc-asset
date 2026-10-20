@@ -17,6 +17,15 @@ Fragmen `/pages/WorkOrders.html` + `/pages/EnterpriseDashboard.html`: perf **100
 ### Satu perbaikan nyata
 `/robots.txt` **tidak ada** di `public/`, jadi Firebase Hosting menyajikan `index.html` (200 `text/html`) untuk path itu → audit `robots-txt` gagal → seo tertahan 91. Ditambah `public/robots.txt` (23 byte: `User-agent: *` / `Allow: /`), commit **`7dee035`**, live terverifikasi: `curl -sI` → `Content-Type: text/plain`, body benar. Ini satu-satunya kegagalan biner di desktop.
 
+### Backup RTDB terjadwal + retensi 7 hari (kartu `t_004f45c4`, selesai)
+**Premis kartu keliru** — backup terjadwal sudah ada di cloud: `.github/workflows/backup.yml` cron `0 19 * * *` (= 02:00 WIB), **124 run**, tiga run terjadwal terakhir (17/18/19 Okt) semuanya `completed/success` (dicek lewat API GitHub, `gh` belum login).
+- **Windows Scheduled Task TIDAK dibuat** — redundan dengan cron cloud dan bergantung laptop menyala. Kalau nanti mau backup lokal terjadwal, tinggal `schtasks /create` + wrapper `.cmd` (± 5 menit).
+- **Retensi 7 hari** di dua tempat: artifact workflow `retention-days: 90 → 7`; `scripts/backup-firebase.js` sekarang membuang berkas berumur > 7 hari (`selectExpiredBackups`, `RETENTION_DAYS = 7`) di samping cap `MAX_BACKUPS = 30`.
+- **Retensi dibuktikan**: 2 berkas dummy di-`touch -d "10 days ago"` → keduanya `Removed` saat run; run menghasilkan `backup-2026-10-20_08-23-31.json` dan `LATEST.txt` diperbarui.
+- **`BACKUP.md` dibetulkan**: `backups/` **tidak** di-commit (gitignored), angka retensi, dan prosedur **restore 5 langkah** yang benar — `database:set` menimpa seluruh node, tanpa `--force` minta konfirmasi, cakupan artifact cloud tidak memuat `Users`/`AI_Settings`.
+- **Tes**: `tests/backup-retention.test.js` (5 tes, RED dulu — modul di-guard `invokedDirectly` supaya import tidak menjalankan backup).
+- **Commit** `c02b8f8`. Gate: `tsc` 0 · lint 0/79 · **1195** tes / 44 berkas · coverage 77,22/65,50/74,11/79,27 · build + precache OK. Tanpa bump `sw.js` (tidak ada `src/**`/`public/**` berubah).
+
 ### Migrasi data legacy URL di RTDB (kartu `t_576f26ea`, selesai)
 Fix `9038829` hanya menutup tulisan baru; baris lama masih menyimpan `https:&#x2F;&#x2F;...`.
 - **Backup dulu**: `npm run backup:firebase` → 7 node berisi data, berkas di `backups/` (gitignored).
