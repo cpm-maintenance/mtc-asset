@@ -6,6 +6,8 @@
  * Module lain WAJIB import dari sini, bukan dari window.*
  */
 import { initializeApp } from 'firebase/app'
+import { connectAuthEmulator } from 'firebase/auth'
+import { connectDatabaseEmulator } from 'firebase/database'
 import {
   getDatabase, ref, onValue, onChildAdded, set, update, remove,
   get, query, limitToLast, runTransaction,
@@ -37,6 +39,13 @@ const db = getDatabase(app)
 const storage = getStorage(app)
 const auth = getAuth(app)
 const messaging = getMessaging(app)
+
+// E2E: pakai Firebase Emulator (auth + database) supaya tes tidak menyentuh produksi
+// dan tidak butuh kredensial asli. Aktif hanya bila VITE_USE_EMULATORS=1.
+if (import.meta.env.VITE_USE_EMULATORS === '1') {
+  connectDatabaseEmulator(db, '127.0.0.1', 9000)
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+}
 
 export { app }
 export { db }

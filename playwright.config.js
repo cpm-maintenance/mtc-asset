@@ -3,9 +3,11 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright E2E config.
  *
- * Starts the Vite dev server automatically and runs against http://localhost:3000.
- * Full login/WO/PDF flows need real Firebase credentials — set E2E_EMAIL /
- * E2E_PASSWORD; those specs self-skip when the env vars are absent so CI stays green.
+ * Alur login → WO → PDF dijalankan terhadap **Firebase Emulator** (auth 9099,
+ * database 9000): tes tidak menyentuh produksi dan tidak butuh kredensial asli.
+ * Data uji di-seed otomatis oleh e2e/seed-emulator.mjs dari dalam spec.
+ * Dev server diberi VITE_USE_EMULATORS=1 sehingga src/js/db.js menyambung ke
+ * emulator, bukan ke RTDB produksi.
  */
 export default defineConfig({
     testDir: './e2e',
@@ -21,10 +23,22 @@ export default defineConfig({
         screenshot: 'only-on-failure',
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-    webServer: {
-        command: process.env.CI ? 'npm run preview -- --port 3000' : 'npm run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: true,
-        timeout: 60_000,
-    },
+    webServer: [
+        {
+            command:
+                'firebase emulators:start --only auth,database --config e2e/firebase.e2e.json --project mtc-asset',
+            url: 'http://127.0.0.1:9000',
+            reuseExistingServer: true,
+            timeout: 120_000,
+            stdout: 'ignore',
+            stderr: 'pipe',
+        },
+        {
+            command: process.env.CI ? 'npm run preview -- --port 3000' : 'npm run dev',
+            url: 'http://localhost:3000',
+            reuseExistingServer: true,
+            timeout: 60_000,
+            env: { VITE_USE_EMULATORS: '1' },
+        },
+    ],
 });

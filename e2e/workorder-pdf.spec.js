@@ -1,14 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-/**
- * Full E2E flow — requires real Firebase credentials.
- * Set E2E_EMAIL and E2E_PASSWORD to enable; otherwise these specs self-skip.
- */
-const EMAIL = process.env.E2E_EMAIL;
-const PASSWORD = process.env.E2E_PASSWORD;
+import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
 
-test.describe('Authenticated flow', () => {
-    test.skip(!EMAIL || !PASSWORD, 'E2E_EMAIL / E2E_PASSWORD not set — skipping authenticated flow');
+/**
+ * Alur kritis: login → dashboard → export Work Order PDF.
+ * Berjalan terhadap Firebase Emulator (lihat playwright.config.js): data uji
+ * di-seed di beforeAll, jadi tidak ada skip dan tidak menyentuh RTDB produksi.
+ */
+const EMAIL = E2E_USER.email;
+const PASSWORD = E2E_USER.password;
+
+test.describe('Authenticated flow (emulator)', () => {
+    test.beforeAll(async () => {
+        await seedEmulator();
+    });
 
     test('login → dashboard → export a Work Order PDF', async ({ page }) => {
         await page.goto('/');
@@ -23,14 +28,18 @@ test.describe('Authenticated flow', () => {
         // App shell is mounted and Firebase listeners have had a chance to run.
         await expect(page.locator('[x-data]').first()).toBeVisible();
 
-        // Find an existing Work Order to export.
+        // Tunggu listener RTDB terisi, lalu ambil WO hasil seed.
+        await expect
+            .poll(() => page.evaluate(() => (window.app?.logs || []).filter((l) => l && l.woNumber).length), {
+                timeout: 25_000,
+            })
+            .toBeGreaterThan(0);
+
         const woId = await page.evaluate(() => {
-            const logs = window.app?.logs || [];
-            const wo = logs.find((l) => l && l.woNumber);
+            const wo = (window.app?.logs || []).find((l) => l && l.woNumber);
             return wo ? wo.LogID : null;
         });
-
-        test.skip(!woId, 'No Work Order data available to export');
+        expect(woId).toBeTruthy();
 
         const [download] = await Promise.all([
             page.waitForEvent('download', { timeout: 25_000 }),
