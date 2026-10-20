@@ -38,6 +38,23 @@ Lanjutan S32: 325 baris merah `app.js` (61 klaster) ditutup lewat **6 berkas tes
 
 Kontrak baru `tests/wo-filter-a11y.test.js` (4 tes, ditulis RED dulu). `sw.js` `CACHE_NAME` **v21 → v22** (`public/**` berubah). Commit `af81fd8`. Live terverifikasi: `sw.js` → `mtc-asset-v22`, marker `aria-label="Filter status Pending"` muncul di `/pages/WorkOrders.html` (~50 s setelah push). Suite 1643 → **1647**; coverage tetap 95,57/84,67/96,00/96,69.
 
+### S33e — bundel awal: buang `firebase/storage` + `firebase/messaging`
+Halaman login tidak pernah memakai Firebase Storage (foto naik ke **Cloudinary**) dan tidak memanggil FCM saat boot, tapi keduanya ikut terunduh lewat chunk `db` (85,6 KiB gzip; 67 KiB di antaranya *unused* menurut Lighthouse).
+
+| Perubahan | Efek |
+|---|---|
+| `db.js`: import/instance/export `firebase/storage` + `firebase/messaging` dihapus | chunk `db` **295 → 222 KB** (raw) |
+| `firebase-config.js`: jembatan `window.storage/refStorage/uploadBytes/getDownloadURL/messaging` dihapus | tidak ada pemakai di `src/**` maupun `public/**` |
+| `notification.js`: `firebase/messaging` → **dynamic import** di `registerFCMToken` + `setupForegroundListener` (kini async) | SDK messaging keluar dari bundel awal |
+| `tests/notification-fcm.test.js`: 4 tes listener di-`await` | 16/16 hijau |
+
+Lighthouse mobile (preview): unused JS **136 → 122 KiB**, total **438 → 427 KiB**, chunk `db` unused 67 → 52,5 KiB. Skor perf lokal berisik (63–87 antar run) — jangan dipakai sebagai bukti tunggal.
+
+`sw.js` **v23 → v24**, precache 50 → **52** berkas (chunk lazy baru). Live: `mtc-asset-v24`. Commit `11c2372`.
+Gerbang: tsc 0, eslint 0/79, **1647 tes**, coverage **95,60/84,67/96,00/96,73**, build ok, precache 52/52, E2E 5 passed.
+
+**Sisa peluang** (belum dikerjakan): chunk `db` (Firebase RTDB SDK) masih dimuat sebelum login; menundanya butuh pemuatan dinamis seluruh lapisan data — refactor besar, jangan dikerjakan setengah.
+
 ### S33d — skala tipografi label >= 12 px (audit `font-size` tuntas)
 Audit Lighthouse `font-size` hanya menghitung teks **>= 12 px**, jadi label 10/11 px membuat hampir separuh teks dianggap tidak legibel.
 
