@@ -1,3 +1,46 @@
+## 📝 S33z (2026-10-21) — 7 duplikat state di literal `app()` dibuang (kartu `t_cee197a5`, sw v40)
+
+Commit `c0a86f2`. Live **sw v40**.
+
+**Koreksi hitungan**: kartu menyebut 8 duplikat; hitung ulang = **7** (angka 8 ikut menghitung
+`login`/`logout`/`showUID` yang sudah dibuang di S33y).
+
+### Yang dibuang dari literal `app()`
+`isLogDetailView`, `selectedEquip`, `isOnline` (← `logs.js`), `loginForm` (← `auth.js`),
+`equipPage`, `equipLimit` (← `data.js`), `logForm` (← `logs.js`). Impor `DEFAULT_LOG_FORM` dan
+`DEFAULT_PM_FORM` ikut hilang (tidak ada pemakai lain).
+
+### Bukti netral — snapshot, bukan asumsi
+Harness jsdom, 630 kunci `app()` di-snapshot (nilai primitif, tipe, bentuk objek, getter yang
+melempar) sebelum dan sesudah:
+
+| | sebelum | sesudah |
+|---|---|---|
+| jumlah kunci | 630 | **630** |
+| hanya-di-sebelum / hanya-di-sesudah | — | **0 / 0** |
+| nilai berubah | — | **0** |
+
+### Tes
+`tests/app-state-single-source.test.js` (3): penanda `// --- MODULE INJECTION ---` ada; setiap
+kunci literal sebelum batas itu tidak dimiliki modul mana pun; ketujuh kunci tidak kembali.
+**Dibuktikan menggigit**: mengembalikan `isOnline: navigator.onLine` ke literal → 2 tes merah
+(`isOnline (literal) vs logs.js`), lalu di-revert.
+
+### Angka
+`app-*.js` gzip 61.723 → **61.670 B** (−53). Muatan login tidak berubah (56.295 B).
+Penghematan byte kecil dan **bukan** tujuan — yang diperbaiki satu sumber kebenaran.
+
+### Gerbang
+tsc 0 · eslint **0 error / 78 warning** · **1705 tes / 70 berkas** · coverage
+95,88/84,71/96,17/97,07 · build ok · precache **65/65** · **E2E 5 passed (34,4 s)**.
+
+### Pelajaran
+Untuk kode yang "kalah oleh spread", bukti netral paling murah adalah **snapshot seluruh objek
+hasil komposisi sebelum/sesudah** — bukan penalaran tentang urutan spread. Snapshot 630 kunci
+memakan satu tes sementara, dan langsung menjawab "apakah ada nilai awal yang berubah".
+
+---
+
 ## 📝 S33y (2026-10-21) — kode mati era pre-authModule dibuang (kartu `t_a9ec2a2d`, sw v39)
 
 Commit `b78c4e8`. Live **sw v39**. Sweep pemanggil dulu, baru hapus — semua yang dibuang
