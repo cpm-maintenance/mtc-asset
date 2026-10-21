@@ -31,21 +31,6 @@
   <!-- Main Application Entry -->
   <script type="module" src="/src/main.js"></script>
 
-  <!-- Emergency Global Fallbacks (Prevents ReferenceErrors) -->
-  <script>
-    window.isLoggedIn = false;
-    window.isLoading = false;
-    window.loginForm = { email: '', password: '' };
-    window.login = function() {
-      if (window.appData && window.appData.login) {
-        window.appData.login();
-      } else {
-        alert("System still initializing... please wait 2 seconds and try again.");
-        location.reload();
-      }
-    };
-  </script>
-
   <!-- Emergency Theme Script (Prevents flash & caching issues) -->
   <script>
       (function () {

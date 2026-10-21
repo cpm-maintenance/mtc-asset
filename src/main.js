@@ -419,9 +419,6 @@ window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
 Alpine.start();
 logger.debug('Alpine Started');
 
-// Expose Sentry for manual error capture from Alpine modules
-window.Sentry = Sentry;
-
 // ============================================================
 // PWA Install Prompt
 // ============================================================

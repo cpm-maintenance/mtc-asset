@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 /**
  * Tests untuk `src/js/app.js` klaster auth & navigasi:
- * installApp (62-67), login (512-527), logout (531-543), showUID (548-550),
- * filteredMenuGroups (638-644), mobilePrimaryItems (648-650),
- * isSupervisor (1211) via canAccess.
+ * installApp, filteredMenuGroups, mobilePrimaryItems, isSupervisor via canAccess.
+ *
+ * `login`/`logout`/`showUID` **tidak lagi** didefinisikan di `app.js` (S33y):
+ * salinan di sana selalu kalah oleh spread `...authModule`, jadi yang diuji di
+ * sini adalah versi `src/js/modules/auth.js` lewat komposisi `makeApp()`.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { makeApp, stubFirebase } from './helpers/app-harness.js';
 
 beforeEach(() => {
@@ -190,5 +194,39 @@ describe('isSupervisor / canAccess', () => {
     expect(s.isSupervisor).toBe(false);
     expect(s.canAccess({ allowedRole: 'supervisor' })).toBe(false);
     expect(s.canAccess({ name: 'Dashboard' })).toBe(true);
+  });
+});
+
+// Kartu t_a9ec2a2d: `login()`/`logout()`/`showUID()` di `app.js` selalu kalah
+// oleh spread `...authModule` (modul di-spread SESUDAH literal), jadi salinan
+// itu tidak pernah bisa dieksekusi. Yang menutup regresi bukan angka byte
+// (keduanya sudah di chunk malas), melainkan satu sumber kebenaran.
+describe('sumber tunggal auth', () => {
+  const read = (rel) => fs.readFileSync(path.join(process.cwd(), rel), 'utf-8');
+
+  it('app.js tidak lagi punya salinan login/logout/showUID', () => {
+    const appSrc = read('src/js/app.js');
+    expect(appSrc).not.toMatch(/^\s+async login\(\)/m);
+    expect(appSrc).not.toMatch(/^\s+async logout\(\)/m);
+    expect(appSrc).not.toMatch(/^\s+showUID\(\)/m);
+    // Versi yang sah tetap ada di modul auth.
+    const authSrc = read('src/js/modules/auth.js');
+    expect(authSrc).toMatch(/^\s+async login\(\)/m);
+    expect(authSrc).toMatch(/^\s+async logout\(\)/m);
+    expect(authSrc).toMatch(/^\s+showUID\(\)/m);
+  });
+
+  it('main.js tidak menugaskan window.Sentry ke dirinya sendiri', () => {
+    // `Sentry` resolve ke `window.Sentry` (stub yang dipasang di atas berkas),
+    // jadi baris itu no-op dan hanya menambah kebingungan saat membaca boot.
+    expect(read('src/main.js')).not.toMatch(/window\.Sentry = Sentry/);
+  });
+
+  it('index.html tidak lagi membawa fallback window.login → window.appData', () => {
+    // `window.appData` tidak pernah didefinisikan di mana pun; blok itu selalu
+    // jatuh ke cabang `alert()` + `location.reload()`.
+    const html = read('index.html');
+    expect(html).not.toMatch(/window\.appData/);
+    expect(html).not.toMatch(/System still initializing/);
   });
 });

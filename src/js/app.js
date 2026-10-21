@@ -509,48 +509,6 @@ export function app() {
             return 'bg-tac-status-repair';
         },
 
-        async login() {
-            const form = this.loginForm;
-            if (!form.email || !form.password) {
-                this.showNotification("Please enter email and password", "error");
-                return;
-            }
-            this.isLoading = true;
-            try {
-                await window.setPersistence(window.auth, window.browserSessionPersistence);
-                await window.signInWithEmailAndPassword(window.auth, form.email, form.password);
-                this.showNotification("Welcome back!");
-            } catch (/** @type {any} */ error) {
-                console.error(error);
-                this.showNotification("Login failed: " + error.message, "error");
-            } finally {
-                this.isLoading = false;
-            }
-        },
-
-        async logout() {
-if (confirm('Are you sure you want to logout?')) {
-                    this.isLoading = true;
-                    try {
-                        await window.signOut(window.auth);
-                        this.isLoggedIn = false;
-                        this.user = null;
-                        this.userRole = 'user';
-                        this.showNotification("Logged out successfully", "info");
-                } catch (/** @type {any} */ error) {
-                    this.showNotification("Error logging out: " + error.message, "error");
-                } finally {
-                    this.isLoading = false;
-                }
-            }
-        },
-
-        showUID() {
-            if (this.user) {
-                prompt("Copy your UID below:", this.user.uid);
-            }
-        },
-
         // Error Handling State
         hasError: false,
         errorMessage: '',
