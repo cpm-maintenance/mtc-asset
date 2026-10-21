@@ -28,8 +28,8 @@
  * `tests/tac-theme.test.js` menjaga keduanya tetap sinkron.
  */
 :root {
-  --tac-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --tac-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --tac-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --tac-sans: 'Inter', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* ── Tema default: NIGHT (Tactical Slate asli, slate #0b0f15 + amber) ─── */
   --tac-surface-base: 11 15 21;

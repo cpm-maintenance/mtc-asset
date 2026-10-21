@@ -40,3 +40,16 @@
   src: url('/fonts/jetbrains-mono-subset.woff2') format('woff2');
   unicode-range: U+20-7e, U+a9, U+b1, U+b7, U+d7, U+2013-2014, U+2022, U+2026, U+2192;
 }
+
+@font-face { font-family: 'Inter Fallback'; src: local('Segoe UI'); size-adjust: 107.79%; ascent-override: 89.99%; descent-override: 22.27%; line-gap-override: 0%; }
+@font-face { font-family: 'Inter Fallback'; src: local('Roboto'); size-adjust: 108.47%; ascent-override: 89.43%; descent-override: 22.13%; line-gap-override: 0%; }
+@font-face { font-family: 'Inter Fallback'; src: local('Helvetica'); size-adjust: 104.99%; ascent-override: 92.39%; descent-override: 22.86%; line-gap-override: 0%; }
+@font-face { font-family: 'JetBrains Mono Fallback'; src: local('Consolas'); size-adjust: 109.13%; ascent-override: 93.47%; descent-override: 27.49%; line-gap-override: 0%; }
+@font-face { font-family: 'JetBrains Mono Fallback'; src: local('Roboto Mono'); size-adjust: 117.63%; ascent-override: 86.72%; descent-override: 25.50%; line-gap-override: 0%; }
+@font-face { font-family: 'JetBrains Mono Fallback'; src: local('Menlo'); size-adjust: 99.98%; ascent-override: 102.02%; descent-override: 30.00%; line-gap-override: 0%; }
+@font-face { font-family: 'Outfit Fallback'; src: local('Segoe UI'); size-adjust: 100.76%; ascent-override: 99.24%; descent-override: 25.80%; line-gap-override: 0%; }
+@font-face { font-family: 'Outfit Fallback'; src: local('Roboto'); size-adjust: 101.39%; ascent-override: 98.62%; descent-override: 25.64%; line-gap-override: 0%; }
+@font-face { font-family: 'Outfit Fallback'; src: local('Helvetica'); size-adjust: 98.15%; ascent-override: 101.89%; descent-override: 26.49%; line-gap-override: 0%; }
+@font-face { font-family: 'Space Grotesk Fallback'; src: local('Segoe UI'); size-adjust: 106.27%; ascent-override: 92.22%; descent-override: 27.29%; line-gap-override: 0%; }
+@font-face { font-family: 'Space Grotesk Fallback'; src: local('Roboto'); size-adjust: 106.94%; ascent-override: 91.64%; descent-override: 27.12%; line-gap-override: 0%; }
+@font-face { font-family: 'Space Grotesk Fallback'; src: local('Helvetica'); size-adjust: 103.52%; ascent-override: 94.67%; descent-override: 28.01%; line-gap-override: 0%; }

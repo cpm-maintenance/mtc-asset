@@ -148,6 +148,61 @@ for (const stale of STALE) {
   await fs.rm(path.join(OUT_FONTS, stale), { force: true });
 }
 
+/**
+ * Fallback metrik — menutup CLS dari font swap (S33p).
+ *
+ * `font-display: swap` mencetak teks dengan font sistem lebih dulu, lalu
+ * menukarnya ke webfont. Kalau lebar advance keduanya beda, jumlah baris
+ * berubah → blok teks tumbuh dan menggeser tetangganya. Terukur di produksi
+ * (scripts/cls-probe.mjs, cache dingin, CPU x4 + slow-4G): **CLS 0,027**
+ * dengan penyebab tunggal `DIV.max-w-7xl` + `FOOTER` layar login yang bertambah
+ * 4 px dan 16 px tepat saat woff2 selesai diunduh. Cache hangat = 0,000,
+ * karena swap-nya tidak pernah terjadi — itulah kenapa angka lama (0,009 di
+ * Lighthouse) terlihat aman: tiga run Lighthouse memberi 0,051 / 0,009 / 0,008.
+ *
+ * `size-adjust` menormalkan advance fallback, `ascent/descent-override`
+ * menormalkan tinggi barisnya. Angka di bawah **diukur**, bukan ditebak:
+ * `node scripts/font-metric-probe.mjs` mencetak tabelnya (lebar advance atas
+ * seluruh ASCII printable, + fontBoundingBox ascent/descent). Jalankan ulang
+ * skrip itu setiap kali keluarga font atau subsetnya berubah.
+ *
+ * Satu @font-face per fallback: `local()` yang tidak ada di OS itu akan gagal
+ * dan browser lanjut ke aturan berikutnya, jadi urutannya = prioritas platform
+ * (Windows → Android → macOS → generic). Nol byte unduhan: semuanya `local()`.
+ */
+const FALLBACKS = {
+  Inter: [
+    ['Segoe UI', 107.79, 89.99, 22.27],
+    ['Roboto', 108.47, 89.43, 22.13],
+    ['Helvetica', 104.99, 92.39, 22.86],
+  ],
+  'JetBrains Mono': [
+    ['Consolas', 109.13, 93.47, 27.49],
+    ['Roboto Mono', 117.63, 86.72, 25.5],
+    ['Menlo', 99.98, 102.02, 30.0],
+  ],
+  Outfit: [
+    ['Segoe UI', 100.76, 99.24, 25.8],
+    ['Roboto', 101.39, 98.62, 25.64],
+    ['Helvetica', 98.15, 101.89, 26.49],
+  ],
+  'Space Grotesk': [
+    ['Segoe UI', 106.27, 92.22, 27.29],
+    ['Roboto', 106.94, 91.64, 27.12],
+    ['Helvetica', 103.52, 94.67, 28.01],
+  ],
+};
+
+const fallbackFaces = () =>
+  Object.entries(FALLBACKS).flatMap(([family, rows]) =>
+    rows.map(
+      ([local, adjust, ascent, descent]) =>
+        `@font-face { font-family: '${family} Fallback'; src: local('${local}'); ` +
+        `size-adjust: ${adjust.toFixed(2)}%; ascent-override: ${ascent.toFixed(2)}%; ` +
+        `descent-override: ${descent.toFixed(2)}%; line-gap-override: 0%; }`
+    )
+  );
+
 const css = [
   '/* Di-generate oleh scripts/download-webfonts.mjs — jangan diedit tangan.',
   ' * Font di-self-host supaya jalur kritis login tidak melewati fonts.googleapis.com',
@@ -160,6 +215,7 @@ const css = [
     (f) =>
       `@font-face {\n  font-family: '${f.family}';\n  font-style: ${f.style};\n  font-weight: ${f.weight};\n  font-display: swap;\n  src: url('/fonts/${f.file}') format('woff2');\n  unicode-range: ${f.range};\n}\n`
   ),
+  ...fallbackFaces(),
 ].join('\n');
 
 await fs.writeFile(OUT_CSS, css);

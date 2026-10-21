@@ -32,6 +32,10 @@ function faces() {
   return css
     .split('@font-face')
     .slice(1)
+    // Hanya @font-face yang memuat berkas subset. Sejak S33p generator juga
+    // menulis "fallback metrik" (`src: local(...)`, tanpa unicode-range) yang
+    // tidak punya berkas dan tidak perlu meng-cover charset.
+    .filter((block) => block.includes("url('/fonts/"))
     .map((block) => ({
       family: /font-family: '([^']+)'/.exec(block)?.[1] || '',
       file: /url\('\/fonts\/([^']+)'\)/.exec(block)?.[1] || '',

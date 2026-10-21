@@ -20,8 +20,8 @@
   --text-muted: #8b9eb7;
   --radius-xl: 1.25rem;
   --radius-2xl: 2rem;
-  --font-main: 'Inter', 'Outfit', sans-serif;
-  --font-display: 'Space Grotesk', sans-serif;
+  --font-main: 'Inter', 'Inter Fallback', 'Outfit', sans-serif;
+  --font-display: 'Space Grotesk', 'Space Grotesk Fallback', sans-serif;
 
   /* Google Stitch: The Industrial Monolith Tokens */
 }
