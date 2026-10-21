@@ -109,6 +109,21 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     async ensureUserProfile(user) {
         if (!user?.uid) return;
 
+        // Lapisan data (SDK RTDB) dimuat MALAS sejak S33p, sementara fungsi ini
+        // dipanggil tepat setelah `signInWithEmailAndPassword` — sebelum listener
+        // auth di bootstrap.js selesai menunggu `__loadDataLayer()`. Tanpa baris
+        // ini `window.ref` masih undefined → "Failed to sync user profile:
+        // TypeError: window.ref is not a function", `lastLogin` tidak pernah
+        // tertulis, dan profil user baru tidak pernah dibuat. Idempoten, jadi
+        // aman dipanggil walau lapisan data sudah ada.
+        if (typeof window.__loadDataLayer === 'function') {
+            try {
+                await window.__loadDataLayer();
+            } catch (/** @type {any} */ error) {
+                logger.warn('[auth] lapisan data gagal dimuat:', error);
+            }
+        }
+
         try {
             const userRef = window.ref(window.db, `Users/${user.uid}`);
             const snapshot = await window.get(userRef);
