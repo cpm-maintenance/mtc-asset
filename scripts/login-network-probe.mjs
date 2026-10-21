@@ -24,8 +24,8 @@ await page.waitForTimeout(3000);
 const after = reqs.filter((u) => /prod-[\w-]+\.js/.test(u));
 
 const sentryInit = await page.evaluate(() => ({
-  sentryGlobal: typeof window.Sentry,
-  hasApp: typeof window.Alpine !== 'undefined',
+  sentryGlobal: typeof globalThis.Sentry,
+  hasApp: typeof globalThis.Alpine !== 'undefined',
 }));
 
 console.log(JSON.stringify({
