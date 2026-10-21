@@ -1,6 +1,6 @@
 // Seed Firebase Emulator (auth + RTDB) untuk E2E — tanpa kredensial produksi.
 // Dipakai otomatis oleh e2e/workorder-pdf.spec.js saat E2E_USE_EMULATORS=1.
-/* global fetch, setTimeout, URL, process */
+/* global fetch, setTimeout, URL, process, console */
 import { readFileSync } from 'node:fs';
 
 const AUTH = 'http://127.0.0.1:9099';
