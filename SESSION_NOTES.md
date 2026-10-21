@@ -1,3 +1,36 @@
+## 📝 S33u-b (2026-10-21) — regresi toast pasca-login (ditemukan & ditutup, sw v36)
+
+Ditemukan saat menyusun rekomendasi lanjutan, bukan oleh tes mana pun. **Saya sendiri yang
+membawanya di `e01a7a7`.**
+
+Toast stack tinggal di `index.html` (scope `login()`), sedangkan `showNotification()`
+pasca-login dipanggil dari instance `app()`. Dua larik `notifications` berbeda, satu renderer:
+setiap notifikasi setelah login **tidak pernah tampil**. Dibuktikan di emulator, bukan dibaca
+dari kode: `app.notifications` 1 · `__loginScreen.notifications` 0 · `sameArray` false ·
+teks toast tidak ada di DOM. Tes yang ada tidak melihatnya karena smoke hanya memeriksa
+keberadaan live region, bukan perilakunya.
+
+**Perbaikan** (`4aa993f`, sw **v36**):
+- `main.js` — `loginScreen.notifications = instance.notifications` setelah chunk app terpasang:
+  satu larik untuk kedua scope.
+- `ui.js` — hapus entri dengan `splice()`, **bukan** `this.notifications = …filter(…)`.
+  Penugasan ulang memutus referensi bersama itu; itu justru bug kedua yang menunggu.
+- `index.html` — handler dismiss toast ikut `splice` (bentuk lama juga menugaskan array baru).
+- `e2e/workorder-pdf.spec.js` — kunci regresi: setelah login, toast dari `app()` wajib terlihat
+  di live region `role="status"`. Ditulis `page.getByRole('status')…` karena `getByText` polos
+  cocok ke dua node (toast + panel notifikasi di dalam shell) → strict mode violation.
+
+**Gerbang**: tsc 0 · eslint 0/79 · 1686 tes / 68 berkas · coverage 95,56/84,61/96,01/96,67 ·
+build ok · precache 63/63 · **E2E 5 passed (22,1 s)**.
+
+**Pelajaran umum**: memecah satu root Alpine jadi dua scope memindahkan **state bersama**
+(`notifications`, dan apa pun yang dirender di luar scope asalnya), bukan cuma markup. Setiap
+larik/objek yang dibaca dari dua scope harus dibagi referensinya, dan penghapusan isinya harus
+di tempat (`splice`) — bukan penugasan ulang. Kontrak "satu renderer, satu larik" perlu tes
+perilaku; tes keberadaan elemen tidak menangkapnya.
+
+---
+
 ## 📝 S33u (2026-10-21) — chunk `app()` malas SELESAI: login 120,3 → 60,0 KiB, TBT 115 → 25 ms (sw v35)
 
 Percobaan ke-3 lulus semua gerbang. Live **sw v35**, commit `e01a7a7`.
