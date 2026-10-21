@@ -27,4 +27,21 @@ describe('jalur kritis halaman login', () => {
     expect(mainjs).toMatch(/addEventListener\(ev, armSentry/);
     expect(mainjs).toMatch(/setTimeout\(armSentry/);
   });
+
+  // Diukur live (Lighthouse mobile, 3 run): `getAuth(app)` membawa
+  // `popupRedirectResolver` bawaan, dan di browser mobile resolver itu memuat
+  // `__/auth/iframe.js` (93 KB, 2,2 s) + `apis.google.com/js/api.js` (35 KB,
+  // 1,4 s) saat boot. `initializeAuth` tanpa resolver memindahkan keduanya ke
+  // jalur SSO saja.
+  it('auth boot tanpa popupRedirectResolver — iframe auth tidak ikut di layar login', () => {
+    const dbjs = fs.readFileSync(path.join(ROOT, 'src/js/db.js'), 'utf-8');
+    expect(dbjs).toMatch(/initializeAuth\(app,/);
+    expect(dbjs).not.toMatch(/\bgetAuth\(app\)/);
+    // hanya larang sebagai dependensi; komentar penjelasan boleh menyebutnya
+    expect(dbjs).not.toMatch(/popupRedirectResolver\s*:/);
+
+    const authjs = fs.readFileSync(path.join(ROOT, 'src/js/modules/auth.js'), 'utf-8');
+    expect(authjs).toMatch(/browserPopupRedirectResolver/);
+    expect(authjs).toMatch(/signInWithPopup\(\s*window\.auth,\s*provider,\s*browserPopupRedirectResolver\s*\)/);
+  });
 });

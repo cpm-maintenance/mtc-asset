@@ -14,7 +14,8 @@ import {
   orderByChild, endAt, equalTo, endBefore
 } from 'firebase/database'
 import {
-  getAuth, signOut, onAuthStateChanged,
+  initializeAuth, indexedDBLocalPersistence, inMemoryPersistence,
+  signOut, onAuthStateChanged,
   signInWithEmailAndPassword, setPersistence,
   browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
   sendPasswordResetEmail
@@ -33,7 +34,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db = getDatabase(app)
-const auth = getAuth(app)
+// `getAuth()` menyertakan `popupRedirectResolver` di dependensi default. Di browser
+// mobile resolver itu menginisialisasi iframe `__/auth/iframe` + `apis.google.com/js/api.js`
+// (93 + 35 KB, ~3,6 s) saat boot — padahal belum ada tombol SSO yang ditekan.
+// `initializeAuth` hanya mendaftarkan persistensi; resolver diambil di jalur SSO
+// (`loginWithSSO`) sebagai argumen ketiga `signInWithPopup`.
+const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence],
+})
 
 // E2E: pakai Firebase Emulator (auth + database) supaya tes tidak menyentuh produksi
 // dan tidak butuh kredensial asli. Aktif hanya bila VITE_USE_EMULATORS=1.

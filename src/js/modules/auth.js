@@ -72,7 +72,10 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // GoogleAuthProvider + signInWithPopup, plus iframe `__/auth/iframe`
             // dan `apis.google.com`) baru diunduh saat tombol SSO diklik, bukan
             // saat boot. API Google keluar dari jalur kritis login.
-            const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+            // `browserPopupRedirectResolver` wajib diberikan eksplisit: `auth`
+            // dibuat lewat `initializeAuth` tanpa resolver (lihat db.js) supaya
+            // iframe auth tidak dimuat di layar login.
+            const { GoogleAuthProvider, signInWithPopup, browserPopupRedirectResolver } = await import('firebase/auth');
             if (!signInWithPopup || !GoogleAuthProvider) {
                 this.showNotification('SSO belum tersedia di build ini', 'error');
                 return;
@@ -80,7 +83,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             const provider = new GoogleAuthProvider();
             // `window.auth` — sama seperti login email di berkas ini; AppState
             // tidak menyimpan instance auth.
-            const cred = await signInWithPopup(window.auth, provider);
+            const cred = await signInWithPopup(window.auth, provider, browserPopupRedirectResolver);
             const userData = await this.ensureUserProfile(cred.user);
             this.userRole = userData?.role || 'user';
             this.rememberLogin?.(cred.user?.email || '');

@@ -27,6 +27,10 @@ vi.mock('firebase/auth', () => ssoMock);
 const ssoMock = vi.hoisted(() => ({
     GoogleAuthProvider: class {},
     signInWithPopup: vi.fn(),
+    // Resolver WAJIB diberikan eksplisit di jalur SSO: `auth` dibuat lewat
+    // `initializeAuth` tanpa resolver supaya iframe `__/auth/iframe` tidak
+    // dimuat di layar login (lihat db.js).
+    browserPopupRedirectResolver: { name: 'browserPopupRedirectResolver' },
 }));
 function stubFirebase(overrides = {}) {
     const fns = {
@@ -650,7 +654,13 @@ describe('login — mode akses (email / pin / sso)', () => {
         expect(ssoMock.GoogleAuthProvider).toBeDefined();
         // Instance auth HARUS dari jembatan window (sama seperti login email),
         // bukan `this.auth` — AppState tidak punya field `auth`.
-        expect(ssoMock.signInWithPopup).toHaveBeenCalledWith(fb.auth, expect.anything());
+        // Argumen ketiga = resolver nyata: tanpa itu `initializeAuth` tidak punya
+        // resolver dan popup akan gagal dengan auth/argument-error.
+        expect(ssoMock.signInWithPopup).toHaveBeenCalledWith(
+            fb.auth,
+            expect.any(ssoMock.GoogleAuthProvider),
+            ssoMock.browserPopupRedirectResolver,
+        );
         expect(ctx.userRole).toBe('supervisor');
         expect(localStorage.getItem('mtc_last_login_email')).toBe('op@plant.id');
         expect(ctx.showNotification).toHaveBeenCalledWith('Welcome back!');
