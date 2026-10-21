@@ -1,3 +1,53 @@
+## 📝 S33o (2026-10-21) — subset webfont dikirim sebagai `text=` (−20,5 KiB jalur login) + protokol **TBT nyata**
+
+### Prioritas 1 — subset webfont: −34,4 KiB total, tanpa regresi
+
+Subset "latin" Google membawa seluruh Latin-1 + Latin Extended-A yang tidak dipakai aplikasi berbahasa Indonesia. Yang benar-benar dipakai UI = **ASCII + 9 tanda baca** (© · – — • … → ± ×), dan daftar itu dikirim sebagai `&text=` supaya subsetting dilakukan **server-side** — tanpa fonttools, tanpa tool baru di repo.
+
+| berkas | sebelum | sesudah | turun |
+|---|---|---|---|
+| outfit-subset.woff2 | 32.292 B | **24.088 B** | −25% |
+| space-grotesk-subset.woff2 | 22.288 B | **15.720 B** | −29% |
+| inter-subset.woff2 | 48.256 B | **32.612 B** | −32% |
+| jetbrains-mono-subset.woff2 | 31.432 B | **26.560 B** | −15% |
+| **total** | **131,1 KiB** | **96,7 KiB** | **−26%** |
+
+Plafonnya ~26% karena **variabel font** tetap menyimpan seluruh delta sumbu `wght` untuk glyph yang tersisa: Inter ASCII saja 30,5 KB, ASCII+9 tanda baca 33,6 KB, latin penuh 48,3 KB — jadi 10 KB dari penghematan itu berasal dari Latin-1 yang memang tidak dipakai.
+
+Bukti tanpa regresi:
+- **Kanal `s33n-c`, 3 run**: total byte **260 → 240 KiB**, perf 91, FCP 2170, LCP 3109 (di dalam derau LCP yang sudah diketahui).
+- **Probe berpasangan** (base vs subset, 3 pasang, CPU ×4 + slow-4G, cache dingin): FCP 1128 → 1184 ms (median) — tidak ada regresi seperti kasus preload; font tetap tiba sesudah paint.
+- **Glyph yang benar-benar dirender** dicek lewat CDP `CSS.getPlatformFontsForNode` (`scripts/font-render-check.mjs`, baru): JetBrains Mono(24) · Inter(65) · Inter(56) **identik** dengan build lama — bukan sekadar "CSS-nya bilang Inter".
+- Live sesudah deploy (sw **v32**, `cea89de`, 3 run): total **240 KiB**, perf median **96**, FCP 2175, LCP 2250 (LCP derau — jangan diklaim).
+- Kerugian yang diterima, dikunci tes: karakter di luar subset (mis. huruf beraksen Latin-1 yang ditempel pengguna) dirender font berikutnya di stack, **per glyph** (bukan tofu). Generator mencetak peringatan kalau ada karakter teks baru; `tests/webfont-subset.test.js` (5 tes) mengunci ASCII+9 tanda baca tercover, plafon ukuran, dan nama lama tidak kembali.
+
+### Prioritas 2 — TBT nyata sebagai angka kedua (`npm run lh:real`)
+
+Sampai sesi ini hanya mode `simulate` yang diukur, dan mode itu **melaporkan TBT 0** sementara Chrome dengan throttle sungguhan mencatat **254 ms** (median 3 run hari ini; 355 ms di 2 run sebelum subset).
+
+| run | perf | FCP | LCP | TBT | CLS | main-thread | JS eval |
+|---|---|---|---|---|---|---|---|
+| 1 | 91 | 2240 | 2240 | 254 | 0,058 | 1225 | 1137 |
+| 2 | 90 | 2239 | 2239 | 264 | 0,073 | 1216 | 1133 |
+| 3 | 92 | 2253 | 2253 | 214 | 0,008 | 1136 | 1025 |
+| **median** | **91** | **2240** | **2240** | **254** | 0,058 | **1216** | **1133** |
+
+- `scripts/lh-real.mjs` = 3 run `--throttling-method=devtools` → cetak perf/FCP/LCP/TBT/CLS + main-thread + JS eval. CLI dipanggil lewat `process.execPath` + `node_modules/lighthouse/cli/index.js` (`npx.cmd` tidak bisa di-spawn tanpa shell di Windows/node 24).
+- **Temuan baru langsung dari instrumen ini**: **CLS nyata 0,058–0,073** (mode simulate: 0,000–0,013) — di atas ambang 0,02 yang dipakai sebagai gerbang. Jadi gate CLS yang dilacak hari ini mengukur versi model, bukan versi perangkat. Belum diperbaiki; kandidat sesi berikutnya dengan `scripts/cls-probe.mjs` + throttle nyata.
+
+### Gerbang
+tsc 0 · eslint **0 error / 79 warning** · **1669 tes / 66 berkas** · coverage **95,56 / 84,64 / 96,00 / 96,68** (ratchet 95/84/95/96) · build ok · precache **58/58** · E2E lokal **5 passed (21,2 s)**.
+Commit `cea89de` (subset) → `0862266` (protokol `lh:real`). `sw.js` v31 → **v32**.
+Live: sw v32 · `/fonts/inter-subset.woff2` HTTP 200 Content-Length 32.612 · CSS live menunjuk 5 berkas `*-subset.woff2`.
+
+### Jebakan
+1. **Plafon subset server-side ≈26%** (variabel font) — jangan janjikan 50%; penghematan besar hanya datang dari membuang glyph Latin-1/ExtA.
+2. **`unicode-range` sempit = fallback per glyph**, bukan tofu. Kalau UI menambah karakter baru, perluas `EXTRA` di generator dan jalankan ulang; generator sudah mencetak peringatan (`≥` sisa hanya ada di komentar CSS — sengaja tidak diminta).
+3. `curl -w '%{size_download}'` di git-bash bisa melaporkan **0 walau HTTP 200** — verifikasi ukuran pakai `curl -sI` (Content-Length) atau `| wc -c`.
+4. **Aset lama tidak benar-benar hilang**: `firebase.json` punya rewrite `** → /index.html`, jadi URL berkas yang sudah dihapus menjawab **200 berisi index.html**. Periksa keberadaan aset dari `Content-Type`/`Content-Length`, jangan dari status code.
+
+---
+
 ## 📝 S33n (2026-10-21) — dua kandidat jalur kritis diukur, **keduanya ditolak**: preload webfont (Lighthouse bilang menang, browser nyata bilang kalah) · tunda `@font-face`
 
 ### Target sesi (LCP live median ≤ 2,8 s): **tidak tercapai — dan penyebabnya bukan kandidat yang diuji**
