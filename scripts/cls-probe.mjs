@@ -7,8 +7,12 @@
 // lewat CDP, lalu mencatat SETIAP `layout-shift` beserta node penyebabnya.
 //
 // Pakai:
-//   node scripts/cls-probe.mjs [url] [passes] [threshold]
-//   default: https://mtc-asset.web.app/  3  0.02
+//   node scripts/cls-probe.mjs [url] [passes] [threshold] [settleMs]
+//   default: https://mtc-asset.web.app/  3  0.02  8000
+//
+// `settleMs` = jeda setelah `networkidle` sebelum CLS dibaca. Lighthouse membaca
+// lebih lama dari itu, jadi shift yang datang belakangan (icon font, fragmen
+// shell) hanya terlihat kalau jedanya cukup.
 //
 // Keluar dengan kode 1 kalau median CLS melewati ambang (dipakai sebagai gate).
 import { chromium } from 'playwright';
@@ -16,6 +20,17 @@ import { chromium } from 'playwright';
 const url = process.argv[2] || 'https://mtc-asset.web.app/';
 const passes = Number(process.argv[3] || 3);
 const threshold = Number(process.argv[4] || 0.02);
+const settle = Number(process.argv[5] || 8000);
+// Lebar viewport bisa diubah untuk membandingkan dengan emulasi Lighthouse
+// (412x823, DPR 1,75) — jumlah baris teks bergantung lebar, jadi swap font bisa
+// tetap menggeser di satu lebar dan tidak di lebar lain.
+const vw = Number(process.argv[6] || 390);
+const vh = Number(process.argv[7] || 844);
+const dpr = Number(process.argv[8] || 2);
+
+// `CLS_CHANNEL=chrome` memakai Chrome sistem (yang dipakai Lighthouse) alih-alih
+// Chromium bawaan Playwright — dua binari bisa punya set font/`local()` berbeda.
+const channel = process.env.CLS_CHANNEL || '';
 
 const UA =
   'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
@@ -28,10 +43,10 @@ const results = [];
 // Lighthouse selalu cache DINGIN (profil Chrome baru per run) — probe ini
 // menirunya: satu browser baru per pass.
 for (let pass = 1; pass <= passes; pass++) {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(channel ? { channel } : {});
   const ctx = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 2,
+    viewport: { width: vw, height: vh },
+    deviceScaleFactor: dpr,
     isMobile: true,
     userAgent: UA,
   });
@@ -98,9 +113,9 @@ for (let pass = 1; pass <= passes; pass++) {
 
   const t0 = Date.now();
   await page.goto(url, { waitUntil: 'networkidle' });
-  // Jeda 3 s: `requestIdleCallback`/prefetch baseline baru jalan setelah itu,
-  // tanpa jeda shift yang datang belakangan tidak terlihat.
-  await page.waitForTimeout(3000);
+  // Jeda `settle` (default 8 s): prefetch/`requestIdleCallback` baseline baru
+  // jalan setelah itu, dan Lighthouse membaca lebih lama dari 3 s.
+  await page.waitForTimeout(settle);
 
   const out = await page.evaluate(() => {
     /** @type {any} */ const w = globalThis;
