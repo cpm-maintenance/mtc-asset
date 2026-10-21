@@ -1,3 +1,30 @@
+## 📝 S33r (2026-10-21) — probe scope Alpine: jawabannya varian c (wrapper di fragmen)
+
+Sesi pendek, satu tujuan: memastikan apakah `x-data` pada elemen host bisa menjadi scope.
+**Jawaban: tidak bisa, dalam urutan apa pun.** `node scripts/alpine-scope-probe.mjs` (baru):
+
+| varian | cara | hasil |
+|---|---|---|
+| control | atribut → `innerHTML` → `initTree(host)` | gagal (`probeValue is not defined`) |
+| a | atribut → `initTree(host)` kosong → `innerHTML` → `initTree` | gagal |
+| b | atribut → `initTree(document.body)` → `innerHTML` → `initTree` | gagal |
+| **c** | fragmen membawa root **`<div x-data="app()">`** | **LULUS** (`SCOPE-OK`, tanpa error) |
+
+Jadi bug #2 S33q terpecahkan: pakai varian c. Turunannya:
+- `#app-shell` tidak diberi `x-data`; `main.js` cukup `innerHTML` + `Alpine.initTree(host)`.
+- `@keydown.window` shortcut n/l pindah **ke dalam wrapper**, bukan tetap di `#app-shell`
+  (direktif di host akan terikat ke scope `login()`).
+- Risiko CSS wrapper: **nol temuan** — `grep -c 'body *>'` di `style.css`/`tactical.css` = 0,
+  `:nth-child`/`:last-child` hanya di `.skeleton-*` dan `#page-dash a.rounded-2xl`, dan
+  wrapper statis tidak membuat containing block untuk `position: fixed`.
+
+Desain diperbarui: `docs/superpowers/specs/2026-10-21-lazy-main-chunk-design.md` (bagian
+"Hasil probe scope"). Sisa pekerjaan sebelum refactor diulang: **bug #3** (balapan
+`window.ref` antara sign-in dan `__loadDataLayer()`; `app.logs` 0 di emulator).
+Tidak ada perubahan `src/**` sesi ini → `sw.js` tetap **v33**, live tetap `5cccd53`.
+
+---
+
 ## 📝 S33q (2026-10-21) — percobaan chunk `app()` malas: 79,0 KiB tercapai, TIDAK di-merge (3 bug runtime)
 
 Status: **dibatalkan, working tree kembali ke `0aa410f`**. Live tetap `3cbae47` / sw **v33**. Tidak ada yang di-deploy.

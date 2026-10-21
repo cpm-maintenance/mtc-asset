@@ -128,3 +128,28 @@ CSS, dan **satu modul state layar login**. Isinya diambil dari sumber yang ada
   singleton, scope ganda tetap satu proxy — jangan membuat objek baru per elemen.
 - Bila `initTree` dipanggil untuk fragmen yang sudah punya `x-data`, Alpine tetap
   memprosesnya; jangan memanggil dua kali (`host.dataset.loaded` sudah menjaga ini).
+## Hasil probe scope (S33r) — MENENTUKAN, jangan diulang
+
+`node scripts/alpine-scope-probe.mjs` (4 varian, halaman terpisah, `<body x-data="login()">`
++ `<div id="host">` + `<span x-text="probeValue">`, `app()` mendefinisikan `probeValue`):
+
+| varian | cara | hasil |
+|---|---|---|
+| control | `setAttribute('x-data','app()')` → `innerHTML` → `initTree(host)` | **gagal** — `probeValue is not defined` (anak mencari scope `login()`) |
+| a | atribut → `initTree(host)` kosong → `innerHTML` → `initTree(host)` | **gagal** |
+| b | atribut → `initTree(document.body)` → `innerHTML` → `initTree(host)` | **gagal** |
+| **c** | tanpa atribut di host; fragmen membawa **root `<div x-data="app()">`** sendiri | **LULUS** (`probeValue` = `SCOPE-OK`, tanpa error) |
+
+Kesimpulan: `x-data` pada elemen host **tidak pernah** menjadi scope lewat `initTree`,
+dalam urutan apa pun. Satu-satunya bentuk yang bekerja: **wrapper `<div x-data="app()">`
+di dalam fragmen** (varian c).
+
+Konsekuensi untuk rancangan:
+- `#app-shell` di `index.html` **tidak** perlu (dan tidak boleh) diberi `x-data`;
+  `main.js` cukup `innerHTML` + `Alpine.initTree(host)`.
+- Handler `@keydown.window` shortcut n/l **pindah ke dalam wrapper**, bukan tetap di
+  `#app-shell` — direktif di host akan terikat ke scope `login()`.
+- Risiko CSS wrapper: **nol temuan statis** — `grep -c 'body *>'` di `style.css` dan
+  `tactical.css` = 0, dan satu-satunya `:nth-child`/`:last-child` ter-scope ke
+  `.skeleton-*` dan `#page-dash a.rounded-2xl`. Wrapper statis juga tidak membuat
+  containing block untuk `position: fixed` (tidak ada transform/filter/contain).
