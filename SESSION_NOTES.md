@@ -1,3 +1,77 @@
+## 📝 S33k (2026-10-21) — webfont di-self-host: fonts.googleapis.com keluar dari jalur kritis login (perf live **79 → 93**)
+
+### Temuan: font pihak ketiga adalah biaya terbesar FCP, bukan JS
+Lighthouse live mobile satu run + A/B `--blocked-url-patterns` (tanpa rebuild, jadi murni efek sumber daya):
+
+| Kondisi (live, 1 run) | perf | FCP | LCP | total byte |
+|---|---|---|---|---|
+| baseline (S33j) | 79 | 3.680 ms | 3.980 ms | 275 KiB |
+| blokir `fonts.googleapis.com` + `fonts.gstatic.com` | **82** | **2.667 ms** | 3.034 ms | 196 KiB |
+| blokir chunk `db-*` | 81 | 3.576 ms | 3.801 ms | 241 KiB |
+| blokir `main-*.js` | 83 | 3.475 ms | 3.475 ms | 206 KiB |
+
+Font = **−1.013 ms FCP** dan 79 KiB transfer. Penyebabnya `index.html` memakai pola
+`<link rel=preload as=style href="fonts.googleapis.com/css2?…" onload="this.rel='stylesheet'">`
+— CSS tetap diunduh dari origin lain (DNS+TLS ke dua host) lalu memicu unduhan woff2 dari
+`fonts.gstatic.com`. `preconnect` tidak menghapus rantai itu.
+
+Eksperimen pembanding (preview, DOM aplikasi dipotong dari `dist/index.html`): perf **90**,
+LCP 2.911 ms — jadi sisa biaya render delay memang markup shell 128 KB yang ikut diparse
+sebelum login. Itu pekerjaan tersendiri, belum dikerjakan (lihat "Tidak dikerjakan").
+
+### Perubahan
+| Berkas | Isi |
+|---|---|
+| `scripts/download-webfonts.mjs` | generator: ambil css2 (UA Chrome, variable range `wght@300..800` dll), simpan **hanya subset latin**, tulis `src/css/fonts.css` |
+| `src/css/fonts.css` | 4 `@font-face` (`font-display: swap`): Outfit 300–800, Space Grotesk 300–700, Inter 400–700, JetBrains Mono 400–600 — **131 KiB** total |
+| `public/fonts/*-latin.woff2` | 4 berkas font (ikut `includeAssets` `fonts/*.woff2` → ter-precache) |
+| `index.html` | preconnect ×2, preload, dan `noscript` Google Fonts dibuang; preconnect cdnjs juga (cropper dimuat on-demand) |
+| `src/main.js` | `import './css/fonts.css'` sebelum `style.css` |
+| `sw.js` | `mtc-asset-v28` → **v29** |
+| `.gitignore` | `lh-*.json`, `lh.log`, `gf.css`, `preview.log` (artefak ukur, jangan ke-commit) |
+
+Subset `latin-ext`/cyrillic/greek sengaja dibuang: aplikasi berbahasa Indonesia, dan tiap
+subset ikut masuk precache SW — byte-nya nyata, bukan gratis.
+
+### Gerbang
+tsc 0 · eslint 0 error / 79 warning · **1653 tes / 63 berkas** · coverage **95,60 / 84,65 / 96,00 / 96,73** (ratchet tetap) · build ok · precache **60 entries** (`verify:precache` 57/57) · E2E **5 passed** (43,4 s).
+
+### Live sesudah push `1dfaa14` (sw v29 aktif t≈65 s)
+`curl sw.js` → `mtc-asset-v29`; `curl index.html | grep -c fonts.googleapis` → **0**.
+Probe browser produksi: 5 `@font-face` lokal terdaftar, `document.styleSheets` tanpa origin
+luar, Inter + JetBrains Mono + Material Symbols berstatus `loaded`.
+
+Lighthouse live mobile **3 run** (`node scripts/lighthouse-aggregate.mjs`):
+
+| Metrik | S33j (median) | S33k (median) | Run 1/2/3 |
+|---|---|---|---|
+| perf | 79 | **93** | 88 / 93 / 95 |
+| a11y · bp · seo | 100 · 100 · 100 | 100 · 100 · 100 | 100 semua |
+| FCP | 3.680 ms | **2.197 ms** | 2.235 / 2.013 / 2.197 |
+| LCP | 3.988 ms | **2.929 ms** | 3.205 / 2.929 / 2.497 |
+| render delay | 3.298 ms | **2.266 ms** | 2.469 / 2.266 / 1.800 |
+| TBT | 0 ms | 48 ms | 167 / 48 / 0 |
+| CLS | 0 | **0,000** | 0,014 / 0 / 0 |
+| total byte | 275 KiB | 274 KiB | 274 semua |
+| unused-js | 58 KiB | 58 KiB (`main-*`) | 58 / 53 / 84 |
+| `prod-*.js` di network | 0 / 3 | 0 / 3 | 0 semua |
+
+Target sesi (**≥ 85**) tercapai: **93**. Unused-js tidak turun — perbaikan datang dari jalur
+kritis, bukan dari pemangkasan byte JS; `db-*` (34 KiB) masih diunduh di login.
+
+### Tidak dikerjakan (dan kenapa)
+1. **Chunk `db-*` ditunda sampai setelah login** (kartu `t_cb2a51d4`) — A/B blokir hanya **+2** poin dari baseline 79; menundanya butuh `db.js` jadi binding hidup + urutan boot baru (risiko jalur data seluruh app) untuk sisa gain yang lebih kecil lagi di baseline 93.
+2. **`main-*.js` 58 KiB unused** (kartu `t_bea98211`) — butuh pemecahan `app()` 2.604 baris / 15 mixin; belum, sesuai isi kartu.
+3. **Shell aplikasi 128 KB keluar dari `index.html`** — eksperimen preview menunjukkan perf **90** dengan DOM dipotong (LCP 2.911 ms); kandidat kuat berikutnya, tapi mengubah cara semua halaman boot, jadi butuh sesi sendiri.
+
+### Jebakan
+1. **`preconnect` ≠ menghapus rantai.** Font pihak ketiga tetap 2 origin + 1 CSS hop. Yang menghapusnya hanya self-host (atau blokir total).
+2. **Pola `preload as=style onload="this.rel='stylesheet'"` lolos dari audit `render-blocking-resources`** — Lighthouse tidak menandainya, tapi A/B blokir membuktikan 1 s FCP. Jangan percaya audit itu sebagai daftar lengkap.
+3. **Ukur hipotesis dengan `--blocked-url-patterns`, bukan dengan rebuild.** Satu perintah per hipotesis di URL produksi; hasilnya berlaku untuk build yang sedang live, tanpa risiko `dist/` basi.
+4. **`wght@300;400;…` mengembalikan 55 `@font-face` (semua subset).** Pakai rentang variabel (`wght@300..800`) + filter `unicode-range: U+0000-00FF` supaya yang tersimpan hanya latin.
+
+---
+
 ## 📝 S33j (2026-10-21) — iframe auth + gapi keluar dari jalur login (kartu `t_505ab09a` dibuka lagi)
 
 ### Kartu S33h salah menutup premisnya — karena UA probe
