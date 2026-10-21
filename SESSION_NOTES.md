@@ -30,6 +30,9 @@
 ### Gerbang
 tsc 0 · eslint 0 error / 79 warning · **1652 tes / 63 berkas** · coverage **95,60 / 84,65 / 96,00 / 96,73** · build ok · precache **53/53** · E2E **5 passed** (`--workers=1`, 40,7 s).
 
+### Live (setelah push `687c549`)
+`mtc-asset-v27` aktif di `https://mtc-asset.web.app` (terdeteksi **t=90 s** setelah push). Probe produksi: **0** request `prod-*.js` sebelum interaksi, muncul setelah klik pertama (`window.Sentry` = object), 7 request JS, **0 `pageerror`**. Chunk live `main-B8v51kMt.js`: `import(\`./prod-C6YQoGgw.js\`)` ada, `requestIdleCallback` **0 kemunculan**, `prod-` di `index.html` **0**.
+
 ### Jebakan
 1. **`npm run test:coverage && npm run build` dalam satu panggilan dengan `timeout` > 600 s dipromosikan jadi background process** — pakai `timeout` ≤ 600 atau poll `process_manage`, jangan jalankan ulang (dobel build).
 2. **Probe `prod-*.js` harus menunggu `networkidle` + 3 s** — `requestIdleCallback` baseline butuh jeda itu; tanpa jeda baseline terlihat "bersih" dan A/B jadi palsu.
