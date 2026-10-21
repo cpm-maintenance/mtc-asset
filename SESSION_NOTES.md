@@ -1,3 +1,58 @@
+## 📝 S33n (2026-10-21) — dua kandidat jalur kritis diukur, **keduanya ditolak**: preload webfont (Lighthouse bilang menang, browser nyata bilang kalah) · tunda `@font-face`
+
+### Target sesi (LCP live median ≤ 2,8 s): **tidak tercapai — dan penyebabnya bukan kandidat yang diuji**
+
+Lighthouse `critical-request-chains` menaruh jalur paint pertama halaman login sebagai
+`main-*.css` (12,9 KB) → `jetbrains-mono-latin.woff2` (31,7 KB) → `inter-latin.woff2` (48,6 KB):
+**80 KB berurutan + 2 RTT sesudah CSS**. Harga tiap sumber daya diukur di URL produksi
+(`--blocked-url-patterns`, median 3 run):
+
+| dipblokir | dFCP | dLCP | byte |
+|---|---|---|---|
+| `main-*.css` (12,9 KB) | **−69 ms** | +45 | −30 KiB |
+| `inter-latin.woff2` (48,6 KB) | −171 ms | +370 | −47 KiB |
+| `jetbrains-mono-latin.woff2` (31,7 KB) | −170 ms | −140 | −31 KiB |
+| keduanya | −249 ms | +35 | −89 KiB |
+
+Premis kartu ("CSS 12,5 KiB yang memblokir render adalah tuasnya") lemah di live: 69 ms. Yang mengisi rantai itu justru webfont — 80 dari 94 KB.
+
+**Probe browser nyata** (`scripts/login-paint-probe.mjs`, Chromium, CPU ×4 + slow-4G, cache dingin):
+**FP = FCP = LCP ≈ 1,19 s** (median 4 run). Lighthouse mode `simulate` mencetak FCP 2,2 s dan LCP 2,4–3,4 s pada build yang sama → selisihnya artefak model Lantern, yang menganggap webfont penentu paint pertama padahal `font-display: swap` sudah mencatat teks sebelum font tiba.
+
+### Yang diuji, dan angkanya
+
+| varian | Lighthouse (kanal A/B) | probe nyata (berpasangan) | keputusan |
+|---|---|---|---|
+| preload 2 webfont | 3 vs 6 run: FCP 2269 → **1965**, LCP 3076 → **2484**, perf 91 → **94,5** | FCP 1188 → **1508 ms** (4/4 pasang, tanpa tumpang tindih); TTFB lebih rendah di jalur preload (272 → 225) | **dibatalkan** (`835d135`) |
+| tunda `@font-face` setelah paint pertama | FCP sama (−330), **LCP tidak turun** (3065) | + kedipan font | dibuang, tak pernah di-deploy |
+| inline / potong CSS | hanya 69 ms | — | tidak dikerjakan |
+
+Mekanisme penolakan: 80 KB font prioritas High berebut pipa 1,6 Mbps dengan CSS yang memblokir render. JetBrains memang datang lebih awal (1705 → 1448 ms), tapi teks login sudah tercatak sebelum font tiba → untungnya nol, biayanya nyata.
+
+Instrumen A/B yang baru: **kanal hosting** (`npx firebase hosting:channel:deploy s33n-a --expires 3d`) — A/B di URL hosting asli tanpa menyentuh produksi.
+
+### Temuan untuk sesi berikutnya
+
+1. **LCP live tidak bisa dipakai sebagai pembeda.** Build yang sama (`fd8540f`, sw v30) memberi LCP **2262–3414 ms** lintas 10 run (median 2459) — bimodal ≈2,5 s vs ≈3,4 s. Elemen LCP selalu `label.font-body-sm` yang sama, Load Delay/Load Time 0, tidak ada sumber daya yang berubah. Tidak ada perubahan hari ini yang menggeser mediannya secara terbaca. Jangan simpulkan menang/kalah dari median 3 run LCP.
+2. **FCP bisa dipakai**, tapi hanya dengan instrumen yang sama: ~1,1–1,2 s di probe nyata, ~2,2 s di Lighthouse `simulate`.
+3. Kandidat yang belum tersentuh dan masih punya angka: `db-*.js` 34 KB terunduh pra-login (31 K unused), `main-*.js` 57 K unused (lihat kartu).
+
+### Gerbang + deploy
+
+tsc 0 · eslint **0 error / 79 warning** · **1664 tes / 65 berkas** · coverage **95,56 / 84,64 / 96,00 / 96,68** (ratchet 95/84/95/96) · build ok · precache **58/58** · E2E lokal **5 passed (23,7 s)** · CI `835d135`: Lighthouse CI + Build and Deploy **success**, E2E di CI 14 s.
+Commit `999ac98` (preload, dibatalkan) → `835d135` (revert + tes kontrak negatif). `sw.js` tetap **v31**; `index.html` kembali identik dengan `f83e999`.
+Live sesudah revert (3 run, sw v31): perf **91**, FCP 2169, LCP 3064, TBT 0, CLS 0 — kembali ke baseline S33m (91 / 2186 / 3097).
+
+### Jebakan
+
+1. **Lighthouse `simulate` menghukum rantai webfont, bukan waktu paint nyata.** Keputusan yang bergantung pada FCP/LCP wajib lewat probe nyata + A/B **berpasangan selang-seling**; kalau tidak, drift jaringan/jam jadi kesimpulan palsu: di sini urutan blok (base dulu, preload kemudian) memberi arah yang berlawanan dengan 4 pasang selang-seling.
+2. **A/B lewat URL berbeda (kanal vs produksi) punya TTFB berbeda** (189–243 vs 275–408 ms) — bandingkan kanal↔kanal atau produksi↔produksi, jangan campur.
+3. `npx playwright --workers=1` **bukan** perintah yang benar — subcommand `test` wajib: `npx playwright test --workers=1` (tanpa itu: "unknown option '--workers=1'").
+4. **eslint tidak mengabaikan berkas scratch di root repo.** `curl -s ... > live-sw.js` (35 error `no-undef` di berkas minified) + 3 error `no-undef` di probe baru membuat `npm run lint` merah padahal source bersih. Hapus berkas curl sebelum lint; untuk probe, tulis `globalThis.document` / `globalThis.getComputedStyle` di dalam `page.evaluate()`.
+5. Kanal hosting kedaluwarsa 3 hari (`--expires 3d`) — kalau mau diukur lagi, deploy ulang.
+
+---
+
 ## 📝 S33m (2026-10-21) — shell aplikasi (128 KB) keluar dari `index.html` — hasil live: **tidak naik** (median 93 → 91)
 
 ### Yang dikerjakan
