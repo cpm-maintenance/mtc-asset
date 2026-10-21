@@ -16,7 +16,9 @@ export default defineConfig({
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 1 : undefined,
     reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-    timeout: 30_000,
+    // Di CI dev server masih dingin: tes pertama men-transform seluruh modul
+    // (terukur 22,3 s lokal). Runner lebih lambat, jadi beri 60 s di CI.
+    timeout: process.env.CI ? 60_000 : 30_000,
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
@@ -37,10 +39,19 @@ export default defineConfig({
             stderr: 'pipe',
         },
         {
-            command: process.env.CI ? 'npm run preview -- --port 3000' : 'npm run dev',
+            // `dev` di CI **dan** lokal: satu-satunya jalur yang menghormati
+            // VITE_USE_EMULATORS=1. Dulu CI memakai `preview` (dist hasil build
+            // dengan env demo) sehingga db.js tidak pernah menyambung ke emulator
+            // dan `e2e/workorder-pdf.spec.js` (login → WO → PDF) selalu gagal —
+            // karena itu CI hanya menjalankan smoke.
+            // `stdout: 'pipe'` supaya kalau server mati, log Playwright memuat
+            // pesan aslinya, bukan cuma "webServer was not able to start".
+            command: 'npm run dev -- --port 3000',
             url: 'http://localhost:3000',
-            reuseExistingServer: true,
+            reuseExistingServer: !process.env.CI,
             timeout: 60_000,
+            stdout: 'pipe',
+            stderr: 'pipe',
             env: { VITE_USE_EMULATORS: '1' },
         },
     ],

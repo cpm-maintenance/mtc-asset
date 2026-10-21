@@ -59,7 +59,10 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: E2E tests (smoke)
-        # Satu worker: 4 worker paralel di preview yang masih dingin membuat
+      - name: E2E tests (full suite)
+        # Seluruh spec: smoke + alur kritis login → dashboard → export PDF.
+        # Alur login hanya bisa jalan kalau dev server memakai VITE_USE_EMULATORS=1
+        # (lihat playwright.config.js) — bukan `vite preview` atas dist ber-env demo.
+        # Satu worker: 4 worker paralel di server yang masih dingin membuat
         # `page.goto` menabrak timeout 30 s (terbukti lokal, 4 gagal / 1 lolos).
-        run: npx playwright test e2e/smoke.spec.js --workers=1
+        run: npx playwright test --workers=1
