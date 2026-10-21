@@ -27,6 +27,22 @@ Kesimpulan:
 - Saat mem-probe alur boot/scope, **tangkap `pageerror`, bukan hanya `console`**. Dua percobaan berturut-turut menghabiskan waktu karena `logs: 0` terlihat seperti masalah listener padahal ada ReferenceError tak tertangkap yang menghentikan init.
 - Probe state yang berguna: `loggedIn`, `logs`, `hasOnUser`, `hasSetup`, `shellLoaded`, `wrapper`, `loginFlag`, `dbFn`, `refFn` — semuanya dalam satu `page.evaluate`.
 
+### Addendum S33t — hipotesis 1 sudah diuji: FALSIFIKASI
+`grep -rn showCropModalOpen src/ public/pages/`:
+- `src/js/app.js:365` → **`showCropModalOpen: false`** (properti ADA di `app()`)
+- `src/js/app.js:2543/2568/2580` → pemakaian
+- `public/pages/app-shell.html:1835` → **`<template x-if="showCropModalOpen">`**
+
+Jadi bukan properti yang hilang. Berarti `x-if` di fragmen itu dievaluasi pada scope yang
+**tidak** punya properti tersebut — artinya wrapper `<div x-data="app()">` tidak menjangkau
+node itu, walau `wrapper: true` dan `shellLoaded: 1`.
+
+Uji termurah berikutnya (satu baris, sebelum menyentuh kode aplikasi): di probe, cetak
+`document.querySelector('#app-shell template[x-if]')?.closest('[x-data]')?.getAttribute('x-data')`
+dan `.parentElement.closest('[x-data]')` — kalau hasilnya bukan `app()`, cari di mana wrapper
+tertutup lebih awal (periksa keseimbangan `<div>` di `app-shell.html` setelah pembungkusan,
+terutama di sekitar markup crop modal dan `</template>` di akhir berkas).
+
 **Status**: refactor ini sudah gagal 2×, keduanya di E2E dan keduanya dengan penyebab berbeda yang sekarang sudah terdokumentasi. Sisa satu langkah investigasi (hipotesis 1) sebelum layak dicoba lagi.
 
 ---
