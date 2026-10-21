@@ -1,3 +1,42 @@
+## 📝 S33i (2026-10-21) — Sentry keluar dari jalur kritis login (kartu `t_bea98211`, bagian Sentry)
+
+### Masalah
+`src/main.js` memuat Sentry lewat `requestIdleCallback(initSentry, {timeout: 3000})`. Pada render login mobile, timeout 3 s itu **selalu** menang atas paint, jadi chunk `prod-*.js` (83.856 B / **28.015 B gzip**) ikut terunduh di layar login — padahal Sentry hanya telemetry.
+
+### Perubahan
+| Berkas | Isi |
+|---|---|
+| `src/main.js` | `initSentry` dipicu interaksi pertama (`pointerdown`/`keydown`/`touchstart`, `{passive:true}`) + jaring pengaman `setTimeout(armSentry, 30000)`; listener dilepas setelah menyala (`sentryArmed`) |
+| `sw.js` | `mtc-asset-v26` → **v27** |
+| `tests/login-critical-path.test.js` | baru — 2 tes kontrak: `requestIdleCallback(initSentry` / `setTimeout(initSentry,` dilarang muncul lagi; `armSentry` + daftar event + `setTimeout(armSentry` wajib ada |
+| `scripts/login-network-probe.mjs` | baru — probe Playwright: hitung request `prod-*.js` sebelum vs sesudah interaksi (dipakai untuk bukti di bawah) |
+
+### Bukti A/B (probe Playwright, preview `:4173`)
+| Kondisi | Request JS sebelum interaksi | `prod-*.js` sebelum interaksi | sesudah klik |
+|---|---|---|---|
+| baseline (`git stash push -- src/main.js`, build ulang) | 8 | **dimuat** | dimuat |
+| sesudah fix | 7 | **tidak ada** | dimuat (`window.Sentry` = object) |
+
+`prod-C6YQoGgw.js` juga tidak ada di `modulepreload` `dist/index.html`; di chunk `main` hanya muncul sebagai `import(\`./prod-C6YQoGgw.js\`)` — dinamis, jadi jalur login bersih. 0 `pageerror` di kedua run.
+
+### Lighthouse preview (Chromium headless, sesudah fix)
+| Preset | perf | a11y | FCP | LCP | TBT | CLS | total byte | `prod-*.js` di network |
+|---|---|---|---|---|---|---|---|---|
+| desktop | **100** | 100 | 0,6 s | 0,7 s | 0 ms | 0,001 | 293 KiB | tidak ada |
+| mobile (default throttle) | **89** | 100 | 2,3 s | 2,6 s | 260 ms | 0,013 | 444 KiB | tidak ada |
+
+`unused-javascript` preview **105 KiB** — `main-*.js` 69 KiB + `db-*.js` 36 KiB. Keduanya **bukan** bagian perubahan ini: `main` = kartu `t_bea98211` (Alpine + modul), `db` = kartu `t_cb2a51d4` (RTDB SDK setelah login). Kartu `t_bea98211` belum bisa ditutup — bagian Sentry selesai, bagian Alpine belum.
+
+### Gerbang
+tsc 0 · eslint 0 error / 79 warning · **1652 tes / 63 berkas** · coverage **95,60 / 84,65 / 96,00 / 96,73** · build ok · precache **53/53** · E2E **5 passed** (`--workers=1`, 40,7 s).
+
+### Jebakan
+1. **`npm run test:coverage && npm run build` dalam satu panggilan dengan `timeout` > 600 s dipromosikan jadi background process** — pakai `timeout` ≤ 600 atau poll `process_manage`, jangan jalankan ulang (dobel build).
+2. **Probe `prod-*.js` harus menunggu `networkidle` + 3 s** — `requestIdleCallback` baseline butuh jeda itu; tanpa jeda baseline terlihat "bersih" dan A/B jadi palsu.
+3. Nama chunk `prod-*.js` berubah tiap build (hash) — probe mencocokkan regex, jangan hardcode hash.
+
+---
+
 ## 📝 S33h (2026-10-20) — SSO Google: import dinamis + jembatan global mati (kartu `t_505ab09a`)
 
 ### Premis kartu tidak terbukti
