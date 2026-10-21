@@ -153,3 +153,38 @@ Konsekuensi untuk rancangan:
   `tactical.css` = 0, dan satu-satunya `:nth-child`/`:last-child` ter-scope ke
   `.skeleton-*` dan `#page-dash a.rounded-2xl`. Wrapper statis juga tidak membuat
   containing block untuk `position: fixed` (tidak ada transform/filter/contain).
+
+## Hasil S33u — SELESAI, dan penyebab kegagalan S33t ternyata bukan scope
+
+Percobaan ke-3 lulus seluruh gerbang. Yang memecahkan blokir bukan perubahan scope,
+tapi **tiga `</div>` yatim di `public/pages/app-shell.html:1830-1832`** (sisa markup
+import overlay, tepat sebelum crop modal).
+
+Mekanismenya: fragmen itu seimbang di dalam dirinya sendiri (533 buka / 533 tutup
+setelah yatim dihapus), tapi **tidak** seimbang setelah dibungkus wrapper — parser
+HTML memakai `</div>` yatim pertama untuk menutup `<div x-data="app()">`, sehingga
+`<template x-if="showCropModalOpen">` (satu-satunya node terikat yang jatuh di luar)
+dievaluasi di scope `<body x-data="login()">` → `ReferenceError` tak tertangkap di
+tengah `Alpine.initTree()` → sisa fragmen tidak ter-init → `app.logs = 0`.
+
+Bukti (Chromium, `page.evaluate` atas fragmen + wrapper):
+
+| fragmen | anak wrapper | node terikat di luar wrapper | `closest('[x-data]')` crop modal |
+|---|---|---|---|
+| lama (3 `</div>` yatim) | 19 | **1** | `login()` |
+| setelah yatim dihapus | 20 | **0** | `app()` |
+
+**Pelajaran metodologis**: membandingkan fragmen **tanpa** wrapper memberi DOM yang
+identik di kedua versi (20 anak, crop modal tetap anak `#app-shell`) — baik di jsdom
+maupun Chromium. Perbedaannya hanya muncul pada struktur yang benar-benar dikirim
+(wrapper + fragmen). Uji parse harus memakai bentuk final, bukan fragmen telanjang.
+
+**Temuan kedua**: Alpine 3.15 memanggil `init()` untuk **setiap** scope `x-data`
+(`reactiveData["init"] && evaluate(el, reactiveData["init"])` di direktif `data`).
+Begitu fragmen membawa wrapper sendiri, `bootstrap.init()` berjalan dua kali untuk
+singleton yang sama → watcher, listener online/offline, dan penjadwalan chart
+terdaftar ganda. Ditutup dengan guard `_booted`.
+
+Hasil terukur (live, sw v35, commit `e01a7a7`): `modulepreload` tanpa chunk app,
+muatan login **120,3 → 60,0 KiB gzip**, `app-*.js` 57,7 KiB jadi chunk malas,
+**TBT 115 → 25 ms**, main-thread 1408 → 1289 ms, CLS probe 0,000, E2E 5 passed.

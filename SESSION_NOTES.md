@@ -1,3 +1,95 @@
+## 📝 S33u (2026-10-21) — chunk `app()` malas SELESAI: login 120,3 → 60,0 KiB, TBT 115 → 25 ms (sw v35)
+
+Percobaan ke-3 lulus semua gerbang. Live **sw v35**, commit `e01a7a7`.
+
+### Blokir S33t terpecahkan — dan penyebabnya bukan scope
+`showCropModalOpen` gagal karena **tiga `</div>` yatim di `public/pages/app-shell.html:1830-1832`**
+(sisa markup import overlay, tepat sebelum crop modal). Fragmen seimbang di dalam dirinya
+sendiri, tapi **tidak** setelah dibungkus: parser HTML memakai `</div>` yatim pertama untuk
+menutup `<div x-data="app()">` lebih awal, jadi `<template x-if="showCropModalOpen">` —
+satu-satunya node terikat yang jatuh di luar — dievaluasi di scope `<body x-data="login()">`.
+`ReferenceError` itu melempar di tengah `Alpine.initTree()`, init sisa fragmen berhenti,
+`app.logs` tetap 0. Semua gejala S33t ("store kosong") berasal dari satu baris markup rusak.
+
+Bukti Chromium (fragmen + wrapper, `page.evaluate`):
+
+| fragmen | anak wrapper | node terikat di luar wrapper | `closest('[x-data]')` crop modal |
+|---|---|---|---|
+| lama (3 `</div>` yatim) | 19 | **1** | `login()` |
+| setelah dihapus | 20 | **0** | `app()` |
+
+**Metode yang salah**: membandingkan fragmen **tanpa** wrapper. Di jsdom maupun Chromium
+hasilnya identik untuk kedua versi (20 anak, crop modal tetap anak `#app-shell`), jadi
+hipotesis terlihat terfalsifikasi padahal benar. Uji parse wajib memakai bentuk final
+(wrapper + fragmen), bukan fragmen telanjang.
+
+### Temuan kedua: Alpine memanggil `init()` per scope `x-data`
+Alpine 3.15: `reactiveData["init"] && evaluate(el, reactiveData["init"])` di direktif `data`.
+Begitu fragmen membawa wrapper sendiri, `bootstrap.init()` jalan **dua kali** untuk singleton
+yang sama → watcher, listener online/offline, dan penjadwalan chart terdaftar ganda.
+Ditutup dengan guard `_booted` (+ `_booted?: boolean` di `appstate.ts`).
+
+### Perubahan
+- **`src/js/modules/login.js` (baru, eager)** — `createLoginScreen()`: state sesi + `notifications`
+  + `themeMode` (lewat `readThemeMode()` baru di `ui.js`) + spread `uiModule`/`authModule` +
+  `init()` yang memasang tema. Kedua modul sumber tidak punya getter → spread aman.
+- **`src/main.js`** — `app.js` tidak lagi diimpor statis. `window.__loadApp()` memuat chunk
+  malas, mendaftarkan `Alpine.data('app')` **sebelum** `initTree`. `react()` membungkus
+  `Alpine.reactive()`. Listener auth pindah ke sini (bootstrap.js ikut chunk malas) dengan
+  urutan wajib: `__loadDataLayer()` → `__loadApp()` → `__loadAppShell()` → `onUser()` → gate.
+  `__loadAppShell` dipecah: `fetchAppShell()` (boleh di-prefetch) vs pasang + `initTree`
+  (butuh chunk app sudah terdaftar).
+- **`src/js/bootstrap.js`** — `init()` (watcher, error handler, tema, online/offline) +
+  `onUser(user)` (checkUserRole, listener RTDB, AI settings, PM schedule, requisitions,
+  sapuan notifikasi). Guard `_booted`.
+- **`index.html`** — `<body x-data="login()">`; dua handler `@keydown.window` (n/l) pindah
+  ke wrapper fragmen (di body mereka akan dievaluasi di scope `login()`).
+- **`public/pages/app-shell.html`** — 3 `</div>` yatim dihapus, wrapper `<div x-data="app()">`
+  + `@keydown.window` ditambahkan, komentar kepala menjelaskan jebakan scope & yatim.
+- `sw.js` → **v35**.
+
+### Angka (terukur)
+| metrik | sebelum (v34) | sesudah (v35) |
+|---|---|---|
+| `modulepreload` memuat chunk app | ya | **0 hit** |
+| muatan login (JS+CSS gzip) | 120,3 KiB | **60,0 KiB** |
+| `app-*.js` | entry chunk | **chunk malas, 57,7 KiB gzip** |
+| TBT live (median 3 run devtools) | 115 ms | **25 ms** |
+| main-thread | 1408 ms | **1289 ms** |
+| JS eval | 1334 ms | **1217 ms** |
+| CLS `cls-probe` (3 pass) | 0,000 | **0,000** |
+
+Probe produksi (Chromium, 390×844): layar login **0 request** untuk `app-*`, `data-layer-*`,
+`prod-*` (14 request total); `window.__loadApp()` menarik `app-DIebibNh.js` dalam 21 ms dan
+`window.app === instance` dengan `onUser` tersedia. Satu-satunya console warning:
+`entry type 'first-contentful-paint' does not exist` (observer RUM, pre-existing).
+
+### Gerbang
+tsc 0 · eslint **0 error / 79 warning** · **1686 tes / 68 berkas** · coverage
+95,56/84,62/96,01/96,67 (ratchet 95/84/95/96 utuh) · build ok · `verify:precache` **63/63** ·
+**E2E 5 passed (29,9 s)**.
+
+### Tes yang ikut diubah (bukan dihapus)
+- `tests/bootstrap-module.test.js` — listener auth tidak lagi milik bootstrap
+  (`expect(window.onAuthStateChanged).not.toHaveBeenCalled()`); tes auth-state memanggil
+  `ctx.onUser(...)` langsung; tes baru untuk idempotensi `init()`.
+- `tests/app-shell-split.test.js` — urutan shell-sebelum-gate dibaca dari `main.js` +
+  tes baru: fragmen wajib punya `<div x-data="app()"`, `#app-shell` tidak boleh ber-`x-data`.
+- `tests/data-layer-lazy.test.js` — urutan `loadDataLayer → loadApp → loadAppShell → onUser`
+  dibaca dari `main.js`.
+- **`tests/login-screen-module.test.js` (baru, 8 tes)** — bentuk state, kelengkapan binding
+  markup login, tidak membawa permukaan chunk app, `init()` memasang tema, `readThemeMode()`.
+
+### Sisa / catatan
+- Kartu `t_bea98211` ditutup dengan bukti ini.
+- `git commit` sempat gagal `index.lock` basi (dari 20:43, tanpa proses git hidup) — `rm -f
+  .git/index.lock`, bukan proses yang benar-benar berjalan.
+- `login()`/`logout()` mati di `app.js` (kalah oleh spread `authModule`) **tidak** dihapus
+  sesi ini: bukan bagian dari blokir, dan menghapusnya menambah permukaan tes tanpa manfaat
+  terukur. Kandidat pembersihan berikutnya.
+
+---
+
 ## 📝 S33t (2026-10-21) — percobaan refactor ke-2: build-side LULUS, E2E merah lagi (penyebab baru)
 
 Working tree dikembalikan ke `a71e7b0`. Live tetap **sw v34**. Tidak ada deploy.
