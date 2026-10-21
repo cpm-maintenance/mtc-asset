@@ -69,7 +69,11 @@ jobs:
           VITE_USE_EMULATORS: '1'
           VITE_FIREBASE_API_KEY: demo-key
           VITE_FIREBASE_AUTH_DOMAIN: demo-mtc-asset.firebaseapp.com
-          VITE_FIREBASE_DATABASE_URL: https://demo-mtc-asset.firebaseio.com
+          # Host databaseURL = namespace RTDB emulator (bukan projectId!). Harus
+          # sama dengan namespace yang dipakai e2e/seed-emulator.mjs
+          # (E2E_RTDB_NS, default 'mtc-asset-default-rtdb'). Beda namespace =
+          # seed masuk ke tempat lain, aplikasi membaca kosong, tanpa error.
+          VITE_FIREBASE_DATABASE_URL: https://mtc-asset-default-rtdb.firebaseio.com
           VITE_FIREBASE_PROJECT_ID: demo-mtc-asset
           VITE_FIREBASE_STORAGE_BUCKET: demo-mtc-asset.appspot.com
           VITE_FIREBASE_MESSAGING_SENDER_ID: '400206066339'

@@ -77,6 +77,10 @@ async function ensureUser() {
 
 /** Buat user uji + data minimal yang dibutuhkan alur login → WO → PDF. */
 export async function seedEmulator() {
+  // Cetak namespace: kalau seed dan build memakai namespace berbeda, aplikasi
+  // membaca data kosong tanpa error apa pun (gejala: poll `window.app.logs`
+  // selalu 0). Satu baris ini membuat penyebabnya terlihat di log CI.
+  console.log(`[seed] RTDB namespace = ${NS}`);
   await waitForAuth();
   const signUp = await ensureUser();
 
