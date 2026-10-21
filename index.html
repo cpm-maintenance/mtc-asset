@@ -9,6 +9,13 @@
     content="Professional maintenance tracking and asset management for industrial equipment. Integrated with Firebase and PWA support.">
   <!-- Material Symbols Outlined sekarang dibundel lokal & di-precache offline di /fonts/material-symbols-outlined.woff2 -->
   <link rel="preload" href="/fonts/material-symbols-outlined.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Dua webfont yang dipakai layar login. Tanpa preload keduanya baru
+       ditemukan setelah bundel CSS selesai diparse, jadi Lighthouse menaruh
+       keduanya BERURUTAN di jalur kritis paint pertama
+       (chain audit: main-*.css → jetbrains-mono → inter). Preload membuat
+       keduanya diambil paralel dengan CSS, bukan sesudahnya. -->
+  <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/src/css/style.css">
 
   <!-- PWA Meta Tags -->
