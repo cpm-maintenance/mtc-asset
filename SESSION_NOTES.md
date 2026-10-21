@@ -1,3 +1,58 @@
+## 📝 S33w (2026-10-21) — prefetch chunk app + lapisan data saat submit login (kartu `t_2af5fb60`, sw v38)
+
+Commit `fa68cc7`. Live **sw v38**. Muatan login tidak berubah (54,97 KiB) — yang berubah
+adalah **kapan** chunk itu diminta.
+
+### Kenapa
+Setelah S33u, chunk `app-*.js` (57,7 KiB gzip) dan lapisan data (38,5 KiB) diminta **serial
+setelah** auth selesai: `__loadDataLayer()` → `__loadApp()` → `__loadAppShell()`. Prefetch
+yang ada hanya fragmen shell, jadi seluruh 96 KiB itu ada di jalur kritis login → dashboard.
+
+### Yang dikerjakan
+`submitLogin()` (`src/js/modules/auth.js`) memulai `window.__loadDataLayer()` dan
+`window.__loadApp()` **sebelum** `signInWithEmailAndPassword`, fire-and-forget. Keduanya
+idempoten, jadi jalur auth di `main.js` tinggal menunggu promise yang sama; kegagalan prefetch
+diabaikan karena jalur sebenarnya mencoba lagi dan melaporkan errornya sendiri.
+
+Sengaja **tidak** dipicu dari interaksi generik (`pointerdown`): kunjungan pasif tidak boleh
+membayar 96 KiB untuk sesuatu yang belum tentu dipakai.
+
+### Angka (emulator, slow-4G 1,6 Mbps/150 ms + CPU ×4, median 3 run)
+| metrik | sebelum | sesudah |
+|---|---|---|
+| klik submit → gate login terbuka | **648 ms** | **334 ms** (−48%) |
+| sampel | 765 / 648 / 457 | 502 / 326 / 334 |
+
+Target kartu: turun ≥ 30%. Tercapai.
+
+### Verifikasi kunjungan pasif
+| konteks | request | `app-*` | `data-layer-*` | fragmen shell |
+|---|---|---|---|---|
+| emulator, klik di luar form, 4 s | 19 | **0** | **0** | — |
+| produksi, tanpa interaksi, 3 s | 15 | **0** | **0** | **0** |
+| produksi, setelah 1 klik | 18 | **0** | **0** | **1** |
+
+Artinya prefetch fragmen shell tetap satu-satunya yang dipicu interaksi; chunk pasca-auth
+hanya bergerak setelah tombol submit ditekan. Nol `pageerror`.
+
+### Tes
+`tests/auth-module.test.js` +3: prefetch terpanggil dan login tetap dijalankan; tidak meledak
+kalau loader belum terpasang (jsdom); prefetch yang gagal tidak menjatuhkan login.
+`globals.d.ts`: deklarasi `window.__loadApp` (tsc merah tanpa itu).
+
+### Gerbang
+tsc 0 · eslint **0 error / 79 warning** · **1690 tes / 68 berkas** · coverage
+95,55/84,61/95,95/96,66 · build ok · `verify:precache` **65/65** · **E2E 5 passed (23,8 s)**.
+
+### Catatan
+- Probe sementara `e2e/tmp-submit-timing.spec.js` dihapus setelah dipakai; bentuknya: throttle
+  CDP **setelah** layar login tampil, lalu ukur di dalam halaman sampai `#login-id`
+  `offsetParent === null` (gate terbuka). `page.click('body')` tidak bisa dipakai untuk
+  "interaksi generik" — overlay `fixed inset-0` membuat Playwright menunggu actionability
+  sampai timeout; pakai `page.mouse.click(x, y)`.
+
+---
+
 ## 📝 S33v (2026-10-21) — notification-*.js + ui.js keluar jalur login (kartu `t_e08217cd`, sw v37)
 
 Commit `e9a5dfa`. Live **sw v37**. Muatan login **60,0 → 54,9 KiB** gzip.
