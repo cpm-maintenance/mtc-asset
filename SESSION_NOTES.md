@@ -1,3 +1,43 @@
+## 📝 S33s (2026-10-21) — bug #3 tertutup: sinkronisasi profil menunggu lapisan data (sw v34)
+
+Bug ini **sudah ada di live sejak S33p**, bukan cuma di percobaan S33q: `ensureUserProfile()`
+(`src/js/modules/auth.js:109`) dipanggil tepat setelah `signInWithEmailAndPassword`, sementara
+listener auth di `bootstrap.js` baru memuat lapisan RTDB **setelah** fragmen shell 129 KB selesai
+diunduh. Jadi `window.ref` masih `undefined` → `Failed to sync user profile: TypeError: window.ref
+is not a function`; akibatnya `lastLogin` tidak pernah tertulis dan profil user baru tidak pernah
+dibuat (UI tetap pulih karena `checkUserRole` menyusul).
+
+**Perbaikan** (`a1543ed`): `ensureUserProfile()` menunggu `window.__loadDataLayer()` (idempoten,
+satu guard `typeof … === 'function'` + try/catch). Tidak ada perubahan urutan di `bootstrap.js`.
+
+**Bukti (emulator, probe Playwright, 15 s setelah submit)**: `logs 1` · `withWo 1` · `equip 1` ·
+`userRole "admin"` · `refFn function` · **`ERRS []`** (nol error `window.ref`, nol Alpine Expression
+Error). Sebelum perbaikan: `logs 0`, `Failed to sync user profile`.
+
+**Koreksi catatan S33q**: gejala `app.logs` tetap 0 di percobaan refactor itu **bukan** bug
+terpisah — penyebabnya shell yang mati karena bug scope (#2). Setelah #2 dan #3 beres, store terisi
+normal di build yang sama.
+
+**Temuan yang menyederhanakan refactor berikutnya**: `login()`, `logout()`, `loginMode`,
+`setLoginMode`, `loginForm`, `submitLogin`, `rememberedEmail`, `showLoginKey` **semua sudah ada di
+`modules/auth.js`** (app.js punya salinan mati yang selalu kalah oleh spread). Jadi komponen login
+ringan cukup meng-`...`-spread `auth.js` + `ui.js`; tidak perlu memindahkan `login()` ke mana pun.
+
+**Gerbang** (turn yang sama): tsc 0 · eslint **0 error / 79 warning** · **1675 tes / 67 berkas** ·
+coverage 95,47/84,60/96,00/96,6x (ratchet utuh) · build ok · `verify:precache` **61/61** ·
+**E2E 5 passed (11,2 s)**. Live **sw v34**, `modulepreload` `index.html` tidak berubah
+(tanpa `data-layer`, tanpa chunk app) — tidak ada regresi payload.
+
+**Sampingan** (`fa6def1`): `playwright-report/**` + `test-results/**` masuk `ignores` eslint —
+tanpa itu `npm run lint` merah (trace viewer memuat bundel pihak ketiga) hanya karena suite E2E
+pernah dijalankan. Probe `scripts/alpine-scope-probe.mjs` juga memakai `globalThis.document`.
+
+**Sisa sebelum refactor diulang**: tidak ada blocker yang diketahui. Bug #1 (`Alpine.reactive()`) dan
+#2 (varian c: wrapper `x-data` di dalam fragmen) sudah terpecahkan di S33q/S33r; #3 tertutup di sini.
+Langkah berikutnya: ulangi refactor chunk `app()` malas sesuai desain, gate + E2E dulu.
+
+---
+
 ## 📝 S33r (2026-10-21) — probe scope Alpine: jawabannya varian c (wrapper di fragmen)
 
 Sesi pendek, satu tujuan: memastikan apakah `x-data` pada elemen host bisa menjadi scope.
