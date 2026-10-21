@@ -111,6 +111,17 @@ for (const pass of [1, 2]) {
     };
   });
 
+  const fcpEntry = out.paints.find((e) => e.name === 'first-contentful-paint');
+  const lastLcp = out.lcp[out.lcp.length - 1];
+  console.log(
+    `SUMMARY pass=${pass} FCP=${fcpEntry ? fcpEntry.t : '?'} LCP=${lastLcp ? lastLcp.t : '?'} ` +
+      `ttfb=${out.nav?.ttfb} css=${(out.res.find((r) => /\.css$/.test(r.name)) || {}).end ?? '?'} ` +
+      `fonts=${out.res
+        .filter((r) => r.name.endsWith('.woff2'))
+        .map((r) => `${r.name.split('-')[0]}:${r.end}`)
+        .join(',')} ` +
+      `longtask=${out.long.filter((l) => l.d > 50).length}`
+  );
   console.log(`pass ${pass} · url ${url}  (wall ${Date.now() - t0} ms, CPU x4 + slow-4G)`);
   console.log('nav     ', out.nav);
   console.log('paints  ', out.paints);
