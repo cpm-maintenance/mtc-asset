@@ -39,14 +39,20 @@ export default defineConfig({
             stderr: 'pipe',
         },
         {
-            // `dev` di CI **dan** lokal: satu-satunya jalur yang menghormati
-            // VITE_USE_EMULATORS=1. Dulu CI memakai `preview` (dist hasil build
-            // dengan env demo) sehingga db.js tidak pernah menyambung ke emulator
-            // dan `e2e/workorder-pdf.spec.js` (login → WO → PDF) selalu gagal —
-            // karena itu CI hanya menjalankan smoke.
-            // `stdout: 'pipe'` supaya kalau server mati, log Playwright memuat
-            // pesan aslinya, bukan cuma "webServer was not able to start".
-            command: 'npm run dev -- --port 3000',
+            // Dua jalur, dua tujuan:
+            //  · default (lokal)  → `npm run dev`: transform on-demand, cepat dipakai
+            //    sambil mengembangkan tes. Menghormati VITE_USE_EMULATORS=1.
+            //  · E2E_PREVIEW=1 (CI) → `vite preview` atas **dist-e2e**, yaitu build
+            //    terpisah yang dibangun dengan VITE_USE_EMULATORS=1 (lihat script
+            //    `build:e2e` + step CI-nya). Static, deterministik, dan tidak
+            //    menabrak timeout seperti dev server dingin di runner.
+            //    `vite preview` atas `dist` biasa TIDAK bisa dipakai: dist itu
+            //    dibangun dengan env demo, jadi login tidak pernah ke emulator.
+            // `stdout/stderr: 'pipe'` supaya kalau server mati, log Playwright
+            // memuat pesan aslinya, bukan cuma "webServer was not able to start".
+            command: process.env.E2E_PREVIEW
+                ? 'npx vite preview --outDir dist-e2e --port 3000 --strictPort'
+                : 'npm run dev -- --port 3000',
             url: 'http://localhost:3000',
             reuseExistingServer: !process.env.CI,
             timeout: 60_000,

@@ -9,6 +9,7 @@
     "postbuild": "node scripts/verify-precache.mjs",
     "verify:precache": "node scripts/verify-precache.mjs",
     "preview": "vite preview",
+    "build:e2e": "vite build --outDir dist-e2e",
     "test": "vitest",
     "test:run": "vitest run",
     "test:rules": "firebase emulators:exec --only database --project demo-mtc-asset \"vitest run --config vitest.rules.config.js\"",

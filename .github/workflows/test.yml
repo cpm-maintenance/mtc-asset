@@ -59,10 +59,30 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # Build terpisah untuk E2E: dist-e2e dibangun dengan VITE_USE_EMULATORS=1
+      # supaya src/js/db.js menyambung ke Firebase Emulator, bukan ke RTDB demo.
+      # Tanpa ini, `vite preview` atas dist ber-env demo membuat login mustahil
+      # diuji — akar masalah kenapa CI dulu cuma menjalankan smoke.
+      - name: Build (E2E, emulator)
+        run: npm run build:e2e
+        env:
+          VITE_USE_EMULATORS: '1'
+          VITE_FIREBASE_API_KEY: demo-key
+          VITE_FIREBASE_AUTH_DOMAIN: demo-mtc-asset.firebaseapp.com
+          VITE_FIREBASE_DATABASE_URL: https://demo-mtc-asset.firebaseio.com
+          VITE_FIREBASE_PROJECT_ID: demo-mtc-asset
+          VITE_FIREBASE_STORAGE_BUCKET: demo-mtc-asset.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: '400206066339'
+          VITE_FIREBASE_APP_ID: 1:400206066339:web:demo
+          VITE_FIREBASE_MEASUREMENT_ID: G-DEMO
+
       - name: E2E tests (full suite)
         # Seluruh spec: smoke + alur kritis login → dashboard → export PDF.
-        # Alur login hanya bisa jalan kalau dev server memakai VITE_USE_EMULATORS=1
-        # (lihat playwright.config.js) — bukan `vite preview` atas dist ber-env demo.
-        # Satu worker: 4 worker paralel di server yang masih dingin membuat
-        # `page.goto` menabrak timeout 30 s (terbukti lokal, 4 gagal / 1 lolos).
+        # E2E_PREVIEW=1 → playwright memakai `vite preview` atas `dist-e2e`, build
+        # terpisah yang dibangun dengan VITE_USE_EMULATORS=1 (step di atas).
+        # `dist` biasa tidak bisa dipakai: env-nya demo, login tak pernah ke emulator.
+        # Satu worker: worker paralel di server yang masih dingin membuat
+        # `page.goto` menabrak timeout (terbukti lokal: 4 gagal / 1 lolos).
+        env:
+          E2E_PREVIEW: '1'
         run: npx playwright test --workers=1
