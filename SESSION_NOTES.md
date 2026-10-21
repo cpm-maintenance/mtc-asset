@@ -1,3 +1,42 @@
+## 📝 S33l (2026-10-21) — E2E alur kritis jalan di CI: 5 passed di runner (kartu `t_58fcaef2`)
+
+### Akar masalah (dua lapis, bukan satu)
+1. **CI cuma menjalankan smoke** karena langkah E2E memakai `vite preview` atas `dist` yang dibangun dengan env demo → `VITE_USE_EMULATORS` tidak aktif, `db.js` tidak pernah menyambung ke emulator, jadi `e2e/workorder-pdf.spec.js` mustahil lolos.
+2. Percobaan pertama (dev server di CI) **merah**: 3 passed / 2 failed. Dev server dingin di runner butuh transform on-demand — smoke `x-cloak` kehabisan 10 s, `workorder-pdf` menabrak timeout 60 s. Bukan bug aplikasi.
+3. Percobaan kedua (preview atas `dist-e2e`) **merah lagi**: `window.app.logs` selalu 0. Build E2E memakai `VITE_FIREBASE_DATABASE_URL` = `demo-mtc-asset.firebaseio.com` (namespace `demo-mtc-asset`) sementara `seed-emulator.mjs` menulis ke `mtc-asset-default-rtdb` (fallback saat `.env` tidak ada di runner). **Namespace RTDB emulator = host `databaseURL`, bukan `projectId`.**
+
+### Perubahan
+| Berkas | Isi |
+|---|---|
+| `package.json` | script `build:e2e` = `vite build --outDir dist-e2e` (tanpa `postbuild`, jadi `verify:precache` tidak ikut) |
+| `.github/workflows/test.yml` | step **Build (E2E, emulator)** dengan `VITE_USE_EMULATORS=1` + env demo + `databaseURL` = `mtc-asset-default-rtdb.firebaseio.com`; step E2E jadi `npx playwright test --workers=1` (seluruh suite) dengan `E2E_PREVIEW=1` |
+| `playwright.config.js` | `E2E_PREVIEW=1` → `npx vite preview --outDir dist-e2e --port 3000 --strictPort`; default lokal tetap `npm run dev -- --port 3000`; `stdout`/`stderr` di-pipe; `timeout` 60 s di CI |
+| `e2e/seed-emulator.mjs` | cetak `[seed] RTDB namespace = …` (penyebab namespace mismatch langsung terlihat di log CI) |
+| `eslint.config.js` | `dist-e2e/**` di-`ignores` — tanpa ini `npm run lint` lokal ikut melinting hasil build (2.929 error palsu) |
+| `.gitignore` | `dist-e2e/` |
+
+### Bukti
+- Lokal `E2E_PREVIEW=1 CI=1 npx playwright test --workers=1` → **5 passed (27,5 s)**.
+- CI run `39529677960` (sha `dd4768f`) → **success**, langkah E2E **5 passed (10,0 s)**:
+
+```
+✓ 1..4  e2e/smoke.spec.js
+[seed] RTDB namespace = mtc-asset-default-rtdb
+✓ 5     e2e/workorder-pdf.spec.js  login → dashboard → export a Work Order PDF (1,1 s)
+5 passed (10.0s)
+```
+
+Run merah sebelumnya (untuk jejak): `39527882633` 3 passed/2 failed (dev server dingin), `39528872830` 4 passed/1 failed (namespace mismatch).
+
+### Jebakan
+1. **`vite preview` atas `dist` ber-env demo tidak pernah bisa menguji login.** Butuh build kedua (`dist-e2e`) dengan `VITE_USE_EMULATORS=1`.
+2. **Dev server di runner terlalu lambat** untuk tes pertama: transform on-demand membuat smoke `x-cloak` (10 s) dan alur login (60 s) timeout. Static preview: 10 s total.
+3. **Namespace RTDB = host `databaseURL`.** Samakan dengan seed, kalau tidak: 0 baris, tanpa error apa pun.
+4. **`eslint .` melinting `dist-e2e/`** setelah `build:e2e` — tambahkan ke `ignores`, kalau tidak lint lokal melaporkan ribuan error yang tidak nyata.
+5. `/* global … */` di berkas ESM harus memuat `console` kalau memakai `console.log` — `no-undef` bikin CI merah di langkah Lint.
+
+---
+
 ## 📝 S33k (2026-10-21) — webfont di-self-host: fonts.googleapis.com keluar dari jalur kritis login (perf live **79 → 93**)
 
 ### Temuan: font pihak ketiga adalah biaya terbesar FCP, bukan JS
