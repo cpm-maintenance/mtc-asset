@@ -59,8 +59,21 @@ if (SENTRY_DSN && import.meta.env.PROD) {
       logger.debug('[Sentry] Initialized, env:', import.meta.env.MODE);
     }).catch((e) => logger.warn('[Sentry] Gagal dimuat:', e));
   };
-  if (typeof requestIdleCallback === 'function') requestIdleCallback(initSentry, { timeout: 3000 });
-  else setTimeout(initSentry, 1500);
+  // Sentry bukan jalur kritis paint pertama: chunk `prod-*.js` (27 KiB) tidak
+  // boleh ikut di muatan login. `requestIdleCallback(..., {timeout: 3000})` selalu
+  // kalah cepat dari render halaman login mobile, jadi blok itu terukur selalu
+  // terunduh. Dipicu interaksi pertama pengguna, plus jaring pengaman 30 s
+  // supaya sesi pasif tetap mengirim telemetry.
+  const SENTRY_TRIGGERS = ['pointerdown', 'keydown', 'touchstart'];
+  let sentryArmed = false;
+  const armSentry = () => {
+    if (sentryArmed) return;
+    sentryArmed = true;
+    for (const ev of SENTRY_TRIGGERS) window.removeEventListener(ev, armSentry);
+    initSentry();
+  };
+  for (const ev of SENTRY_TRIGGERS) window.addEventListener(ev, armSentry, { passive: true });
+  setTimeout(armSentry, 30000);
 } else if (!SENTRY_DSN) {
   logger.debug('[Sentry] DSN not configured — skipping init. Set VITE_SENTRY_DSN in .env');
 }
