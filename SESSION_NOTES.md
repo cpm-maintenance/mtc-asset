@@ -1,3 +1,29 @@
+## 📝 S33q (2026-10-21) — percobaan chunk `app()` malas: 79,0 KiB tercapai, TIDAK di-merge (3 bug runtime)
+
+Status: **dibatalkan, working tree kembali ke `0aa410f`**. Live tetap `3cbae47` / sw **v33**. Tidak ada yang di-deploy.
+
+### Yang berhasil sebelum dibatalkan
+- Desain tertulis: `docs/superpowers/specs/2026-10-21-lazy-main-chunk-design.md` (fakta lapangan: `index.html` pra-shell 0 `$root`, `app-shell.html` 0 `$root` + tanpa `x-data`, 12+ elemen top-level bersaudara, `auth.js`/`ui.js` hanya bergantung pada `logger`/`constants`).
+- Implementasi (di-revert): `src/js/modules/login.js` baru (`loginModule` + `reattachModuleGetters` + `createLoginScreen()`), `login()`/`logout()` pindah ke sana, `<body x-data="login()">`, `app()` jadi chunk malas lewat `window.__loadApp()`, `bootstrap.init()` kehilangan listener auth dan dapat `onUser(user)`.
+- Angka build yang tercapai: muatan login **120,3 → 79,0 KiB** gzip (−41,3), `app-*.js` **58,9 KiB** gzip keluar dari `modulepreload`, `login-*.js` 8,4 KiB eager. Suite **1676/1676** hijau, `tsc` 0, eslint 0 error. **E2E 4 passed / 1 failed** — dan di situlah bugnya.
+
+### Tiga bug runtime yang hanya muncul di browser (ini inti catatan)
+1. **Tulisan dari luar komponen tidak memicu reaktivitas Alpine.** `Alpine.data('login', () => objek)` membuat proxy sendiri; menulis `objek.isLoading = false` dari `main.js` mengubah objek mentah tanpa men-trigger efek. Gejala: tombol submit `disabled` permanen walau `isLoading` sudah `false`. Perbaikan yang terbukti: bungkus dengan `Alpine.reactive()` (`typeof Alpine.reactive === 'function'` → benar) dan pakai proxy itu untuk `window.__loginScreen`/`window.app`.
+2. **`Alpine.initTree(host)` tidak membuat scope milik `host` itu sendiri.** Menaruh `x-data="app()"` di `#app-shell` lalu meng-inject fragmen membuat node fragmen mencari scope terdekat dan menemukan `<body x-data="login()">` → `Alpine Expression Error: sidebarCollapsed is not defined`, `showNotifications is not defined`, `rejectReason is not defined`. Urutan dua fase (set atribut → `initTree` host kosong → innerHTML → `initTree` lagi) **tidak** menolong; kemungkinan perlu `Alpine.initTree(document.body)` (atau membungkus fragmen) supaya `initNode(host)` benar-benar jalan. Ini yang belum terpecahkan.
+3. **Menunda lapisan data membuka balapan baru.** Di antara `signInWithEmailAndPassword` dan `__loadDataLayer()` selesai masih ada jalur yang memakai `window.ref` → `Failed to sync user profile: TypeError: window.ref is not a function`. Selain itu, pada alur emulator `window.app.logs` tetap **0** setelah 15 s walau `setupFirebaseListeners()` sudah jalan dan `window.db`/`window.ref` ada — belum ketahuan apakah ini akibat butir 2 (shell mati) atau listener yang tidak pernah terpasang.
+
+### Aturan kerja yang terbukti
+- `git checkout -- .` menyelamatkan; commit terakhir selalu hijau, jadi percobaan besar boleh gagal asal tidak di-commit.
+- E2E adalah satu-satunya gerbang yang menangkap butir 1–3. Unit test 1676 hijau sementara aplikasinya tidak bisa login — **jangan pernah menutup pekerjaan boot/scope tanpa E2E**.
+- Subagent untuk refactor sebesar ini mati di kuota (HTTP 429 `deepseek-v4.1-flash`, 31 panggilan, 0 berkas ditulis). Kerjakan inline atau pastikan kuota dulu.
+
+### Langkah berikutnya (kalau dilanjutkan)
+1. Pecahkan butir 2 lebih dulu dengan probe kecil (bukan refactor penuh): buat halaman uji yang menaruh `x-data` pada elemen host lalu cek apakah anak-anaknya mendapat scope itu.
+2. Kalau scope host tidak bisa dibuat tanpa wrapper, pilih: bungkus fragmen dalam satu `<div x-data="app()">` (uji dulu efek `fixed`/`body > *`) **atau** tambahkan `x-data="app()"` ke setiap elemen top-level fragmen.
+3. Baru setelah login + shell + logs hijau di E2E, ulangi pengukuran TBT live.
+
+---
+
 ## 📝 S33p (2026-10-21) — CLS swap webfont ditutup (0,027 → 0,000) + SDK RTDB keluar jalur login (TBT 349 → 115 ms)
 
 ### Prioritas 1 — CLS: penyebabnya swap font, dan instrumennya baru
