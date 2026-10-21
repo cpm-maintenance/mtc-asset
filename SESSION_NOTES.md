@@ -1,3 +1,53 @@
+## 📝 S33v (2026-10-21) — notification-*.js + ui.js keluar jalur login (kartu `t_e08217cd`, sw v37)
+
+Commit `e9a5dfa`. Live **sw v37**. Muatan login **60,0 → 54,9 KiB** gzip.
+
+### Yang dikerjakan
+- `notification-*.js` (8,1 KiB gzip) tidak lagi di `modulepreload`. Dimuat lewat
+  `window.__loadNotifications()` (idempoten), dipicu `bootstrap.onUser()` **tanpa di-await** —
+  gate tidak boleh menunggu chunk ini.
+- FCM registration + `setInterval` sapuan 5 menit pindah ke `armNotifications()` yang jalan
+  setelah modul termuat. Sapuan pertama tetap milik `onUser` supaya tidak ada dua sapuan
+  berdekatan (kalau keduanya dipindah, `checkAllNotifications` jalan dobel di ~7 s).
+- `window.notificationAPI` diisi di dalam loader, bukan saat boot.
+
+### Efek samping yang tidak diperkirakan — dan koreksinya
+Begitu `notification.js` keluar dari graf eager, Rollup mengangkat **`ui.js` jadi chunk
+bersama** yang tetap di-preload: bersihnya cuma **−2,0 KiB** (60,0 → 58,0), bukan −8,1.
+Karena itu `ui.js` dipecah:
+- **`src/js/modules/ui-core.js` (baru)** — `setTheme`, `applyTheme`, `showNotification`,
+  `readThemeMode`. Ini satu-satunya bagian yang dipakai sebelum login.
+- `ui.js` meng-`...`-spread `uiCore` lalu menambahkan QR/Cloudinary/helper warna, jadi
+  `app()` dan `reattachModuleGetters` tidak berubah sama sekali.
+- `login.js` mengimpor `ui-core.js`, bukan `ui.js`.
+
+### Angka terukur
+| metrik | v36 | v37 |
+|---|---|---|
+| `modulepreload` | 7 berkas (termasuk `notification-*`) | **8 berkas, 0 hit `notification-*`**, tanpa `ui.js` penuh |
+| muatan login (JS+CSS gzip) | 60,0 KiB | **54,9 KiB** |
+| probe produksi (Chromium 390×844) | — | 15 request, **0** untuk `notification-*`/`app-*`/`data-layer-*`; `__loadNotifications()` memuat chunk dalam 4 ms dan mengisi 7 kunci API |
+
+**Target ≤ 52 KiB di kartu TIDAK tercapai.** Lantai terukur: firebase auth 24,3 + CSS 16,6 +
+firebase app 10,6 = **51,5 KiB** yang semuanya dipakai layar login. Sisa 3,4 KiB adalah
+`ui-core` + runtime + helper. Angka 52 KiB di kartu adalah estimasi saya, bukan hasil ukur;
+dikoreksi di komentar kartu.
+
+### Gerbang
+tsc 0 · eslint **0 error / 79 warning** · **1687 tes / 68 berkas** · coverage
+95,55/84,60/95,94/96,66 (ratchet utuh) · build ok · `verify:precache` **65/65** ·
+**E2E 5 passed (27,2 s)**.
+
+### Pelajaran
+**Menarik satu modul keluar dari graf eager tidak otomatis memindahkan byte-nya.** Rollup
+mengekstrak modul yang dipakai bersama oleh graf eager dan chunk malas menjadi chunk baru
+yang **tetap di-preload**. Yang benar: sesudah setiap perubahan bentuk impor, ukur ulang
+**total** `modulepreload` (jumlah semua berkas + CSS), bukan hanya berkas yang dipindahkan.
+Di sini selisih antara "8,1 KiB keluar" dan kenyataan "−2,0 KiB" adalah tepat sebesar
+`ui.js` yang muncul menggantikan tempatnya.
+
+---
+
 ## 📝 S33u-b (2026-10-21) — regresi toast pasca-login (ditemukan & ditutup, sw v36)
 
 Ditemukan saat menyusun rekomendasi lanjutan, bukan oleh tes mana pun. **Saya sendiri yang
