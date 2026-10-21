@@ -1,3 +1,66 @@
+## 📝 S33m (2026-10-21) — shell aplikasi (128 KB) keluar dari `index.html` — hasil live: **tidak naik** (median 93 → 91)
+
+### Yang dikerjakan
+`index.html` **156 KB → 28 KB**. Layar login + toast stack tetap di sana; sidebar, `<main>` (`x-page`), footer, nav mobile, dan seluruh modal pindah ke fragmen **`public/pages/app-shell.html`** (129 KB), dimuat `window.__loadAppShell()` di `src/main.js`:
+
+1. prefetch pada interaksi pertama (`pointerdown`/`keydown`/`touchstart`/`focusin`) — kunjungan pasif ke layar login tidak membayar 128 KB itu;
+2. inject ke `<div id="app-shell">` lalu `Alpine.initTree(host)`;
+3. `bootstrap.js` **menunggu** `await window.__loadAppShell()` sebelum `this.isLoggedIn = true`, supaya `x-page`/`x-show` di dalam shell sudah punya target saat data mengalir.
+
+| Berkas | Isi |
+|---|---|
+| `public/pages/app-shell.html` | baru — 1.848 baris markup shell (sidebar, main, footer, nav mobile, 12 modal) |
+| `index.html` | −1.848 baris, +placeholder `#app-shell` |
+| `src/main.js` | `APP_SHELL_URL`, `__loadAppShell()`, prefetch 4 event, `Alpine.initTree` |
+| `src/js/bootstrap.js` | auth callback jadi `async`, menunggu shell sebelum membuka gate |
+| `src/js/globals.d.ts` | deklarasi `window.__loadAppShell` |
+| `tests/app-shell-split.test.js` | baru — 7 tes kontrak pemisahan (placeholder, tidak ada markup shell di index.html, plafon ukuran, urutan `await` sebelum gate) |
+| `tests/legacy-palette · log-form-contract · login-image-weight` | membaca fragmen shell juga (markup-nya pindah) |
+| `sw.js` | `mtc-asset-v29` → **v30** |
+
+### Pengukuran
+**Preview (build yang sama, 2 run)** — di sinilah efeknya terlihat:
+
+| Metrik | Sebelum split | Sesudah split |
+|---|---|---|
+| perf | 82 / 84 | **91 / 92** |
+| LCP | 3.177 / 3.180 ms | **2.887 / 2.838 ms** |
+| render delay | 2.711 / 2.691 ms | **2.429 / 2.382 ms** |
+| total byte | 308 KiB | **290 KiB** |
+
+**Live, 6 run** (`lh-live-1..6`, commit `fd8540f`, sw v30):
+
+| Run | perf | FCP | LCP |
+|---|---|---|---|
+| 1 | 95 | 2.273 | 2.348 |
+| 2 | 90 | 2.187 | 3.199 |
+| 3 | 88 | 2.282 | 3.414 |
+| 4 | 95 | 2.185 | 2.410 |
+| 5 | 91 | 2.168 | 3.064 |
+| 6 | 91 | 2.163 | 3.129 |
+| **median** | **91** | **2.186** | **3.097** |
+
+a11y/bp/seo 100 · TBT 0 · CLS 0,000 · total **260 KiB** (dari 274).
+
+### Kesimpulan yang jujur: hipotesisnya salah untuk metrik live
+S33k (sebelum split) median 3 run = **93** dengan LCP 2.929 ms; sesudah split median 6 run = **91** dengan LCP 3.097 ms. Rentangnya tumpang tindih (88–95 di kedua sampel), jadi ini **bukan kemenangan** — dan bukan regresi yang terbukti, hanya noise di sekitar angka yang sama.
+
+Artinya: **ukuran dokumen bukan penghambat LCP di live.** 128 KB markup shell memang hilang dari parse/style/layout, dan byte pertama turun 274 → 260 KiB, tapi render delay tetap ~2,5 s — biayanya ada di CSS + `main-*.js` + swap font, bukan di DOM. Eksperimen preview memberi +7 poin karena preview lebih lambat dari live; selisih itu tidak terbawa ke produksi.
+
+Keputusan: **perubahan dipertahankan** (payload awal lebih kecil, struktur lebih jelas, E2E hijau, tes kontrak mengunci pemisahannya), tapi **tidak diklaim sebagai perbaikan perf live**. Kalau prioritasnya angka median, langkah berikutnya harus menyentuh render delay itu sendiri: inline critical CSS layar login, atau pangkas `main-*.js`.
+
+### Gerbang + CI
+tsc 0 · eslint 0 error / 79 warning · **1660 tes / 64 berkas** · coverage **95,56 / 84,64 / 96,00 / 96,68** (ratchet 95/84/95/96) · build ok · precache **61 entries**, `verify:precache` **58/58** · E2E lokal **5 passed (24,3 s)** · CI run `39532178038` (sha `fd8540f`) **success**, E2E **5 passed (14,1 s)**.
+
+### Jebakan
+1. **`Alpine.initTree(host)` wajib** setelah `innerHTML` — tanpa itu seluruh `x-show`/`x-for`/`x-page` di fragmen jadi markup mati.
+2. **Gate login harus menunggu fragmen**, bukan sebaliknya: kalau `isLoggedIn` dibuka lebih dulu, `x-page` belum ada target dan halaman pertama tidak pernah dimuat.
+3. **Fragmen harus ada di precache** (`verify:precache` 58/58) — kalau tidak, login offline dengan sesi tersimpan akan kehilangan seluruh shell.
+4. **`window.__loadAppShell` perlu deklarasi** di `src/js/globals.d.ts`, kalau tidak `tsc --noEmit` gagal TS2339 di `bootstrap.js`.
+5. **Tes yang membaca `index.html` ikut pindah sasaran.** Tiga berkas (palette, log-form, image-weight) harus membaca `public/pages/app-shell.html` juga — kalau tidak, tesnya hijau tapi tidak lagi memeriksa apa pun yang nyata.
+
+---
+
 ## 📝 S33l (2026-10-21) — E2E alur kritis jalan di CI: 5 passed di runner (kartu `t_58fcaef2`)
 
 ### Akar masalah (dua lapis, bukan satu)
