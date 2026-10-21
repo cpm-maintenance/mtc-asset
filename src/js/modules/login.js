@@ -1,6 +1,6 @@
 // @ts-check
 import { authModule } from './auth.js';
-import { uiModule, readThemeMode } from './ui.js';
+import { uiCore, readThemeMode } from './ui-core.js';
 /** @typedef {import('../appstate').AppState} AppState */
 
 /**
@@ -31,7 +31,7 @@ export function createLoginScreen() {
         darkMode: true,
         themeMode: readThemeMode(),
 
-        ...uiModule,
+        ...uiCore,
         ...authModule,
 
         /**

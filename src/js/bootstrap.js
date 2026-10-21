@@ -163,6 +163,13 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
         this.loadPMSchedule();
         this.setupRequisitionsListener();
 
+        // Modul notifikasi dimuat malas (8,1 KiB gzip tidak boleh di jalur login).
+        // JANGAN di-await: gate tidak boleh menunggu chunk ini; sapuan di bawah
+        // sudah dijaga `window.notificationAPI?.`.
+        if (typeof window.__loadNotifications === 'function') {
+            window.__loadNotifications().catch(() => {});
+        }
+
         setTimeout(() => {
             if (window.notificationAPI?.checkAllNotifications) {
                 setTimeout(() => window.notificationAPI?.checkAllNotifications?.(), 6000);

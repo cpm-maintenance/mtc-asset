@@ -6,7 +6,6 @@ import './css/tactical.css';
 import './css/tactical-icons.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
-import { requestNotificationPermission, registerFCMToken, setupForegroundListener, checkAllNotifications, removeFCMToken, sendBrowserNotification, resetNotifBlocker } from './js/modules/notification.js';
 import { logger } from './js/logger.js';
 
 // Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong.
@@ -232,6 +231,72 @@ logger.debug('Alpine App Registered');
 logger.debug('Component Loader Ready');
 
 // ============================================================
+// Notifikasi (FCM + sapuan periodik) — dimuat MALAS, pasca-auth
+// ============================================================
+// `notification.js` = 8,1 KiB gzip dan tidak melakukan apa pun yang berguna
+// sebelum ada user, tapi dulu ia ikut `modulepreload` di layar login (13,5% dari
+// seluruh muatan login). `firebase/messaging` di dalamnya sudah impor dinamis,
+// jadi yang dikeluarkan di sini memang logika modulnya, bukan SDK-nya.
+/** @type {Promise<any>|null} */
+let notificationsPromise = null;
+/**
+ * Muat modul notifikasi sekali, isi `window.notificationAPI`, lalu arm FCM.
+ * Idempoten seperti `window.__loadDataLayer()`.
+ * @returns {Promise<any>}
+ */
+window.__loadNotifications = () => {
+  if (notificationsPromise) return notificationsPromise;
+  notificationsPromise = import('./js/modules/notification.js')
+    .then((m) => {
+      // Dipakai `bootstrap.onUser()` (sapuan notifikasi) dan tombol di fragmen
+      // shell — keduanya baru hidup setelah login.
+      window.notificationAPI = {
+        requestNotificationPermission: m.requestNotificationPermission,
+        registerFCMToken: m.registerFCMToken,
+        checkAllNotifications: m.checkAllNotifications,
+        removeFCMToken: m.removeFCMToken,
+        sendBrowserNotification: m.sendBrowserNotification,
+        resetNotifBlocker: m.resetNotifBlocker,
+      };
+      armNotifications(m);
+      return m;
+    })
+    .catch((err) => {
+      notificationsPromise = null; // izinkan percobaan ulang (mis. offline sesaat)
+      logger.warn('[notif] gagal memuat modul notifikasi:', err);
+      throw err;
+    });
+  return notificationsPromise;
+};
+
+/**
+ * Daftar FCM + jadwalkan sapuan periodik. Dipanggil sekali, setelah modul
+ * termuat — bukan lagi saat boot layar login.
+ * @param {any} m modul `notification.js`
+ */
+function armNotifications(m) {
+  // Jeda kecil supaya listener Firebase lain sempat terpasang lebih dulu.
+  setTimeout(() => {
+    // Hanya daftar kalau izin SUDAH diberikan — jangan meminta izin dari
+    // setTimeout (Chrome memblokir permintaan izin di luar gestur pengguna).
+    if (Notification.permission === 'granted') {
+      m.registerFCMToken().then((token) => {
+        if (token) {
+          logger.debug('[FCM] Registered, token:', token.substring(0, 20) + '...');
+          m.setupForegroundListener();
+        }
+      });
+    } else {
+      logger.debug('[FCM] Permission not granted — skipping auto-register. Will register on user click.');
+    }
+
+    // Sapuan pertama tetap milik `bootstrap.onUser()`; di sini hanya periodiknya,
+    // supaya tidak ada dua sapuan yang jalan berdekatan.
+    setInterval(m.checkAllNotifications, 5 * 60 * 1000);
+  }, 2000);
+}
+
+// ============================================================
 // App shell — sidebar/main/footer/modal dimuat sebagai fragmen
 // ============================================================
 // index.html sengaja hanya membawa layar login (+ toast stack): 128 KB markup
@@ -354,42 +419,8 @@ window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
 Alpine.start();
 logger.debug('Alpine Started');
 
-// ============================================================
-// Initialize FCM Push Notifications
-// ============================================================
-// Use a small delay to ensure Firebase listeners are ready
-setTimeout(() => {
-  // Only register FCM if permission already granted — don't auto-request (Chrome blocks from setTimeout)
-  if (Notification.permission === 'granted') {
-    registerFCMToken().then(token => {
-      if (token) {
-        logger.debug('[FCM] Registered, token:', token.substring(0, 20) + '...');
-        setupForegroundListener();
-      }
-    });
-  } else {
-    logger.debug('[FCM] Permission not granted — skipping auto-register. Will register on user click.');
-  }
-
-  // Run initial check after data loads
-  setTimeout(checkAllNotifications, 5000);
-
-  // Periodic checks every 5 minutes
-  setInterval(checkAllNotifications, 5 * 60 * 1000);
-}, 2000);
-
 // Expose Sentry for manual error capture from Alpine modules
 window.Sentry = Sentry;
-
-// Expose notification functions
-window.notificationAPI = {
-  requestNotificationPermission,
-  registerFCMToken,
-  checkAllNotifications,
-  removeFCMToken,
-  sendBrowserNotification,
-  resetNotifBlocker,
-};
 
 // ============================================================
 // PWA Install Prompt

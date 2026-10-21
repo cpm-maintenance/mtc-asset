@@ -44,4 +44,15 @@ describe('jalur kritis halaman login', () => {
     expect(authjs).toMatch(/browserPopupRedirectResolver/);
     expect(authjs).toMatch(/signInWithPopup\(\s*window\.auth,\s*provider,\s*browserPopupRedirectResolver\s*\)/);
   });
+
+  // `notification-*.js` = 8,1 KiB gzip dan tidak melakukan apa pun yang berguna
+  // sebelum ada user, tapi dulu ikut `modulepreload` (13,5% dari muatan login).
+  it('modul notifikasi tidak ikut muatan login — dimuat lewat __loadNotifications', () => {
+    expect(mainjs).not.toMatch(/^import\s+\{[^}]*\}\s+from\s+'\.\/js\/modules\/notification\.js'/m);
+    expect(mainjs).toMatch(/window\.__loadNotifications\s*=/);
+    expect(mainjs).toMatch(/import\('\.\/js\/modules\/notification\.js'\)/);
+    // FCM + sapuan periodik tidak boleh dijadwalkan dari boot layar login.
+    expect(mainjs).not.toMatch(/setInterval\(\s*checkAllNotifications/);
+    expect(mainjs).not.toMatch(/setTimeout\(\s*checkAllNotifications/);
+  });
 });

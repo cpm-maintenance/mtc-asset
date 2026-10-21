@@ -41,6 +41,7 @@ declare global {
     firebaseApp?: any;
     /** Muat SDK RTDB + helper-nya ke window.* setelah login — di-set firebase-config.js. */
     __loadDataLayer?: () => Promise<any>;
+    __loadNotifications?: () => Promise<any>;
     /** Sentry global (CDN). */
     Sentry?: any;
     /** Firebase globals (di-set oleh firebase-config.js). */
