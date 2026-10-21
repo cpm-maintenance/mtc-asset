@@ -1,3 +1,48 @@
+## 📝 S33j (2026-10-21) — iframe auth + gapi keluar dari jalur login (kartu `t_505ab09a` dibuka lagi)
+
+### Kartu S33h salah menutup premisnya — karena UA probe
+S33h menyimpulkan "premis kartu tidak terbukti: 0 request ke `apis.google.com` / `__/auth/iframe`" dan kartu `t_505ab09a` ditutup. Pengukuran ulang di **live dengan UA mobile** (Android moto g power, Playwright) menemukan **4 request**: `__/auth/iframe.js`, `__/auth/iframe?…eid=p&usegapi=1`, `apis.google.com/…/cb=gapi.loaded_0`, satu lagi iframe gapi.
+
+Penyebabnya: **Firebase hanya menginisialisasi iframe auth di browser mobile.** Probe Playwright default memakai UA desktop → 0 request, seolah bersih. Kartu itu benar; yang salah alat ukurnya.
+
+### Akar masalah
+`src/js/db.js` memakai `getAuth(app)`. Dependensi default `getAuth` menyertakan `popupRedirectResolver` (`browserPopupRedirectResolver`), dan di mobile resolver itu memuat iframe + gapi saat boot — bukan saat tombol SSO ditekan.
+
+| Request | Transfer | Waktu |
+|---|---|---|
+| `__/auth/iframe.js` | 93,1 KB | 2.196 ms |
+| `cb=gapi.loaded_0` (gapi) | 34,7 KB | 1.407 ms |
+
+### Perubahan
+| Berkas | Isi |
+|---|---|
+| `src/js/db.js` | `getAuth(app)` → `initializeAuth(app, {persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence]})` — resolver tidak didaftarkan saat boot |
+| `src/js/modules/auth.js` | `loginWithSSO` mengambil `browserPopupRedirectResolver` di import dinamis dan memberikannya sebagai argumen ketiga `signInWithPopup(auth, provider, resolver)` |
+| `sw.js` | `mtc-asset-v27` → **v28** |
+| `tests/auth-module.test.js` | mock `firebase/auth` menambah `browserPopupRedirectResolver`; assert memakai resolver nyata (bukan `expect.anything()`) |
+| `tests/login-critical-path.test.js` | tes kontrak baru: `db.js` wajib `initializeAuth(app,`, dilarang `getAuth(app)` / `popupRedirectResolver:`, `auth.js` wajib memberi resolver ke `signInWithPopup` |
+| `scripts/auth-iframe-probe.mjs` | probe baru (UA mobile + CDP initiator stack) |
+| `scripts/lighthouse-aggregate.mjs` | agregator 3-run Lighthouse (median skor, LCP breakdown, unused-js) |
+
+### Bukti A/B (preview `:4173`, probe UA mobile)
+| Kondisi | Hit iframe/gapi | Request JS | `networkidle` |
+|---|---|---|---|
+| baseline (`git stash push -- src/js/db.js src/js/modules/auth.js`) | **4** | 8 | 3.417 ms |
+| sesudah fix | **0** | 7 | **1.177 ms** |
+
+Lighthouse preview mobile sesudah fix: perf **83 / 79** (2 run), total **231 KiB** (baseline 444 KiB), `iframe/gapi` 0, `prod-*.js` 0, 7 request JS.
+
+### Gerbang
+tsc 0 · eslint 0 error / 79 warning · **1653 tes / 63 berkas** · coverage **95,60 / 84,65 / 96,00 / 96,73** (ratchet tetap) · build ok · precache **53/53** · E2E **5 passed** (48,6 s).
+
+### Jebakan
+1. **`window.Sentry` bukan bukti SDK termuat.** `src/main.js:21` memasang stub `window.Sentry = {…}` sebelum SDK diunduh. Probe S33i yang mencetak `sentryGlobalAfter: "object"` karena itu **menyesatkan** — bukti yang sah adalah request chunk `prod-*.js`, bukan nilai global.
+2. **Probe Firebase auth WAJIB UA mobile.** UA desktop = 0 request iframe, kesimpulan "bersih" palsu. Ini yang membuat S33h menutup kartu yang benar.
+3. **`getAuth()` ≠ `initializeAuth()`.** Yang pertama mendaftarkan `popupRedirectResolver` bawaan (iframe auth di mobile), yang kedua tidak. Kalau resolver dilepas, `signInWithPopup` **wajib** diberi resolver eksplisit atau gagal `auth/argument-error`.
+4. Assert mock jangan pakai `expect.anything()` untuk resolver — bandingkan dengan objek resolver dari mock supaya penolakan argumen ketiga ketahuan.
+
+---
+
 ## 📝 S33i (2026-10-21) — Sentry keluar dari jalur kritis login (kartu `t_bea98211`, bagian Sentry)
 
 ### Masalah
