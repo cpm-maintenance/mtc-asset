@@ -36,6 +36,7 @@ declare global {
     /** Singleton ComponentLoader (di-set component-loader.js). */
     componentLoader?: any;
     /** Muat fragmen /pages/app-shell.html (sidebar/main/modal) — di-set main.js. */
+    __loadApp?: () => Promise<any>;
     __loadAppShell?: () => Promise<void>;
     /** Firebase App instance (di-set firebase-config.js). */
     firebaseApp?: any;

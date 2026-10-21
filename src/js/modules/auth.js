@@ -40,6 +40,16 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
 
     /** Titik masuk tunggal tombol submit — memilih jalur sesuai mode aktif. */
     async submitLogin() {
+        // Prefetch pasca-auth dimulai DI SINI, bukan dari interaksi generik:
+        // kunjungan pasif tidak membayar apa pun, sementara siapa pun yang
+        // menekan submit hampir pasti login. Tanpa ini chunk `app-*.js`
+        // (57,7 KiB gzip) + lapisan data (38,5 KiB) baru diminta SETELAH auth
+        // selesai, dan keduanya berurutan di jalur kritis.
+        // Keduanya idempoten, jadi jalur auth di `main.js` tinggal menunggu
+        // promise yang sama. Kegagalan prefetch diabaikan: jalur sebenarnya
+        // akan mencoba lagi dan melaporkan errornya sendiri.
+        if (typeof window.__loadDataLayer === 'function') window.__loadDataLayer().catch(() => {});
+        if (typeof window.__loadApp === 'function') window.__loadApp().catch(() => {});
         if (this.loginMode === 'pin') return this.loginWithPin?.();
         if (this.loginMode === 'sso') return this.loginWithSSO?.();
         return this.login();

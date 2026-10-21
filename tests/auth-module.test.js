@@ -687,3 +687,52 @@ describe('login — mode akses (email / pin / sso)', () => {
         expect(ssoMock.signInWithPopup).not.toHaveBeenCalled();
     });
 });
+
+// Kartu t_2af5fb60: tanpa prefetch ini chunk `app-*.js` (57,7 KiB gzip) dan
+// lapisan data (38,5 KiB) baru diminta SETELAH auth selesai — keduanya
+// berurutan di jalur kritis. Diukur di emulator (slow-4G + CPU x4):
+// submit -> gate terbuka 648 ms -> 334 ms.
+describe('submitLogin — prefetch pasca-auth', () => {
+    afterEach(() => {
+        delete window.__loadDataLayer;
+        delete window.__loadApp;
+    });
+
+    it('memulai pemuatan lapisan data + chunk app tanpa menunggunya', async () => {
+        const loadData = vi.fn(() => Promise.resolve({}));
+        const loadApp = vi.fn(() => Promise.resolve({}));
+        window.__loadDataLayer = loadData;
+        window.__loadApp = loadApp;
+
+        const ctx = Object.create(authModule);
+        ctx.loginMode = 'email';
+        ctx.login = vi.fn(async () => 'ok');
+
+        await ctx.submitLogin();
+
+        expect(loadData).toHaveBeenCalledTimes(1);
+        expect(loadApp).toHaveBeenCalledTimes(1);
+        // Jalur login tetap dijalankan — prefetch tidak menggantikannya.
+        expect(ctx.login).toHaveBeenCalledTimes(1);
+    });
+
+    it('tidak meledak kalau loader belum terpasang (unit test jsdom)', async () => {
+        const ctx = Object.create(authModule);
+        ctx.loginMode = 'email';
+        ctx.login = vi.fn(async () => {});
+
+        await expect(ctx.submitLogin()).resolves.toBeUndefined();
+    });
+
+    it('prefetch yang gagal tidak menjatuhkan login', async () => {
+        window.__loadDataLayer = vi.fn(() => Promise.reject(new Error('offline')));
+        window.__loadApp = vi.fn(() => Promise.reject(new Error('offline')));
+
+        const ctx = Object.create(authModule);
+        ctx.loginMode = 'email';
+        ctx.login = vi.fn(async () => 'ok');
+
+        await expect(ctx.submitLogin()).resolves.toBe('ok');
+        expect(ctx.login).toHaveBeenCalledTimes(1);
+    });
+});
