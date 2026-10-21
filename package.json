@@ -26,7 +26,9 @@
     "deploy:all": "firebase deploy",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "lh:real": "node scripts/lh-real.mjs",
+    "lh:live": "node scripts/lighthouse-aggregate.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
