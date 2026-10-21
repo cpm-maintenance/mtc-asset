@@ -13,10 +13,13 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf-8');
+// Logo sidebar tinggal di fragmen shell (index.html hanya layar login).
+const shell = fs.readFileSync(path.join(ROOT, 'public/pages/app-shell.html'), 'utf-8');
+const markup = `${index}\n${shell}`;
 
 /** Ambil tag <img ...> yang memuat `src` tertentu. */
 function imgTagWith(src) {
-  const tags = index.match(/<img\b[^>]*>/g) || [];
+  const tags = markup.match(/<img\b[^>]*>/g) || [];
   const tag = tags.find((t) => t.includes(`src="${src}"`));
   expect(tag, `img ${src} tidak ditemukan`).toBeTruthy();
   return tag;

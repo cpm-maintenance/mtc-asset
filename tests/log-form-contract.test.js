@@ -19,6 +19,9 @@ import { DEFAULT_LOG_FORM } from '../src/js/constants.ts';
 
 const ROOT = process.cwd();
 const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf-8');
+// Modal form log tinggal di fragmen shell (index.html hanya layar login).
+const shell = fs.readFileSync(path.join(ROOT, 'public/pages/app-shell.html'), 'utf-8');
+const markup = `${index}\n${shell}`;
 
 describe('viewport — zoom tidak boleh diblokir (WCAG 1.4.4)', () => {
   it('meta viewport tidak mematikan pinch-zoom', () => {
@@ -43,27 +46,27 @@ describe('form log — field yang disubmit punya input di UI', () => {
   });
 
   it('modal log inline punya input Actual Hours', () => {
-    expect(index).toContain('x-model="logForm.actualHours"');
-    expect(index).toMatch(/x-model="logForm\.actualHours"[^>]*step="0\.1"/);
+    expect(markup).toContain('x-model="logForm.actualHours"');
+    expect(markup).toMatch(/x-model="logForm\.actualHours"[^>]*step="0\.1"/);
   });
 
   it('modal log inline punya input Completed Date yang dibatasi hari ini', () => {
-    expect(index).toContain('x-model="logForm.completedDate"');
-    expect(index).toMatch(/x-model="logForm\.completedDate"[^>]*:max="new Date\(\)\.toISOString\(\)/);
+    expect(markup).toContain('x-model="logForm.completedDate"');
+    expect(markup).toMatch(/x-model="logForm\.completedDate"[^>]*:max="new Date\(\)\.toISOString\(\)/);
   });
 
   it('Completed Date hanya muncul saat status Completed', () => {
-    const at = index.indexOf('x-model="logForm.completedDate"');
+    const at = markup.indexOf('x-model="logForm.completedDate"');
     expect(at).toBeGreaterThan(-1);
     // `x-show` berada di pembungkus <div> sebelum input-nya.
-    const wrapper = index.slice(Math.max(0, at - 400), at);
+    const wrapper = markup.slice(Math.max(0, at - 400), at);
     expect(wrapper).toContain(`x-show="logForm.status === 'Completed'"`);
   });
 
   it('memilih status Completed mengisi completedDate otomatis', () => {
-    const at = index.indexOf('x-model="logForm.status"');
+    const at = markup.indexOf('x-model="logForm.status"');
     expect(at).toBeGreaterThan(-1);
-    const tag = index.slice(at, index.indexOf('>', at));
+    const tag = markup.slice(at, markup.indexOf('>', at));
     expect(tag).toContain('@change=');
     expect(tag).toMatch(/logForm\.completedDate\s*=/);
   });

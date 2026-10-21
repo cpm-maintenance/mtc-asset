@@ -35,6 +35,8 @@ declare global {
     __initLucide?: () => void;
     /** Singleton ComponentLoader (di-set component-loader.js). */
     componentLoader?: any;
+    /** Muat fragmen /pages/app-shell.html (sidebar/main/modal) — di-set main.js. */
+    __loadAppShell?: () => Promise<void>;
     /** Sentry global (CDN). */
     Sentry?: any;
     /** Firebase globals (di-set oleh firebase-config.js). */

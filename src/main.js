@@ -182,6 +182,52 @@ window._firebaseReadyResolve = resolveFirebaseReady;
 logger.debug('Alpine App Registered');
 logger.debug('Component Loader Ready');
 
+// ============================================================
+// App shell — sidebar/main/footer/modal dimuat sebagai fragmen
+// ============================================================
+// index.html sengaja hanya membawa layar login (+ toast stack): 128 KB markup
+// shell aplikasi tidak ikut diparse/di-style/di-layout sebelum paint pertama.
+// Fragmen diambil sekali, di-inject ke placeholder `#app-shell`, lalu di-init
+// dengan `Alpine.initTree()` supaya x-show/x-for/x-page di dalamnya hidup.
+const APP_SHELL_URL = '/pages/app-shell.html';
+/** @type {Promise<void>|null} */
+let appShellPromise = null;
+window.__loadAppShell = () => {
+  if (appShellPromise) return appShellPromise;
+  appShellPromise = fetch(APP_SHELL_URL, { credentials: 'same-origin' })
+    .then((res) => {
+      if (!res.ok) throw new Error(`${res.status} ${APP_SHELL_URL}`);
+      return res.text();
+    })
+    .then((html) => {
+      const host = document.getElementById('app-shell');
+      if (!host) throw new Error('placeholder #app-shell tidak ditemukan');
+      if (host.dataset.loaded) return;
+      // Aman: fragmen statis same-origin dari build kita sendiri
+      // (`public/pages/app-shell.html`), bukan masukan pengguna. Pola yang sama
+      // dipakai `componentLoader.loadPage()` untuk /pages/*.html.
+      host.innerHTML = html;
+      host.dataset.loaded = '1';
+      Alpine.initTree(host);
+      logger.debug('[shell] app shell terpasang');
+    })
+    .catch((err) => {
+      appShellPromise = null; // izinkan percobaan ulang (mis. offline sesaat)
+      logger.warn('[shell] gagal memuat app shell:', err);
+      throw err;
+    });
+  return appShellPromise;
+};
+
+// Prefetch saat interaksi pertama: kunjungan pasif ke layar login tidak
+// membayar 128 KB ini, tapi sesi yang benar-benar login sudah punya cache-nya.
+const SHELL_TRIGGERS = ['pointerdown', 'keydown', 'touchstart', 'focusin'];
+const prefetchAppShell = () => {
+  for (const ev of SHELL_TRIGGERS) window.removeEventListener(ev, prefetchAppShell);
+  window.__loadAppShell().catch(() => {});
+};
+for (const ev of SHELL_TRIGGERS) window.addEventListener(ev, prefetchAppShell, { passive: true });
+
 // Start Alpine immediately (AFTER registering everything)
 Alpine.start();
 logger.debug('Alpine Started');

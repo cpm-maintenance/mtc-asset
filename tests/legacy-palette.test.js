@@ -151,7 +151,7 @@ describe('sapu string kelas lama di src/js/**', () => {
     // di situ bukan pelanggaran tema. Dieja persis supaya `bg-white` baru di
     // tempat lain tetap gagal.
     const ALLOWED_WHITE = [
-      { file: 'index.html', needle: 'bg-white p-8 rounded-[2.5rem]' },
+      { file: 'public/pages/app-shell.html', needle: 'bg-white p-8 rounded-[2.5rem]' },
     ];
     const hits = [];
     for (const rel of FILES) {

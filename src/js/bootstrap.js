@@ -41,31 +41,44 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             });
             
             // Monitor Auth State
-            window.onAuthStateChanged(window.auth, (/** @type {any} */ user) => {
+            window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
                 if (!user) {
                     this.isLoggedIn = false;
                     this.user = null;
                     this.isLoading = false;
-                } else {
-                    this.isLoggedIn = true;
-                    this.user = user;
-                    // Set Sentry user context
-                    if (window.Sentry) {
-                        window.Sentry.setUser({ id: user.uid, email: user.email });
-                    }
-                    // Check if user is admin
-                    this.checkUserRole(user.uid);
-                    this.setupFirebaseListeners();
-                    this.loadAISettings();
-                    this.loadPMSchedule();
-                    this.setupRequisitionsListener();
-
-                    setTimeout(() => {
-                        if (window.notificationAPI?.checkAllNotifications) {
-                            setTimeout(() => window.notificationAPI?.checkAllNotifications?.(), 6000);
-                        }
-                    }, 3000);
+                    return;
                 }
+
+                // Shell aplikasi (sidebar · main · footer · modal) hidup di
+                // fragmen /pages/app-shell.html — index.html hanya layar login.
+                // Muat & init dulu sebelum gate dibuka, supaya x-page dan
+                // x-show di dalam shell sudah punya target saat data mengalir.
+                if (typeof window.__loadAppShell === 'function') {
+                    try {
+                        await window.__loadAppShell();
+                    } catch (e) {
+                        logger.warn('[auth] app shell gagal dimuat:', e);
+                    }
+                }
+
+                this.isLoggedIn = true;
+                this.user = user;
+                // Set Sentry user context
+                if (window.Sentry) {
+                    window.Sentry.setUser({ id: user.uid, email: user.email });
+                }
+                // Check if user is admin
+                this.checkUserRole(user.uid);
+                this.setupFirebaseListeners();
+                this.loadAISettings();
+                this.loadPMSchedule();
+                this.setupRequisitionsListener();
+
+                setTimeout(() => {
+                    if (window.notificationAPI?.checkAllNotifications) {
+                        setTimeout(() => window.notificationAPI?.checkAllNotifications?.(), 6000);
+                    }
+                }, 3000);
             });
 
             this.applyTheme();
