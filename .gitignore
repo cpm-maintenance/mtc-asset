@@ -102,3 +102,9 @@ anti-slop/
 
 # Lighthouse reports (lokal, jangan di-commit)
 lighthouse/
+
+# Laporan Lighthouse / fetch sementara (lokal, jangan di-commit)
+lh-*.json
+lh.log
+gf.css
+preview.log

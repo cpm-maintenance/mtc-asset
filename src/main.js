@@ -1,5 +1,6 @@
 import './js/firebase-config.js';
 import { app } from './js/app.js';
+import './css/fonts.css';
 import './css/style.css';
 import './css/tactical.css';
 import './css/tactical-icons.css';
