@@ -1,3 +1,49 @@
+## 📝 S33y (2026-10-21) — kode mati era pre-authModule dibuang (kartu `t_a9ec2a2d`, sw v39)
+
+Commit `b78c4e8`. Live **sw v39**. Sweep pemanggil dulu, baru hapus — semua yang dibuang
+**dibuktikan tidak bisa dieksekusi**, bukan sekadar terlihat tidak dipakai.
+
+### Yang dibuang
+| lokasi | apa | bukti mati |
+|---|---|---|
+| `src/js/app.js` | `login()`, `logout()`, `showUID()` | literal objek kalah oleh `...authModule` yang di-spread SESUDAHnya; versi sah di `modules/auth.js`. Pemanggil hanya `submitLogin()` + tes lewat `makeApp()` |
+| `src/main.js` | `window.Sentry = Sentry;` | no-op: `Sentry` resolve ke `window.Sentry` (stub 340 baris di atasnya) |
+| `index.html` | blok "Emergency Global Fallbacks" (13 baris) | `window.login()` memanggil `window.appData` yang **tidak pernah didefinisikan** → selalu `alert()` + `location.reload()`; `window.isLoggedIn/isLoading/loginForm` ditulis tapi tidak pernah dibaca; nol `onclick=` di markup |
+
+### Angka
+| metrik | sebelum | sesudah |
+|---|---|---|
+| `app-*.js` mentah | 236.549 B | **235.699 B** (−850) |
+| `app-*.js` gzip | 61.991 B | **61.723 B** (−268) |
+| `index.html` sumber | 27.478 B | **26.549 B** (−929) |
+| muatan login | 56.295 B | 56.295 B (tidak berubah — sudah chunk malas) |
+
+**Coverage naik** karena kode tanpa cakupan ikut hilang: 95,55/84,61/95,95/96,66 →
+**95,88/84,71/96,17/97,07**. Efek samping yang wajar, bukan tujuan.
+
+### Tes
+`tests/app-auth-menu.test.js` +3 (header diperbarui, nomor baris lama stale):
+`app.js` tidak lagi punya ketiganya **dan** `modules/auth.js` masih punya (mengunci "satu
+sumber", bukan sekadar "hilang"); `main.js` tanpa `window.Sentry = Sentry`; `index.html` tanpa
+`window.appData`.
+
+### Gerbang
+tsc 0 · eslint **0 error / 79 warning** · **1702 tes / 69 berkas** · coverage
+95,88/84,71/96,17/97,07 · build ok · precache **65/65** · **E2E 5 passed (34,8 s)**.
+
+### Temuan sampingan — kartu baru `t_cee197a5`
+Masih ada **8 duplikat state** di literal `app.js` yang juga kalah oleh spread:
+`isLogDetailView`, `selectedEquip`, `isOnline`, `loginForm`, `equipPage`, `equipLimit`,
+`logForm`. Sengaja **tidak** dikerjakan: ini nilai **awal state**, bukan metode, dan bisa tidak
+setara (mis. `isOnline: navigator.onLine` vs default modul) — perlu perbandingan per kunci.
+
+### Pelajaran
+"Kode mati" bukan satu kategori. Metode yang kalah oleh spread aman dibuang setelah sweep
+pemanggil; **nilai awal state** yang kalah oleh spread tidak — urutannya menentukan nilai, dan
+menghapusnya tanpa membandingkan per kunci bisa mengubah perilaku diam-diam.
+
+---
+
 ## 📝 S33x (2026-10-21) — kontrak state bersama antar dua scope (kartu `t_dcef9e80`)
 
 Commit `2fb0a22`. Hanya berkas tes baru → `sw.js` **tidak** naik, tidak ada deploy.
