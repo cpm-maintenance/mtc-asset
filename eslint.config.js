@@ -15,6 +15,11 @@ export default [
     ignores: [
       'dist/**',
       'dist-e2e/**',
+      // Artefak yang dihasilkan Playwright (trace viewer memuat bundel pihak
+      // ketiga yang memakai `document`/`navigator`/`define`) — tanpa ini
+      // `npm run lint` merah hanya karena suite E2E pernah dijalankan.
+      'playwright-report/**',
+      'test-results/**',
       'node_modules/**',
       'backups/**',
       'backup/**',

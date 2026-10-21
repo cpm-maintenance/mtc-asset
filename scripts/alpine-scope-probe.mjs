@@ -39,7 +39,7 @@ for (const variant of VARIANTS) {
   await page.evaluate(() => {
     // Alpine CDN memanggil `start()` sendiri; `alpine:init` adalah satu-satunya
     // titik untuk mendaftarkan komponen sebelum DOM dievaluasi.
-    document.addEventListener('alpine:init', () => {
+    globalThis.document.addEventListener('alpine:init', () => {
       /** @type {any} */ const A = globalThis.Alpine;
       A.data('login', () => ({ loginFlag: 1 }));
       A.data('app', () => ({ probeValue: 'SCOPE-OK' }));
@@ -50,7 +50,7 @@ for (const variant of VARIANTS) {
 
   const out = await page.evaluate((name) => {
     /** @type {any} */ const A = globalThis.Alpine;
-    const host = document.getElementById('host');
+    const host = globalThis.document.getElementById('host');
     // Markup fragmen: satu node yang hanya bisa di-resolve oleh scope `app()`.
     const CHILD = '<span id="child" x-text="probeValue"></span>';
 
@@ -66,9 +66,9 @@ for (const variant of VARIANTS) {
       host.innerHTML = CHILD;
       A.initTree(host);
     } else if (name === 'b') {
-      // initTree(document.body) supaya `initNode(host)` ikut jalan.
+      // initTree(globalThis.document.body) supaya `initNode(host)` ikut jalan.
       host.setAttribute('x-data', 'app()');
-      A.initTree(document.body);
+      A.initTree(globalThis.document.body);
       host.innerHTML = CHILD;
       A.initTree(host);
     } else {
@@ -81,7 +81,7 @@ for (const variant of VARIANTS) {
   }, variant);
 
   await page.waitForTimeout(150);
-  const text = await page.evaluate(() => (document.getElementById('child')?.textContent || '').trim());
+  const text = await page.evaluate(() => (globalThis.document.getElementById('child')?.textContent || '').trim());
   rows.push({ variant, text, ok: text === 'SCOPE-OK', scope: out.hostScope, errors: errors.slice(0, 1) });
   await page.close();
 }
