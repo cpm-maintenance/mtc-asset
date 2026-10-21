@@ -394,7 +394,7 @@
             </div>
             <p x-text="note.message" class="text-sm font-semibold leading-snug text-tac-on-surface/90"></p>
           </div>
-          <button @click="note.exiting = true; setTimeout(() => notifications = notifications.filter(n => n.id !== note.id), 400)" 
+          <button @click="note.exiting = true; setTimeout(() => { const i = notifications.findIndex(n => n.id === note.id); if (i > -1) notifications.splice(i, 1); }, 400)" 
             aria-label="Dismiss notification"
             class="w-6 h-6 rounded-lg bg-tac-surface-container-low flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-tac-surface-container transition-all shrink-0">
             <span class="material-symbols-outlined text-[16px] text-[10px] text-tac-status-standby">close</span>

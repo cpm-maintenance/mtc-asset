@@ -157,6 +157,11 @@ window.__loadApp = () => {
       // wrapper `<div x-data="app()">`, dan `Alpine.data` harus sudah ada saat
       // wrapper itu diproses.
       Alpine.data('app', () => instance);
+      // Toast stack tinggal di index.html (scope `login()`), sedangkan
+      // `showNotification()` pasca-login dipanggil dari instance app. Satu larik
+      // untuk keduanya, kalau tidak toast berhenti tampil setelah login.
+      // `ui.js` menghapus entri dengan `splice()` supaya referensi ini tidak putus.
+      loginScreen.notifications = instance.notifications;
       // `beforeinstallprompt` bisa sudah terpicu sebelum chunk ini selesai.
       if (window.__installPromptEvent) {
         instance.installPromptEvent = window.__installPromptEvent;

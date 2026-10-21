@@ -25,6 +25,15 @@ test.describe('Authenticated flow (emulator)', () => {
         // Login gate disappears once authenticated.
         await expect(page.locator('#login-id')).toBeHidden({ timeout: 20_000 });
 
+        // Regresi S33u: toast stack tinggal di index.html (scope `login()`),
+        // sedangkan `showNotification()` pasca-login dipanggil dari instance
+        // `app()`. Larik notifikasi harus dibagi; tanpa itu setiap notifikasi
+        // setelah login tidak pernah tampil dan tidak ada tes lain yang melihat.
+        await page.evaluate(() => globalThis.app.showNotification('E2E-TOAST-OK', 'info'));
+        // Live region toast (`role="status"` di index.html) — bukan panel
+        // notifikasi di dalam shell, yang juga menampilkan `note.message`.
+        await expect(page.getByRole('status').getByText('E2E-TOAST-OK')).toBeVisible({ timeout: 5_000 });
+
         // App shell is mounted and Firebase listeners have had a chance to run.
         await expect(page.locator('[x-data]').first()).toBeVisible();
 
