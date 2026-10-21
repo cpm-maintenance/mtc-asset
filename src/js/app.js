@@ -17,7 +17,7 @@ import { chartToken } from './chart-palette.js';
 import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
-import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_LOG_FORM, DEFAULT_PERF_FORM, DEFAULT_PM_FORM } from './constants';
+import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_PERF_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
 /** @typedef {import("./appstate").AppState} AppState */
@@ -98,9 +98,8 @@ export function app() {
         // merged into ai.js module
         
         showEquipModal: false, showPartModal: false, showLogModal: false, showScanner: false, showQRPreviewModal: false, showNotifications: false, showMoreMenu: false,
-        isLogDetailView: false, isEditingEquip: false, isEditingPart: false, isEditingLog: false,
-        selectedEquip: null, notifications: [], isLoading: true, html5QrCode: null, qrCodeDataUrl: '',
-        isOnline: navigator.onLine,
+        isEditingEquip: false, isEditingPart: false, isEditingLog: false,
+        notifications: [], isLoading: true, html5QrCode: null, qrCodeDataUrl: '',
         themeMode: (() => { try { const m = localStorage.getItem('themeMode'); if (m) return m; const old = localStorage.getItem('darkMode'); if (old !== null) { const v = old === 'true' ? 'night' : 'light'; localStorage.setItem('themeMode', v); localStorage.removeItem('darkMode'); return v; } return 'night'; } catch(e) { return 'night'; } })(),
         isLoggedIn: false, user: null,
         sidebarExpandedGroups: (() => {
@@ -112,7 +111,6 @@ export function app() {
             return { Maintenance: false, 'Logs & Reports': false };
         })(),
         userRole: 'user', // 'admin' or 'user'
-        loginForm: { email: '', password: '' },
         
         // Delete confirmation modal
         showDeleteConfirm: false,
@@ -319,8 +317,6 @@ export function app() {
         allParts: [],
         logs: [],
         performanceData: [],
-        equipPage: 1,
-        equipLimit: 30,
         allLogsLimit: 30,
         allLogsJenisFilter: '',
 
@@ -524,7 +520,6 @@ export function app() {
         // --- FORMS ---
         equipForm: DEFAULT_EQUIP_FORM(),
         partForm: DEFAULT_PART_FORM(),
-        logForm: DEFAULT_LOG_FORM(),
         performanceForm: DEFAULT_PERF_FORM(),
 
         // --- TEMP STORAGE ---
