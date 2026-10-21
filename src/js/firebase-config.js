@@ -1,36 +1,30 @@
 // @ts-check
 /**
  * firebase-config.js — Window bridge for Alpine.js
- * Imports centralized Firebase singleton from db.js and exposes instances & helpers to window.*
+ *
+ * Hanya **Auth** yang dipasang eager di sini: layar login memakainya
+ * (`window.signInWithEmailAndPassword`), jadi ia memang jalur kritis.
+ *
+ * Seluruh lapisan RTDB (`window.db`, `ref`, `get`, `onValue`, ...) sekarang
+ * dimuat lewat `window.__loadDataLayer()` — satu impor dinamis ke
+ * `data-layer.js` yang dipanggil `bootstrap.js` setelah `onAuthStateChanged`
+ * memberi user. Sebelum login tidak satu pun pemanggil sah butuh `window.db`,
+ * dan menahan SDK-nya (34 KiB gzip + parse) adalah inti perbaikan TBT S33p.
+ *
+ * Urutan penting: pemuatan ini WAJIB selesai sebelum kode yang memakai
+ * `window.db` berjalan (listener RTDB, audit trail). Pemanggilnya satu:
+ * `bootstrap.js` — setelah shell terpasang, sebelum `setupFirebaseListeners()`.
  */
 import {
-  db, auth,
-  ref,
-  onValue, onChildAdded, set, update, remove,
-  get, query, limitToLast, runTransaction,
-  orderByChild, endAt, equalTo, endBefore,
+  app as firebaseApp,
+  auth,
   signOut, onAuthStateChanged, signInWithEmailAndPassword,
   setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
   sendPasswordResetEmail
-} from './db.js';
+} from './firebase-core.js';
 
-// Expose Firebase functions to global window for Alpine.js
-window.db = db;
+window.firebaseApp = firebaseApp;
 window.auth = auth;
-window.ref = ref;
-window.onValue = onValue;
-window.onChildAdded = onChildAdded;
-window.set = set;
-window.update = update;
-window.remove = remove;
-window.get = get;
-window.query = query;
-window.limitToLast = limitToLast;
-window.runTransaction = runTransaction;
-window.orderByChild = orderByChild;
-window.endAt = endAt;
-window.equalTo = equalTo;
-window.endBefore = endBefore;
 window.signOut = signOut;
 window.onAuthStateChanged = onAuthStateChanged;
 window.signInWithEmailAndPassword = signInWithEmailAndPassword;
@@ -40,4 +34,40 @@ window.browserLocalPersistence = browserLocalPersistence;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
 window.sendPasswordResetEmail = sendPasswordResetEmail;
 
-export { db, auth };
+/** @type {Promise<any>|null} */
+let dataLayerPromise = null;
+
+/**
+ * Muat SDK Realtime Database + pasang helper-nya ke `window.*`.
+ * Idempoten: pemanggilan kedua mengembalikan promise yang sama.
+ * @returns {Promise<any>} modul data-layer
+ */
+window.__loadDataLayer = function loadDataLayer() {
+  if (dataLayerPromise) return dataLayerPromise;
+  dataLayerPromise = import('./data-layer.js')
+    .then((m) => {
+      window.db = m.db;
+      window.ref = m.ref;
+      window.onValue = m.onValue;
+      window.onChildAdded = m.onChildAdded;
+      window.set = m.set;
+      window.update = m.update;
+      window.remove = m.remove;
+      window.get = m.get;
+      window.query = m.query;
+      window.limitToLast = m.limitToLast;
+      window.runTransaction = m.runTransaction;
+      window.orderByChild = m.orderByChild;
+      window.endAt = m.endAt;
+      window.equalTo = m.equalTo;
+      window.endBefore = m.endBefore;
+      return m;
+    })
+    .catch((err) => {
+      dataLayerPromise = null; // izinkan percobaan ulang (offline sesaat)
+      throw err;
+    });
+  return dataLayerPromise;
+};
+
+export { auth };

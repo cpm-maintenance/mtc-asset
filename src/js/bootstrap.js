@@ -61,8 +61,19 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
                     }
                 }
 
-                this.isLoggedIn = true;
-                this.user = user;
+                // Lapisan data (SDK RTDB) sengaja TIDAK ikut muatan login —
+                                // 34 KiB gzip yang tidak dipakai sebelum ada user. Dipasang di
+                                // sini, sebelum consumer pertama (`checkUserRole`).
+                                if (typeof window.__loadDataLayer === 'function') {
+                                    try {
+                                        await window.__loadDataLayer();
+                                    } catch (e) {
+                                        logger.warn('[auth] lapisan data gagal dimuat:', e);
+                                    }
+                                }
+
+                                this.isLoggedIn = true;
+                                this.user = user;
                 // Set Sentry user context
                 if (window.Sentry) {
                     window.Sentry.setUser({ id: user.uid, email: user.email });
@@ -83,8 +94,9 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
 
             this.applyTheme();
 
-            // Load AI settings on init (before login)
-            this.loadAISettings();
+                        // AI settings TIDAK lagi dimuat di sini: `loadAISettings()` membaca
+                        // RTDB, dan lapisan data baru dipasang setelah ada user. Pemanggilan
+                        // di jalur auth (di atas) sudah menutup kebutuhan yang sah.
 
             // Browser online/offline status
             window.addEventListener('online', () => this.isOnline = true);

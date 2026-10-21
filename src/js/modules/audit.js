@@ -1,5 +1,9 @@
 // @ts-check
-import { db, ref, set } from '../db.js';
+// Impor STATIS dari '../db.js' menarik SDK RTDB (34 KiB gzip) ke muatan login,
+// padahal `logAudit` baru mungkin jalan setelah ada `user.uid` (lihat penjaga di
+// bawah). Diubah jadi impor dinamis di S33p; tes tetap bisa `vi.mock` modulnya.
+let _fb = null;
+const firebase = async () => (_fb ??= await import('../db.js'));
 
 let _enabled = true;
 
@@ -35,6 +39,7 @@ export async function logAudit(action, details = {}) {
 
     // Use timestamp as key — no push() needed
     const key = `${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const { db, ref, set } = await firebase();
     await set(ref(db, `AuditTrail/${key}`), entry);
   } catch (/** @type {any} */ e) {
     // Silent fail — audit should never break the app

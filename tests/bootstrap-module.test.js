@@ -100,7 +100,9 @@ describe('bootstrapModule.init — wiring', () => {
         ]);
         expect(window.onAuthStateChanged).toHaveBeenCalledWith(window.auth, expect.any(Function));
         expect(ctx.applyTheme).toHaveBeenCalledOnce();
-        expect(ctx.loadAISettings).toHaveBeenCalledOnce();
+        // `loadAISettings()` membaca RTDB; jalur init pra-login tidak boleh
+        // menyentuhnya lagi (S33p: lapisan data dimuat setelah auth).
+        expect(ctx.loadAISettings).not.toHaveBeenCalled();
     });
 
     it('registers every watcher used by the dashboard and modals', () => {

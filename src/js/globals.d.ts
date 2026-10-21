@@ -37,6 +37,10 @@ declare global {
     componentLoader?: any;
     /** Muat fragmen /pages/app-shell.html (sidebar/main/modal) — di-set main.js. */
     __loadAppShell?: () => Promise<void>;
+    /** Firebase App instance (di-set firebase-config.js). */
+    firebaseApp?: any;
+    /** Muat SDK RTDB + helper-nya ke window.* setelah login — di-set firebase-config.js. */
+    __loadDataLayer?: () => Promise<any>;
     /** Sentry global (CDN). */
     Sentry?: any;
     /** Firebase globals (di-set oleh firebase-config.js). */

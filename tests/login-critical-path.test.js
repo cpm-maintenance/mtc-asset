@@ -34,7 +34,7 @@ describe('jalur kritis halaman login', () => {
   // 1,4 s) saat boot. `initializeAuth` tanpa resolver memindahkan keduanya ke
   // jalur SSO saja.
   it('auth boot tanpa popupRedirectResolver — iframe auth tidak ikut di layar login', () => {
-    const dbjs = fs.readFileSync(path.join(ROOT, 'src/js/db.js'), 'utf-8');
+    const dbjs = fs.readFileSync(path.join(ROOT, 'src/js/firebase-core.js'), 'utf-8');
     expect(dbjs).toMatch(/initializeAuth\(app,/);
     expect(dbjs).not.toMatch(/\bgetAuth\(app\)/);
     // hanya larang sebagai dependensi; komentar penjelasan boleh menyebutnya
