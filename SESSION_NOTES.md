@@ -35,6 +35,21 @@ Lighthouse preview mobile sesudah fix: perf **83 / 79** (2 run), total **231 KiB
 ### Gerbang
 tsc 0 · eslint 0 error / 79 warning · **1653 tes / 63 berkas** · coverage **95,60 / 84,65 / 96,00 / 96,73** (ratchet tetap) · build ok · precache **53/53** · E2E **5 passed** (48,6 s).
 
+### Live sesudah push `70e0f82`
+`mtc-asset-v28` aktif (t=80 s). Probe UA mobile produksi: **0** hit iframe/gapi, 7 request JS, `networkidle` **1.859 ms**. Lighthouse live mobile 3 run:
+
+| Metrik | Sebelum (S33i, median) | Sesudah (S33j, median) |
+|---|---|---|
+| perf | 62 | **79** |
+| LCP | 6.428 ms | **3.988 ms** |
+| render delay | 5.747 ms | **3.298 ms** |
+| total byte | 411 KiB | **275 KiB** |
+| unused-js | 84 KiB | **58 KiB** |
+| `iframe/gapi` | 4 request (2 run) | **0 / 3 run** |
+| `prod-*.js` | 0 | 0 |
+
+a11y/bp/seo tetap **100/100/100**, TBT **0 ms**, CLS **0**. Sisa `unused-javascript`: `main` 58 KiB (Alpine — kartu `t_bea98211`) + `db` 31 KiB (kartu `t_cb2a51d4`). Target ≥85 belum tercapai; render delay 3,3 s masih didominasi parse `main` + font.
+
 ### Jebakan
 1. **`window.Sentry` bukan bukti SDK termuat.** `src/main.js:21` memasang stub `window.Sentry = {…}` sebelum SDK diunduh. Probe S33i yang mencetak `sentryGlobalAfter: "object"` karena itu **menyesatkan** — bukti yang sah adalah request chunk `prod-*.js`, bukan nilai global.
 2. **Probe Firebase auth WAJIB UA mobile.** UA desktop = 0 request iframe, kesimpulan "bersih" palsu. Ini yang membuat S33h menutup kartu yang benar.
