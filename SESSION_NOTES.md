@@ -1,3 +1,50 @@
+## 📝 S33x (2026-10-21) — kontrak state bersama antar dua scope (kartu `t_dcef9e80`)
+
+Commit `2fb0a22`. Hanya berkas tes baru → `sw.js` **tidak** naik, tidak ada deploy.
+
+### Masalah yang dikunci
+S33u memecah satu root Alpine jadi dua scope. Yang ikut pecah bukan cuma markup tapi **state
+bersama** — dan bug toast pasca-login (`4aa993f`) lolos ke produksi tanpa satu tes pun melihatnya.
+Tidak ada gerbang yang menangkap kelas bug ini.
+
+### Inventaris (hasil ekstraksi, bukan tebakan)
+Identifier Alpine `index.html` ∩ fragmen shell, disaring ke kunci yang benar-benar dimiliki
+objek komponennya (jadi `note`/`i`/`n` lokal tidak ikut):
+
+| kunci | keputusan | alasan |
+|---|---|---|
+| `notifications` | **shared** | `main.js`: `loginScreen.notifications = instance.notifications` |
+| `isLoading` | **both** | `main.js` + `bootstrap.onUser` wajib menulis keduanya |
+| `isLoggedIn` | **separate** | dua gate beda tugas: overlay login vs shell |
+
+Login-only (aman, tidak beririsan): `loginForm`, `loginMode`, `setLoginMode`, `submitLogin`,
+`showLoginKey`, `rememberedEmail`.
+
+### `tests/scope-shared-state.test.js` (9 tes)
+1. Irisan identifier **wajib** sama dengan daftar keputusan → kunci irisan baru = tes merah.
+2. `shared`: baris pembagian di `main.js` wajib ada; `ui-core.js` wajib `splice`; handler
+   dismiss `index.html` wajib `splice` dan **tidak** boleh `notifications = notifications.filter(…)`.
+3. Uji perilaku: setelah notifikasi kedaluwarsa, `app.notifications` dan `login.notifications`
+   masih **objek yang sama** (`toBe`) dan panjangnya 0.
+4. `both`/`separate`: `main.js` menulis `loginScreen.isLoading`/`isLoggedIn`, `bootstrap.js`
+   menulis `this.isLoading`, logout menutup kedua gate.
+
+### Tes dibuktikan menggigit (mutasi, bukan asumsi)
+`ui-core.js` dikembalikan sementara ke `this.notifications = this.notifications.filter(…)` →
+2 tes merah, `AssertionError: referensi bersama putus: expected [] to be [ { id: … } ]`.
+Di-revert, 9/9 hijau.
+
+### Gerbang
+tsc 0 · eslint **0 error / 79 warning** · **1699 tes / 69 berkas** · coverage
+95,55/84,61/95,95/96,66 (ratchet utuh).
+
+### Pelajaran
+Tes kontrak yang membaca sumber **harus dibuktikan menggigit** sebelum dipercaya: mutasi satu
+baris, lihat merah, revert. Tanpa itu, tes yang selalu hijau tidak bisa dibedakan dari tes
+yang tidak memeriksa apa pun.
+
+---
+
 ## 📝 S33w (2026-10-21) — prefetch chunk app + lapisan data saat submit login (kartu `t_2af5fb60`, sw v38)
 
 Commit `fa68cc7`. Live **sw v38**. Muatan login tidak berubah (54,97 KiB) — yang berubah
