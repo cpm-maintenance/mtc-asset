@@ -1,3 +1,36 @@
+## 📝 S33t (2026-10-21) — percobaan refactor ke-2: build-side LULUS, E2E merah lagi (penyebab baru)
+
+Working tree dikembalikan ke `a71e7b0`. Live tetap **sw v34**. Tidak ada deploy.
+
+### Yang sudah berhasil (build-side)
+Dengan ketiga perbaikan (proxy `Alpine.reactive()`, wrapper `x-data="app()"` di fragmen, `ensureUserProfile` menunggu lapisan data) + diff yang lebih kecil karena `login()`/`logout()` memang sudah di `auth.js`:
+- `dist/index.html` `modulepreload` = runtime · preload-helper · 3× `index.esm` · **`login-*.js`** · `firebase-core-*.js` — **tanpa chunk app, tanpa `data-layer`**.
+- `verify:precache` **63/63**.
+
+### Yang gagal (E2E, 2,3 m)
+4 passed, **1 failed** — tetap `login → dashboard → export WO PDF`, gagal di `expect.poll(window.app.logs…)` = 0.
+
+Probe Playwright (emulator, 14 s setelah submit) memberi gambaran yang jauh lebih tajam:
+`{"loggedIn":true,"logs":0,"equip":0,"hasOnUser":"function","hasSetup":"function","shellLoaded":"1","wrapper":true,"loginFlag":true,"dbFn":"object","refFn":"function"}`
+`ERRS ["warning:Alpine Expression Error: showCropModalOpen is not defined","PE:ReferenceError: showCropModalOpen is not defined"]`
+
+Kesimpulan:
+- **Perbaikan #2 (wrapper) TERBUKTI BEKERJA**: tidak ada lagi `sidebarCollapsed is not defined` / `showNotifications is not defined`. `wrapper: true`, shell terpasang, gate terbuka, `onUser`/`setupFirebaseListeners` ada, `window.db`/`ref` siap.
+- Kegagalan sekarang **berbeda**: ada **`ReferenceError` yang tidak tertangkap** (`pageerror`, bukan sekadar warning Alpine) pada ekspresi `showCropModalOpen` di fragmen. Error itu melempar saat `Alpine.initTree(host)` dijalankan di dalam callback auth, sehingga sisa node fragmen tidak pernah ter-init dan store tetap kosong.
+
+### Hipotesis berikutnya (murah, lakukan ini dulu)
+1. `grep -rn "showCropModalOpen" src/ public/pages/` — kalau properti itu **tidak ada di mana pun**, ini ekspresi rusak yang sudah lama ada di fragmen dan baru sekarang muncul sebagai error tak tertangkap; perbaiki ekspresinya (atau tambahkan field-nya) lalu ulangi.
+2. Kalau properti itu **ada**, berarti wrapper tidak menjangkau semua node — kemungkinan besar markup crop modal berada di dalam `<template x-if>` yang di-clone belakangan dan dievaluasi terhadap scope yang salah.
+3. Bungkus `Alpine.initTree(host)` dengan try/catch **tidak** menyelesaikan akar; ia hanya menyembunyikan sisa node yang tidak ter-init.
+
+### Aturan kerja yang perlu ditambahkan
+- Saat mem-probe alur boot/scope, **tangkap `pageerror`, bukan hanya `console`**. Dua percobaan berturut-turut menghabiskan waktu karena `logs: 0` terlihat seperti masalah listener padahal ada ReferenceError tak tertangkap yang menghentikan init.
+- Probe state yang berguna: `loggedIn`, `logs`, `hasOnUser`, `hasSetup`, `shellLoaded`, `wrapper`, `loginFlag`, `dbFn`, `refFn` — semuanya dalam satu `page.evaluate`.
+
+**Status**: refactor ini sudah gagal 2×, keduanya di E2E dan keduanya dengan penyebab berbeda yang sekarang sudah terdokumentasi. Sisa satu langkah investigasi (hipotesis 1) sebelum layak dicoba lagi.
+
+---
+
 ## 📝 S33s (2026-10-21) — bug #3 tertutup: sinkronisasi profil menunggu lapisan data (sw v34)
 
 Bug ini **sudah ada di live sejak S33p**, bukan cuma di percobaan S33q: `ensureUserProfile()`
