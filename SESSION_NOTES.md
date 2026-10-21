@@ -1,3 +1,31 @@
+## 📝 S33p (2026-10-21) — CLS swap webfont ditutup (0,027 → 0,000) + SDK RTDB keluar jalur login (TBT 349 → 115 ms)
+
+### Prioritas 1 — CLS: penyebabnya swap font, dan instrumennya baru
+- **Instrumen baru** `scripts/cls-probe.mjs`: Chromium nyata, CPU ×4 + slow-4G, **cache dingin per pass** (browser baru tiap pass — dalam satu browser, cache dibagi antar-tab sehingga shift font hilang sejak pass ke-2), mencatat setiap `layout-shift` + node penyebab + sumber daya yang selesai ≤1,5 s sebelumnya. Opsi: `[url] [passes] [threshold] [settleMs] [vw] [vh] [dpr]`, dan `CLS_CHANNEL=chrome` untuk memakai Chrome sistem.
+- **Baseline live (`cea89de`, sw v32)**: CLS **0,027** (0,027 / 0,021 / 0,027, 3 pass) — bukan 0,058–0,073. Dua shift, satu penyebab: kartu login `DIV.w-full.max-w-7xl` (+4 px) dan `FOOTER` (+16 px), tepat setelah `jetbrains-mono-subset.woff2` (2882 ms) lalu `inter-subset.woff2` (2929 ms) selesai. **Cache hangat = 0,000**, karena swap-nya tidak terjadi — itu sebabnya angka Lighthouse lama terlihat aman (0,051 / 0,009 / 0,008 pada build yang sama).
+- **Perbaikan** (`3c3a1d7`): generator `download-webfonts.mjs` sekarang juga menulis **12 `@font-face` fallback metrik** (`src: local(...)` + `size-adjust` + `ascent/descent-override`, nol byte unduhan). Angkanya **diukur**, bukan ditebak: `scripts/font-metric-probe.mjs` (baru) mencetak tabel rasio lebar advance seluruh ASCII printable + ascent/descent per (keluarga, fallback). `tailwind.config.js`, `style.css`, `tactical.css` memakai `'Inter Fallback'` / `'JetBrains Mono Fallback'` di stack.
+- **Hasil**: live CLS **0,000** — 4 pass @390×844 + 3 pass @412×823 (viewport Lighthouse) + 2 pass dengan Chrome sistem = **9 pass, semua 0,000**, tanpa satu pun shift. `scripts/font-render-check.mjs` tetap melaporkan glyph dirender webfont sendiri (Inter/JetBrains), jadi fallback tidak menutupi kegagalan muat font.
+- **BELUM selesai**: Lighthouse devtools CLS pada build yang sama tetap mencatat 0,049 (0,005 / 0,049 / 0,130) dan audit `layout-shifts`-nya menunjuk **elemen yang sama** (kartu login). Tidak bisa direproduksi di luar pipeline Lighthouse sendiri — sudah dicoba Chromium Playwright & Chrome sistem, 390 & 412 px, settle 8 s. Lighthouse CLS build ini memang **bimodal** (0,005–0,130 pada 3 run berurutan), jadi ia bukan gerbang yang bisa dipakai. Gerbang CLS yang dipakai sekarang: `node scripts/cls-probe.mjs <url> 3 0.02`.
+
+### Prioritas 2 — SDK RTDB keluar dari jalur login (kartu `t_cb2a51d4` → **ditutup**)
+- **Harga terukurnya lebih dulu** (produksi, devtools throttling, `--blocked-url-patterns`): baseline main-thread **1318 ms / TBT 349 ms**; blokir `*db-*` → **555 ms / 0 ms**; blokir `*main-*` → 485 ms / 0 ms. Jadi lever-nya chunk RTDB, bukan app.js.
+- **Perubahan** (`27dbd50`): `db.js` dipecah → `firebase-core.js` (App + Auth, eager karena tombol login butuh) + `data-layer.js` (**malas**). `firebase-config.js` hanya memasang auth ke `window.*` dan menyediakan `window.__loadDataLayer()` (impor dinamis, idempoten, bisa di-retry). `bootstrap.js` memanggilnya tepat setelah `onAuthStateChanged` memberi user, **sebelum** `checkUserRole()` (consumer pertama). Impor statis terakhir ke `db.js` (`audit.js`) jadi impor dinamis; `loadAISettings()` dicabut dari jalur init pra-login karena ia membaca RTDB.
+- **Hasil**: muatan login 138,2 → **120,3 KiB gzip**; `data-layer` (39,4 KiB gzip) **0 hit** di `modulepreload` `index.html` live; **TBT median live 349 → 115 ms (−67%)**, perf devtools 86 → **94**; E2E **5 passed (29,6 s)**; suite **1675/67**; coverage 95,51/84,61/96,00/96,61 (turun tipis, threshold tidak diturunkan); precache 61/61.
+- Dikunci `tests/data-layer-lazy.test.js` (6 tes baca-sumber: tidak boleh ada impor statis `db.js`/`data-layer.js` di `src/**`, urutan pemuatan sebelum consumer pertama, `audit.js` dinamis).
+- `main-*.js` **naik** 71,4 → 84,7 KiB gzip: ia sekarang menyerap bagian Auth dari chunk `db-*.js` yang dulu terpisah. Kartu `t_bea98211` (main-*.js 69 KiB unused) **tetap terbuka** — belum tersentuh; langkah berikutnya yang masuk akal: komponen login ringan untuk `<body x-data>` supaya `app()` penuh baru didaftarkan setelah gate terbuka.
+- Catatan: `unused-javascript` **tidak bisa** dibaca dari `lh:real` (mode devtools mengembalikan 0 item) — hanya ada di mode `simulate`, dan sesi ini tidak menjalankannya.
+
+### Verifikasi
+- Gerbang lengkap di turn yang sama: `tsc` **0 error** · `eslint` **0 error / 79 warning** · **1675 tes / 67 berkas** · coverage 95,51/84,61/96,00/96,61 · build ok · `verify:precache` **61/61** · E2E **5 passed**.
+- Live terverifikasi isi (bukan hash): `sw.js` = **mtc-asset-v33**; `index.html` preload hanya `rolldown-runtime`, `vite-preload-helper`, 3× `index.esm`, `firebase-core-*` — `grep -c data-layer` = **0**.
+- Commit: `3c3a1d7` (CLS) → `27dbd50` (data layer) → `3cbae47` (probe). `sw.js` v32 → **v33**.
+
+### Kartu
+- `t_cb2a51d4` (tunda chunk db) — **ditutup** dengan bukti di komentar.
+- `t_bea98211` (main-*.js unused) — **tetap `blocked`**, komentar temuan ditambahkan (apa yang berubah, apa yang belum).
+
+---
+
 ## 📝 S33o (2026-10-21) — subset webfont dikirim sebagai `text=` (−20,5 KiB jalur login) + protokol **TBT nyata**
 
 ### Prioritas 1 — subset webfont: −34,4 KiB total, tanpa regresi
