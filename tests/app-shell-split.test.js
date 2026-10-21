@@ -19,7 +19,6 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf-8');
 const index = read('index.html');
 const shell = read('public/pages/app-shell.html');
 const mainJs = read('src/main.js');
-const bootstrapJs = read('src/js/bootstrap.js');
 
 /** Penanda markup yang hanya boleh hidup di fragmen shell. */
 const SHELL_MARKERS = [
@@ -76,11 +75,24 @@ describe('app shell dipisah dari index.html', () => {
     expect(mainJs).toContain("['pointerdown', 'keydown', 'touchstart', 'focusin']");
   });
 
-  it('bootstrap.js menunggu shell sebelum membuka gate login', () => {
-    const awaitAt = bootstrapJs.indexOf('await window.__loadAppShell()');
-    const gateAt = bootstrapJs.indexOf('this.isLoggedIn = true');
-    expect(awaitAt).toBeGreaterThan(-1);
+  // Sejak S33u urutan boot pasca-login pindah ke `main.js`: `bootstrap.js` ikut
+  // chunk `app-*.js` yang malas, jadi listener auth di sana tidak pernah
+  // terpasang pada layar login.
+  it('main.js menunggu shell (dan initTree) sebelum membuka gate login', () => {
+    const shellAt = mainJs.indexOf('await window.__loadAppShell()');
+    const gateAt = mainJs.indexOf('loginScreen.isLoggedIn = true');
+    expect(shellAt).toBeGreaterThan(-1);
     expect(gateAt).toBeGreaterThan(-1);
-    expect(awaitAt, 'shell harus dimuat sebelum isLoggedIn = true').toBeLessThan(gateAt);
+    expect(shellAt, 'shell harus dimuat sebelum gate dibuka').toBeLessThan(gateAt);
+    // Wrapper fragmen memanggil `Alpine.data('app')`, jadi chunk app wajib lebih dulu.
+    const appAt = mainJs.indexOf('await window.__loadApp()');
+    expect(appAt).toBeGreaterThan(-1);
+    expect(appAt, 'chunk app harus terdaftar sebelum initTree fragmen').toBeLessThan(shellAt);
+  });
+
+  it('fragmen shell membawa wrapper x-data="app()" (satu-satunya bentuk yang jadi scope)', () => {
+    expect(shell).toContain('<div x-data="app()"');
+    // Direktif di elemen host akan terikat ke scope `login()`.
+    expect(index).not.toContain('<div id="app-shell" x-data');
   });
 });

@@ -8,7 +8,31 @@
   menyalin-tempel markup ini kembali ke index.html — layar login sengaja
   dibiarkan kecil supaya paint pertama tidak menunggu parse 128 KB DOM.
   `tests/app-shell-split.test.js` mengunci pemisahan ini.
+
+  SCOPE: seluruh isi berkas ini hidup di dalam wrapper
+  `<div x-data="app()">` di bawah. `x-data` pada elemen host (`#app-shell`)
+  TIDAK PERNAH menjadi scope lewat `Alpine.initTree()` — dibuktikan dengan 4
+  varian di `scripts/alpine-scope-probe.mjs` (S33r). Wrapper itu juga pemilik
+  dua shortcut keyboard yang dulu menempel di `<body>`; direktif di host akan
+  terikat ke scope `login()` dan melempar ReferenceError.
+
+  JANGAN menaruh `</div>` yatim di dalam wrapper: parser HTML memakainya untuk
+  menutup wrapper lebih awal, node setelahnya jatuh ke scope `<body x-data=
+  "login()">`, dan `Alpine.initTree()` melempar ReferenceError di tengah jalan
+  sehingga sisa fragmen tidak pernah ter-init (S33t).
 -->
+<div x-data="app()"
+  @keydown.window="
+    if ($event.key.toLowerCase() === 'n' && !$event.ctrlKey && !$event.altKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName) && !showLogModal && !showEquipModal && !showPartModal && isLoggedIn && isAdminOrSupervisor) {
+      $event.preventDefault();
+      openLogModal(false);
+    }
+    if ($event.key.toLowerCase() === 'l' && !$event.ctrlKey && !$event.altKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName) && isLoggedIn && isAdminOrSupervisor && currentPage === 'wo') {
+      $event.preventDefault();
+      const console = document.getElementById('wo-log-console');
+      if (console) console.open = !console.open;
+    }
+  ">
   <!-- 🔔 Notification Panel Modal -->
   <div x-show="showNotifications" x-cloak class="fixed inset-0 z-[250] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showNotifications = false">
     <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-[20px]" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -1827,9 +1851,6 @@
       </div>
     </div>
   </div>
-  </div>
-    </div>
-  </div>
 
   <!-- ✂️ CROP MODAL -->
   <template x-if="showCropModalOpen">
@@ -1856,3 +1877,4 @@
       </div>
     </div>
   </template>
+</div>

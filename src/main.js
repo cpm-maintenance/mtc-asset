@@ -1,5 +1,5 @@
 import './js/firebase-config.js';
-import { app } from './js/app.js';
+import { createLoginScreen } from './js/modules/login.js';
 import './css/fonts.css';
 import './css/style.css';
 import './css/tactical.css';
@@ -121,12 +121,57 @@ if (import.meta.env.PROD && window.Sentry?.captureMessage) {
 
 window.Alpine = Alpine;
 
-// Create single instance
-const appInstance = app();
-window.app = appInstance;
+// ============================================================
+// Reaktivitas: selalu ekspos PROXY, jangan objek mentah
+// ============================================================
+// `Alpine.data(name, () => objek)` membuat proxy sendiri, jadi menulis
+// `objek.isLoading = false` dari `main.js` mengubah objek mentah tanpa
+// men-trigger efek: `:disabled="isLoading"` tertinggal di nilai lama dan tombol
+// login mati walau state-nya benar. Bungkus sekali di sini, ekspos proxy-nya.
+const react = (o) => (typeof Alpine.reactive === 'function' ? Alpine.reactive(o) : o);
 
-// Register for Alpine
-Alpine.data('app', () => appInstance);
+// --- Layar login (eager) ---
+// Chunk `app-*.js` dimuat malas, jadi layar login butuh komponennya sendiri.
+// Isinya di-spread dari `auth.js`/`ui.js` — modul yang sama dengan `app()`.
+const loginScreen = react(createLoginScreen());
+window.__loginScreen = loginScreen;
+window.app = loginScreen; // diganti instance app begitu chunk malas terpasang
+Alpine.data('login', () => loginScreen);
+
+// --- Chunk aplikasi (malas) ---
+/** @type {Promise<any>|null} */
+let appPromise = null;
+/**
+ * Muat `app.js` + 13 mixin + `bootstrap.js` sebagai chunk terpisah, sekali saja.
+ * Idempoten seperti `window.__loadDataLayer()`.
+ * @returns {Promise<any>} instance app (proxy reaktif)
+ */
+window.__loadApp = () => {
+  if (appPromise) return appPromise;
+  appPromise = import('./js/app.js')
+    .then(({ app }) => {
+      const instance = react(app());
+      window.app = instance;
+      window.appState = instance;
+      // WAJIB terdaftar sebelum `Alpine.initTree(host)`: fragmen shell membawa
+      // wrapper `<div x-data="app()">`, dan `Alpine.data` harus sudah ada saat
+      // wrapper itu diproses.
+      Alpine.data('app', () => instance);
+      // `beforeinstallprompt` bisa sudah terpicu sebelum chunk ini selesai.
+      if (window.__installPromptEvent) {
+        instance.installPromptEvent = window.__installPromptEvent;
+        instance.showInstallButton = true;
+      }
+      logger.debug('[app] chunk aplikasi terpasang');
+      return instance;
+    })
+    .catch((err) => {
+      appPromise = null; // izinkan percobaan ulang (mis. offline sesaat)
+      logger.warn('[app] gagal memuat chunk aplikasi:', err);
+      throw err;
+    });
+  return appPromise;
+};
 
 // Add Alpine magic helper for page loading
 Alpine.magic('loadPage', () => {
@@ -167,7 +212,6 @@ Alpine.directive('page', (el, { expression }, { evaluateLater, effect }) => {
 });
 
 // Global debug
-window.appState = appInstance;
 window.componentLoader = componentLoader;
 
 // Track the promise that resolves when Firebase initial data is loaded
@@ -190,43 +234,116 @@ logger.debug('Component Loader Ready');
 // Fragmen diambil sekali, di-inject ke placeholder `#app-shell`, lalu di-init
 // dengan `Alpine.initTree()` supaya x-show/x-for/x-page di dalamnya hidup.
 const APP_SHELL_URL = '/pages/app-shell.html';
+/** Teks fragmen, diambil sekali. */
+let shellHtml = null;
+/** @type {Promise<string>|null} */
+let shellFetch = null;
 /** @type {Promise<void>|null} */
-let appShellPromise = null;
-window.__loadAppShell = () => {
-  if (appShellPromise) return appShellPromise;
-  appShellPromise = fetch(APP_SHELL_URL, { credentials: 'same-origin' })
+let shellInit = null;
+
+/** Ambil fragmen (tanpa menyalin ke DOM). Aman dipanggil sebagai prefetch. */
+function fetchAppShell() {
+  if (shellFetch) return shellFetch;
+  shellFetch = fetch(APP_SHELL_URL, { credentials: 'same-origin' })
     .then((res) => {
       if (!res.ok) throw new Error(`${res.status} ${APP_SHELL_URL}`);
       return res.text();
     })
     .then((html) => {
-      const host = document.getElementById('app-shell');
-      if (!host) throw new Error('placeholder #app-shell tidak ditemukan');
-      if (host.dataset.loaded) return;
-      // Aman: fragmen statis same-origin dari build kita sendiri
-      // (`public/pages/app-shell.html`), bukan masukan pengguna. Pola yang sama
-      // dipakai `componentLoader.loadPage()` untuk /pages/*.html.
-      host.innerHTML = html;
-      host.dataset.loaded = '1';
-      Alpine.initTree(host);
-      logger.debug('[shell] app shell terpasang');
+      shellHtml = html;
+      return html;
     })
     .catch((err) => {
-      appShellPromise = null; // izinkan percobaan ulang (mis. offline sesaat)
+      shellFetch = null; // izinkan percobaan ulang (mis. offline sesaat)
       logger.warn('[shell] gagal memuat app shell:', err);
       throw err;
     });
-  return appShellPromise;
+  return shellFetch;
+}
+
+/**
+ * Pasang fragmen ke `#app-shell` lalu init dengan `Alpine.initTree()`.
+ *
+ * JANGAN dipanggil sebelum `window.__loadApp()`: fragmen membawa wrapper
+ * `<div x-data="app()">`, dan `Alpine.data('app')` baru terdaftar setelah chunk
+ * aplikasi selesai dimuat. Prefetch cukup `fetchAppShell()`.
+ */
+window.__loadAppShell = () => {
+  if (shellInit) return shellInit;
+  shellInit = (async () => {
+    const html = shellHtml || (await fetchAppShell());
+    const host = document.getElementById('app-shell');
+    if (!host) throw new Error('placeholder #app-shell tidak ditemukan');
+    if (host.dataset.loaded) return;
+    // Aman: fragmen statis same-origin dari build kita sendiri
+    // (`public/pages/app-shell.html`), bukan masukan pengguna. Pola yang sama
+    // dipakai `componentLoader.loadPage()` untuk /pages/*.html.
+    host.innerHTML = html;
+    host.dataset.loaded = '1';
+    Alpine.initTree(host);
+    logger.debug('[shell] app shell terpasang');
+  })().catch((err) => {
+    shellInit = null; // izinkan percobaan ulang
+    logger.warn('[shell] gagal memasang app shell:', err);
+    throw err;
+  });
+  return shellInit;
 };
 
 // Prefetch saat interaksi pertama: kunjungan pasif ke layar login tidak
 // membayar 128 KB ini, tapi sesi yang benar-benar login sudah punya cache-nya.
+// Hanya teks fragmen yang diambil — `initTree` menunggu chunk `app-*.js`.
 const SHELL_TRIGGERS = ['pointerdown', 'keydown', 'touchstart', 'focusin'];
 const prefetchAppShell = () => {
   for (const ev of SHELL_TRIGGERS) window.removeEventListener(ev, prefetchAppShell);
-  window.__loadAppShell().catch(() => {});
+  fetchAppShell().catch(() => {});
 };
 for (const ev of SHELL_TRIGGERS) window.addEventListener(ev, prefetchAppShell, { passive: true });
+
+// ============================================================
+// Gate auth — satu-satunya pemilik urutan boot pasca-login
+// ============================================================
+// Listener ini tinggal di sini, bukan di `bootstrap.js`, karena `bootstrap.js`
+// ikut chunk `app-*.js` yang malas: listener yang tinggal di sana tidak akan
+// pernah terpasang pada layar login. Urutannya wajib dan tidak boleh ditukar:
+//   lapisan data → chunk app → fragmen shell (+ initTree) → onUser → gate.
+// `initTree` harus selesai SEBELUM `isLoggedIn` dibuka (pelajaran S33m): kalau
+// gate dibuka lebih dulu, `x-page` belum punya target dan shell tampil kosong.
+window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
+  if (!user) {
+    loginScreen.isLoggedIn = false;
+    loginScreen.user = null;
+    loginScreen.isLoading = false;
+    // Sesi berakhir setelah app pernah termuat (logout): tutup juga shell.
+    if (window.app && window.app !== loginScreen) {
+      window.app.isLoggedIn = false;
+      window.app.user = null;
+      window.app.isLoading = false;
+    }
+    return;
+  }
+
+  try {
+    // SDK RTDB tidak ikut muatan login (S33p) — pasang sebelum consumer pertama.
+    if (typeof window.__loadDataLayer === 'function') {
+      await window.__loadDataLayer();
+    }
+    const instance = await window.__loadApp();
+    await window.__loadAppShell();
+    // Pekerjaan pasca-auth milik bootstrap.js (checkUserRole, listener RTDB,
+    // AI settings, PM schedule, requisitions, sapuan notifikasi).
+    if (typeof instance.onUser === 'function') {
+      await instance.onUser(user);
+    }
+    // Gate dibuka paling akhir — setelah shell ter-init.
+    loginScreen.isLoggedIn = true;
+    loginScreen.user = user;
+    loginScreen.isLoading = false;
+  } catch (err) {
+    logger.warn('[auth] boot pasca-login gagal:', err);
+    loginScreen.isLoading = false;
+  }
+});
 
 // Start Alpine immediately (AFTER registering everything)
 Alpine.start();
@@ -274,6 +391,9 @@ window.notificationAPI = {
 // ============================================================
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
+  // Disimpan juga di window: event ini biasanya terpicu sebelum chunk `app-*.js`
+  // selesai dimuat, dan `__loadApp()` memindahkannya ke instance app.
+  window.__installPromptEvent = e;
   if (window.app) {
     window.app.installPromptEvent = e;
     window.app.showInstallButton = true;
@@ -282,6 +402,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 window.addEventListener('appinstalled', () => {
+  window.__installPromptEvent = null;
   if (window.app) {
     window.app.installPromptEvent = null;
     window.app.showInstallButton = false;

@@ -77,13 +77,30 @@ describe('lapisan data (RTDB) tetap di luar jalur login', () => {
     expect(eagerDb).toEqual([]);
   });
 
-  it('bootstrap.js memuat lapisan data sebelum consumer pertama (checkUserRole)', () => {
+  // Sejak S33u urutan boot pasca-login dipegang `main.js` (listener auth tidak
+  // bisa tinggal di `bootstrap.js`: modul itu ikut chunk `app-*.js` yang malas).
+  // Yang dikunci di sini urutannya, bukan nama berkasnya.
+  it('main.js memuat lapisan data sebelum chunk app, shell, dan onUser', () => {
+    const main = fs.readFileSync(path.join(SRC, 'main.js'), 'utf-8');
+    const order = [
+      'await window.__loadDataLayer()',
+      'await window.__loadApp()',
+      'await window.__loadAppShell()',
+      'instance.onUser(user)',
+    ];
+    let prev = -1;
+    for (const step of order) {
+      const at = main.indexOf(step);
+      expect(at, `langkah hilang dari main.js: ${step}`).toBeGreaterThan(-1);
+      expect(at, `urutan salah: ${step} harus setelah langkah sebelumnya`).toBeGreaterThan(prev);
+      prev = at;
+    }
+  });
+
+  it('consumer pertama (checkUserRole) hanya dipanggil dari onUser', () => {
     const boot = fs.readFileSync(path.join(SRC, 'js/bootstrap.js'), 'utf-8');
-    const loadAt = boot.indexOf('await window.__loadDataLayer()');
-    const firstConsumerAt = boot.indexOf('this.checkUserRole(user.uid)');
-    expect(loadAt).toBeGreaterThan(-1);
-    expect(firstConsumerAt).toBeGreaterThan(-1);
-    expect(loadAt).toBeLessThan(firstConsumerAt);
+    expect(boot).toMatch(/async onUser\(user\)/);
+    expect(boot.match(/this\.checkUserRole\(user\.uid\)/g)).toHaveLength(1);
   });
 
   it('audit.js memakai impor dinamis, bukan impor statis db.js', () => {

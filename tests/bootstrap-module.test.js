@@ -42,18 +42,14 @@ function makeCtx(overrides = {}) {
 }
 
 let listeners;
-let authCallback;
 
 function stubWindow() {
     listeners = {};
-    authCallback = null;
     window.addEventListener = vi.fn((type, fn) => {
         (listeners[type] ||= []).push(fn);
     });
     window.auth = { name: 'auth' };
-    window.onAuthStateChanged = vi.fn((_auth, cb) => {
-        authCallback = cb;
-    });
+    window.onAuthStateChanged = vi.fn();
     window.Sentry = { setUser: vi.fn() };
     window.notificationAPI = { checkAllNotifications: vi.fn() };
     window._appCharts = {};
@@ -98,7 +94,10 @@ describe('bootstrapModule.init — wiring', () => {
             'online',
             'unhandledrejection',
         ]);
-        expect(window.onAuthStateChanged).toHaveBeenCalledWith(window.auth, expect.any(Function));
+        // Sejak S33u listener auth tinggal di `main.js`: modul ini ikut chunk
+        // `app-*.js` yang dimuat malas, jadi listener di sini tidak akan pernah
+        // terpasang saat layar login tampil.
+        expect(window.onAuthStateChanged).not.toHaveBeenCalled();
         expect(ctx.applyTheme).toHaveBeenCalledOnce();
         // `loadAISettings()` membaca RTDB; jalur init pra-login tidak boleh
         // menyentuhnya lagi (S33p: lapisan data dimuat setelah auth).
@@ -138,6 +137,19 @@ describe('bootstrapModule.init — wiring', () => {
         expect(ctx.isOnline).toBe(false);
         listeners.online[0]();
         expect(ctx.isOnline).toBe(true);
+    });
+
+    // Alpine memanggil `init()` untuk SETIAP scope `x-data="app()"`, dan sejak
+    // refactor S33u ada dua: wrapper fragmen shell + (kalau shell dimuat ulang)
+    // node berikutnya. Tanpa guard, watcher dan listener terdaftar dua kali.
+    it('idempoten — init() kedua tidak mendaftarkan watcher lagi', () => {
+        const ctx = makeCtx();
+        ctx.init();
+        const first = ctx.$watch.mock.calls.length;
+        ctx.init();
+        expect(ctx.$watch.mock.calls.length).toBe(first);
+        expect(ctx.applyTheme).toHaveBeenCalledOnce();
+        expect(Object.keys(listeners)).toHaveLength(4);
     });
 });
 
@@ -195,20 +207,20 @@ describe('bootstrapModule.init — global error handlers', () => {
     });
 });
 
-describe('bootstrapModule.init — auth state', () => {
-    it('clears the session when the user signs out', () => {
+describe('bootstrapModule.onUser — state pasca-auth', () => {
+    it('clears the session when the user signs out', async () => {
         const ctx = makeCtx({ isLoggedIn: true, user: { uid: 'x' }, isLoading: true });
         ctx.init();
-        authCallback(null);
+        await ctx.onUser(null);
         expect(ctx.isLoggedIn).toBe(false);
         expect(ctx.user).toBeNull();
         expect(ctx.isLoading).toBe(false);
     });
 
-    it('hydrates every store and schedules the notification sweep on login', () => {
+    it('hydrates every store and schedules the notification sweep on login', async () => {
         const ctx = makeCtx();
         ctx.init();
-        authCallback({ uid: 'uid-1', email: 'a@b.c' });
+        await ctx.onUser({ uid: 'uid-1', email: 'a@b.c' });
 
         expect(ctx.isLoggedIn).toBe(true);
         expect(ctx.user).toEqual({ uid: 'uid-1', email: 'a@b.c' });
@@ -223,12 +235,12 @@ describe('bootstrapModule.init — auth state', () => {
         expect(window.notificationAPI.checkAllNotifications).toHaveBeenCalledOnce();
     });
 
-    it('works without Sentry or the notification API', () => {
+    it('works without Sentry or the notification API', async () => {
         delete window.Sentry;
         delete window.notificationAPI;
         const ctx = makeCtx();
         ctx.init();
-        expect(() => authCallback({ uid: 'uid-2' })).not.toThrow();
+        await expect(ctx.onUser({ uid: 'uid-2' })).resolves.toBeUndefined();
         expect(() => vi.advanceTimersByTime(9000)).not.toThrow();
     });
 });

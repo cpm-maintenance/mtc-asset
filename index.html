@@ -72,19 +72,11 @@
 
 </head>
 
-<body x-data="app()" 
-  @keydown.window="
-    if ($event.key.toLowerCase() === 'n' && !$event.ctrlKey && !$event.altKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName) && !showLogModal && !showEquipModal && !showPartModal && isLoggedIn && isAdminOrSupervisor) {
-      $event.preventDefault();
-      openLogModal(false);
-    }
-    if ($event.key.toLowerCase() === 'l' && !$event.ctrlKey && !$event.altKey && !$event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes($event.target.tagName) && isLoggedIn && isAdminOrSupervisor && currentPage === 'wo') {
-      $event.preventDefault();
-      const console = document.getElementById('wo-log-console');
-      if (console) console.open = !console.open;
-    }
-  "
+<body x-data="login()"
   class="selection:bg-tac-gold-bright/30">
+
+  <!-- Shortcut keyboard n/l (butuh state shell: showLogModal, openLogModal,
+       currentPage) pindah ke wrapper fragmen shell — di sini scope-nya `login()`. -->
 
   <!-- 🛡️ LOGIN SCREEN OVERLAY: "Secure Gateway" HUD (S30) -->
   <!-- Layout 12 kolom: HUD kiri (desktop) + konsol akses kanan. Semua warna dari

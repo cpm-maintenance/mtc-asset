@@ -308,6 +308,8 @@ export interface AppState {
   _woKpiLogsRef?: any;
   _woKpiPartsRef?: any;
   _cropper?: any;
+  /** Guard idempotensi `bootstrap.init()`: Alpine memanggil `init()` per scope `x-data="app()"`. */
+  _booted?: boolean;
   _dashTimeout?: any;
   _kpiCache?: any;
   _kpiTimeout?: any;

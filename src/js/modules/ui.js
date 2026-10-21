@@ -16,6 +16,29 @@ const CLOUDINARY_CLOUD = 'g3lkh1pu';
 const CLOUDINARY_PRESET = 'mtc-asset-unsigned';
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
 
+/**
+ * Tema tersimpan, dengan migrasi kunci lama `darkMode` → `themeMode`.
+ * Satu sumber untuk `app()` dan layar login — layar login hidup di chunk eager
+ * dan tidak boleh mengimpor `app.js` hanya untuk membaca satu nilai localStorage.
+ * @returns {'night'|'navy'|'purple'|'light'|string}
+ */
+export function readThemeMode() {
+    try {
+        const m = localStorage.getItem('themeMode');
+        if (m) return m;
+        const old = localStorage.getItem('darkMode');
+        if (old !== null) {
+            const v = old === 'true' ? 'night' : 'light';
+            localStorage.setItem('themeMode', v);
+            localStorage.removeItem('darkMode');
+            return v;
+        }
+    } catch {
+        // localStorage bisa diblokir (mode privat/iframe) — jatuh ke default.
+    }
+    return 'night';
+}
+
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
     manualScanId: '',
