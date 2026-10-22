@@ -1,3 +1,74 @@
+## 📝 S33aa (2026-10-22) — CSS kritis inline DIBATALKAN: FCP derau, TBT 25 → 489 ms (kartu `t_4c952280`, sw v42)
+
+Percobaan `e951f89`, revert `582c73d`. Live **sw v42** = keadaan sebelum percobaan.
+Satu percobaan, diukur, gagal acceptance, dibatalkan — bukan karena tidak dikerjakan.
+
+### Langkah 1 — baseline v40 + harga CSS (live, 3 run devtools)
+| | perf | FCP | LCP | TBT | main-thread | JS eval |
+|---|---|---|---|---|---|---|
+| baseline v40 (median) | 95 | 2374 | 2374 | 25 | 1307 | 1230 |
+
+`cls-probe` v40: **0,000 ×3**.
+CSS diblokir (`--blocked-url-patterns='*assets/main-*.css'`, 3 run): FCP
+**1785 / 1735 / 3352 → median 1785 ms (−589)**, TBT 303/155/257 (naik: long task JS
+yang tadinya tersembunyi di balik CSS kini terlihat).
+Probe Chromium sendiri (cache dingin per pass, CPU ×4 + slow-4G): base FCP
+**1120 / 1116**, tanpa CSS **856 / 776** → harga CSS ≈ **300 ms**. Lighthouse devtools
+melaporkan ~2× angka probe; probe dipakai untuk arah, `lh:real` untuk keputusan.
+
+### Langkah 2 — yang dicoba
+- `scripts/critical-css.mjs`: Tailwind dijalankan ulang dengan `content: ['index.html']`
+  (satu-satunya markup sebelum login) + `tactical.css` + `tactical-icons.css` + `fonts.css`,
+  diminifikasi lightningcss → **37.452 B mentah / 8.720 B gzip**.
+- Plugin build: `<style data-critical-css>` inline menggantikan `<link rel=stylesheet>`;
+  bundel penuh tetap dimuat lewat `media="print" onload="this.media='all'"` + `<noscript>`.
+- **Bukti subset cukup**: `scripts/critical-css-parity.mjs` membandingkan computed style +
+  kotak **143 elemen** antara "CSS penuh" dan "bundel penuh diblokir" → **0 selisih**
+  (FCP lokal 172 vs 148 ms).
+
+Dua jebakan Tailwind programatik, keduanya **senyap**:
+1. objek yang dioper ke plugin tailwind **menggantikan** config file — tanpa
+   `{...userConfig}` semua `theme.extend` (`tac-*`, `font-label-mono-*`, `gutter-*`) hilang
+   dan utilitasnya tidak diemit sama sekali;
+2. glob `content` harus **relatif** — path absolut Windows gagal dicocokkan fast-glob.
+
+### Langkah 3 — hasil live dan keputusan
+| | perf | FCP | TBT | Style & Layout | main-thread |
+|---|---|---|---|---|---|
+| v40 baseline | 95 | 2374 | 25 | 448 | 1307 |
+| **v41 percobaan** | **81** | **2259** | **489** | **942** | **2052** |
+| v42 revert | 93 | 2508 | 83 | — | 1557 |
+
+Diagnosis dari JSON: CSS async mendarat **2082–2169 ms** (priority `VeryLow`) tapi tetap
+**diterapkan sebelum paint pertama** (long task 316–581 ms) → biaya style dibayar dua kali
+(kritis inline + bundel penuh) dan paint tetap menunggu. FCP −115 ms ada **di dalam derau**
+(v41 2108–2455 vs baseline 2339–2413); TBT gagal acceptance (≤ 60 ms) dengan selisih 6×.
+→ revert, `sw.js` v41 → **v42**, live diverifikasi: `sw.js` v42, `grep -c data-critical-css` = 0.
+Sesudah revert: FCP 2508, TBT 83, CLS probe **0,000 ×3**.
+
+### Gerbang
+tsc 0 · eslint **0 error / 78 warning** · **1708 tes / 71 berkas** · coverage
+95,88/84,71/96,17/97,07 · build ok · precache **65/65** · **E2E 5 passed (36,8 s)**
+— dijalankan dua kali: sebelum commit percobaan dan sesudah revert.
+
+### Yang tetap di repo (instrumen, tanpa efek runtime)
+`scripts/critical-css.mjs`, `scripts/critical-css-parity.mjs`,
+`tests/critical-css.test.js` (3 tes: subset memuat kelas login, subset membuang kelas
+khusus shell, plugin **tidak** kembali). Tes subset dibuktikan menggigit:
+`content: ['nope.html']` → merah pada `.bg-tac-surface-base`.
+
+### Pelajaran
+1. **Render-blocking CSS bukan soal byte.** Memindahkan CSS keluar jalur blokir tidak
+   menurunkan FCP kalau bundel penuh tetap diterapkan sebelum paint — yang terjadi justru
+   dua kali kerja style. Kalau mencoba lagi: inline **seluruh** bundel (tanpa permintaan
+   CSS kedua) atau serang biaya style/layout-nya, jangan subset + async.
+2. **FCP `lh:real` di halaman ini ~2× probe Chromium sendiri** (2374 vs 1120). Probe
+   menentukan arah, `lh:real` menentukan lulus/gagal.
+3. Angka TBT baseline pun bergerak 25 → 83 ms pada build yang sama (v40 vs v42 hanya beda
+   `CACHE_NAME`), jadi selisih < 100 ms bukan bukti; 489 vs 25–83 adalah.
+
+---
+
 ## 📝 S33z (2026-10-21) — 7 duplikat state di literal `app()` dibuang (kartu `t_cee197a5`, sw v40)
 
 Commit `c0a86f2`. Live **sw v40**.
