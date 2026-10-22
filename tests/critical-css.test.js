@@ -54,16 +54,13 @@ describe('CSS kritis layar login', () => {
 describe('plugin build', () => {
     const config = fs.readFileSync(path.join(ROOT, 'vite.config.js'), 'utf-8');
 
-    it('memasang inlineCriticalCssPlugin di daftar plugin', () => {
-        expect(config).toMatch(/plugins:\s*\[[^\]]*inlineCriticalCssPlugin\(\)/);
-    });
-
-    it('mengubah tautan CSS jadi non-blocking, bukan menghapusnya', () => {
-        // media="print" + onload: bundel penuh tetap diunduh (aturan yang tidak
-        // masuk subset pulih), tapi tidak lagi menahan paint pertama.
-        expect(config).toContain('media="print"');
-        expect(config).toContain('onload="this.media=');
-        // Tanpa JS (dan untuk crawler) bundel penuh harus tetap ada.
-        expect(config).toContain('<noscript>');
+    it('TIDAK memasang inlineCriticalCssPlugin — percobaan S33aa dibatalkan', () => {
+        // S33aa mencoba mengganti <link rel=stylesheet> dengan <style> kritis +
+        // bundel penuh non-blocking. Hasil live: FCP 2374 → 2259 ms (di dalam
+        // rentang derau), tapi TBT 25 → 489 ms dan Style & Layout 448 → 942 ms
+        // karena bundel penuh tetap diterapkan sebelum paint pertama. Dibatalkan;
+        // tes ini menjaga supaya mekanismenya tidak kembali tanpa pengukuran.
+        expect(config).not.toContain('inlineCriticalCssPlugin');
+        expect(config).not.toContain('media="print"');
     });
 });

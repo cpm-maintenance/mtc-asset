@@ -2,41 +2,6 @@ import { defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildCriticalCss } from './scripts/critical-css.mjs';
-
-/**
- * Kritis CSS inline (kartu t_4c952280).
- *
- * `<link rel="stylesheet">` memblokir render: FCP menunggu 13,2 KB CSS mendarat
- * ditambah parse + style/layout 96,5 KB bundel. Di live (blocked-url-patterns)
- * FCP 2374 → 1785 ms. Pada build, CSS kritis layar login (subset Tailwind dari
- * `index.html` + token/ikon/font) di-inline ke `<head>`, dan bundel penuh
- * dimuat non-blocking lewat `media="print"` + `onload` — jadi aturan yang tidak
- * masuk subset pulih beberapa ratus ms kemudian, bukan hilang.
- *
- * `<noscript>` memuat ulang tautan yang sama supaya pengguna tanpa JS (dan
- * crawler) tetap dapat bundel penuh.
- */
-function inlineCriticalCssPlugin() {
-  return {
-    name: 'inline-critical-css',
-    apply: 'build',
-    enforce: 'post',
-    transformIndexHtml: {
-      order: 'post',
-      async handler(html) {
-        const linkRe = /<link[^>]*rel="stylesheet"[^>]*>/;
-        const match = html.match(linkRe);
-        if (!match) return html;
-        const tag = match[0].replace(/\s*\/?>$/, '>');
-        const asyncTag = tag.replace('<link', '<link media="print" onload="this.media=\'all\'"');
-        const critical = await buildCriticalCss();
-        const replacement = `<style data-critical-css>${critical}</style>\n    ${asyncTag}\n    <noscript>${tag}</noscript>`;
-        return html.replace(linkRe, replacement);
-      },
-    },
-  };
-}
 
 /**
  * P2-2: Inject Firebase web config ke public/firebase-messaging-sw.js dari env.
@@ -141,7 +106,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       firebaseMessagingSwPlugin(env),
-      inlineCriticalCssPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         strategies: 'injectManifest',
