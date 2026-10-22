@@ -48,6 +48,10 @@ describe('halaman login — gambar panel desktop tidak diunduh di mobile', () =>
     const webpPath = path.join(ROOT, 'public/logo.webp');
     expect(fs.existsSync(webpPath), 'public/logo.webp belum diterbitkan').toBe(true);
     expect(fs.statSync(webpPath).size).toBeLessThan(png * 0.5);
+    // S33ah: PNG asli 16,7 KB untuk ikon yang tampil 32 px (dan ikon manifest 180×180
+    // yang tetap diunduh browser di jalur login). Alpha-nya seluruhnya 255, jadi
+    // palette+RGB lossless secara visual: 16,7 → 6,3 KB.
+    expect(png).toBeLessThan(8 * 1024);
   });
 
   it('hero tetap dekoratif (alt kosong + aria-hidden) supaya a11y tidak berubah', () => {
