@@ -1,3 +1,67 @@
+## 📝 S33ab (2026-10-22) — CSS kritis inline + bundel penuh SETELAH paint: FCP 2510 → 2227 ms (sw v43)
+
+Commit `886d9b5`. Live **sw v43**. Lanjutan `t_4c952280` (S33aa ditutup negatif).
+Dua percobaan sebelumnya memberi batas yang jelas, dan yang ketiga menang.
+
+### Urutan bukti
+| percobaan | hasil | kesimpulan |
+|---|---|---|
+| baseline v40/v42 | FCP 2374 / 2510 · TBT 25–197 · perf 95/90 | patokan |
+| CSS diblokir (`--blocked-url-patterns`) | FCP **1785** (−589) | CSS penyumbang terbesar FCP |
+| S33aa: subset inline + bundel `media=print` | FCP 2259, **TBT 489** | bundel penuh diterapkan sebelum paint → style dua kali |
+| A: `fetchpriority="high"` (kanal) | FCP 2439 vs 2519 | nol — CSS render-blocking **sudah** `VeryHigh` |
+| **B′: subset inline + bundel penuh hanya setelah paint** | **FCP 2227 · TBT 60 · perf 95** | menang |
+
+### Bentuk yang dipakai
+- Plugin build (`vite.config.js`): `<link rel=stylesheet>` **dihapus**, CSS kritis
+  (subset Tailwind `index.html` + token/ikon/font, **8.720 B gzip**) di-inline,
+  href bundel penuh dititipkan di `data-full-css`, plus `<noscript>` fallback.
+- `window.__loadFullCss()` (`src/main.js`, idempoten) dipicu: gate auth (sesi ada),
+  interaksi pertama, dan `submitLogin()` (`modules/auth.js`) — jadi 13,2 KB CSS
+  berjalan paralel dengan round-trip auth, bukan menahan paint.
+- **Diverifikasi**: 0 request `.css` sebelum interaksi, 1 sesudahnya.
+
+### Angka (3 run devtools)
+| | perf | FCP | LCP | TBT | main-thread |
+|---|---|---|---|---|---|
+| v42 produksi (berpasangan) | 90 | 2510 | 2515 | 197 | 1688 |
+| kanal `s33ab-b` | 95 | 2147 | 2214 | 72 | 1500 |
+| **live v43** | **95** | **2227** | **2227** | **60** | 1574 |
+
+Live v43 run: FCP 2123 / 2227 / 2231 · TBT 1 / 60 / 172 · CLS Lighthouse 0,072.
+`cls-probe` **0,000 / 0,005 / 0,000 → median 0,000** (lulus, ambang 0,02).
+FCP −283 ms vs v42 (median berpasangan), perf 90–93 → **95**.
+
+### Biaya
+`index.html` gzip 6,1 → **15,6 KB** (8,7 KB CSS kritis ikut di dalamnya); bundel CSS
+16,6 KB gzip **tidak lagi di jalur kritis** dan hanya diunduh saat interaksi/login.
+Total byte per kunjungan pasif naik ~9,5 KB; kunjungan yang login membayar bundel
+penuh seperti sebelumnya, hanya tidak lagi sebelum paint.
+
+### Bukti bahwa subset cukup
+`scripts/critical-css-parity.mjs` (diperbarui): kasus "penuh" kini **meminta**
+`__loadFullCss()` sendiri — tanpa itu kedua kasus sama-sama hanya kritis dan
+perbandingan lolos tanpa memeriksa apa pun. Ditambah blok tersembunyi (tab PIN/SSO)
+ikut diukur. Hasil: **0 selisih** pada 143 elemen × 3 keadaan.
+
+### Gerbang
+tsc 0 · eslint **0 error / 78 warning** · **1711 tes / 71 berkas** · coverage
+95,87/84,70/96,17/97,07 (ambang 95/84/95/96) · build ok · precache **65/65** ·
+**E2E 5 passed (35,6 s)**. `tests/critical-css.test.js` 6 tes, dibuktikan menggigit
+(hapus dua pemicu `__loadFullCss` → 1 tes merah).
+
+### Pelajaran
+1. **Yang menentukan FCP bukan byte CSS-nya, tapi apakah CSS itu ada di jalur
+   permintaan sebelum paint.** Menurunkan 16,6 → 8,7 KB (subset) dan menaikkan
+   prioritas tidak menggerakkan apa pun selama bundel penuh tetap mendarat sebelum
+   paint; memindahkannya sepenuhnya ke pasca-paint memberi −283 ms.
+2. **Jangan pakai `media="print"` + `onload` untuk CSS di aplikasi ini** — bundel
+   penuh diterapkan sebelum paint dan TBT melonjak 25 → 489 ms.
+3. Probe paritas harus **meminta** keadaan pembandingnya sendiri setelah bentuk
+   "muat belakangan" dipakai; kalau tidak, tesnya vakum dan tetap hijau.
+
+---
+
 ## 📝 S33aa (2026-10-22) — CSS kritis inline DIBATALKAN: FCP derau, TBT 25 → 489 ms (kartu `t_4c952280`, sw v42)
 
 Percobaan `e951f89`, revert `582c73d`. Live **sw v42** = keadaan sebelum percobaan.
