@@ -1,3 +1,72 @@
+## 📝 S33ah (2026-10-22) — `logo.png` 16,1 → 4,7 KiB (total login **151 → 140 KiB**) + `exportData` format excel|csv (G)
+
+Live **sw v49**. Tiga commit: `b93d2ab` (WebP header + `exportData`) · `2255d8a` (palette q90) ·
+`667d5bf` (palette q80). `f4e9882` (favicon 48×48) **dibatalkan** — lihat "Premis kartu yang salah".
+
+### Angka live (3 run `simulate`, `npx --no-install lighthouse`)
+| audit | sebelum (v45) | sesudah (v49) |
+|---|---|---|
+| `total-byte-weight` | 155.095 B / 151 KiB | **143.305 B / 140 KiB** (median; 143.316 · 143.272 · 143.305) |
+| selisih | — | **−11.790 B = −11,5 KiB** (kriteria ≥ 10 KiB) |
+| `unused-javascript` | 0 KiB | **0 KiB** |
+| `unused-css-rules` | 0 KiB | **0 KiB** |
+| request `logo.png` | 16,1 KiB | **4,69 KiB** |
+| perf | 96–99 | 96 · 97 · 97 |
+| CLS probe (`cls-probe.mjs 3 0.02`) | 0,000 | **0,000 ×3** (LULUS) |
+
+### Premis kartu yang salah (diukur, bukan diduga)
+`logo.png` 16,1 KiB di jalur login **bukan** `<img>` header shell — elemen itu
+`loading="lazy"` **dan** di dalam panel `hidden lg:block`, jadi tidak pernah diminta di
+layar login. Yang meminta adalah **ikon manifest** (`manifest.json` → `logo.png`):
+`resourceType: Other`, mendarat ~1234 ms, satu batch dengan favicon.
+Bukti: favicon diganti ke `/icons/favicon-48.png` (`f4e9882`) → `logo.png` **tetap**
+diminta 16,1 KiB, total malah **151 → 153 KiB**. Percobaan itu dibatalkan (`2255d8a`).
+
+### Yang menang
+| perubahan | byte |
+|---|---|
+| `logo.png` di-re-encode palette PNG (nama, 180×180, format **sama**; alpha asli seluruhnya 255 → dibuang; q80) | 16.743 → **4.397 B** |
+| `logo.webp` (q90, 180×180) untuk `<picture><source>` header shell, fallback PNG | 2.508 B (berlaku **setelah** login) |
+| `manifest.json` + `favicon` **tidak disentuh** (tetap PNG) | 0 |
+
+Fidelity palette q80 diukur terhadap aslinya: 0,88 % piksel menyimpang > 8/255, maks 22, mean 0,40.
+q90 (6.255 B) hanya −9,7 KiB → di bawah kriteria, karena itu q80.
+
+### `exportData(type, format)`
+`_format` yang selalu diabaikan (temuan S33ad) sekarang dipakai:
+`'excel'` → `XLSX.utils.book_new` + sheet `Data` + `XLSX.writeFile(...xlsx)`;
+`'csv'` **dan tanpa argumen** → jalur lama (`sheet_to_csv` + Blob + `<a download>`).
+Tiga tes baru di `tests/export-module.test.js` (excel menulis `.xlsx`, sheet ke workbook,
+default tetap CSV). **Dibuktikan menggigit**: `format === 'xlsx'` → 2 tes merah → revert.
+Bukti browser nyata (probe Playwright + emulator, dihapus setelah dipakai):
+`EXCEL_DOWNLOAD=Equipment_Export_1792660675429.xlsx`, `DEFAULT_DOWNLOAD=Equipment_Export_…csv`.
+**Belum ada UI**: kelima tombol halaman masih `exportData(x,'csv')` — cabang `excel`
+belum punya pemicu; itu keputusan produk, bukan bug.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- tes **1771 / 75 berkas** (dari 1767 / 74)
+- coverage **96,43 / 86,12 / 96,55 / 97,75** (ratchet 96/86/96/97 tetap)
+- build ok · precache **66/66** (`logo.webp` masuk `includeAssets` + `verify-precache`)
+- E2E **8 passed (29,3 s)** · probe export browser **1 passed**
+- live: `sw.js` = `mtc-asset-v49`, `logo.png` 4.497 B, `logo.webp` 2.508 B (`image/webp`),
+  `pages/app-shell.html` memuat `logo.webp` 1×, precache memuat `logo.webp`
+
+### Pitfall baru
+- **`total-byte-weight` menghitung request di luar markup halaman.** Ikon manifest
+  (`resourceType: Other`) tetap diunduh browser walau halaman tidak menampilkannya, jadi
+  menukar `<link rel="icon">` **tidak** menghapus byte itu — satu-satunya cara adalah
+  memperkecil berkas ikon manifest itu sendiri.
+- **`sharp.png({palette:true})` membuang alpha.** Aman hanya bila alpha asli seluruhnya
+  255 (cek `minAlpha`); kalau tidak, logo transparan akan jadi kotak gelap.
+- **Perbandingan piksel `raw()` wajib `.removeAlpha()` di kedua sisi.** Tanpa itu channel
+  4 vs 3 → `mean=NaN`, `maxdiff=255`, dan hasilnya terlihat seperti kerusakan total.
+- Re-encode berantai (palette → palette) menurunkan kualitas dua kali; selalu encode dari
+  sumber asli (`git show <sha>:public/logo.png`).
+
+---
+
 ## 📝 S33ag (2026-10-22) — audit `unused-javascript`: **0 KiB** (F)
 
 Tanpa perubahan kode. Live **sw v45**. Tiga run `lighthouse --only-categories=performance`
