@@ -3,6 +3,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildCriticalCss } from './scripts/critical-css.mjs';
+import { dedupeCss } from './scripts/css-dedupe.mjs';
 
 /**
  * CSS kritis layar login di-inline, bundel penuh dimuat setelah paint (S33ab).
@@ -23,6 +24,10 @@ import { buildCriticalCss } from './scripts/critical-css.mjs';
  * `<noscript>` memuat bundel penuh untuk pengguna tanpa JS.
  */
 function inlineCriticalCssPlugin() {
+  /** @type {string|null} */
+  let criticalCache = null;
+  const criticalCss = async () => (criticalCache ??= await buildCriticalCss());
+
   return {
     name: 'inline-critical-css',
     apply: 'build',
@@ -35,13 +40,48 @@ function inlineCriticalCssPlugin() {
         if (!match) return html;
         const href = (match[0].match(/href="([^"]+)"/) || [])[1];
         if (!href) return html;
-        const critical = await buildCriticalCss();
+        const critical = await criticalCss();
         const fallback = `<link rel="stylesheet" href="${href}">`;
         return html.replace(
           linkRe,
           `<style data-critical-css data-full-css="${href}">${critical}</style>\n    <noscript>${fallback}</noscript>`
         );
       },
+    },
+    /**
+     * Bundel penuh dibangun dari SELURUH konten, jadi ia memuat ulang aturan yang
+     * sudah ada di CSS kritis (8,7 KB gzip dobel). Buang salinannya di sini —
+     * selisih per aturan, dengan invarian "tidak ada aturan yang hilang".
+     *
+     * Aset CSS diganti nama (hash baru) karena isinya berubah: kalau namanya
+     * tetap, pengunjung lama akan disajikan berkas 16,5 KB dari cache HTTP
+     * (aset ber-hash di-cache `immutable`), bukan 9 KB yang baru.
+     */
+    async generateBundle(_options, bundle) {
+      const critical = await criticalCss();
+      for (const asset of Object.values(bundle)) {
+        if (asset.type !== 'asset' || !String(asset.fileName).endsWith('.css')) continue;
+        const before = String(asset.source);
+        const { css, removed, kept } = dedupeCss(before, critical);
+        if (removed === 0) continue;
+
+        const refId = this.emitFile({
+          type: 'asset',
+          name: path.basename(asset.fileName).replace(/-[\w-]+\.css$/, '') + '.css',
+          source: css,
+        });
+        const newName = this.getFileName(refId);
+        // HTML sudah dibuat oleh plugin Vite (hook ini `enforce: 'post'`), jadi
+        // tautan `data-full-css` harus ditukar manual.
+        for (const other of Object.values(bundle)) {
+          if (other.type !== 'asset' || !String(other.fileName).endsWith('.html')) continue;
+          other.source = String(other.source).split(asset.fileName).join(newName);
+        }
+        delete bundle[asset.fileName];
+        this.info(
+          `[inline-critical-css] ${asset.fileName} → ${newName}: ${removed} aturan dobel dibuang, ${kept} tersisa`
+        );
+      }
     },
   };
 }
