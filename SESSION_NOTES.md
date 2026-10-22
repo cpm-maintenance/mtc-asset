@@ -1,3 +1,54 @@
+## 📝 S33af (2026-10-22) — coverage branch 84,70 → 86,11 %; error-handler 0 → 100 % (D)
+
+Commit `cb0ab19`. Tanpa perubahan `src/**` ⇒ `sw.js` tetap **v45**.
+Lanjutan daftar sisa (D: metrik terendah). Tidak ada kode produksi yang disentuh.
+
+### Sasaran dipilih dari data, bukan dari perasaan
+`coverage/lcov.info` diurutkan per branch belum tercover:
+`app.js` 258 (tapi 85,9 %) · `enterprise-kpi.js` 86 (79,4 %) · `export.js` 83 ·
+`requisition.js` **76 (65,3 %)** · `data.js` 70 · **`error-handler.js` 31 (0 %)**.
+`error-handler.js` satu-satunya modul di `src/js/` tanpa tes sama sekali.
+
+### Tiga berkas tes baru (52 tes)
+| berkas | yang dikunci |
+|---|---|
+| `tests/error-handler-module.test.js` | semua kelas pesan (network/permission/quota/not found/auth + fallback), `errorDetails` untuk error non-`Error`, tag Sentry `context` dan `unknown`, `handleError` tidak melempar walau Sentry gagal, `clearError` |
+| `tests/enterprise-kpi-fallbacks.test.js` | cabang **state kosong** (sisi kanan `this._raw(x) \|\| []`) untuk 14 metrik + ambang availability 95/85/70 dan clamp 0–100 |
+| `tests/requisition-fallbacks.test.js` | record lama tanpa `items`, default `quantity` 1, clone line item tidak berbagi referensi, `autoReorderLowStock` dengan `PartID`/`partId`/`NamaPart` + dedupe pending/approved, backlink `reqIds` ke WO (belum ada / sudah ada id / id lain / gagal) |
+
+Untuk cabang `cur.includes(id)` dipakai `Date.now` + `Math.random` distub supaya
+id-nya deterministik — tanpa itu cabang tersebut tidak bisa dieksekusi dari luar.
+
+### Angka
+| metrik | sebelum | sesudah |
+|---|---|---|
+| statements | 95,80 % | **96,43 %** |
+| branches | 84,70 % | **86,11 %** |
+| functions | 96,16 % | **96,55 %** |
+| lines | 97,00 % | **97,75 %** |
+| tes | 1715 / 71 berkas | **1767 / 74 berkas** |
+
+Threshold di `vitest.config.js` di-ratchet **95/84/95/96 → 96/86/96/97**.
+**Dibuktikan menggigit**: `branches: 87` → `ERROR: Coverage for branches (86.11%)
+does not meet global threshold (87%)`, lalu di-revert.
+
+### Gerbang
+tsc 0 · eslint **0/0** · 1767 tes / 74 berkas · coverage 96,43/86,11/96,55/97,75 ·
+build ok · precache **65/65** · **E2E 8 passed (30,7 s)**.
+
+### Pelajaran
+1. **Pilih sasaran coverage dari `lcov.info`, bukan dari ukuran berkas.**
+   `app.js` punya 258 branch terlewat tapi sudah 85,9 %; `error-handler.js`
+   hanya 31 branch tapi 0 % — dan itu satu-satunya modul yang sama sekali tak
+   tersentuh.
+2. **Cabang `|| []` hanya bisa dicapai dengan state kosong.** Semua tes lama
+   memberi data terisi, jadi sisi kanan fallback tidak pernah jalan — padahal
+   itulah kondisi nyata halaman sebelum listener RTDB mengisi apa pun.
+3. **Threshold baru harus dibuktikan menggigit** (naikkan 1 poin → merah →
+   revert). Tanpa itu, ratchet hanya angka di berkas konfigurasi.
+
+---
+
 ## 📝 S33ae (2026-10-22) — CSS dobel dibuang: bundel 16,6 → 9,0 KB gzip (sw v45)
 
 Commit `7d96859`. Live **sw v45**. Lanjutan S33ab (C dari daftar sisa).
