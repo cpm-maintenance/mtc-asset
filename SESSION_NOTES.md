@@ -1,3 +1,58 @@
+## 📝 S33ac (2026-10-22) — sisa FCP dibedah: koneksi ~400 ms + layout pertama ~160–250 ms (tanpa perubahan kode)
+
+Instrumen baru `scripts/paint-trace.mjs`; live tetap **sw v43** (`886d9b5`).
+Langkah ini **pengukuran, bukan patch** — hasilnya: tidak ada lever ≥ 100 ms yang
+tersisa di sisi aplikasi.
+
+### Instrumen
+`scripts/paint-trace.mjs` mengambil trace Chromium nyata (CPU ×4 + slow-4G, cache
+dingin) lalu menjumlahkan **self time per nama event** di thread utama sampai FCP —
+jadi kelihatan `Layout` vs `UpdateLayoutTree` vs `v8.evaluateModule` vs `ParseHTML`,
+bukan cuma ember "Style & Layout" milik Lighthouse. Ikut mencetak setiap pass
+`Layout` (kapan, durasi, jumlah node kotor) dan rincian navigasi
+(dns/tcp/tls/ttfb/download). Dua jebakan yang sudah ditutup di dalamnya:
+`ts` trace itu absolut sehingga harus dinormalkan ke `navigationStart` (kalau tidak,
+semua event terbuang → "total 0 ms"), dan thread utama dicari dari total durasi
+terbesar, bukan dari metadata `thread_name`.
+
+### Komposisi FCP (live v43, probe sendiri, 2 pass)
+| komponen | ms |
+|---|---|
+| dns | 9 |
+| tcp | 117–153 |
+| tls | 62–96 |
+| ttfb | 57–60 |
+| download HTML (15,6 KB gzip) | 158–172 |
+| **Layout pertama** (91–114 node) | **149–267** |
+| UpdateLayoutTree (style) | 24–37 |
+| ParseHTML | 28–43 |
+| Paint | 7–12 |
+| **FCP** | **964–1048** |
+
+Lighthouse devtools melaporkan ~2,2 s untuk build yang sama (≈2,2× probe), dan
+`mainthread-work-breakdown` "Style & Layout 519–620 ms" ternyata **didominasi
+`Layout`**, bukan style.
+
+### Dua hipotesis diuji, dua-duanya gugur
+| hipotesis | uji | hasil |
+|---|---|---|
+| rantai fallback webfont (4 keluarga + 12 `@font-face` metrik) yang mahal | `--no-webfont` (`*{font-family:sans-serif!important}`) | Layout pertama **242–357 ms** vs 251–267 → **bukan** font |
+| layout terlalu luas, bisa dipersempit containment | `--css '*{contain:layout style}'` | **182 ms** vs 202–239 → hanya −20 %, bukan lever |
+
+### Kesimpulan
+Sisa FCP = **setup koneksi dingin ~400 ms** (3 RTT pada 150 ms) + **layout pertama
+yang intrinsik** ~160–250 ms + byte HTML 15,6 KB (8,7 KB di antaranya CSS kritis
+inline — hasil S33ab). Tidak ada satu pun yang bisa dipotong ≥ 100 ms tanpa
+membongkar markup, dan arah "potong DOM" sudah terbukti negatif di live (S33m:
+93 → 91). Kandidat sisa kalau ada yang mau mengejar: memangkas subset kritis
+(perkiraan 40–50 ms) atau urusan edge/HTTP3 yang di luar repo.
+
+### Gerbang
+Tidak ada perubahan `src/**`/`index.html`/`public/**` ⇒ `sw.js` tetap **v43**.
+tsc 0 · eslint **0 error / 78 warning** · **1711 tes / 71 berkas** hijau.
+
+---
+
 ## 📝 S33ab (2026-10-22) — CSS kritis inline + bundel penuh SETELAH paint: FCP 2510 → 2227 ms (sw v43)
 
 Commit `886d9b5`. Live **sw v43**. Lanjutan `t_4c952280` (S33aa ditutup negatif).
