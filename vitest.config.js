@@ -81,11 +81,14 @@ export default defineConfig({
             // app.js 74,54 → 97,57% lines (branch 66,41 → 85,51).
             // Total 90,05/79,19/87,86/91,45 → 95,57/84,67/96,00/96,69.
             // Suite 1527 → 1643 (60 berkas). Threshold 88/77/85/89 → 95/84/95/96.
+            // Ratchet S33af: 95/84/95/96 -> 96/86/96/97 setelah tiga berkas tes
+            // baru (error-handler 0 -> 100 %, fallback enterprise-kpi & requisition).
+            // Terukur 96,43 / 86,11 / 96,55 / 97,75 — jangan turunkan.
             thresholds: {
-                statements: 95,
-                branches: 84,
-                functions: 95,
-                lines: 96,
+                statements: 96,
+                branches: 86,
+                functions: 96,
+                lines: 97,
             },
         },
     },
