@@ -2,6 +2,49 @@ import { defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildCriticalCss } from './scripts/critical-css.mjs';
+
+/**
+ * CSS kritis layar login di-inline, bundel penuh dimuat setelah paint (S33ab).
+ *
+ * Tiga pengukuran yang menentukan bentuk ini:
+ *   - `--blocked-url-patterns='*assets/main-*.css'` di live: FCP 2374 → 1785 ms,
+ *     jadi CSS memang penyumbang terbesar FCP.
+ *   - `fetchpriority="high"` tidak mengubah apa pun: CSS render-blocking SUDAH
+ *     `VeryHigh`, dan tetap selesai ~1740–1830 ms karena 13,2 KB-nya berebut pipa
+ *     1,6 Mbps dengan ~100 KB chunk JS.
+ *   - Subset inline + bundel penuh `media="print"` GAGAL: bundel penuh tetap
+ *     diterapkan sebelum paint pertama → TBT 25 → 489 ms (style dihitung dua kali).
+ *
+ * Jadi bundel penuh TIDAK dimuat sebelum paint sama sekali. `<link>`-nya dihapus,
+ * CSS kritis (subset Tailwind `index.html` + token/ikon/font) di-inline, dan href
+ * bundel penuh dititipkan di `data-full-css` — `window.__loadFullCss()` di
+ * `src/main.js` yang memasangnya saat sesi ada / submit login / interaksi pertama.
+ * `<noscript>` memuat bundel penuh untuk pengguna tanpa JS.
+ */
+function inlineCriticalCssPlugin() {
+  return {
+    name: 'inline-critical-css',
+    apply: 'build',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'post',
+      async handler(html) {
+        const linkRe = /<link[^>]*rel="stylesheet"[^>]*>/;
+        const match = html.match(linkRe);
+        if (!match) return html;
+        const href = (match[0].match(/href="([^"]+)"/) || [])[1];
+        if (!href) return html;
+        const critical = await buildCriticalCss();
+        const fallback = `<link rel="stylesheet" href="${href}">`;
+        return html.replace(
+          linkRe,
+          `<style data-critical-css data-full-css="${href}">${critical}</style>\n    <noscript>${fallback}</noscript>`
+        );
+      },
+    },
+  };
+}
 
 /**
  * P2-2: Inject Firebase web config ke public/firebase-messaging-sw.js dari env.
@@ -106,6 +149,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       firebaseMessagingSwPlugin(env),
+      inlineCriticalCssPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         strategies: 'injectManifest',

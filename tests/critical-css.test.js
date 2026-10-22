@@ -51,16 +51,34 @@ describe('CSS kritis layar login', () => {
     });
 });
 
-describe('plugin build', () => {
+describe('plugin build + pemuatan bundel penuh', () => {
     const config = fs.readFileSync(path.join(ROOT, 'vite.config.js'), 'utf-8');
+    const main = fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf-8');
+    const auth = fs.readFileSync(path.join(ROOT, 'src/js/modules/auth.js'), 'utf-8');
 
-    it('TIDAK memasang inlineCriticalCssPlugin — percobaan S33aa dibatalkan', () => {
-        // S33aa mencoba mengganti <link rel=stylesheet> dengan <style> kritis +
-        // bundel penuh non-blocking. Hasil live: FCP 2374 → 2259 ms (di dalam
-        // rentang derau), tapi TBT 25 → 489 ms dan Style & Layout 448 → 942 ms
-        // karena bundel penuh tetap diterapkan sebelum paint pertama. Dibatalkan;
-        // tes ini menjaga supaya mekanismenya tidak kembali tanpa pengukuran.
-        expect(config).not.toContain('inlineCriticalCssPlugin');
-        expect(config).not.toContain('media="print"');
+    it('memasang inlineCriticalCssPlugin dan menitipkan href bundel penuh', () => {
+        expect(config).toMatch(/plugins:\s*\[[^\]]*inlineCriticalCssPlugin\(\)/);
+        // href dititipkan di atribut, bukan di <link> yang memblokir render.
+        expect(config).toContain('data-full-css');
+        expect(config).toContain('<noscript>');
+    });
+
+    it('TIDAK memakai pola media="print" + onload — pola itu gagal di S33aa (TBT 489 ms)', () => {
+        // media="print" + onload membuat bundel penuh diterapkan SEBELUM paint
+        // pertama, jadi style dihitung dua kali. Jangan kembali ke sana.
+        // (Komentar di vite.config.js boleh menyebut polanya; yang dilarang kodenya.)
+        expect(config).not.toContain('onload="this.media');
+    });
+
+    it('main.js memasang bundel penuh hanya dari pemicu pasca-paint', () => {
+        expect(main).toContain('window.__loadFullCss =');
+        expect(main).toContain("document.querySelector('style[data-critical-css]')");
+        // Interaksi pertama dan gate auth — dua pemicu, keduanya setelah paint.
+        expect(main).toMatch(/prefetchAppShell[\s\S]{0,400}window\.__loadFullCss\?\.\(\)/);
+        expect(main).toMatch(/try \{\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*window\.__loadFullCss\?\.\(\)/);
+    });
+
+    it('submitLogin memulai bundel penuh paralel dengan round-trip auth', () => {
+        expect(auth).toMatch(/submitLogin\(\)[\s\S]{0,1300}__loadFullCss/);
     });
 });

@@ -50,6 +50,10 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         // akan mencoba lagi dan melaporkan errornya sendiri.
         if (typeof window.__loadDataLayer === 'function') window.__loadDataLayer().catch(() => {});
         if (typeof window.__loadApp === 'function') window.__loadApp().catch(() => {});
+        // Bundel CSS penuh ikut dimulai di sini (S33ab): 13,2 KB-nya dulu
+        // render-blocking; sekarang berjalan paralel dengan round-trip auth dan
+        // sudah mendarat sebelum shell dirender.
+        if (typeof window.__loadFullCss === 'function') window.__loadFullCss();
         if (this.loginMode === 'pin') return this.loginWithPin?.();
         if (this.loginMode === 'sso') return this.loginWithSSO?.();
         return this.login();

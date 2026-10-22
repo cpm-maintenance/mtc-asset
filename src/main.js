@@ -363,10 +363,45 @@ window.__loadAppShell = () => {
 // Prefetch saat interaksi pertama: kunjungan pasif ke layar login tidak
 // membayar 128 KB ini, tapi sesi yang benar-benar login sudah punya cache-nya.
 // Hanya teks fragmen yang diambil — `initTree` menunggu chunk `app-*.js`.
+// ============================================================
+// Bundel CSS penuh — dipasang SETELAH paint pertama (S33ab)
+// ------------------------------------------------------------
+// `index.html` tidak lagi membawa `<link rel=stylesheet>` yang memblokir render:
+// CSS kritis layar login di-inline oleh plugin build (`vite.config.js`) dan href
+// bundel penuh dititipkan di `data-full-css`. Bundel itu dipasang saat sesi sudah
+// ada (gate auth), saat submit login, atau saat interaksi pertama.
+//
+// JANGAN dipanggil sebelum paint pertama: percobaan S33aa membuktikan bundel
+// penuh yang diterapkan sebelum paint membuat style dihitung dua kali dan TBT
+// melonjak 25 → 489 ms.
+let fullCssPromise = null;
+window.__loadFullCss = () => {
+  if (fullCssPromise) return fullCssPromise;
+  const styleTag = document.querySelector('style[data-critical-css]');
+  const href = styleTag?.dataset?.fullCss;
+  if (!href) {
+    // Mode dev / build tanpa plugin: CSS sudah dimuat lewat <link> biasa.
+    fullCssPromise = Promise.resolve(false);
+    return fullCssPromise;
+  }
+  fullCssPromise = new Promise((resolve) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.addEventListener('load', () => resolve(true), { once: true });
+    link.addEventListener('error', () => resolve(false), { once: true });
+    document.head.appendChild(link);
+  });
+  return fullCssPromise;
+};
+
 const SHELL_TRIGGERS = ['pointerdown', 'keydown', 'touchstart', 'focusin'];
 const prefetchAppShell = () => {
   for (const ev of SHELL_TRIGGERS) window.removeEventListener(ev, prefetchAppShell);
   fetchAppShell().catch(() => {});
+  // Interaksi pertama juga memuat bundel CSS penuh (S33ab). Aman: paint pertama
+  // sudah lewat, jadi tidak ada style yang dihitung dua kali sebelum FCP.
+  window.__loadFullCss?.();
 };
 for (const ev of SHELL_TRIGGERS) window.addEventListener(ev, prefetchAppShell, { passive: true });
 
@@ -394,6 +429,9 @@ window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
   }
 
   try {
+    // Bundel CSS penuh dipasang sekarang: sesi sudah ada, jadi shell akan
+    // dirender dan aturannya dibutuhkan (S33ab).
+    window.__loadFullCss?.();
     // SDK RTDB tidak ikut muatan login (S33p) — pasang sebelum consumer pertama.
     if (typeof window.__loadDataLayer === 'function') {
       await window.__loadDataLayer();

@@ -56,14 +56,29 @@ async function collect(blockCss) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 120)));
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+  // Sejak S33ab bundel CSS penuh TIDAK dimuat sebelum interaksi, jadi "kasus
+  // penuh" harus memintanya sendiri — kalau tidak, kedua kasus sama-sama hanya
+  // memakai CSS kritis dan perbandingan ini lolos tanpa memeriksa apa pun.
+  if (!blockCss) await page.evaluate(() => globalThis.__loadFullCss?.());
   await page.waitForTimeout(2500);
   const data = await page.evaluate(fingerprint);
+  // Blok yang tersembunyi saat paint (tab PIN/SSO, spinner) tidak ikut terukur
+  // oleh sidik jari pertama — buka satu per satu lalu ukur lagi.
+  const hidden = [];
+  for (const mode of ['pin', 'sso']) {
+    await page.evaluate((m) => {
+      const s = globalThis.__loginScreen;
+      if (s) s.loginMode = m;
+    }, mode);
+    await page.waitForTimeout(300);
+    hidden.push(await page.evaluate(fingerprint));
+  }
   const fcp = await page.evaluate(() => {
     const e = performance.getEntriesByName('first-contentful-paint')[0];
     return e ? Math.round(e.startTime) : null;
   });
   await ctx.close();
-  return { data, errors, fcp };
+  return { data, hidden, errors, fcp };
 }
 
 const full = await collect(false);
@@ -71,13 +86,25 @@ const crit = await collect(true);
 await browser.close();
 
 const diffs = [];
-for (let i = 0; i < Math.min(full.data.length, crit.data.length); i++) {
-  const a = full.data[i];
-  const b = crit.data[i];
-  for (const k of Object.keys(a)) {
-    if (k === 'i') continue;
-    if (a[k] !== b[k]) diffs.push(`${i} ${a.tag}.${a.cls} ${k}: full=${a[k]} crit=${b[k]}`);
+/** @param {{data:any[], hidden:any[][]}} A @param {{data:any[], hidden:any[][]}} B @param {string} label */
+function compare(A, B, label) {
+  for (let i = 0; i < Math.min(A.data.length, B.data.length); i++) {
+    const a = A.data[i];
+    const b = B.data[i];
+    for (const k of Object.keys(a)) {
+      if (k === 'i') continue;
+      if (a[k] !== b[k]) diffs.push(`${label} ${i} ${a.tag}.${a.cls} ${k}: full=${a[k]} crit=${b[k]}`);
+    }
   }
+}
+compare(full, crit, 'paint');
+// Blok tersembunyi (tab PIN/SSO) — diukur setelah mode-nya diaktifkan.
+for (let m = 0; m < Math.min(full.hidden.length, crit.hidden.length); m++) {
+  compare(
+    { data: full.hidden[m], hidden: [] },
+    { data: crit.hidden[m], hidden: [] },
+    ['mode-pin', 'mode-sso'][m] || `mode-${m}`
+  );
 }
 
 console.log(`url ${url}`);

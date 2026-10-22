@@ -38,6 +38,8 @@ declare global {
     /** Muat fragmen /pages/app-shell.html (sidebar/main/modal) — di-set main.js. */
     __loadApp?: () => Promise<any>;
     __loadAppShell?: () => Promise<void>;
+    /** Pasang bundel CSS penuh setelah paint pertama — di-set main.js (S33ab). */
+    __loadFullCss?: () => Promise<boolean>;
     /** Firebase App instance (di-set firebase-config.js). */
     firebaseApp?: any;
     /** Muat SDK RTDB + helper-nya ke window.* setelah login — di-set firebase-config.js. */
