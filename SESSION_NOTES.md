@@ -1,3 +1,48 @@
+## 📝 S33ag (2026-10-22) — audit `unused-javascript`: **0 KiB** (F)
+
+Tanpa perubahan kode. Live **sw v45**. Tiga run `lighthouse --only-categories=performance`
+(mode `simulate`, karena `--throttling-method=devtools` selalu mengembalikan 0 item
+untuk audit ini), diagregasi `npm run lh:live`.
+
+### Hasil audit
+| audit | hasil |
+|---|---|
+| `unused-javascript` | **score 1, 0 KiB** (era `main-*.js` dulu 105 KiB) |
+| `unused-css-rules` | **score 1, 0 KiB** |
+| `legacy-javascript` | score 1 (tidak ada polyfill ES5) |
+| `duplicated-javascript` | score 1 (tidak ada modul dobel antar chunk) |
+| `total-byte-weight` | **151 KiB / 17 request** |
+
+### Ke mana 151 KiB itu pergi
+| sumber | KiB | catatan |
+|---|---|---|
+| `inter-subset.woff2` | 32,0 | font teks utama |
+| `jetbrains-mono-subset.woff2` | 26,3 | label mono |
+| `index.esm-D13AyfEk.js` | 20,9 | firebase auth |
+| `main-*.js` | 17,4 | entry |
+| **`logo.png`** | **16,1** | **PNG 180×180 — satu-satunya sisa yang bisa dipangkas** |
+| dokumen (HTML + CSS kritis inline) | 13,2 | CSS terpisah 0 KiB (sudah inline) |
+| `material-symbols-outlined.woff2` | 10,1 | font ikon |
+| `index.esm-B85zkWW_.js` | 9,6 | firebase app |
+| sisanya (ui-core, helper, runtime, manifest, registerSW) | < 5 | — |
+| stylesheet / image | **0** | tidak ada permintaan CSS terpisah; gambar login `lazy` tidak dimuat |
+
+FCP simulate 1532 ms · LCP 2197 ms · CLS 0,000 (TBT 0 karena mode simulate memang buta —
+angka nyata tetap dari `lh:real`, lihat S33ab).
+
+### Kesimpulan
+**Tidak ada sisa kode mati.** Setiap byte JS/CSS yang dikirim layar login dieksekusi.
+Bundel yang tersisa 151 KiB didominasi **font 68,4 KiB (45 %)** dan itu sudah di
+lantai terukur (subset `&text=`, lihat S33o; preload font terbukti merugikan di S33n).
+
+Satu-satunya item yang masih layak: **`logo.png` 16,1 KiB** — PNG 180×180 yang dipakai
+sebagai `<img>` header shell, `favicon`, dan ikon manifest. Varian WebP/AVIF untuk
+`<img>` (manifest tetap PNG, karena ikon PWA butuh PNG) diperkirakan 3–5 KiB →
+potensi −11…−13 KiB (~6 % total byte login). Belum dikerjakan: itu keputusan aset,
+bukan perbaikan kode.
+
+---
+
 ## 📝 S33af (2026-10-22) — coverage branch 84,70 → 86,11 %; error-handler 0 → 100 % (D)
 
 Commit `cb0ab19`. Tanpa perubahan `src/**` ⇒ `sw.js` tetap **v45**.
