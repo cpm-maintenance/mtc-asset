@@ -26,6 +26,7 @@ const xlsx = vi.hoisted(() => ({
     },
     read: vi.fn(() => ({ SheetNames: ['Sheet1'], Sheets: { Sheet1: { '!ref': 'A1:B2' } } })),
     write: vi.fn(() => new Uint8Array([1, 2, 3])),
+    writeFile: vi.fn(),
 }));
 
 const jsPDF = vi.hoisted(() => {
@@ -95,6 +96,9 @@ beforeEach(() => {
     xlsx.utils.sheet_to_csv.mockClear();
     xlsx.utils.sheet_to_json.mockReset().mockReturnValue([]);
     xlsx.read.mockClear();
+    xlsx.writeFile.mockClear();
+    xlsx.utils.book_new.mockClear();
+    xlsx.utils.book_append_sheet.mockClear();
     jsPDF.ctor.mockClear();
     generateProfessionalWOPDF.mockClear();
     delete window.Alpine;
@@ -192,6 +196,40 @@ describe('export.js — exportData', () => {
 
         await makeCtx({ logs: [] }).exportData('logs', 'csv');
         expect(lastDownloadName()).toMatch(/^HistoryLogs_Export_/);
+    });
+
+    it('format "excel" menulis .xlsx lewat XLSX.writeFile, bukan CSV', async () => {
+        const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ-1' }] });
+
+        await ctx.exportData('equip', 'excel');
+
+        expect(xlsx.writeFile).toHaveBeenCalledTimes(1);
+        expect(xlsx.writeFile.mock.calls[0][1]).toMatch(/^Equipment_Export_\d+\.xlsx$/);
+        expect(xlsx.utils.sheet_to_csv).not.toHaveBeenCalled();
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('format "excel" menaruh sheet ke workbook baru', async () => {
+        const ctx = makeCtx({ allParts: [{ PartID: 'P1' }] });
+
+        await ctx.exportData('parts', 'excel');
+
+        expect(xlsx.utils.book_new).toHaveBeenCalledTimes(1);
+        expect(xlsx.utils.book_append_sheet).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            'Data',
+        );
+    });
+
+    it('tanpa argumen format tetap CSV (perilaku lama)', async () => {
+        const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ-1' }] });
+
+        await ctx.exportData('equip');
+
+        expect(xlsx.writeFile).not.toHaveBeenCalled();
+        expect(lastDownloadName()).toMatch(/^Equipment_Export_\d+\.csv$/);
+        expect(URL.createObjectURL).toHaveBeenCalled();
     });
 });
 

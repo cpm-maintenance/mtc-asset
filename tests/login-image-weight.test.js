@@ -39,6 +39,17 @@ describe('halaman login — gambar panel desktop tidak diunduh di mobile', () =>
     expect(tag).toContain('loading="lazy"');
   });
 
+  it('logo header dilayani WebP < 50% bobot PNG, dengan fallback PNG', () => {
+    // S33ah: PNG 180×180 = 16,7 KB dikirim utuh untuk <img> setinggi 32 px.
+    expect(shell).toMatch(/<source\s+srcset="\/logo\.webp"\s+type="image\/webp">/);
+    expect(imgTagWith('/logo.png')).toContain('loading="lazy"');
+
+    const png = fs.statSync(path.join(ROOT, 'public/logo.png')).size;
+    const webpPath = path.join(ROOT, 'public/logo.webp');
+    expect(fs.existsSync(webpPath), 'public/logo.webp belum diterbitkan').toBe(true);
+    expect(fs.statSync(webpPath).size).toBeLessThan(png * 0.5);
+  });
+
   it('hero tetap dekoratif (alt kosong + aria-hidden) supaya a11y tidak berubah', () => {
     const tag = imgTagWith('/img/login-mill-1600.jpg');
 

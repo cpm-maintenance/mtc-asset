@@ -240,10 +240,10 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
  * Ekspor data satu tipe ke format Excel atau CSV.
  *
  * @param {('perf'|'equip'|'parts'|'logs')} type - Jenis data.
- * @param {('excel'|'csv')} _format - Diterima untuk kompatibilitas pemanggil; implementasi saat ini SELALU CSV.
+ * @param {('excel'|'csv')} [format='csv'] - `excel` → unduhan `.xlsx`; `csv` (default) → perilaku lama.
  * @returns {Promise<void>} Memicu unduhan file.
  */
-    async exportData(type, _format) {
+    async exportData(type, format = 'csv') {
         const XLSX = await loadXLSX();
         let data = /** @type {any[]} */ ([]), file = "";
         
@@ -277,6 +277,12 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
             file = "HistoryLogs_Export";
         }
         const ws = XLSX.utils.json_to_sheet(data);
+        if (format === 'excel') {
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Data');
+            XLSX.writeFile(wb, `${file}_${Date.now()}.xlsx`);
+            return;
+        }
         const csv = XLSX.utils.sheet_to_csv(ws);
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${file}_${Date.now()}.csv`; a.click();

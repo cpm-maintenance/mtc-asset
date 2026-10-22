@@ -70,6 +70,7 @@ const targets = [
   path.join(DIST, 'offline.html'),
   path.join(DIST, 'manifest.json'),
   path.join(DIST, 'logo.png'),
+  path.join(DIST, 'logo.webp'),
   path.join(DIST, 'registerSW.js'),
   path.join(DIST, 'firebase-messaging-sw.js'),
 ].filter((abs) => fs.existsSync(abs));
