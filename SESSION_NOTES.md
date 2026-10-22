@@ -1,3 +1,63 @@
+## 📝 S33ae (2026-10-22) — CSS dobel dibuang: bundel 16,6 → 9,0 KB gzip (sw v45)
+
+Commit `7d96859`. Live **sw v45**. Lanjutan S33ab (C dari daftar sisa).
+
+### Masalahnya
+Sejak S33ab bundel penuh dimuat **setelah** paint, tapi ia tetap dibangun dari
+SELURUH konten — jadi ia memuat ulang setiap aturan yang sudah ada di CSS kritis
+inline (8,7 KB gzip). Total CSS yang dibayar satu kunjungan: 8,7 + 16,6 = 25,3 KB.
+
+### Yang dikerjakan
+- `scripts/css-dedupe.mjs`: selisih **per aturan**, bukan tebakan kelas. Kunci
+  normalisasi `rule|media|selector|deklarasi` (dan `atrule|media|nama|params|isi`).
+  Aturan dengan selector sama tapi deklarasi beda **tidak** dibuang; konteks
+  `@media` ikut jadi bagian kunci.
+- **Invarian**: setiap aturan bundel penuh harus tetap ada di (kritis ∪ hasil).
+  Kalau tidak, `dedupeCss` melempar error dan build gagal — lebih baik bundel
+  gemuk daripada shell tanpa gaya.
+- `vite.config.js` (`generateBundle`): buang aturan dobel, terbitkan aset CSS
+  dengan **hash baru**, dan tukar `data-full-css` di HTML. Nama lama tidak boleh
+  dipakai ulang: aset ber-hash di-cache `immutable`, jadi pengunjung lama akan
+  terus menerima berkas 16,5 KB dari cache.
+- `tests/css-dedupe.test.js` (4 tes): identik dibuang · deklarasi beda
+  dipertahankan · `@media` tidak disamakan · invarian.
+
+### Angka
+| | sebelum | sesudah |
+|---|---|---|
+| bundel CSS gzip | 16.562 B | **9.007 B** (−7.555, −46 %) |
+| aturan di bundel | 1.174 | 812 (362 dobel dibuang) |
+| `index.html` gzip | 15.524 B | 15.524 B (tidak berubah) |
+| total CSS per kunjungan | 25,3 KB | **17,7 KB** |
+
+Diverifikasi di live: `curl …/assets/main-BuzeYsZW.css` = 60.333 B mentah /
+**8.989 B gzip**; `data-full-css` menunjuk nama baru; `sw.js` memuat nama baru.
+
+### Bukti tidak ada gaya yang hilang
+- Invarian di atas dijalankan saat build (build lolos).
+- `scripts/critical-css-parity.mjs` di preview: **0 selisih** pada 143 elemen ×
+  3 keadaan (paint, mode PIN, mode SSO).
+- E2E **8 passed** termasuk alur login → dashboard → PDF (shell butuh CSS ini).
+
+### Gerbang
+tsc 0 · eslint **0/0** · **1715 tes / 72 berkas** · coverage 95,8/84,7/96,16/97,00 ·
+build ok · precache **65/65** · **E2E 8 passed (38,1 s)**.
+
+### Live v45
+`lh:real` 3 run: perf **94** · FCP=LCP **2211** · TBT 124 (derau) · main-thread 1553.
+`cls-probe` **0,000 ×3**. Tidak ada regresi vs v44 (FCP 2139) — seperti diharapkan,
+ini perbaikan **byte**, bukan FCP: bundel CSS tidak ada di jalur kritis.
+
+### Pelajaran
+1. **Aset yang isinya diubah saat build WAJIB diganti nama.** Nama ber-hash dengan
+   isi berbeda = cache poisoning: pengunjung lama tetap menerima berkas lama
+   karena header `immutable`.
+2. Dedupe CSS aman kalau dipakai **selisih per aturan + invarian**, bukan
+   heuristik "kelas ini dipakai di mana". Kunci harus memuat konteks `@media`,
+   kalau tidak aturan yang sama di media berbeda ikut terbuang.
+
+---
+
 ## 📝 S33ad (2026-10-22) — A/B/E: jalur CSS dikunci tes, 78 warning lint habis, `.open/skills` dijinakkan (sw v44)
 
 Commit `39823d5` (kode) + `bb…` (test jalur CSS). Live **sw v44**.
