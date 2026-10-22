@@ -1,3 +1,63 @@
+## 📝 S33ad (2026-10-22) — A/B/E: jalur CSS dikunci tes, 78 warning lint habis, `.open/skills` dijinakkan (sw v44)
+
+Commit `39823d5` (kode) + `bb…` (test jalur CSS). Live **sw v44**.
+Tiga pekerjaan hygiene berurutan; tidak ada perubahan fitur.
+
+### A — properti S33ab akhirnya dikunci tes
+`e2e/css-critical-path.spec.js` (3 tes, butuh `E2E_PREVIEW=1`):
+1. `style[data-critical-css]` ada **satu**, `data-full-css` menunjuk `assets/main-*.css`,
+   dan `head` **tidak** memuat `link[rel=stylesheet]`;
+2. **0 request `.css`** sebelum interaksi (tunggu 2 s setelah gate login tampil);
+3. request `.css` muncul setelah interaksi pertama (`page.mouse.click`, bukan
+   `page.click('body', …)` — overlay `fixed inset-0` membuat actionability timeout).
+
+**Dibuktikan menggigit**: memanggil `window.__loadFullCss()` saat boot → 2 tes merah;
+revert → **8 passed (29,0 s)** (5 lama + 3 baru).
+
+### B — 78 warning `no-unused-vars` → 0
+| kategori | jumlah | tindakan |
+|---|---|---|
+| catch binding tak terpakai (termasuk ber-JSDoc `/** @type {any} */ e`) | 48 | `catch {` |
+| parameter tak terpakai | 15 | dihapus kalau di ekor (`new Promise((resolve))`, `onRetry: (attempt, error)`), diberi `_` kalau posisinya dokumentasi API (`confirmDelete(_node, _id)`, `exportData(type, _format)`) |
+| binding lokal/impor tak terpakai | 15 | dibuang (`CONSTANTS`, `orderByChild`, `CAN_USE_STORAGE`, `perfSum`, `withHM` + `elogs`, `performanceData`, `lastError`, `today` ganda, `readFileSync`, `_pmTemplates`, `e1`/`e2`/`idbErr`) |
+
+`const Audit = (await import('./modules/audit.js'))` → `await import(...)`: modul tetap
+dimuat, binding-nya saja yang tidak dipakai.
+
+**Temuan, sengaja tidak diubah**: `exportData(type, format)` selalu menulis CSV walau
+JSDoc-nya menjanjikan `excel|csv`. Sekarang ditandai `_format` + JSDoc menyebut batasnya —
+bukan diam-diam diganti perilakunya. Kalau mau diperbaiki, itu kartu sendiri.
+
+Angka: `app-*.js` gzip **61.670 → 61.555 B** (−115). Coverage **95,8/84,7/96,16/97,00**
+(turun tipis karena baris yang dihapus tadinya tercakup; ambang 95/84/95/96 tetap lulus).
+
+### E — `.open/skills` berhenti mengotori `git status`
+`.open/skills` adalah **gitlink** (entri mode 160000) tanpa `.gitmodules` — repo git
+bersarang. Setiap perubahan di dalamnya muncul sebagai ` M` dan menutupi perubahan nyata.
+Perbaikan **lokal** (tidak di-commit): `git update-index --skip-worktree .open/skills`.
+Sesudahnya `git status --porcelain` kosong.
+
+### Gerbang
+tsc 0 · eslint **0 error / 0 warning** (dari 0/78) · **1711 tes / 71 berkas** ·
+coverage 95,8/84,7/96,16/97,00 · build ok · precache **65/65** ·
+**E2E 8 passed (29,0 s)**.
+
+### Live v44
+`lh:real` 3 run: perf **94** · FCP=LCP **2139** · TBT 126 (derau 22–150) ·
+main-thread 1501. `cls-probe` **0,000 ×3**. Tidak ada regresi vs v43 (FCP 2227).
+
+### Pelajaran
+1. **Kemenangan perf tanpa tes akan hilang.** Properti "0 request `.css` sebelum
+   interaksi" hanya dijaga spec E2E; `grep` di tes unit tidak bisa melihatnya.
+2. **Jangan hapus baris berdasarkan kemunculan pertama.** `const today = now.split('T')[0];`
+   ada tiga kali di `requisition.js`; eslint menandai satu. Menghapus "yang pertama ketemu"
+   mematikan dua pemakaian nyata (`requestDate`, `arrivedDate`) dan tsc yang menangkapnya,
+   bukan tes. Selalu pakai `line` dari output eslint.
+3. **Config eslint per-folder berbeda**: `scripts/**` hanya punya `argsIgnorePattern`,
+   jadi menamai ulang variabel jadi `_x` **tidak** membungkam warning di sana — hapus.
+
+---
+
 ## 📝 S33ac (2026-10-22) — sisa FCP dibedah: koneksi ~400 ms + layout pertama ~160–250 ms (tanpa perubahan kode)
 
 Instrumen baru `scripts/paint-trace.mjs`; live tetap **sw v43** (`886d9b5`).
