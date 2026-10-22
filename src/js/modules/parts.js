@@ -142,7 +142,7 @@ openPartModal(isEdit = false, data = null) {
                 maxRetries: 3,
                 delay: 1000,
                 backoff: 2,
-                onRetry: (attempt, error, delay) => {
+                onRetry: (attempt, error) => {
                     if (isNetworkError(error)) {
                         this.showNotification("Network error, retrying...", "info");
                     }
@@ -152,7 +152,7 @@ openPartModal(isEdit = false, data = null) {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.(this.isEditingPart ? 'Update Spare Part' : 'Create Spare Part', { id: sanitizedData.PartID, nama: sanitizedData.NamaPart });
-            } catch (e) { /* silent */ }
+            } catch { /* silent */ }
 
             
             // Add to local array immediately for instant UI update

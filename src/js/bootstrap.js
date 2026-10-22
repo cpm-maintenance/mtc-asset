@@ -109,7 +109,7 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
                 // Destroy enterprise charts when navigating away
                 if (oldVal === 'enterprise') {
                     ['eHealth','woStatus','pmTrend','downtimeTrend','costTrend','abc'].forEach(k => {
-                        if (window._appCharts && window._appCharts[k]) { try { window._appCharts[k].destroy(); } catch(e) {} }
+                        if (window._appCharts && window._appCharts[k]) { try { window._appCharts[k].destroy(); } catch {} }
                     });
                 }
                 // Trigger enterprise dashboard compute + charts

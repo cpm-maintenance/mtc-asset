@@ -240,10 +240,10 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
  * Ekspor data satu tipe ke format Excel atau CSV.
  *
  * @param {('perf'|'equip'|'parts'|'logs')} type - Jenis data.
- * @param {('excel'|'csv')} format - Format keluaran.
+ * @param {('excel'|'csv')} _format - Diterima untuk kompatibilitas pemanggil; implementasi saat ini SELALU CSV.
  * @returns {Promise<void>} Memicu unduhan file.
  */
-    async exportData(type, format) {
+    async exportData(type, _format) {
         const XLSX = await loadXLSX();
         let data = /** @type {any[]} */ ([]), file = "";
         
@@ -519,7 +519,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
             ]);
             doc.setFontSize(9); doc.setTextColor(200, 210, 220);
             let col = 0, xStart = 20;
-            fields.forEach(([k, v], i) => {
+            fields.forEach(([k, v]) => {
                 const x = xStart + col * 90;
                 doc.setFont('helvetica', 'bold'); doc.text(k + ':', x, y);
                 doc.setFont('helvetica', 'normal'); const w = doc.getTextWidth(k + ':  ' + v);

@@ -24,9 +24,7 @@ const TONE = {
 export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
   // ─── Availability ───
   calcAvailability(equipId) {
-    const logs = this._raw(this.logs) || [];
     const perf = this._raw(this.performanceData) || [];
-    const elogs = logs.filter(l => l && l.EquipmentID === equipId);
     const eperf = perf.filter(p => p && (p.equipmentId || p.EquipmentID) === equipId);
     const totalHrs = eperf.reduce((s, p) => s + (Number(p.wh) || 24), 0);
     const downHrs = eperf.reduce((s, p) => s + (Number(p.bd) || 0) + (Number(p.stb) || 0), 0);
@@ -87,7 +85,7 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     const availability = count > 0 ? availSum / count : 0;
 
     // Performance: actual run hrs / planned hrs from perf data
-    let perfSum = 0, perfCount = 0;
+    let perfCount = 0;
     const perfMap = /** @type {Record<string, number>} */ ({});
     perf.forEach(p => { if ((p.equipmentId || p.EquipmentID)) {
       const wh = Number(p.wh) || 0;

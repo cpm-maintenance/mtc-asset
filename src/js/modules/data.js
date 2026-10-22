@@ -21,7 +21,7 @@ function cleanFirebaseUrl(/** @type {any} */ url) {
         });
         // Then decode URL encoding (%2F -> /)
         return decodeURIComponent(decoded);
-    } catch (/** @type {any} */ e) {
+    } catch {
         return url;
     }
 }
@@ -43,14 +43,14 @@ function safeParseJSONField(/** @type {any} */ data, /** @type {any} */ fieldNam
             try {
                 const parsed = JSON.parse(str);
                 return Array.isArray(parsed) ? parsed : fallback;
-            } catch(e2) {
+            } catch {
                 return fallback;
             }
         } else if (Array.isArray(data[fieldName])) {
             return data[fieldName];
         }
         return data[fieldName] || fallback;
-    } catch (/** @type {any} */ e) {
+    } catch {
         return fallback;
     }
 }
@@ -104,7 +104,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     // Firebase listener tracking — cleanup to prevent listener leaks
     _listeners: [],
     _cleanupFirebaseListeners() {
-        this._listeners.forEach(unsub => { try { unsub(); } catch(/** @type {any} */ e) {} });
+        this._listeners.forEach(unsub => { try { unsub(); } catch {} });
         this._listeners = [];
     },
 
@@ -207,7 +207,7 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                         idbManager.putBulk(storeName, plainData).catch(() => {
                             localStorage.setItem(`cache_${key}`, JSON.stringify(plainData));
                         });
-                    } catch (idbErr) {
+                    } catch {
                         localStorage.setItem(`cache_${key}`, JSON.stringify(plainData));
                     }
                 } catch (/** @type {any} */ e) { console.warn('Cache Save Failed:', e); }
@@ -704,12 +704,12 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                                 } else if (str.startsWith('[')) {
                                     try {
                                         usedParts = JSON.parse(str);
-                                    } catch(e1) {
+                                    } catch {
                                         // Try unescape double-encoded
                                         try {
                                             const unescaped = str.replace(/\\"/g, '"');
                                             usedParts = JSON.parse(unescaped);
-                                        } catch(e2) {
+                                        } catch {
                                             // Try decodeHTMLEntities
                                             const txt = document.createElement('textarea');
                                             txt.innerHTML = str;

@@ -165,7 +165,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Create PM Task', { id: pmId, task: this.pmForm.taskName, equip: this.pmForm.equipmentId });
-            } catch (/** @type {any} */ e) { /* silent */ }
+            } catch { /* silent */ }
 
       } else {
         const pmId = this.pmForm.pmId;
@@ -187,7 +187,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Update PM Task', { id: pmId, task: this.pmForm.taskName });
-            } catch (/** @type {any} */ e) { /* silent */ }
+            } catch { /* silent */ }
 
       }
 

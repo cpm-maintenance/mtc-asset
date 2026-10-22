@@ -91,7 +91,6 @@ getKPIContext() {
         const equipment = /** @type {any[]} */ (this.equipment || []);
         const logs = /** @type {any[]} */ (this.logs || []);
         const parts = /** @type {any[]} */ (this.allParts || []);
-        const performanceData = /** @type {any[]} */ (this.performanceData || []);
 
         // Basic stats
         const totalEquipment = equipment.length;
@@ -226,7 +225,6 @@ getKPIContext() {
             logger.debug('[AI] Prompt length:', prompt.length);
             
             let result = null;
-            let lastError = null;
             
             // Try with each API key
             for (let attempt = 0; attempt < 5; attempt++) {
@@ -238,7 +236,6 @@ getKPIContext() {
                     }
                     break;
                 } catch (/** @type {any} */ e) {
-                    lastError = e;
                     const errMsg = e.message.toLowerCase();
                     if (errMsg.includes('rate limit') || errMsg.includes('quota') || errMsg.includes('insufficient') || errMsg.includes('invalid')) {
                         if (app && app.rotateApiKey) {

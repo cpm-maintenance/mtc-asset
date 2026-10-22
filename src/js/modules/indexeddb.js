@@ -15,12 +15,11 @@ function isStorageAvailable(type) {
         window[type].setItem(test, test);
         window[type].removeItem(test);
         return true;
-    } catch (e) {
+    } catch {
         return false;
     }
 }
 
-const CAN_USE_STORAGE = isStorageAvailable('localStorage');
 const CAN_USE_IDB = isStorageAvailable('indexedDB');
 
 export { CAN_USE_IDB };
@@ -99,7 +98,7 @@ class IndexedDBManager {
         const db = await this.ensureReady();
         if (!db) return [];
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const tx = db.transaction(storeName, 'readonly');
                 if (!tx) {
                     resolve([]);
@@ -120,7 +119,7 @@ class IndexedDBManager {
         const db = await this.ensureReady();
         if (!db) return null;
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const tx = db.transaction(storeName, 'readonly');
                 if (!tx) {
                     resolve(null);
@@ -141,7 +140,7 @@ class IndexedDBManager {
         const db = await this.ensureReady();
         if (!db) return;
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -161,7 +160,7 @@ class IndexedDBManager {
         const db = await this.ensureReady();
         if (!db || !items || items.length === 0) return;
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -181,7 +180,7 @@ class IndexedDBManager {
         const db = await this.ensureReady();
         if (!db) return;
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -201,7 +200,7 @@ class IndexedDBManager {
         const db = await this.ensureReady();
         if (!db) return;
         try {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();

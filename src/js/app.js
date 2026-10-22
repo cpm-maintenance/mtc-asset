@@ -17,7 +17,7 @@ import { chartToken } from './chart-palette.js';
 import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
-import { CONSTANTS, DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_PERF_FORM } from './constants';
+import { DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_PERF_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
 /** @typedef {import("./appstate").AppState} AppState */
@@ -100,13 +100,13 @@ export function app() {
         showEquipModal: false, showPartModal: false, showLogModal: false, showScanner: false, showQRPreviewModal: false, showNotifications: false, showMoreMenu: false,
         isEditingEquip: false, isEditingPart: false, isEditingLog: false,
         notifications: [], isLoading: true, html5QrCode: null, qrCodeDataUrl: '',
-        themeMode: (() => { try { const m = localStorage.getItem('themeMode'); if (m) return m; const old = localStorage.getItem('darkMode'); if (old !== null) { const v = old === 'true' ? 'night' : 'light'; localStorage.setItem('themeMode', v); localStorage.removeItem('darkMode'); return v; } return 'night'; } catch(e) { return 'night'; } })(),
+        themeMode: (() => { try { const m = localStorage.getItem('themeMode'); if (m) return m; const old = localStorage.getItem('darkMode'); if (old !== null) { const v = old === 'true' ? 'night' : 'light'; localStorage.setItem('themeMode', v); localStorage.removeItem('darkMode'); return v; } return 'night'; } catch { return 'night'; } })(),
         isLoggedIn: false, user: null,
         sidebarExpandedGroups: (() => {
             try {
                 const saved = JSON.parse(localStorage.getItem('sidebarGroups') || 'null');
                 if (saved && typeof saved === 'object') return saved;
-            } catch(e) {}
+            } catch {}
             // Default: dense groups collapsed so Dashboard (Monitoring) is first view
             return { Maintenance: false, 'Logs & Reports': false };
         })(),
@@ -265,7 +265,7 @@ export function app() {
                     const vals = Object.values(raw);
                     if (vals.length > 0 && vals[0] && vals[0].id !== undefined) return vals;
                 }
-            } catch (e) {}
+            } catch {}
             return [];
         },
 
@@ -366,8 +366,8 @@ export function app() {
             if (!this.isAdmin) return;
             this.auditLoading = true;
             try {
-                const Audit = (await import('./modules/audit.js'));
-                const { ref, query, orderByChild, limitToLast, get, db } = await import('./db.js');
+                await import('./modules/audit.js');
+                const { ref, query, limitToLast, get, db } = await import('./db.js');
                 const auditRef = ref(db, 'AuditTrail');
                 const snap = await get(query(auditRef, limitToLast(500)));
                 if (snap.exists()) {
@@ -405,7 +405,7 @@ export function app() {
             try {
                 const d = new Date(dateStr);
                 return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-            } catch(e) { return dateStr?.substring(0, 10) || '-'; }
+            } catch { return dateStr?.substring(0, 10) || '-'; }
         },
 
         // ── Tactical Slate — Audit Trail telemetry & helper ─────────────────
@@ -618,7 +618,7 @@ export function app() {
         toggleSidebarGroup(name) {
             const val = !this.sidebarExpandedGroups[name];
             this.sidebarExpandedGroups[name] = val;
-            try { localStorage.setItem('sidebarGroups', JSON.stringify(this.sidebarExpandedGroups)); } catch(e) {}
+            try { localStorage.setItem('sidebarGroups', JSON.stringify(this.sidebarExpandedGroups)); } catch {}
         },
         navigateTo(pageId) {
             const page = this.menuItems.find(m => m.id === pageId);
@@ -1174,7 +1174,7 @@ export function app() {
         // Dashboard date range helpers
         applyDashboardFilter() {
             // Reset chart cache so renderDashboardCharts rebuilds
-            Object.values(window._appCharts || {}).forEach(c => { if(c) { try { c.destroy(); } catch(e) {} } });
+            Object.values(window._appCharts || {}).forEach(c => { if(c) { try { c.destroy(); } catch {} } });
             window._appCharts = { status: null, cost: null, downtime: null, reliability: null, woCompletion: null };
             if (this.currentPage === 'dash') this.renderDashboardCharts();
         },
@@ -1490,7 +1490,7 @@ export function app() {
         },
 
         // Modern delete confirmation
-        confirmDelete(node, id) {
+        confirmDelete(_node, _id) {
             return new Promise((resolve) => {
                 this.deleteConfirmCallback = {
                     confirm: () => {
@@ -1519,7 +1519,7 @@ export function app() {
                 decoded = decodeURIComponent(decoded);
                 if (!/^(https?:\/\/|data:image\/|blob:)/.test(decoded) || /[[\]{}<>]/.test(decoded)) return '';
                 return decoded;
-            } catch (e) {
+            } catch {
                 return '';
             }
         },
@@ -2469,7 +2469,7 @@ export function app() {
         },
         mtbfRefresh() {
             this.mtbfFilterEquip = '';
-            if (window._appCharts?.mtbfChart) { try { window._appCharts.mtbfChart.destroy(); } catch(e) {} }
+            if (window._appCharts?.mtbfChart) { try { window._appCharts.mtbfChart.destroy(); } catch {} }
             this.$nextTick(() => this.renderMTBFMTTRChart());
         },
 

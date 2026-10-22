@@ -203,7 +203,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Update Requisition', { id: this.reqEditId });
-            } catch (/** @type {any} */ e) { /* silent */ }
+            } catch { /* silent */ }
 
             } else {
                 // --- NEW: single record with items array ---
@@ -231,7 +231,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.('Create Requisition', { id, item: record.itemName, qty: record.quantity });
-            } catch (/** @type {any} */ e) { /* silent */ }
+            } catch { /* silent */ }
 
 
                 // R3: backlink requisition ke WO (reqIds array uniq)
@@ -395,7 +395,6 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
         if (!confirm(`Approve ${ids.length} request(s)? This will update stock.`)) return;
         
         const now = new Date().toISOString();
-        const today = now.split('T')[0];
         let success = 0;
         let errors = 0;
         

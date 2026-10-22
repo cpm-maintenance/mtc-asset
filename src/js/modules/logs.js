@@ -54,13 +54,13 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 // Step 1: unwrap entire data object from Alpine Proxy
                 let rawData = data;
                 if (window.Alpine?.raw) {
-                    try { rawData = window.Alpine.raw(data); } catch(/** @type {any} */ e) {}
+                    try { rawData = window.Alpine.raw(data); } catch {}
                 }
                 // Step 2: get PartsUsed value
                 let rawParts = rawData?.PartsUsed ?? data?.PartsUsed;
                 // Step 3: unwrap if still proxy
                 if (rawParts && window.Alpine?.raw) {
-                    try { rawParts = window.Alpine.raw(rawParts); } catch(/** @type {any} */ e) {}
+                    try { rawParts = window.Alpine.raw(rawParts); } catch {}
                 }
                 // Step 4: parse based on type
                 if (typeof rawParts === 'string' && rawParts.trim()) {
@@ -77,7 +77,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 if (!Array.isArray(parsedParts)) parsedParts = [];
                 // Step 5: deep-clean each part object to remove any Proxy
                 parsedParts = parsedParts.map(p => {
-                    const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch(/** @type {any} */ e) { return p; }})() : p;
+                    const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch { return p; }})() : p;
                     return { id: clean.id || clean.PartID || '', qty: Number(clean.qty) || 1 };
                 });
             } catch (/** @type {any} */ e) {
@@ -92,7 +92,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 try {
                     const parsed = JSON.parse(data.PhotoURLs);
                     existingPhotos = (Array.isArray(parsed) ? parsed : []).map(url => ({ file: null, preview: url, base64: url }));
-                } catch (/** @type {any} */ e) {
+                } catch {
                     existingPhotos = [{ file: null, preview: data.PhotoURLs, base64: data.PhotoURLs }];
                 }
             } else if (Array.isArray(data.PhotoURLs)) {
@@ -298,13 +298,13 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             try {
                 let rawParts = this.logForm?.parts;
                 if (rawParts && window.Alpine?.raw) {
-                    try { rawParts = window.Alpine.raw(rawParts); } catch(/** @type {any} */ e) {}
+                    try { rawParts = window.Alpine.raw(rawParts); } catch {}
                 }
                 if (Array.isArray(rawParts)) {
                     plainParts = rawParts.map(p => {
                         let clean = p;
                         if (clean && window.Alpine?.raw) {
-                            try { clean = window.Alpine.raw(p); } catch(/** @type {any} */ e) {}
+                            try { clean = window.Alpine.raw(p); } catch {}
                         }
                         return { id: clean?.id || '', qty: Number(clean?.qty) || 1 };
                     });
@@ -326,7 +326,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 try {
                     const unwrapped = window.Alpine?.raw?.(rawPhotos);
                     if (Array.isArray(unwrapped)) photoList = unwrapped;
-                } catch(/** @type {any} */ e) {}
+                } catch {}
             }
             if (photoList.length) {
                 this.showNotification('Uploading photos...', 'info');
@@ -447,7 +447,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 maxRetries: 3,
                 delay: 1000,
                 backoff: 2,
-                onRetry: (attempt, error, delay) => {
+                onRetry: (attempt, error) => {
                     if (isNetworkError(error)) {
                         this.showNotification("Network error, retrying...", "info");
                     }
@@ -488,7 +488,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.(this.isEditingLog ? 'Update Log/WO' : 'Create Log/WO', { id: sanitizedLogData.LogID, equip: sanitizedLogData.EquipmentID, jenis: sanitizedLogData.Jenis });
-            } catch (/** @type {any} */ e) { /* silent */ }
+            } catch { /* silent */ }
             
             // Add to local array immediately for instant UI update
             const existingIdx = this.logs.findIndex(l => l.LogID === sanitizedLogData.LogID);

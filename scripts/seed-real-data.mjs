@@ -42,21 +42,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const now = new Date();
 const iso = d => d.toISOString().split('T')[0];
 
 // Helper: tanggal n hari lalu
 const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return iso(d); };
 
-// ── DATA: PM tasks per equipment (taskName realistis) ──
-const pmTemplates = [
-  { taskName: 'Grease & Lube Check', frequency: 'weekly', basis: 'calendar', intervalHours: 168, priority: 'High', description: 'Lubrication titik grease, cek level oli' },
-  { taskName: 'Bearing Vibration Inspection', frequency: 'monthly', basis: 'hours', intervalHours: 720, priority: 'High', description: 'Cek vibrasi bearing, thermal scan' },
-  { taskName: 'Belt & Pulley Alignment', frequency: 'monthly', basis: 'calendar', intervalHours: 720, priority: 'Medium', description: 'Cek tension belt, alignment pulley' },
-  { taskName: 'Hydraulic System Check', frequency: 'monthly', basis: 'hours', intervalHours: 500, priority: 'High', description: 'Cek tekanan, kebocoran, level oli hidrolik' },
-  { taskName: 'Screen Deck Inspection', frequency: 'quarterly', basis: 'calendar', intervalHours: 2160, priority: 'Medium', description: 'Cek keausan screen, frame, rubber' },
-  { taskName: 'Motor Overhaul Check', frequency: 'yearly', basis: 'hours', intervalHours: 8760, priority: 'Medium', description: 'Inspeksi motor, bearing, winding' },
-];
 
 // Peta task per tipe equipment (Crushing/Grinding/Recovery/Conveyor/Filtration/Pump)
 const typePM = {

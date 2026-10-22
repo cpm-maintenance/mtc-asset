@@ -11,7 +11,7 @@ if (typeof globalThis.localStorage === "undefined" || typeof globalThis.localSto
   };
   try {
     Object.defineProperty(globalThis, "localStorage", { value: mock, configurable: true, writable: true });
-  } catch (_e) {
+  } catch {
     globalThis.localStorage = mock;
   }
 }

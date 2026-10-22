@@ -120,7 +120,7 @@ if (!this.isEditingEquip) {
                 maxRetries: 3,
                 delay: 1000,
                 backoff: 2,
-                onRetry: (attempt, error, delay) => {
+                onRetry: (attempt, error) => {
                     if (isNetworkError(error)) {
                         this.showNotification("Network error, retrying...", "info");
                     }
@@ -131,7 +131,7 @@ if (!this.isEditingEquip) {
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.(this.isEditingEquip ? 'Update Equipment' : 'Create Equipment', { id: sanitizedData.EquipmentID, nama: sanitizedData.Nama });
-            } catch (e) { /* silent */ }
+            } catch { /* silent */ }
             
             // Add to local array immediately for instant UI update
             const existingIdx = this.equipment.findIndex(e => e.EquipmentID === sanitizedData.EquipmentID);

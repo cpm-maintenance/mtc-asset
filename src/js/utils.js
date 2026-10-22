@@ -357,7 +357,7 @@ export function formatDate(dateStr) {
     }
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
-  } catch (e) {}
+  } catch {}
   return '';
 }
 
@@ -425,7 +425,7 @@ export function parseJsonSafe(str, fallback = []) {
     if (str.trim() === '') return fallback;
     const parsed = JSON.parse(str);
     return Array.isArray(parsed) ? parsed : fallback;
-  } catch (e) {
+  } catch {
     return fallback;
   }
 }

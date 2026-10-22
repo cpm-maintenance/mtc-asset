@@ -234,7 +234,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         try {
             const snapshot = await window.get(window.ref(window.db, `Users/${uid}/role`));
             return snapshot.val() || 'user';
-        } catch (e) {
+        } catch {
             return 'user';
         }
     },

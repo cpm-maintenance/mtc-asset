@@ -168,7 +168,7 @@ export const performanceModule = /** @type {Partial<AppState> & ThisType<AppStat
                 maxRetries: 3,
                 delay: 1000,
                 backoff: 2,
-                onRetry: (attempt, error, delay) => {
+                onRetry: (attempt, error) => {
                     if (isNetworkError(error)) {
                         this.showNotification("Network error, retrying...", "info");
                     }
@@ -178,7 +178,7 @@ export const performanceModule = /** @type {Partial<AppState> & ThisType<AppStat
             // C3: Audit trail
             try {
                 window.auditModule?.logAudit?.(this.isEditingPerformance ? 'Update Performance' : 'Create Performance', { id: perfId, equip: sanitizedData.equipmentId || sanitizedData.EquipmentID, date: sanitizedData.date });
-            } catch (e) { /* silent */ }
+            } catch { /* silent */ }
 
             
             // Add to local array immediately for instant UI update

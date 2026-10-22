@@ -48,7 +48,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
                     { facingMode: "environment" },
                     config,
                     (/** @type {string} */ decodedText) => this.handleScanResult(decodedText),
-                    (/** @type {string} */ errorMessage) => { }
+                    (/** @type {string} */ _errorMessage) => { }
                 );
             } catch (err) {
                 console.error('QR Scanner Error:', err);

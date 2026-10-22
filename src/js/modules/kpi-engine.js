@@ -24,7 +24,7 @@ export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>
             if (window.Alpine?.raw) return window.Alpine.raw(data);
             if (data && typeof data === 'object' && data.__v_raw) return data.__v_raw;
             return data;
-        } catch (e) {
+        } catch {
             return Array.isArray(data) ? [...data] : data;
         }
     },
@@ -179,11 +179,9 @@ export const kpiEngineModule = /** @type {Partial<AppState> & ThisType<AppState>
         if (breakdowns.length < 2) return 0;
 
         let totalInterval = 0;
-        let withHM = 0;
         for (let i = 1; i < breakdowns.length; i++) {
             const iv = this._hmIntervalHours(breakdowns[i - 1], breakdowns[i]);
             totalInterval += iv;
-            if (breakdowns[i - 1].HM > 0 && breakdowns[i].HM > 0) withHM++;
         }
         // Fallback kalender bila tak ada pasangan HM (data lama)
         const result = (totalInterval / (breakdowns.length - 1)).toFixed(1);

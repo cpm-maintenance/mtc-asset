@@ -6,7 +6,7 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
     // Safe deep clone helper
     safeDeepClone(data) {
         try { return JSON.parse(JSON.stringify(data)); }
-        catch (e) { return Array.isArray(data) ? [...data] : data || {}; }
+        catch { return Array.isArray(data) ? [...data] : data || {}; }
     },
 
     // Lazy load Chart.js — dynamic import (198KB, only when dashboard renders)
@@ -174,14 +174,13 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
 
         // Destroy any remaining chart instances to prevent "Canvas already in use"
         Object.values(window._appCharts || {}).forEach(c => { 
-            if(c) { try { c.destroy(); } catch(e) {} }
+            if(c) { try { c.destroy(); } catch {} }
         });
         window._appCharts = { status: null, cost: null, downtime: null, reliability: null, woCompletion: null };
 
         try {
             const equipment = /** @type {any[]} */ (this.safeDeepClone(this.equipment));
             const performanceData = /** @type {any[]} */ (this.safeDeepClone(this.performanceData));
-            const logs = /** @type {any[]} */ (this.safeDeepClone(this.logs));
 
             let totalEquip = equipment?.length || 0;
             let totalDowntime = 0;
@@ -299,7 +298,7 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                     const woInProgress = wos.filter(l => l.Status === 'In Progress').length;
                     const woPending = wos.filter(l => l.Status !== 'Completed' && l.Status !== 'In Progress').length;
                     if (wos.length > 0) {
-                        if (window._appCharts.woCompletion) { try { window._appCharts.woCompletion.destroy(); } catch(e) {} }
+                        if (window._appCharts.woCompletion) { try { window._appCharts.woCompletion.destroy(); } catch {} }
                         window._appCharts.woCompletion = await this.safeCreateChart(ctxWo, {
                             type: 'doughnut', data: { labels: ['Completed', 'In Progress', 'Pending'], datasets: [{ data: [woCompleted, woInProgress, woPending], backgroundColor: [this.chartColor('good'), this.chartColor('info'), this.chartColor('warn')] }] },
                             options: { animation: { duration: 1000, easing: 'easeOutQuart' }, maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 10 } } } } }
@@ -315,7 +314,7 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                 if (ctxCost) {
                     const ct = /** @type {any[]} */ (this.calcCostTrend ? this.calcCostTrend() : []);
                     if (ct.length > 0) {
-                        if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} }
+                        if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch {} }
                         window._appCharts.costTrend = await this.safeCreateChart(ctxCost, {
                             type: 'line',
                             data: { labels: ct.map(c => c.month.substring(5)), datasets: [{ label: 'Cost (Rp)', data: ct.map(c => c.cost), borderColor: this.chartColor('emerald'), backgroundColor: this.chartColor('emerald', 0.1), fill: true, tension: 0.3 }] },
@@ -353,7 +352,7 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         if (this.currentPage !== 'kpi') return;
 
         Object.values(window._appKpiCharts || {}).forEach(c => { 
-            if(c) { try { c.destroy(); } catch(e) {} }
+            if(c) { try { c.destroy(); } catch {} }
         });
         window._appKpiCharts = {}
 
@@ -380,7 +379,7 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
                 if (this.currentPage !== 'kpi') return;
                 if (!ctx) return;
                 if (window._appKpiCharts[chartKey]) {
-                    try { window._appKpiCharts[chartKey].destroy(); } catch(e) {}
+                    try { window._appKpiCharts[chartKey].destroy(); } catch {}
                 }
                 window._appKpiCharts[chartKey] = await this.safeCreateChart(ctx, {
                     type, data,
@@ -561,16 +560,16 @@ export const chartModule = /** @type {Partial<AppState> & ThisType<AppState>} */
         const wait = (/** @type {string} */ id) => new Promise(res => { let r = 0; const c = () => { const e = document.getElementById(id); if (e && e.offsetParent !== null) res(e); else if (r < 5) { r++; setTimeout(c, 100 * r); } else res(null); }; c(); });
         let ctx;
         ctx = await wait('eHealthChart');
-        if (ctx) { if (window._appCharts.eHealth) { try { window._appCharts.eHealth.destroy(); } catch(e) {} } const hd = this.calcHealthDist(); const has = hd.excellent || hd.good || hd.warning || hd.critical; window._appCharts.eHealth = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['Excellent','Good','Warning','Critical'], datasets: [{ data: has ? [hd.excellent,hd.good,hd.warning,hd.critical] : [1], backgroundColor: has ? [this.chartColor('good'),this.chartColor('info'),this.chartColor('warn'),this.chartColor('crit')] : [this.chartColor('muted')] }] }, options: { cutout: '70%', animation: { duration: 1000 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.eHealth) { try { window._appCharts.eHealth.destroy(); } catch {} } const hd = this.calcHealthDist(); const has = hd.excellent || hd.good || hd.warning || hd.critical; window._appCharts.eHealth = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['Excellent','Good','Warning','Critical'], datasets: [{ data: has ? [hd.excellent,hd.good,hd.warning,hd.critical] : [1], backgroundColor: has ? [this.chartColor('good'),this.chartColor('info'),this.chartColor('warn'),this.chartColor('crit')] : [this.chartColor('muted')] }] }, options: { cutout: '70%', animation: { duration: 1000 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
         ctx = await wait('woStatusChart');
-        if (ctx) { if (window._appCharts.woStatus) { try { window._appCharts.woStatus.destroy(); } catch(e) {} } const ws = this.calcWOStatus(); const has = ws.completed || ws.inProgress || ws.waitingMaterial || ws.pending || ws.cancelled; window._appCharts.woStatus = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['Completed','In Progress','Waiting Mat.','Pending','Cancelled'], datasets: [{ data: has ? [ws.completed,ws.inProgress,ws.waitingMaterial,ws.pending,ws.cancelled] : [1], backgroundColor: has ? [this.chartColor('good'),this.chartColor('info'),this.chartColor('warn'),this.chartColor('violet'),this.chartColor('muted')] : [this.chartColor('muted')] }] }, options: { cutout: '70%', animation: { duration: 1000 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.woStatus) { try { window._appCharts.woStatus.destroy(); } catch {} } const ws = this.calcWOStatus(); const has = ws.completed || ws.inProgress || ws.waitingMaterial || ws.pending || ws.cancelled; window._appCharts.woStatus = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['Completed','In Progress','Waiting Mat.','Pending','Cancelled'], datasets: [{ data: has ? [ws.completed,ws.inProgress,ws.waitingMaterial,ws.pending,ws.cancelled] : [1], backgroundColor: has ? [this.chartColor('good'),this.chartColor('info'),this.chartColor('warn'),this.chartColor('violet'),this.chartColor('muted')] : [this.chartColor('muted')] }] }, options: { cutout: '70%', animation: { duration: 1000 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
         ctx = await wait('pmTrendChart');
-        if (ctx) { if (window._appCharts.pmTrend) { try { window._appCharts.pmTrend.destroy(); } catch(e) {} } const trend = /** @type {any[]} */ (this.calcPMTrend()); window._appCharts.pmTrend = await this.safeCreateChart(ctx, { type: 'bar', data: { labels: trend.length ? trend.map(t => t.month.substring(5)) : ['-'], datasets: [{ label: 'Compliance %', data: trend.length ? trend.map(t => t.pct) : [0], backgroundColor: this.chartColor('warn'), borderRadius: 4 }] }, options: { animation: { duration: 800 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, min: 0, max: 100 } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.pmTrend) { try { window._appCharts.pmTrend.destroy(); } catch {} } const trend = /** @type {any[]} */ (this.calcPMTrend()); window._appCharts.pmTrend = await this.safeCreateChart(ctx, { type: 'bar', data: { labels: trend.length ? trend.map(t => t.month.substring(5)) : ['-'], datasets: [{ label: 'Compliance %', data: trend.length ? trend.map(t => t.pct) : [0], backgroundColor: this.chartColor('warn'), borderRadius: 4 }] }, options: { animation: { duration: 800 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, min: 0, max: 100 } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
         ctx = await wait('downtimeTrendChart');
-        if (ctx) { if (window._appCharts.downtimeTrend) { try { window._appCharts.downtimeTrend.destroy(); } catch(e) {} } const dt = /** @type {any[]} */ (this.calcDowntimeTrend()); window._appCharts.downtimeTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: dt.length ? dt.map(d => d.month.substring(5)) : ['-'], datasets: [{ label: 'Downtime (hrs)', data: dt.length ? dt.map(d => d.hours) : [0], borderColor: this.chartColor('crit'), backgroundColor: this.chartColor('crit', 0.1), fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.downtimeTrend) { try { window._appCharts.downtimeTrend.destroy(); } catch {} } const dt = /** @type {any[]} */ (this.calcDowntimeTrend()); window._appCharts.downtimeTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: dt.length ? dt.map(d => d.month.substring(5)) : ['-'], datasets: [{ label: 'Downtime (hrs)', data: dt.length ? dt.map(d => d.hours) : [0], borderColor: this.chartColor('crit'), backgroundColor: this.chartColor('crit', 0.1), fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
         ctx = await wait('costTrendChart');
-        if (ctx) { if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch(e) {} } const ct = /** @type {any[]} */ (this.calcCostTrend()); window._appCharts.costTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: ct.length ? ct.map(c => c.month.substring(5)) : ['-'], datasets: [{ label: 'Cost', data: ct.length ? ct.map(c => c.cost) : [0], borderColor: this.themeAccent(), backgroundColor: this.chartColor('warn', 0.1), fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.costTrend) { try { window._appCharts.costTrend.destroy(); } catch {} } const ct = /** @type {any[]} */ (this.calcCostTrend()); window._appCharts.costTrend = await this.safeCreateChart(ctx, { type: 'line', data: { labels: ct.length ? ct.map(c => c.month.substring(5)) : ['-'], datasets: [{ label: 'Cost', data: ct.length ? ct.map(c => c.cost) : [0], borderColor: this.themeAccent(), backgroundColor: this.chartColor('warn', 0.1), fill: true, tension: 0.3 }] }, options: { animation: { duration: 1000 }, maintainAspectRatio: false, scales: { x: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: tc, font: { size: 9 } }, beginAtZero: true } }, plugins: { legend: { display: false }, tooltip: tooltipStyle } } }); }
         ctx = await wait('abcChart');
-        if (ctx) { if (window._appCharts.abcChart) { try { window._appCharts.abcChart.destroy(); } catch(e) {} } const abc = /** @type {any[]} */ (this.calcInventoryABC()); const a = abc.filter(p => p.category === 'A').length; const b = abc.filter(p => p.category === 'B').length; const c = abc.filter(p => p.category === 'C').length; window._appCharts.abcChart = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['A (High Value)','B (Medium)','C (Low)'], datasets: [{ data: [a||1,b||1,c||1], backgroundColor: [this.chartColor('crit'),this.chartColor('warn'),this.chartColor('cyan')] }] }, options: { cutout: '65%', animation: { duration: 800 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
+        if (ctx) { if (window._appCharts.abcChart) { try { window._appCharts.abcChart.destroy(); } catch {} } const abc = /** @type {any[]} */ (this.calcInventoryABC()); const a = abc.filter(p => p.category === 'A').length; const b = abc.filter(p => p.category === 'B').length; const c = abc.filter(p => p.category === 'C').length; window._appCharts.abcChart = await this.safeCreateChart(ctx, { type: 'doughnut', data: { labels: ['A (High Value)','B (Medium)','C (Low)'], datasets: [{ data: [a||1,b||1,c||1], backgroundColor: [this.chartColor('crit'),this.chartColor('warn'),this.chartColor('cyan')] }] }, options: { cutout: '65%', animation: { duration: 800 }, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tc, font: { size: 9 } } }, tooltip: tooltipStyle } } }); }
     },
 });
