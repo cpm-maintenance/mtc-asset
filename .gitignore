@@ -109,3 +109,6 @@ lh-*.json
 lh.log
 gf.css
 preview.log
+
+# graphify knowledge graph output
+graphify-out/

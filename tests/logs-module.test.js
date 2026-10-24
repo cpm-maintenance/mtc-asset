@@ -441,6 +441,48 @@ describe('approveWO', () => {
         expect(window.app.logs[0].Status).toBe('Approved');
         expect(window.app.notifications).toHaveLength(1);
     });
+
+    it('transaksi stok tidak pernah negatif, abort saat null, dan kegagalan part tidak memblokir update WO', async () => {
+        let capturedCallback = null;
+        const fb = stubFirebase({
+            runTransaction: vi.fn(async (_ref, cb) => {
+                capturedCallback = cb;
+                throw new Error('permission_denied on part');
+            }),
+        });
+        const longDesc = 'D'.repeat(600);
+        const legacyLog = {
+            ...log,
+            Downtime: '1.5',
+            Cost: '500',
+            HM: 1234,
+            Deskripsi: longDesc,
+            PartsUsed: [{ id: 'P_DEFICIT', qty: 5 }],
+        };
+        const ctx = makeCtx({ logs: [legacyLog], allParts: [{ PartID: 'P_DEFICIT', Stok: 0 }] });
+        vi.stubGlobal('confirm', vi.fn(() => true));
+
+        await ctx.approveWO('L1');
+
+        // Pastikan callback transaksi stok aman:
+        expect(capturedCallback).toBeTypeOf('function');
+        // Saat stok di DB 1 dan qty 5 -> tidak pernah negatif (-4), diklem ke 0
+        expect(capturedCallback(1)).toBe(0);
+        // Saat part belum ada di DB (null) -> return undefined (abort transaction)
+        expect(capturedCallback(null)).toBeUndefined();
+        expect(capturedCallback(undefined)).toBeUndefined();
+
+        // Walau transaksi part melempar error, WO tetap berhasil di-update ke Approved
+        expect(fb.update).toHaveBeenCalledTimes(1);
+        const [, updates] = fb.update.mock.calls[0];
+        expect(updates.Status).toBe('Approved');
+        expect(updates.Downtime).toBe(1.5);
+        expect(updates.Cost).toBe(500);
+        expect(updates.HM).toBe('1234');
+        expect(updates.Deskripsi).toHaveLength(500);
+        expect(ctx.logs[0].Status).toBe('Approved');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Work Order Approved!');
+    });
 });
 
 describe('rejectWO', () => {

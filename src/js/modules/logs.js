@@ -556,6 +556,7 @@ async approveWO(logId) {
         }
 
         try {
+            /** @type {Record<string, any>} */
             const updates = {
                 Status: 'Approved',
                 approvedBy: this.user?.email || 'supervisor',
@@ -578,10 +579,29 @@ async approveWO(logId) {
             if (Array.isArray(parts) && parts.length > 0) {
                 for (const p of parts) {
                     if (!p.id) continue;
-                    await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
-                        return (curr || 0) - Number(p.qty);
-                    });
+                    try {
+                        await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
+                            if (curr === null || typeof curr === 'undefined') return undefined;
+                            return Math.max(0, (curr || 0) - Number(p.qty));
+                        });
+                    } catch (/** @type {any} */ err) {
+                        logger.warn('[approveWO] Gagal potong stok part ' + p.id + ':', err);
+                    }
                 }
+            }
+
+            // Normalisasi field numerik & teks legacy agar lolos .validate di database.rules.json
+            if (log.Downtime !== undefined && typeof log.Downtime !== 'number') {
+                updates.Downtime = Number(log.Downtime) || 0;
+            }
+            if (log.Cost !== undefined && typeof log.Cost !== 'number') {
+                updates.Cost = Number(log.Cost) || 0;
+            }
+            if (log.HM !== undefined && typeof log.HM !== 'string') {
+                updates.HM = String(log.HM);
+            }
+            if (log.Deskripsi && log.Deskripsi.length > 500) {
+                updates.Deskripsi = log.Deskripsi.substring(0, 500);
             }
             
             await window.update(window.ref(window.db, 'HistoryLog/' + logId), updates);
@@ -649,6 +669,7 @@ async approveWO(logId) {
         }
 
         try {
+            /** @type {Record<string, any>} */
             const updates = {
                 Status: 'Rejected',
                 rejectedBy: this.user?.email || 'supervisor',
@@ -657,6 +678,20 @@ async approveWO(logId) {
                 approvedBy: '',
                 approvalDate: ''
             };
+
+            // Normalisasi field numerik & teks legacy agar lolos .validate di database.rules.json
+            if (log.Downtime !== undefined && typeof log.Downtime !== 'number') {
+                updates.Downtime = Number(log.Downtime) || 0;
+            }
+            if (log.Cost !== undefined && typeof log.Cost !== 'number') {
+                updates.Cost = Number(log.Cost) || 0;
+            }
+            if (log.HM !== undefined && typeof log.HM !== 'string') {
+                updates.HM = String(log.HM);
+            }
+            if (log.Deskripsi && log.Deskripsi.length > 500) {
+                updates.Deskripsi = log.Deskripsi.substring(0, 500);
+            }
             
             await window.update(window.ref(window.db, 'HistoryLog/' + logId), updates);
             this.showNotification("Work Order Rejected");

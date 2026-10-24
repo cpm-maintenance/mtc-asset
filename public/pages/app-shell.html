@@ -470,7 +470,7 @@
           </picture>
           <div class="flex flex-col min-w-0">
             <span class="font-headline-md text-[16px] tracking-tight uppercase text-tac-on-surface leading-none">MTC ASSET</span>
-            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider truncate">Industrial Telemetry Core</span>
+            <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider truncate hidden sm:block">Industrial Telemetry Core</span>
           </div>
         </div>
         <div class="hidden xl:flex items-center gap-space-xs pl-space-sm">
@@ -542,11 +542,11 @@
 
         <!-- Utility: export / refresh / reset / QR -->
         <button @click="exportExcelFull()" title="Export Excel lengkap" aria-label="Export Excel"
-          class="flex items-center justify-center p-space-xs rounded text-tac-status-operational hover:bg-tac-surface-container-high transition-colors">
+          class="hidden sm:flex items-center justify-center p-space-xs rounded text-tac-status-operational hover:bg-tac-surface-container-high transition-colors">
           <span class="material-symbols-outlined icon-20">table_view</span>
         </button>
         <button @click="refreshData()" title="Muat ulang data" aria-label="Muat ulang data"
-          class="flex items-center justify-center p-space-xs rounded text-tac-sync-cyan hover:bg-tac-surface-container-high transition-colors">
+          class="hidden sm:flex items-center justify-center p-space-xs rounded text-tac-sync-cyan hover:bg-tac-surface-container-high transition-colors">
           <span class="material-symbols-outlined icon-20">refresh</span>
         </button>
         <button @click="systemReset()" title="Reset sistem" aria-label="Reset sistem"
@@ -1057,9 +1057,17 @@
             <span class="material-symbols-outlined text-[16px] text-[9px]">add</span> New WO
           </button>
         </div>
-        <button @click="showMoreMenu = false" aria-label="Close menu" class="w-8 h-8 rounded-xl bg-tac-surface-container-low text-tac-on-surface-variant hover:text-tac-gold-bright flex items-center justify-center">
-          <span class="material-symbols-outlined text-sm">close</span>
-        </button>
+        <div class="flex items-center gap-1">
+          <button @click="refreshData()" title="Muat ulang data" aria-label="Muat ulang data" class="w-8 h-8 rounded-xl bg-tac-surface-container-low text-tac-sync-cyan hover:bg-tac-surface-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+          </button>
+          <button @click="exportExcelFull()" title="Export Excel" aria-label="Export Excel" class="w-8 h-8 rounded-xl bg-tac-surface-container-low text-tac-status-operational hover:bg-tac-surface-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-sm">table_view</span>
+          </button>
+          <button @click="showMoreMenu = false" aria-label="Close menu" class="w-8 h-8 rounded-xl bg-tac-surface-container-low text-tac-on-surface-variant hover:text-tac-gold-bright flex items-center justify-center">
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
       </div>
       <div class="grid grid-cols-4 gap-2">
         <template x-for="item in menuItems.filter(i => i.mobile && !i.hidden && canAccess(i))" :key="item.id">
@@ -1086,15 +1094,15 @@
     <div x-cloak
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all"
       x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-2xl p-10 rounded-[2.5rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20">
-      <div class="flex justify-between items-center mb-10">
-        <h3 class="text-2xl font-black text-tac-on-surface flex items-center gap-4 uppercase tracking-tighter">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-2xl p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[2.5rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20">
+      <div class="flex justify-between items-center mb-6 md:mb-10">
+        <h3 class="text-xl md:text-2xl font-black text-tac-on-surface flex items-center gap-3 md:gap-4 uppercase tracking-tighter">
           <span class="material-symbols-outlined text-[16px] text-tac-gold-bright">monitoring</span>
           <span x-text="isEditingEquip ? 'Reconfigure Asset' : 'Initialize Asset'"></span>
         </h3>
         <button @click="showEquipModal = false" aria-label="Close" class="tac-btn-ghost"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
-      <form @submit.prevent="submitEquipment()" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <form @submit.prevent="submitEquipment()" class="form-grid">
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Asset Identifier</label>
           <input aria-label="ID asset" type="text" x-model="equipForm.id" required placeholder="NEXUS-XXX" :readonly="isEditingEquip"
@@ -1186,12 +1194,12 @@
   <template x-if="showPartModal">
     <div x-cloak
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-lg p-10 rounded-[3rem] shadow-2xl border-tac-gold-bright/20">
-      <div class="flex justify-between items-center mb-10">
-        <h3 class="text-2xl font-black text-tac-on-surface flex items-center gap-4 uppercase tracking-tighter"><span class="material-symbols-outlined text-[16px] text-tac-gold-bright">inventory</span> <span
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-lg p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-tac-gold-bright/20">
+      <div class="flex justify-between items-center mb-6 md:mb-10">
+        <h3 class="text-xl md:text-2xl font-black text-tac-on-surface flex items-center gap-3 md:gap-4 uppercase tracking-tighter"><span class="material-symbols-outlined text-[16px] text-tac-gold-bright">inventory</span> <span
             x-text="isEditingPart ? 'Sync Component' : 'Register Component'"></span></h3>
         <button @click="showPartModal = false" aria-label="Close part form"
-          class="text-tac-status-standby hover:text-tac-gold-bright w-12 h-12 rounded-2xl bg-tac-surface-card/60 border border-tac-border-tactical flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[16px]">close</span></button>
+          class="text-tac-status-standby hover:text-tac-gold-bright w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-tac-surface-card/60 border border-tac-border-tactical flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
       <form @submit.prevent="submitSparePart()" class="space-y-6">
         <div class="form-grid">
@@ -1237,7 +1245,7 @@
           </div>
           <p class="text-[8px] text-tac-status-standby mt-2 px-1 uppercase tracking-widest font-bold">Part will be visible and accessible across all selected system nodes.</p>
         </div>
-        <div class="grid grid-cols-3 gap-4">
+        <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Current Stock</label>
             <input aria-label="Stok saat ini" type="number" x-model="partForm.stok" placeholder="0" min="0"
@@ -1305,8 +1313,8 @@
   <template x-if="showPerformanceModal">
   <div x-cloak
     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl p-8 lg:p-10 rounded-[3rem] shadow-2xl border-tac-gold-bright/20 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-8 border-b border-tac-border-subtle pb-6">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-tac-gold-bright/20 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6 md:mb-8 border-b border-tac-border-subtle pb-6">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-tac-primary-container flex items-center justify-center shadow-lg">
              <span class="material-symbols-outlined text-tac-on-primary-container text-xl">show_chart</span>
@@ -1321,7 +1329,7 @@
       </div>
       <form @submit.prevent="submitPerformance()" class="space-y-6">
         <!-- Section: Basic Info -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="md:col-span-1">
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
             <input aria-label="Tanggal pencatatan" type="date" x-model="performanceForm.date" required id="perf-date" name="perf-date"
@@ -1459,8 +1467,8 @@
   <template x-if="showLogModal">
   <div x-cloak
     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl p-8 lg:p-10 rounded-[3rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20 shadow-2xl">
-      <div class="flex justify-between items-center mb-8 border-b border-tac-border-subtle pb-6">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 md:mb-8 border-b border-tac-border-subtle pb-6">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-tac-primary-container flex items-center justify-center shadow-lg">
              <span class="material-symbols-outlined text-tac-on-primary-container text-xl">fact_check</span>
@@ -1640,7 +1648,7 @@
             <span class="text-[10px] font-black text-tac-gold-bright" x-text="logForm.photos.length + ' / 4'"></span>
           </div>
 
-          <div class="grid grid-cols-4 gap-4">
+          <div class="form-grid">
             <template x-for="(p, idx) in logForm.photos">
               <div
                 class="relative group aspect-square rounded-2xl overflow-hidden bg-tac-surface-card/60 border border-tac-border-tactical border-tac-gold-bright/20 shadow-xl">
@@ -1793,30 +1801,30 @@
     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all">
     <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
       x-transition:enter-end="opacity-100 scale-100"
-      class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-sm rounded-[3rem] p-10 border-tac-gold-bright/20 text-center">
-      <div class="flex justify-between items-center mb-8">
+      class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-sm rounded-2xl sm:rounded-[3rem] p-5 sm:p-10 border-tac-gold-bright/20 text-center">
+      <div class="flex justify-between items-center mb-6 sm:mb-8">
         <h3 class="text-xl font-black text-tac-on-surface uppercase tracking-tighter">Asset Signature</h3>
         <button @click="showQRPreviewModal = false" aria-label="Close QR preview" class="text-tac-status-standby hover:text-tac-gold-bright transition-colors">
           <span class="material-symbols-outlined text-2xl">close</span>
         </button>
       </div>
       
-      <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-8 mx-auto w-fit border-8 border-tac-gold-bright/5">
+      <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-6 sm:mb-8 mx-auto w-fit border-8 border-tac-gold-bright/5">
         <img :src="qrCodeDataUrl" loading="lazy" class="w-48 h-48 mx-auto" alt="Asset QR Code">
       </div>
       
-      <div class="space-y-3 mb-10">
+      <div class="space-y-3 mb-6 sm:mb-10">
         <p class="text-tac-on-surface font-black text-xl tac-glow-text" x-text="selectedEquip?.Nama"></p>
         <p class="text-tac-gold-bright font-mono font-bold tracking-[0.2em] text-xs" x-text="selectedEquip?.EquipmentID"></p>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <button @click="downloadQR()"
-          class="bg-tac-primary-container text-tac-on-primary-container font-black py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]">
+          class="bg-tac-primary-container text-tac-on-primary-container font-black py-4 sm:py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]">
           <span class="material-symbols-outlined text-[16px]">download</span> Save Data
         </button>
         <button @click="window.print()"
-          class="bg-tac-surface-card/60 border border-tac-border-tactical border-tac-gold-bright/20 text-tac-gold-bright font-black py-5 rounded-2xl hover:border-tac-gold-bright transition-all uppercase tracking-widest text-[10px]">
+          class="bg-tac-surface-card/60 border border-tac-border-tactical border-tac-gold-bright/20 text-tac-gold-bright font-black py-4 sm:py-5 rounded-2xl hover:border-tac-gold-bright transition-all uppercase tracking-widest text-[10px]">
           <span class="material-symbols-outlined text-[16px] mr-2">description</span> Print Node
         </button>
       </div>

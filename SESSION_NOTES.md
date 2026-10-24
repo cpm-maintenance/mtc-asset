@@ -1,3 +1,70 @@
+## 📝 S36-approve-wo-fix (2026-10-24) — Perbaikan bug permission_denied saat Approve Work Order
+
+Live **sw v53**. Mengatasi error `Approve WO Error: Error: permission_denied`.
+
+### Root Cause
+1. **Validasi Stok RTDB**: Pada `src/js/modules/logs.js:approveWO()`, pemotongan stok part dilakukan via `runTransaction(ref(db, 'SpareParts/' + p.id + '/Stok'), curr => (curr || 0) - Number(p.qty))`. Saat part mengalami kekurangan stok (shortage) dan supervisor memilih "OK = tetap approve", callback mengembalikan nilai negatif. Aturan Firebase RTDB di `database.rules.json` pada `SpareParts/$partId/.validate` mewajibkan `newData.child('Stok').val() >= 0`. Nilai negatif langsung ditolak RTDB sebagai `permission_denied`.
+2. **Part ID Tidak Terdaftar**: Jika WO merujuk part ID yang tidak terdaftar di node `SpareParts` (`curr === null`), transaksi membuat node baru yang kehilangan field wajib `NamaPart` dan `MinStock`, melanggar `newData.hasChildren(['NamaPart', 'Stok', 'MinStock'])` dan menghasilkan `permission_denied`.
+3. **Ketiadaan Error Boundary Transaksi**: Transaksi stok tidak dibungkus `try/catch` per part (berbeda dari `createLog`), sehingga kegagalan transaksi part langsung menghentikan eksekusi dan membatalkan update status WO ke `HistoryLog`.
+4. **Data Legacy Non-Numerik**: Jika record WO lama memiliki field `Downtime` atau `Cost` bernilai string kosong `""`, aturan `HistoryLog/$logId/.validate` (`(!newData.hasChild('Downtime') || newData.child('Downtime').isNumber())`) akan menolak pembaruan record dengan `permission_denied`.
+
+### Perbaikan
+- **Guard Transaksi Stok Part**:
+  - Jika `curr === null || typeof curr === 'undefined'`, kembalikan `undefined` (membatalkan transaksi tanpa menulis node tidak valid).
+  - Nilai stok diklem dengan `Math.max(0, (curr || 0) - Number(p.qty))` agar tidak pernah negatif dan mematuhi aturan `Stok >= 0`.
+  - Setiap transaksi part dibungkus dalam blok `try { ... } catch (err) { logger.warn(...) }` sehingga kegagalan potong stok pada satu part tidak membatalkan approval WO.
+- **Normalisasi Field Legacy**:
+  - Pada `approveWO()` dan `rejectWO()`, nilai `Downtime` dan `Cost` dinormalisasi ke `Number` jika bukan number.
+  - `HM` dipastikan `String`, dan `Deskripsi` dipotong max 500 karakter sesuai batas `.validate`.
+- **Unit Test Baru**:
+  - `tests/logs-module.test.js`: menguji bahwa callback transaksi stok mengklem nilai ke 0 saat defisit, abort saat null, dan kegagalan transaksi part tidak menggagalkan approval WO.
+- **Catatan Akun RTDB**:
+  - Aturan `.write` pada `HistoryLog` dan `SpareParts` mewajibkan `root.child('Users').child(auth.uid).child('role').val() === 'admin' || ... === 'supervisor'`. Pastikan akun pengguna yang digunakan di produksi memiliki field `role` bernilai `'admin'` atau `'supervisor'` di node `Users/{uid}` pada Realtime Database.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- vitest **1790 tes / 76 berkas**
+- coverage **96,40 / 86,00 / 96,62 / 97,68**
+- build ok · precache **66/66**
+
+## 📝 S36-mobile (2026-10-24) — Perapihan layout mobile, form input, dan modal
+
+Live **sw v53** (siap di-push). Lanjutan S36-form-c.
+
+### Yang dirapikan
+- **Header mobile (`public/pages/app-shell.html`)**:
+  - Subtitle brand `Industrial Telemetry Core` disembunyikan di layar HP (`hidden sm:block`) agar nama `MTC ASSET` tidak tertekan atau terpotong pada viewport 360 px.
+  - Aksi utilitas sekunder `Export Excel` dan `Refresh` disembunyikan dari header mobile (`hidden sm:flex`), disederhanakan menjadi 4 aksi esensial (`+ NEW WO`, `Notifications`, `Scan QR`, `Logout`).
+  - Pintasan utilitas cepat `Refresh` dan `Export Excel` dipindahkan ke drawer mobile `More Menu` agar tetap bisa diakses cepat oleh operator HP.
+- **Modal bertoken & responsif HP (`public/pages/app-shell.html`)**:
+  - **Asset Config (`showEquipModal`)**: padding modal diturunkan dari `p-10 rounded-[2.5rem]` ke `p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[2.5rem]`, grid diganti `.form-grid` bertoken.
+  - **Spare Part (`showPartModal`)**: padding modal disesuaikan `p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem]`, grid stok/level/harga 3-kolom kaku diganti `.form-grid` bertoken (1 kol HP, 2 kol tablet, 3 kol desktop).
+  - **Performance Log (`showPerformanceModal`)**: padding `p-5 sm:p-8 lg:p-10`, grid info dasar disesuaikan `grid-cols-1 md:grid-cols-3 gap-4`.
+  - **Maintenance Log (`showLogModal`)**: padding `p-5 sm:p-8 lg:p-10`, bukti foto 4-kolom kaku diganti `.form-grid`.
+  - **QR Preview (`showQRPreviewModal`)**: padding modal `p-5 sm:p-10 rounded-2xl sm:rounded-[3rem]`, tombol aksi reflow `grid-cols-1 sm:grid-cols-2`, menghapus risiko overflow QR canvas di layar 360 px.
+- **Form Work Order (`public/pages/WorkOrders.html`)**:
+  - Baris komponen part `logForm.parts` yang sebelumnya kaku `grid-cols-12` (membuat tombol hapus terjepit jadi sliver 25 px dan Qty sempit 100 px) di-reflow responsif: `grid-cols-1 sm:grid-cols-12` dengan target tap minimal 44 px dan label hapus di mobile.
+- **Form Requisition (`public/pages/RequestPart.html`)**:
+  - Sub-grid peralatan tujuan dan link WO / prioritas / catatan disapu dari `grid-cols-12` ke `.form-grid` bertoken.
+- **Kalender PM Schedule (`public/pages/PMSchedule.html`)**:
+  - Wadah kalender 7 hari diberi `overflow-x-auto` dengan `min-w-[560px] lg:min-w-0` agar kolom tanggal tidak terhimpit menjadi irisan 40 px yang tidak terbaca di layar HP.
+- **`sw.js` v52 → v53**.
+
+### Verifikasi viewport HP (CDP Emulation & Browser Probe)
+| Target | Viewport | Coarse Pointer | Overflow-X | Kontrol Terlihat | Min Touch Size | Status |
+|---|---|---|---|---|---|---|
+| Android Mid | 360×800 (dpr 3) | **true** | **0 px** | 8 | **24 px** (checkbox) · 44 px (input/btn) | PASS |
+| iPhone 14/15 | 390×844 (dpr 3) | **true** | **0 px** | 8 | **24 px** (checkbox) · 44 px (input/btn) | PASS |
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- vitest **1789 tes / 76 berkas**
+- coverage **96,43 / 86,12 / 96,55 / 97,75**
+- build ok · precache **66/66**
+
+
 ## 📝 S36-form-c (2026-10-24) — Label 110 kontrol dirapikan + verifikasi viewport HP
 
 Live **sw v52** (belum di-push). Lanjutan S36-form-b.

@@ -423,8 +423,8 @@
                   <input aria-label="Nomor reservasi" type="text" x-model="item.noResv" placeholder="Nomor Reservasi" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
               </div>
-              <div class="grid grid-cols-12 gap-3">
-                <div class="col-span-6">
+              <div class="form-grid">
+                <div>
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Untuk Peralatan</label>
                   <select aria-label="Equipment tujuan" x-model="item.equipmentId" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
                     <option value="">— Tidak ditentukan —</option>
@@ -434,11 +434,11 @@
                   </select>
                 </div>
                 <!-- R3: Live availability badge per line item -->
-                <div class="col-span-6 flex items-end pb-2" x-show="item.itemType === 'part' && item.partId">
+                <div class="flex items-end pb-2" x-show="item.itemType === 'part' && item.partId">
                   <span class="px-3 py-2 rounded font-label-mono-sm text-label-mono-sm font-bold flex items-center gap-2 border"
                     :class="itemAvail(item).ok ? 'bg-tac-status-operational/10 text-tac-status-operational border-tac-status-operational/30' : 'bg-tac-status-emergency/10 text-tac-status-emergency border-tac-status-emergency/30'">
                     <span class="material-symbols-outlined text-[16px]" x-text="itemAvail(item).ok ? 'check_circle' : 'warning'"></span>
-                    <span x-text="itemAvail(item).ok ? ('Stock: ' + itemAvail(item).available) : ('Kurang ' + itemAvail(item).shortage + ' (stock ' + itemAvail(item).available + ')')"></span>
+                    <span x-text="itemAvail(item).text + (itemAvail(item).ok ? '' : ' (' + itemAvail(item).detail + ')')"></span>
                   </span>
                 </div>
               </div>
@@ -451,8 +451,8 @@
           <span class="material-symbols-outlined text-[18px]">add</span> Tambah Item Lain
         </button>
 
-        <div x-show="!reqEditMode" class="grid grid-cols-12 gap-3 pt-3 border-t border-tac-border-subtle">
-          <div class="col-span-12">
+        <div x-show="!reqEditMode" class="form-grid pt-3 border-t border-tac-border-subtle">
+          <div class="span-2">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 flex items-center gap-1">
               <span class="material-symbols-outlined text-[14px] text-tac-sync-cyan">link</span>Link ke Work Order (opsional)
             </label>
@@ -463,14 +463,14 @@
               </template>
             </select>
           </div>
-          <div class="col-span-4">
+          <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Prioritas (global)</label>
             <select aria-label="Prioritas (global)" x-model="reqPriority" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
               <option value="normal">Normal</option>
               <option value="urgent">Urgent</option>
             </select>
           </div>
-          <div class="col-span-8">
+          <div class="span-2">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Catatan (global)</label>
             <input aria-label="Catatan (global)" type="text" x-model="reqNotes" placeholder="Catatan untuk semua item"
               class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
