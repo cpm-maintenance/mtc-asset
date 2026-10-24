@@ -144,7 +144,7 @@
       <!-- Search Input -->
       <div class="flex-1 max-w-xl relative flex items-center bg-tac-surface-recessed rounded px-space-sm py-2 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.6),inset_-1px_-1px_3px_rgba(255,255,255,0.04)] border border-tac-border-subtle">
         <span class="material-symbols-outlined text-tac-status-standby text-[18px] mr-2">search</span>
-        <input type="text" x-model="pmSearch" placeholder="Search task name, equipment, assignee, or notes..."
+        <input aria-label="Search task name, equipment, assignee, or notes" type="text" x-model="pmSearch" placeholder="Search task name, equipment, assignee, or notes..."
           class="w-full bg-transparent text-tac-on-surface font-body-sm text-body-sm outline-none placeholder:text-tac-status-standby">
         <button type="button" x-show="pmSearch" @click="pmSearch = ''" aria-label="Clear search"
           class="font-label-mono-sm text-label-mono-sm px-1.5 py-0.5 rounded bg-tac-surface-container-high text-tac-status-standby hover:text-tac-on-surface">ESC</button>
@@ -153,7 +153,7 @@
       <!-- Dropdown Selects -->
       <div class="flex flex-wrap items-center gap-space-xs">
         <!-- Equipment Selector -->
-        <select x-model="pmFilterEquip"
+        <select aria-label="Pm Filter Equip" x-model="pmFilterEquip"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none max-w-[200px] field-compact">
           <option value="">ALL EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
@@ -162,7 +162,7 @@
         </select>
 
         <!-- Status Selector -->
-        <select x-model="pmFilterStatus"
+        <select aria-label="Pm Filter Status" x-model="pmFilterStatus"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">ALL STATUS</option>
           <option value="pending">PENDING / DUE</option>
@@ -171,7 +171,7 @@
         </select>
 
         <!-- Priority Selector -->
-        <select x-model="pmFilterPriority"
+        <select aria-label="Pm Filter Priority" x-model="pmFilterPriority"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">ALL PRIORITY</option>
           <option value="High">HIGH</option>
@@ -207,7 +207,7 @@
       <!-- Header row (desktop) -->
       <div class="hidden md:grid md:grid-cols-[36px_minmax(0,3.2fr)_minmax(0,1.8fr)_minmax(0,2fr)_auto] gap-3 p-3 bg-tac-surface-recessed border-b border-tac-border-subtle font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby items-center">
         <div class="flex items-center justify-center">
-          <input type="checkbox" @click="pmToggleSelectAll()"
+          <input aria-label="Pilih baris" type="checkbox" @click="pmToggleSelectAll()"
             :checked="pmGetFilteredList().filter(p=>p.status==='pending').length > 0 && pmGetFilteredList().filter(p=>p.status==='pending').every(p => pmSelectedIds.includes(p.pmId))"
             class="accent-tac-primary w-3.5 h-3.5 cursor-pointer">
         </div>
@@ -234,7 +234,7 @@
 
               <div class="flex items-start gap-3 pl-1">
                 <div @click.stop class="mt-1">
-                  <input type="checkbox" :checked="pmSelectedIds.includes(pm.pmId)" @click="pmToggleSelect(pm.pmId)"
+                  <input aria-label="Pilih baris" type="checkbox" :checked="pmSelectedIds.includes(pm.pmId)" @click="pmToggleSelect(pm.pmId)"
                     x-show="pm.status === 'pending'" class="accent-tac-primary w-4 h-4 cursor-pointer">
                 </div>
                 <div class="flex-1 min-w-0">
@@ -286,7 +286,7 @@
 
               <!-- Checkbox -->
               <div @click.stop class="flex items-center justify-center pl-1">
-                <input type="checkbox" :checked="pmSelectedIds.includes(pm.pmId)" @click="pmToggleSelect(pm.pmId)"
+                <input aria-label="Pilih baris" type="checkbox" :checked="pmSelectedIds.includes(pm.pmId)" @click="pmToggleSelect(pm.pmId)"
                   x-show="pm.status === 'pending'" class="accent-tac-primary w-3.5 h-3.5 cursor-pointer">
               </div>
 
@@ -578,12 +578,12 @@
       <form @submit.prevent="submitPM()" class="space-y-4">
         <div>
           <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Task Name *</label>
-          <input type="text" x-model="pmForm.taskName" placeholder="e.g. Ganti Oli, Greasing, Inspect Belt..." required
+          <input aria-label="Task Name" type="text" x-model="pmForm.taskName" placeholder="e.g. Ganti Oli, Greasing, Inspect Belt..." required
             class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-status-standby focus:border-tac-primary outline-none transition-all">
         </div>
         <div>
           <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Target Equipment *</label>
-          <select x-model="pmForm.equipmentId" required
+          <select aria-label="Target Equipment" x-model="pmForm.equipmentId" required
             class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
             <option value="">Select Equipment</option>
             <template x-for="e in equipment" :key="e.EquipmentID">
@@ -593,18 +593,18 @@
         </div>
         <div>
           <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Directive Description</label>
-          <textarea x-model="pmForm.description" rows="2"
+          <textarea aria-label="Directive Description" x-model="pmForm.description" rows="2"
             class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-status-standby focus:border-tac-primary outline-none transition-all resize-none"
             placeholder="Operational notes or standard procedures..."></textarea>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="form-grid">
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">PM Scheduled Date *</label>
-            <input type="date" x-model="pmForm.date" required class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <input aria-label="PM Scheduled Date" type="date" x-model="pmForm.date" required class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
           </div>
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Recurrence Cycle</label>
-            <select x-model="pmForm.frequency" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <select aria-label="Recurrence Cycle" x-model="pmForm.frequency" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
               <option value="none">No Repeat (One-off)</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -613,23 +613,23 @@
             </select>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="form-grid">
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Trigger Basis</label>
-            <select x-model="pmForm.basis" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <select aria-label="Trigger Basis" x-model="pmForm.basis" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
               <option value="calendar">Calendar Window</option>
               <option value="hours">Running Hours (HM)</option>
             </select>
           </div>
           <div x-show="pmForm.basis === 'hours'">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">HM Interval (Hours)</label>
-            <input type="number" x-model="pmForm.intervalHours" min="0" step="100" placeholder="e.g. 500" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <input aria-label="HM Interval (Hours)" type="number" x-model="pmForm.intervalHours" min="0" step="100" placeholder="e.g. 500" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="form-grid">
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Priority Level</label>
-            <select x-model="pmForm.priority" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <select aria-label="Priority Level" x-model="pmForm.priority" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
               <option value="High">HIGH</option>
               <option value="Medium">MEDIUM</option>
               <option value="Low">LOW</option>
@@ -637,7 +637,7 @@
           </div>
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Assigned Specialist</label>
-            <input type="text" x-model="pmForm.assignedTo" placeholder="e.g. Maintenance Crew" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <input aria-label="Assigned Specialist" type="text" x-model="pmForm.assignedTo" placeholder="e.g. Maintenance Crew" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
           </div>
         </div>
         <div class="flex gap-2 pt-2 border-t border-tac-border-subtle">

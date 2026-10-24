@@ -152,3 +152,50 @@ describe('grid form responsif', () => {
     expect(css).toMatch(/@supports not selector\(:has\(\*\)\)/);
   });
 });
+
+describe('nama aksesibel', () => {
+  it('setiap kontrol punya aria-label, atau id yang dirujuk <label for>', () => {
+    const missing = [];
+    for (const { rel, src } of MARKUP) {
+      const ids = new Set([...src.matchAll(/<label[^>]*\bfor="([^"]+)"/g)].map((m) => m[1]));
+      for (const m of src.matchAll(/<(input|select|textarea)\b[^>]*>/g)) {
+        const tag = m[0];
+        if (/type="hidden"/.test(tag)) continue;
+        if (/aria-label=/.test(tag)) continue;
+        const id = tag.match(/\sid="([^"]+)"/);
+        if (id && ids.has(id[1])) continue;
+        missing.push(`${rel}: ${tag.slice(0, 80)}`);
+      }
+    }
+    expect(missing, `kontrol tanpa nama aksesibel:\n${missing.join('\n')}`).toEqual([]);
+  });
+});
+
+describe('grid di dalam form', () => {
+  it('tidak ada grid-cols-2 yang tersisa di dalam <form>', () => {
+    const left = [];
+    for (const { rel, src } of MARKUP) {
+      for (const fm of src.matchAll(/<form\b[^>]*>([\s\S]*?)<\/form>/g)) {
+        const hit = fm[1].match(/class="[^"]*\bgrid-cols-2\b[^"]*"/);
+        if (hit) left.push(`${rel}: ${hit[0].slice(0, 70)}`);
+      }
+    }
+    expect(left, `grid form belum disapu:\n${left.join('\n')}`).toEqual([]);
+  });
+
+  it('setidaknya 14 grid form memakai .form-grid', () => {
+    const n = MARKUP.reduce((acc, { src }) => acc + (src.match(/class="form-grid"/g) || []).length, 0);
+    expect(n).toBeGreaterThanOrEqual(14);
+  });
+});
+
+describe('checkbox & radio', () => {
+  it('kotaknya digambar sendiri, bukan kontrol native', () => {
+    expect(css).toMatch(/input\[type='checkbox'\],[\s\S]{0,120}-webkit-appearance: none/);
+    expect(css).toMatch(/input\[type='checkbox'\]:checked::after/);
+  });
+
+  it('minimal 24 px — target WCAG 2.5.8', () => {
+    expect(css).toMatch(/input\[type='checkbox'\],[\s\S]{0,400}width: 1\.5rem/);
+  });
+});

@@ -143,7 +143,7 @@
         <!-- Technician -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">TEKNISI:</span>
-          <select x-model="planningFilterTech"
+          <select aria-label="Planning Filter Tech" x-model="planningFilterTech"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA TEKNISI</option>
             <template x-for="tech in planningTechList" :key="'tech-' + tech">
@@ -155,7 +155,7 @@
         <!-- Priority -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">PRIORITAS:</span>
-          <select x-model="planningFilterPriority"
+          <select aria-label="Planning Filter Priority" x-model="planningFilterPriority"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA PRIORITAS</option>
             <option value="Emergency">Emergency</option>

@@ -121,7 +121,7 @@
     <div class="flex flex-wrap items-center gap-space-sm">
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">STATUS:</span>
-        <select x-model="reqFilterStatus"
+        <select aria-label="Req Filter Status" x-model="reqFilterStatus"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">SEMUA STATUS</option>
           <option value="pending">PENDING</option>
@@ -133,7 +133,7 @@
 
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">TIPE:</span>
-        <select x-model="reqFilterType"
+        <select aria-label="Req Filter Type" x-model="reqFilterType"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">SEMUA TIPE</option>
           <option value="part">SPARE PART</option>
@@ -345,7 +345,7 @@
               </button>
               <!-- Bulk checkbox -->
               <div class="flex items-center gap-2 ml-auto" @click.stop>
-                <input type="checkbox" x-model="reqSelectedIds" :value="req.id"
+                <input aria-label="Pilih item request" type="checkbox" x-model="reqSelectedIds" :value="req.id"
                   x-show="req.status === 'pending'"
                   class="w-4 h-4 rounded border border-tac-border-subtle bg-tac-surface-recessed accent-tac-primary cursor-pointer">
                 <span x-show="req.status === 'pending'" class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">PILIH</span>
@@ -392,41 +392,41 @@
                   <span class="material-symbols-outlined text-[14px]">close</span> Hapus
                 </button>
               </div>
-              <div class="grid grid-cols-2 md:grid-cols-12 gap-3">
+              <div class="form-grid">
                 <div class="col-span-2">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Tipe</label>
-                  <select x-model="item.itemType" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
+                  <select aria-label="Tipe" x-model="item.itemType" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
                     <option value="part">Spare Part</option>
                     <option value="material">Material</option>
                   </select>
                 </div>
                 <div class="col-span-3">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Nama Item *</label>
-                  <input type="text" x-model="item.itemName" required placeholder="e.g. Bearing SKF 6205" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
+                  <input aria-label="Nama Item" type="text" x-model="item.itemName" required placeholder="e.g. Bearing SKF 6205" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
                 <div class="col-span-2" x-show="item.itemType === 'part'">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Part ID</label>
-                  <input type="text" x-model="item.partId" placeholder="P001" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
+                  <input aria-label="Part ID" type="text" x-model="item.partId" placeholder="P001" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
                 <div class="col-span-1">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Qty *</label>
-                  <input type="number" x-model="item.quantity" required min="1" step="1" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
+                  <input aria-label="Qty" type="number" x-model="item.quantity" required min="1" step="1" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
                 </div>
                 <div class="col-span-1">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Unit</label>
-                  <input type="text" x-model="item.unit" placeholder="pcs" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
+                  <input aria-label="Unit" type="text" x-model="item.unit" placeholder="pcs" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
                 <div class="col-span-3">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 flex items-center gap-1">
                     <span class="material-symbols-outlined text-[14px] text-tac-primary">assignment</span>NO RESV
                   </label>
-                  <input type="text" x-model="item.noResv" placeholder="Nomor Reservasi" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
+                  <input aria-label="NO RESV" type="text" x-model="item.noResv" placeholder="Nomor Reservasi" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
               </div>
               <div class="grid grid-cols-12 gap-3">
                 <div class="col-span-6">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Untuk Peralatan</label>
-                  <select x-model="item.equipmentId" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
+                  <select aria-label="Untuk Peralatan" x-model="item.equipmentId" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
                     <option value="">— Tidak ditentukan —</option>
                     <template x-for="e in equipment" :key="e.EquipmentID">
                       <option :value="e.EquipmentID" x-text="(e.Nama || e.EquipmentID) + ' (' + e.EquipmentID + ')'"></option>
@@ -456,7 +456,7 @@
             <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 flex items-center gap-1">
               <span class="material-symbols-outlined text-[14px] text-tac-sync-cyan">link</span>Link ke Work Order (opsional)
             </label>
-            <select x-model="reqWoId" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
+            <select aria-label="Link ke Work Order (opsional)" x-model="reqWoId" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
               <option value="">— Tanpa WO —</option>
               <template x-for="wo in openWOs" :key="wo.LogID">
                 <option :value="wo.LogID" x-text="(wo.woNumber || wo.LogID) + ' — ' + (wo.Deskripsi || wo.Jenis || '').substring(0, 40)"></option>
@@ -465,14 +465,14 @@
           </div>
           <div class="col-span-4">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Prioritas (global)</label>
-            <select x-model="reqPriority" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
+            <select aria-label="Prioritas (global)" x-model="reqPriority" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
               <option value="normal">Normal</option>
               <option value="urgent">Urgent</option>
             </select>
           </div>
           <div class="col-span-8">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Catatan (global)</label>
-            <input type="text" x-model="reqNotes" placeholder="Catatan untuk semua item"
+            <input aria-label="Catatan (global)" type="text" x-model="reqNotes" placeholder="Catatan untuk semua item"
               class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
           </div>
         </div>

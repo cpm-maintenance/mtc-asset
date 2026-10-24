@@ -217,15 +217,71 @@ select:not([multiple]) {
   cursor: default;
 }
 
-/* Checkbox & radio: 24px (WCAG 2.5.8), warna aksen dari token. */
+/* Checkbox & radio: kotak kustom 24px (WCAG 2.5.8 target-size).
+   `appearance:none` dipakai supaya bentuknya ikut token — kontrol native
+   memakai warna OS dan tidak bisa diatur lewat tema. Selector atribut
+   (0,1,1) menang atas utility `.w-5`/`.h-5` (0,1,0), jadi ukuran di sini
+   berlaku juga untuk checkbox lama yang membawa kelas Tailwind. */
 input[type='checkbox'],
 input[type='radio'] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
   width: 1.5rem;
   height: 1.5rem;
   min-width: 1.5rem;
   min-height: 1.5rem;
-  accent-color: rgb(var(--tac-primary-container));
+  margin: 0;
+  background-color: rgb(var(--tac-surface-recessed));
+  border: 1px solid rgb(var(--tac-border-tactical));
+  border-radius: 5px;
+  box-shadow: var(--field-well);
   cursor: pointer;
+  transition: background-color 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+input[type='radio'] { border-radius: 9999px; }
+
+input[type='checkbox']:hover:not(:disabled),
+input[type='radio']:hover:not(:disabled) { border-color: rgb(var(--tac-outline-variant)); }
+
+input[type='checkbox']:checked,
+input[type='radio']:checked {
+  background-color: rgb(var(--tac-primary-container));
+  border-color: rgb(var(--tac-gold-bright));
+  box-shadow: none;
+}
+
+input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: no-repeat center / 12px 12px
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 6.4 4.6 9 10 3' fill='none' stroke='%23472a00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+input[type='radio']:checked::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 9999px;
+  background: rgb(71 42 0);
+}
+
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  outline: none;
+  border-color: rgb(var(--tac-primary));
+  box-shadow: var(--field-ring);
+}
+
+input[type='checkbox']:disabled,
+input[type='radio']:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ── Varian ukuran ─────────────────────────────────────────────────────── */

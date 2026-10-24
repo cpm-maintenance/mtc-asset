@@ -1,3 +1,45 @@
+## 📝 S36-form-b (2026-10-24) — Nama aksesibel 132 kontrol, 14 grid form, checkbox kustom
+
+Lanjutan S36-form. Live **sw v51** (belum di-push).
+
+### Yang berubah
+- **132 `aria-label`** ditambahkan ke kontrol yang tidak punya nama aksesibel, di 15 berkas.
+  Sumber teks, berurutan: teks `<label>` terdekat (81), `placeholder` (11), `x-model` yang
+  di-humanize (30), dan 10 sisanya (file input impor, checkbox baris tabel, field readonly).
+  Ligatur ikon Material yang ikut terbaca sebagai teks dibersihkan (`assignmentNO RESV` →
+  `NO RESV`). Tidak ada elemen yang dapat `aria-label` statis sekaligus `:aria-label` Alpine.
+- **14 grid form** di dalam `<form>` disapu ke `.form-grid` (`app-shell` 7 · `PMSchedule` 3 ·
+  `WorkOrders` 3 · `RequestPart` 1). Grid kartu KPI **tidak** disentuh — filternya: punya
+  `bg-`/`border`/`shadow`/`rounded` berarti bukan grid field.
+- **Checkbox & radio kustom** — `appearance:none`, 24 px, radius 5 px, kotak centang SVG
+  sendiri, titik radio, ring fokus, state disabled. Selector atribut (0,1,1) mengalahkan
+  utility `.w-4`/`.w-5` (0,1,0), jadi checkbox lama yang membawa kelas Tailwind ikut 24 px.
+- **`tests/form-controls.test.js`** 13 → **18 tes**: nama aksesibel per kontrol, larangan
+  `grid-cols-2` tersisa di dalam `<form>`, minimal 14 `.form-grid`, kotak cek digambar sendiri,
+  dan ukuran ≥ 24 px.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- vitest **1789 tes / 76 berkas** (+7 dari 1782)
+- coverage **96,43 / 86,12 / 96,55 / 97,75** — identik, threshold tidak disentuh
+- build ok · precache **66/66**
+- E2E **5 passed / 3 skipped** (41,8 s)
+- Bukti menggigit: satu `aria-label` dihapus → 1 merah · satu `grid-cols-2` dikembalikan →
+  1 merah · `:checked::after` diganti `::before` → 1 merah · ketiganya revert hijau.
+- Terukur di build baru: `#keep-session` **24×24**, `appearance:none`, radius **5px**,
+  bg `rgb(10,14,20)`, border `1px rgb(40,52,70)`.
+
+### Pelajaran
+1. **Deteksi "sudah berlabel" harus memeriksa `<label for>` DAN `aria-label`, bukan id saja.**
+   Hitungan awal 16 kontrol tanpa label ternyata 132 — markup repo ini mayoritas memakai
+   `<label>` tanpa `for` di atas input tanpa `id`, pola yang tidak terdeteksi oleh cek `for=`.
+2. **`aria-label` statis jangan ditambahkan ke elemen yang punya `:aria-label`** (binding Alpine) —
+   keduanya akan bertabrakan dan yang statis menang, mematikan teks dinamis. Saring dengan
+   `(?<!:)\baria-label=` saat memindai.
+3. **Menyapu grid harus memfilter kelas visual.** `grid-cols-2` juga dipakai kartu KPI; tanpa
+   filter `bg-`/`border`/`shadow`, 71 grid ikut berubah dan tata letak kartu rusak.
+
 ## 📝 S36-form (2026-10-24) — Sistem kontrol form bertoken: 174 kontrol, satu tinggi per konteks
 
 Live **sw v50** (belum di-push). Mockup: `design/mockups/form-controls.html` (standalone, 43 KB,

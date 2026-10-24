@@ -43,7 +43,7 @@
         title="Import Equipment CSV">
         <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
         <span class="hidden sm:inline">IMPORT</span>
-        <input type="file" @change="importCSV($event, 'equip')" class="hidden" accept=".csv, .xlsx">
+        <input aria-label="Impor berkas" type="file" @change="importCSV($event, 'equip')" class="hidden" accept=".csv, .xlsx">
       </label>
 
       <button type="button" x-show="isAdmin" @click="openEquipModal(false)"
@@ -173,7 +173,7 @@
         <!-- Sektor / Area Filter -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SEKTOR:</span>
-          <select x-model="equipSectorFilter"
+          <select aria-label="Equip Sector Filter" x-model="equipSectorFilter"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA AREA</option>
             <template x-for="sec in woSectorOptions" :key="sec">
@@ -185,7 +185,7 @@
         <!-- Status Filter -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STATUS:</span>
-          <select x-model="equipStatusFilter"
+          <select aria-label="Equip Status Filter" x-model="equipStatusFilter"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA STATUS</option>
             <option value="Active">Active</option>
@@ -198,7 +198,7 @@
         <!-- Sorting -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
-          <select x-model="equipSortBy"
+          <select aria-label="Equip Sort By" x-model="equipSortBy"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="name">NAMA UNIT (A-Z)</option>
             <option value="critical">KRITIKALITAS (HIGH FIRST)</option>

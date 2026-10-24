@@ -206,7 +206,7 @@
         <div class="flex items-center gap-2">
           <div class="relative hidden sm:block">
             <span class="material-symbols-outlined icon-16 absolute left-2.5 top-1/2 -translate-y-1/2 text-tac-status-standby">filter_list</span>
-            <input type="text" x-model="dashWoFilter" placeholder="Filter WOs / Assets..."
+            <input aria-label="Filter WOs / Assets" type="text" x-model="dashWoFilter" placeholder="Filter WOs / Assets..."
                    class="pl-8 pr-3 py-1 bg-tac-surface-recessed rounded text-on-surface border border-tac-border-subtle focus:outline-none focus:border-tac-primary-container text-xs w-48 shadow-inner placeholder:text-tac-status-standby">
           </div>
           <button type="button" @click="openLogModal(false)" x-show="isAdminOrSupervisor"
@@ -460,7 +460,7 @@
           <div>
             <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase mb-1">AUTHENTICATION ID</label>
             <div class="relative">
-              <input type="text" readonly :value="(user && user.email) || 'Belum ada sesi'"
+              <input aria-label="AUTHENTICATION ID" type="text" readonly :value="(user && user.email) || 'Belum ada sesi'"
                      class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-tac-border-subtle focus:outline-none focus:border-tac-gold-bright shadow-inner">
               <span class="material-symbols-outlined icon-16 absolute right-3 top-1/2 -translate-y-1/2 text-tac-status-standby">fingerprint</span>
             </div>
@@ -468,7 +468,7 @@
           <div>
             <label class="block font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase mb-1">ROLE / ACCESS LEVEL</label>
             <div class="relative">
-              <input type="text" readonly :value="(userRole || 'user').toUpperCase()"
+              <input aria-label="ROLE / ACCESS LEVEL" type="text" readonly :value="(userRole || 'user').toUpperCase()"
                      class="w-full bg-tac-surface-recessed px-3.5 py-2.5 rounded-lg text-body-sm text-tac-on-surface font-label-mono-sm border border-tac-border-subtle focus:outline-none focus:border-tac-gold-bright shadow-inner">
               <span class="material-symbols-outlined icon-16 absolute right-3 top-1/2 -translate-y-1/2 text-tac-status-standby">badge</span>
             </div>

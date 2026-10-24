@@ -36,7 +36,7 @@
         title="Import Parts CSV">
         <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
         <span class="hidden sm:inline">IMPORT</span>
-        <input type="file" @change="importCSV($event, 'parts')" class="hidden" accept=".csv, .xlsx">
+        <input aria-label="Impor berkas" type="file" @change="importCSV($event, 'parts')" class="hidden" accept=".csv, .xlsx">
       </label>
 
       <button type="button" x-show="isAdmin" @click="openPartModal(false)"
@@ -154,7 +154,7 @@
         <!-- Asset Node Linked Filter -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">LINKED ASSET:</span>
-          <select x-model="partFilterEquip"
+          <select aria-label="Part Filter Equip" x-model="partFilterEquip"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-xs field-compact">
             <option value="">SEMUA ASSET (GLOBAL)</option>
             <template x-for="e in equipment" :key="e.EquipmentID">
@@ -166,7 +166,7 @@
         <!-- Stock Status Filter -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STOCK STATUS:</span>
-          <select x-model="partStatusFilter"
+          <select aria-label="Part Status Filter" x-model="partStatusFilter"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA KONDISI</option>
             <option value="low">LOW STOCK (&le; MIN)</option>
@@ -178,7 +178,7 @@
         <!-- Sorting -->
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
-          <select x-model="partSortBy"
+          <select aria-label="Part Sort By" x-model="partSortBy"
             class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="name">NAMA PART (A-Z)</option>
             <option value="stock_asc">STOK TERENDAH DULU</option>
