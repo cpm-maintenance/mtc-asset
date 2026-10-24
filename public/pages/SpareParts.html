@@ -155,7 +155,7 @@
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">LINKED ASSET:</span>
           <select x-model="partFilterEquip"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-xs">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-xs field-compact">
             <option value="">SEMUA ASSET (GLOBAL)</option>
             <template x-for="e in equipment" :key="e.EquipmentID">
               <option :value="e.EquipmentID" x-text="e.EquipmentID + ' — ' + e.Nama"></option>
@@ -167,7 +167,7 @@
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STOCK STATUS:</span>
           <select x-model="partStatusFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA KONDISI</option>
             <option value="low">LOW STOCK (&le; MIN)</option>
             <option value="zero">OUT OF STOCK (0)</option>
@@ -179,7 +179,7 @@
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
           <select x-model="partSortBy"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="name">NAMA PART (A-Z)</option>
             <option value="stock_asc">STOK TERENDAH DULU</option>
             <option value="stock_desc">STOK TERTINGGI DULU</option>

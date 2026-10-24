@@ -1194,7 +1194,7 @@
           class="text-tac-status-standby hover:text-tac-gold-bright w-12 h-12 rounded-2xl bg-tac-surface-card/60 border border-tac-border-tactical flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
       <form @submit.prevent="submitSparePart()" class="space-y-6">
-        <div class="grid grid-cols-2 gap-6">
+        <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Identifier</label>
             <input type="text" x-model="partForm.id" required placeholder="SKU-XXXX" :readonly="isEditingPart"
@@ -1206,7 +1206,7 @@
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-6">
+        <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Brief Designation</label>
             <input type="text" x-model="partForm.namaSingkat" placeholder="Alias"
@@ -1254,7 +1254,7 @@
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center">
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-6">
+        <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Storage Sector</label>
             <input type="text" x-model="partForm.lokasi" placeholder="Warehouse"

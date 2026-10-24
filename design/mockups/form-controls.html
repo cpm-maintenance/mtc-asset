@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTC-Asset — Mockup Form Controls</title>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   MOCKUP — Form Control System untuk MTC-Asset
+   Token 1:1 dari design/DESIGN-TACTICAL.md (Tactical Slate & Luminous Gold)
+   Tidak ada dependensi build. Standalone page.
+   ════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* surface — 4 tier arsitektur */
+  --tac-surface-base:        11 15 21;    /* #0b0f15 */
+  --tac-surface-canvas:      15 20 28;    /* #0f141c */
+  --tac-surface-card:        22 29 39;    /* #161d27 */
+  --tac-surface-elevated:    30 38 52;    /* #1e2634 */
+  --tac-surface-recessed:    10 14 20;    /* #0a0e14 */
+  --tac-surface-container-low:21 28 38;   /* #151c26 */
+  --tac-surface-container:   25 32 42;    /* #19202a */
+
+  /* on-surface */
+  --tac-on-surface:          220 227 241; /* #dce3f1 */
+  --tac-on-surface-variant:  216 195 173; /* #d8c3ad */
+  --tac-status-standby:      148 163 184; /* #94a3b8 */
+
+  /* accent */
+  --tac-primary:             255 193 116; /* #ffc174 */
+  --tac-primary-container:   245 158 11;  /* #f59e0b */
+  --tac-gold-bright:         251 191 36;  /* #fbbf24 */
+  --tac-sync-cyan:           6 182 212;   /* #06b6d4 */
+
+  /* garis */
+  --tac-border-tactical:     40 52 70;    /* #283446 */
+  --tac-outline-variant:     83 68 52;    /* #534434 */
+  --tac-line-subtle:         rgba(255,255,255,.06);
+
+  /* status */
+  --tac-status-operational:  16 185 129;  /* #10b981 */
+  --tac-status-emergency:    239 68 68;   /* #ef4444 */
+
+  /* ── TOKEN BARU: geometri field ─────────────────────────────── */
+  --field-h:      44px;   /* default — touch envelope (design doc §Layout) */
+  --field-h-sm:   36px;   /* form padat / toolbar */
+  --field-h-xs:   32px;   /* filter bar (masih > WCAG 2.5.8 = 24px) */
+  --field-px:     12px;
+  --field-radius: 8px;    /* design doc §Shapes: 0.5rem default */
+  --field-radius-sm: 6px;
+
+  --ring: 0 0 0 2px rgb(var(--tac-primary) / .45);
+  --ring-err: 0 0 0 2px rgb(var(--tac-status-emergency) / .45);
+  --well: inset 2px 2px 5px rgba(0,0,0,.6), inset -1px -1px 3px rgba(255,255,255,.04);
+
+  --mono: 'JetBrains Mono','JetBrains Mono Fallback',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans: 'Inter','Inter Fallback',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ color-scheme:dark; }
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245,158,11,.05) 0%, transparent 50%),
+    rgb(var(--tac-surface-base));
+  color:rgb(var(--tac-on-surface));
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:20px;
+  -webkit-font-smoothing:antialiased;
+  padding:32px 24px 96px;
+}
+
+.wrap{ max-width:1180px; margin:0 auto; }
+
+/* ── kerangka halaman ─────────────────────────────────────────── */
+.hdr{ border-bottom:1px solid var(--tac-line-subtle); padding-bottom:20px; margin-bottom:36px; }
+.hdr h1{ font-size:26px; line-height:32px; letter-spacing:-.015em; font-weight:600; margin:0 0 6px; }
+.hdr p{ margin:0; color:rgb(var(--tac-status-standby)); font-size:12px; font-family:var(--mono); letter-spacing:.04em; }
+
+section{ margin-bottom:52px; }
+.sec-h{ display:flex; align-items:baseline; gap:12px; margin:0 0 18px; }
+.sec-n{ font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; color:rgb(var(--tac-primary)); }
+.sec-t{ font-size:18px; font-weight:600; margin:0; letter-spacing:-.01em; }
+.sec-d{ margin:-8px 0 20px; color:rgb(var(--tac-status-standby)); font-size:13px; max-width:76ch; }
+
+.panel{
+  background:rgb(var(--tac-surface-card));
+  border:1px solid var(--tac-line-subtle);
+  border-radius:16px;
+  padding:24px;
+  box-shadow:12px 16px 28px rgba(0,0,0,.5), -4px -4px 14px rgba(255,255,255,.03);
+}
+.panel + .panel{ margin-top:16px; }
+.panel--recess{ background:rgb(var(--tac-surface-canvas)); }
+
+.grid{ display:grid; gap:16px; }
+.g2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+.g3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.g4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media (max-width:860px){ .g3,.g4{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px){ .g2,.g3,.g4{ grid-template-columns:1fr; } }
+
+/* ════════════════════════════════════════════════════════════════
+   1. FIELD — anatomi & state
+   ════════════════════════════════════════════════════════════════ */
+
+.field{ display:grid; gap:6px; min-width:0; }
+
+.field__label{
+  font-family:var(--mono);
+  font-size:12px; line-height:16px;
+  font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase;
+  color:rgb(var(--tac-status-standby));
+  display:flex; align-items:center; gap:6px;
+}
+.field__req{ color:rgb(var(--tac-primary)); font-weight:700; }
+.field__opt{ color:rgb(var(--tac-status-standby) / .6); font-weight:500; letter-spacing:.06em; }
+
+.field__hint{ font-size:12px; line-height:16px; color:rgb(var(--tac-status-standby) / .8); }
+.field__err{
+  font-size:12px; line-height:16px;
+  color:rgb(var(--tac-status-emergency));
+  display:flex; align-items:center; gap:5px;
+}
+.field__err svg{ flex:none; }
+
+/* ── kontrol dasar ───────────────────────────────────────────── */
+.ctl{
+  -webkit-appearance:none; appearance:none;
+  width:100%;
+  height:var(--field-h);
+  padding:0 var(--field-px);
+  font-family:var(--sans);
+  font-size:14px; line-height:20px;
+  color:rgb(var(--tac-on-surface));
+  background-color:rgb(var(--tac-surface-recessed));
+  border:1px solid rgb(var(--tac-border-tactical));
+  border-radius:var(--field-radius);
+  box-shadow:var(--well);
+  outline:none;
+  transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.ctl::placeholder{ color:rgb(var(--tac-status-standby) / .65); }
+
+.ctl:hover:not(:disabled):not([readonly]){
+  border-color:rgb(var(--tac-outline-variant));
+}
+.ctl:focus,
+.ctl.is-focus{
+  border-color:rgb(var(--tac-primary));
+  box-shadow:var(--well), var(--ring), 0 0 16px rgba(245,158,11,.18);
+}
+.ctl.is-invalid,
+.ctl[aria-invalid='true']{
+  border-color:rgb(var(--tac-status-emergency));
+  box-shadow:var(--well), var(--ring-err);
+}
+.ctl:disabled{
+  background-color:rgb(var(--tac-surface-container-low));
+  border-color:var(--tac-line-subtle);
+  color:rgb(var(--tac-status-standby) / .55);
+  box-shadow:none;
+  cursor:not-allowed;
+}
+.ctl[readonly]{
+  background-color:rgb(var(--tac-surface-container-low));
+  color:rgb(var(--tac-on-surface-variant));
+  box-shadow:none;
+  border-style:dashed;
+  cursor:default;
+}
+.ctl:disabled::placeholder{ color:rgb(var(--tac-status-standby) / .35); }
+
+/* select — chevron digambar, bukan native */
+select.ctl{
+  padding-right:36px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2394a3b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  cursor:pointer;
+}
+select.ctl option{ background:rgb(var(--tac-surface-container)); color:rgb(var(--tac-on-surface)); }
+
+textarea.ctl{ height:auto; min-height:88px; padding:10px var(--field-px); resize:vertical; line-height:20px; }
+
+/* ukuran */
+.ctl--sm{ height:var(--field-h-sm); font-size:13px; }
+.ctl--xs{ height:var(--field-h-xs); font-size:12px; font-family:var(--mono); letter-spacing:.04em; padding:0 10px; border-radius:var(--field-radius-sm); }
+
+/* angka + satuan */
+.ctl-unit{ position:relative; display:flex; align-items:center; }
+.ctl-unit .ctl{ padding-right:56px; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.ctl-unit__suffix{
+  position:absolute; right:12px;
+  font-family:var(--mono); font-size:12px; letter-spacing:.08em;
+  color:rgb(var(--tac-status-standby));
+  pointer-events:none;
+}
+/* angka rata kanan — kolom numerik sejajar */
+.ctl--num{ text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+/* password reveal */
+.ctl-affix{ position:relative; }
+.ctl-affix .ctl{ padding-right:44px; }
+.ctl-affix__btn{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  width:36px; height:36px; display:grid; place-items:center;
+  background:none; border:0; border-radius:6px;
+  color:rgb(var(--tac-status-standby)); cursor:pointer;
+}
+.ctl-affix__btn:hover{ color:rgb(var(--tac-primary)); background:rgba(255,255,255,.04); }
+
+/* search inline — well tanpa border */
+.search{
+  display:flex; align-items:center; gap:8px;
+  height:var(--field-h-sm);
+  padding:0 10px;
+  background:rgb(var(--tac-surface-recessed));
+  border:1px solid rgb(var(--tac-border-tactical));
+  border-radius:var(--field-radius);
+  box-shadow:var(--well);
+  transition:border-color .16s ease, box-shadow .16s ease;
+}
+.search:focus-within{
+  border-color:rgb(var(--tac-primary));
+  box-shadow:var(--well), var(--ring);
+}
+.search svg{ flex:none; color:rgb(var(--tac-status-standby)); }
+.search input{
+  flex:1; min-width:0; height:100%;
+  background:none; border:0; outline:none;
+  color:rgb(var(--tac-on-surface));
+  font-family:var(--mono); font-size:12px; letter-spacing:.04em;
+}
+.search input::placeholder{ color:rgb(var(--tac-status-standby) / .65); }
+
+/* checkbox & radio */
+.check{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; min-height:24px; }
+.check input{
+  -webkit-appearance:none; appearance:none;
+  flex:none; width:24px; height:24px; margin:0;
+  background:rgb(var(--tac-surface-recessed));
+  border:1px solid rgb(var(--tac-border-tactical));
+  border-radius:5px; box-shadow:var(--well);
+  cursor:pointer; position:relative;
+  transition:background-color .14s ease, border-color .14s ease;
+}
+.check input[type='radio']{ border-radius:9999px; }
+.check input:checked{
+  background:rgb(var(--tac-primary-container));
+  border-color:rgb(var(--tac-gold-bright));
+  box-shadow:none;
+}
+.check input[type='checkbox']:checked::after{
+  content:''; position:absolute; inset:0;
+  background:no-repeat center/12px 12px
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 6.4 4.6 9 10 3' fill='none' stroke='%23472a00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+.check input[type='radio']:checked::after{
+  content:''; position:absolute; inset:7px; border-radius:9999px; background:rgb(71 42 0);
+}
+.check input:focus-visible{ outline:none; box-shadow:var(--ring); border-color:rgb(var(--tac-primary)); }
+.check input:disabled{ opacity:.45; cursor:not-allowed; }
+.check span{ font-size:13px; line-height:20px; }
+.check small{ display:block; color:rgb(var(--tac-status-standby)); font-size:12px; }
+
+/* toggle */
+.toggle{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; }
+.toggle input{ position:absolute; opacity:0; width:0; height:0; }
+.toggle__track{
+  width:44px; height:26px; border-radius:9999px; position:relative;
+  background:rgb(var(--tac-surface-recessed));
+  border:1px solid rgb(var(--tac-border-tactical));
+  box-shadow:var(--well); transition:background-color .16s ease, border-color .16s ease;
+}
+.toggle__track::after{
+  content:''; position:absolute; top:2px; left:2px;
+  width:20px; height:20px; border-radius:9999px;
+  background:rgb(var(--tac-status-standby));
+  transition:transform .16s ease, background-color .16s ease;
+}
+.toggle input:checked + .toggle__track{
+  background:rgba(245,158,11,.18); border-color:rgb(var(--tac-primary));
+}
+.toggle input:checked + .toggle__track::after{
+  transform:translateX(18px); background:rgb(var(--tac-gold-bright));
+}
+.toggle input:focus-visible + .toggle__track{ box-shadow:var(--well), var(--ring); }
+
+/* segmen pilihan (dipakai di filter) */
+.seg{ display:inline-flex; background:rgb(var(--tac-surface-recessed)); border:1px solid rgb(var(--tac-border-tactical)); border-radius:var(--field-radius); padding:2px; gap:2px; }
+.seg button{
+  border:0; background:none; cursor:pointer;
+  height:28px; padding:0 12px; border-radius:5px;
+  font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  color:rgb(var(--tac-status-standby));
+}
+.seg button[aria-pressed='true']{
+  background:rgba(245,158,11,.16); color:rgb(var(--tac-gold-bright));
+  box-shadow:inset 0 0 0 1px rgba(245,158,11,.35);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   2. FORM GRID responsif (container query — padanan sm:/lg: Tailwind)
+   ════════════════════════════════════════════════════════════════ */
+.form-grid{ display:grid; grid-template-columns:1fr; gap:16px; }
+.form-grid > .span-2{ grid-column:1 / -1; }
+
+@container (min-width:480px){
+  .form-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .form-grid > .span-2{ grid-column:1 / -1; }
+}
+@container (min-width:640px){
+  .form-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .form-grid > .span-2{ grid-column:span 2; }
+  .form-grid > .span-3{ grid-column:1 / -1; }
+}
+
+.form-actions{
+  display:flex; gap:10px; justify-content:flex-end;
+  padding-top:20px; margin-top:20px;
+  border-top:1px solid var(--tac-line-subtle);
+}
+
+/* tombol (konteks, bukan subjek mockup) */
+.btn{
+  height:var(--field-h); padding:0 20px; border-radius:var(--field-radius);
+  font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  cursor:pointer; border:1px solid transparent;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn--primary{
+  background:linear-gradient(135deg,#fbbf24,#f59e0b);
+  color:#472a00; border-color:rgba(255,255,255,.18);
+  box-shadow:0 0 16px rgba(245,158,11,.25);
+}
+.btn--ghost{
+  background:rgb(var(--tac-surface-elevated));
+  color:rgb(var(--tac-on-surface));
+  border-color:rgb(var(--tac-border-tactical));
+}
+.btn--sm{ height:var(--field-h-sm); padding:0 14px; font-size:11px; }
+
+/* ════════════════════════════════════════════════════════════════
+   3. BEFORE / AFTER
+   ════════════════════════════════════════════════════════════════ */
+.ba{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:760px){ .ba{ grid-template-columns:1fr; } }
+.ba__col h4{
+  margin:0 0 12px; font-family:var(--mono); font-size:12px;
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.ba__col--old h4{ color:rgb(var(--tac-status-emergency)); }
+.ba__col--new h4{ color:rgb(var(--tac-status-operational)); }
+.ba__box{
+  padding:18px; border-radius:12px;
+  background:rgb(var(--tac-surface-canvas));
+  border:1px dashed rgb(var(--tac-border-tactical));
+  display:grid; gap:12px;
+}
+.ba__box--new{ border-style:solid; border-color:rgba(16,185,129,.35); }
+
+/* replika kontrol LAMA — sengaja apa adanya */
+.old-a{ width:100%; padding:12px; background:rgb(var(--tac-surface-recessed)); border:1px solid var(--tac-line-subtle); font-size:12px; font-weight:700; color:rgb(var(--tac-on-surface)); }
+.old-b{ width:100%; padding:6px; background:rgb(var(--tac-surface-recessed)); border:1px solid var(--tac-line-subtle); border-radius:4px; font-family:var(--mono); font-size:12px; color:rgb(var(--tac-on-surface)); }
+.old-c{ width:100%; padding:10px; background:rgb(var(--tac-surface-container-low)); border:1px solid var(--tac-line-subtle); border-radius:4px; font-size:12px; color:rgb(var(--tac-on-surface)); }
+.old-d{ width:100%; padding:8px 2px; background:transparent; border:0; border-bottom:1px solid rgb(var(--tac-border-tactical)); color:rgb(var(--tac-on-surface)); font-family:var(--mono); font-size:12px; }
+.old-note{ font-family:var(--mono); font-size:11px; color:rgb(var(--tac-status-standby)); }
+
+/* ════════════════════════════════════════════════════════════════
+   4. RESPONSIVE DEMO
+   ════════════════════════════════════════════════════════════════ */
+.devices{ display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+.device{
+  container-type:inline-size;
+  background:rgb(var(--tac-surface-canvas));
+  border:1px solid var(--tac-border-tactical);
+  border-radius:12px;
+  padding:16px;
+  overflow:hidden;
+}
+.device--360{ width:360px; max-width:100%; }
+.device--560{ width:560px; max-width:100%; }
+.device--full{ flex:1 1 100%; min-width:340px; }
+.device__cap{
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  color:rgb(var(--tac-status-standby));
+  margin:0 0 12px; display:flex; justify-content:space-between; gap:8px;
+}
+.device__cap b{ color:rgb(var(--tac-primary)); font-weight:600; }
+
+/* tabel spesifikasi */
+table.spec{ width:100%; border-collapse:collapse; font-size:13px; }
+table.spec th{
+  text-align:left; font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:rgb(var(--tac-status-standby));
+  font-weight:600; padding:0 12px 10px 0; border-bottom:1px solid var(--tac-border-tactical);
+}
+table.spec td{ padding:10px 12px 10px 0; border-bottom:1px solid var(--tac-line-subtle); vertical-align:top; }
+table.spec td:first-child{ font-family:var(--mono); font-size:12px; color:rgb(var(--tac-primary)); white-space:nowrap; }
+table.spec td code{ font-family:var(--mono); font-size:12px; color:rgb(var(--tac-on-surface-variant)); }
+table.spec tr:last-child td{ border-bottom:0; }
+
+.anno{ position:relative; }
+.anno__tag{
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  color:rgb(var(--tac-sync-cyan)); padding-left:8px;
+  border-left:1px solid rgb(var(--tac-sync-cyan) / .4);
+}
+
+.hr{ height:1px; background:var(--tac-line-subtle); border:0; margin:20px 0; }
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  height:22px; padding:0 8px; border-radius:9999px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  background:rgba(6,182,212,.12); color:rgb(var(--tac-sync-cyan));
+}
+.badge--gold{ background:rgba(245,158,11,.14); color:rgb(var(--tac-gold-bright)); }
+.badge--red{ background:rgba(239,68,68,.12); color:rgb(var(--tac-status-emergency)); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hdr">
+    <h1>Form Control System — MTC-Asset</h1>
+    <p>Mockup · token dari design/DESIGN-TACTICAL.md · 174 kontrol di 19 berkas menunggu disapu</p>
+  </header>
+
+  <!-- ══════════════ 1. ANATOMI ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">01</span><h2 class="sec-t">Anatomi satu field</h2></div>
+    <p class="sec-d">Label uppercase mono di atas, kontrol recessed di tengah, hint atau pesan galat di bawah. Tidak ada label mengambang — operator lapangan memakai sarung tangan dan tidak menunggu animasi.</p>
+
+    <div class="panel">
+      <div class="grid g3">
+        <div class="field">
+          <label class="field__label" for="demo-1">Asset ID <span class="field__req">*</span></label>
+          <input class="ctl" id="demo-1" placeholder="NEXUS-001" value="CV-042">
+          <span class="field__hint">Kode unik — tidak bisa diubah setelah disimpan.</span>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="demo-2">Running Hours <span class="field__req">*</span></label>
+          <div class="ctl-unit">
+            <input class="ctl ctl--num" id="demo-2" type="number" step="0.1" value="12480.5">
+            <span class="ctl-unit__suffix">HM</span>
+          </div>
+          <span class="field__hint">Angka tabular — kolom sejajar antar baris.</span>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="demo-3">Downtime <span class="field__opt">(opsional)</span></label>
+          <div class="ctl-unit">
+            <input class="ctl ctl--num is-invalid" id="demo-3" type="number" value="-2" aria-invalid="true" aria-describedby="demo-3-err">
+            <span class="ctl-unit__suffix">JAM</span>
+          </div>
+          <span class="field__err" id="demo-3-err">
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5.2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6 3.4v3.2M6 8.4v.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Tidak boleh negatif.
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 2. STATE MATRIX ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">02</span><h2 class="sec-t">Matriks state</h2></div>
+    <p class="sec-d">Tujuh state, semuanya bisa dibedakan tanpa membaca teks. Fokus memakai <em>ring</em> 2 px emas di luar border — bukan hanya mengubah warna border, karena di layar tablet di bawah lampu sorot beda 1 px tidak terlihat.</p>
+
+    <div class="panel">
+      <div class="grid g4">
+        <div class="field">
+          <span class="field__label">Default</span>
+          <input class="ctl" aria-label="Contoh state default" placeholder="00000.0">
+          <span class="field__hint">border #283446 · well inset</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Hover</span>
+          <input class="ctl" aria-label="Contoh state hover" placeholder="00000.0" style="border-color:rgb(var(--tac-outline-variant))">
+          <span class="field__hint">border naik ke #534434</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Fokus</span>
+          <input class="ctl is-focus" aria-label="Contoh state fokus" value="12480.5">
+          <span class="field__hint">border emas + ring 2 px + halo</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Terisi</span>
+          <input class="ctl" aria-label="Contoh state terisi" value="Bearing SKF 6205">
+          <span class="field__hint">teks on-surface penuh</span>
+        </div>
+      </div>
+
+      <hr class="hr">
+
+      <div class="grid g3">
+        <div class="field">
+          <span class="field__label">Galat</span>
+          <input class="ctl is-invalid" aria-label="Contoh state galat" value="SKF-6205-XX" aria-invalid="true">
+          <span class="field__err">Part number tidak terdaftar.</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Nonaktif</span>
+          <input class="ctl" aria-label="Contoh state nonaktif" value="Terkunci oleh supervisor" disabled>
+          <span class="field__hint">surface container-low, teks 55%</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Hanya-baca</span>
+          <input class="ctl" aria-label="Contoh state hanya-baca" value="CV-042" readonly>
+          <span class="field__hint">border putus-putus — bisa disalin</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 3. VARIAN ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">03</span><h2 class="sec-t">Varian kontrol</h2></div>
+    <p class="sec-d">Empat tinggi saja: 44 px (form), 36 px (toolbar), 32 px (filter), plus area teks. Semua ≥ 24 px sehingga lolos WCAG 2.2 target-size — hari ini filter bar 21 px dan gagal.</p>
+
+    <div class="panel">
+      <div class="grid g3">
+        <div class="field">
+          <label class="field__label" for="v1">Select — default 44</label>
+          <select class="ctl" id="v1">
+            <option>Corrective</option><option>Preventive</option><option>Emergency</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label" for="v2">Select — toolbar 36</label>
+          <select class="ctl ctl--sm" id="v2">
+            <option>Semua sektor</option><option>Milling</option><option>Refinery</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label" for="v3">Select — filter 32</label>
+          <select class="ctl ctl--xs" id="v3">
+            <option>Semua jenis</option><option>PM</option><option>CM</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="v4">Tanggal</label>
+          <input class="ctl" id="v4" type="date" value="2026-10-24">
+        </div>
+        <div class="field">
+          <label class="field__label" for="v5">Kata sandi</label>
+          <div class="ctl-affix">
+            <input class="ctl" id="v5" type="password" value="rahasia123">
+            <button class="ctl-affix__btn" type="button" aria-label="Tampilkan kata sandi">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="v6">Pencarian inline</label>
+          <div class="search">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9.2 9.2 12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <input id="v6" aria-label="Cari work order" placeholder="WO#, PART, TEKNISI…">
+          </div>
+        </div>
+
+        <div class="field span-2">
+          <label class="field__label" for="v7">Catatan pekerjaan</label>
+          <textarea class="ctl" id="v7" rows="3">Bearing sisi drive bergetar 4,2 mm/s. Dijadwalkan ganti pada shutdown berikutnya.</textarea>
+        </div>
+        <div class="field">
+          <span class="field__label">Segmen</span>
+          <div class="seg">
+            <button type="button" aria-pressed="true">Semua</button>
+            <button type="button" aria-pressed="false">Buka</button>
+            <button type="button" aria-pressed="false">Tutup</button>
+          </div>
+        </div>
+      </div>
+
+      <hr class="hr">
+
+      <div class="grid g3">
+        <div>
+          <span class="field__label" style="display:block;margin-bottom:10px">Checkbox</span>
+          <label class="check"><input type="checkbox" checked><span>Simpan sesi<small>Berlaku 30 hari di perangkat ini.</small></span></label>
+          <label class="check" style="margin-top:10px"><input type="checkbox"><span>Kirim notifikasi ke supervisor</span></label>
+        </div>
+        <div>
+          <span class="field__label" style="display:block;margin-bottom:10px">Radio</span>
+          <label class="check"><input type="radio" name="r" checked><span>Preventive</span></label>
+          <label class="check" style="margin-top:10px"><input type="radio" name="r"><span>Corrective</span></label>
+        </div>
+        <div>
+          <span class="field__label" style="display:block;margin-bottom:10px">Toggle</span>
+          <label class="toggle"><input type="checkbox" checked><span class="toggle__track"></span><span style="font-size:13px">Mode offline</span></label>
+          <div style="margin-top:10px"><label class="toggle"><input type="checkbox"><span class="toggle__track"></span><span style="font-size:13px">Sinkron otomatis</span></label></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 4. BEFORE / AFTER ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">04</span><h2 class="sec-t">Sebelum vs sesudah</h2></div>
+    <p class="sec-d">Empat kontrol yang sekarang hidup berdampingan di repo — padding 6/8/10/12 px, radius 0/4/8/16 px, dua token surface berbeda, tanpa state fokus yang seragam.</p>
+
+    <div class="ba">
+      <div class="ba__col ba__col--old">
+        <h4>Sekarang — 4 keluarga</h4>
+        <div class="ba__box">
+          <input class="old-a" placeholder="p-3 · radius 0 · tanpa label">
+          <input class="old-b" placeholder="px-2 py-1 · tinggi 21 px">
+          <input class="old-c" placeholder="p-2.5 · surface container-low">
+          <input class="old-d" placeholder="transparan · garis bawah">
+          <p class="old-note">↑ empat tinggi berbeda dalam satu layar. Filter 21 px &lt; target 24 px.</p>
+        </div>
+      </div>
+
+      <div class="ba__col ba__col--new">
+        <h4>Diusulkan — satu sistem</h4>
+        <div class="ba__box ba__box--new">
+          <div class="field">
+            <label class="field__label" for="n1">Deskripsi pekerjaan</label>
+            <input class="ctl" id="n1" placeholder="Ganti bearing sisi drive">
+          </div>
+          <div class="field">
+            <label class="field__label" for="n2">Jenis</label>
+            <select class="ctl ctl--sm" id="n2"><option>Corrective</option><option>Preventive</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="n3">Cari</label>
+            <div class="search">
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9.2 9.2 12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <input id="n3" aria-label="Cari work order" placeholder="WO#, PART, TEKNISI…">
+            </div>
+          </div>
+          <p class="old-note" style="color:rgb(var(--tac-status-operational))">↑ satu tinggi per konteks, satu ring fokus, satu radius.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 5. FORM NYATA ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">05</span><h2 class="sec-t">Terapan di form yang benar-benar ada</h2></div>
+    <p class="sec-d">Tiga form dengan kontrol terbanyak di repo: Log Work Order (16 field), Request Part (13), dan filter bar Work Orders.</p>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <h3 style="margin:0;font-size:16px;font-weight:600">Log Work Order</h3>
+        <span class="badge">WO-2026-1042</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label class="field__label" for="wo-1">Asset <span class="field__req">*</span></label>
+          <select class="ctl" id="wo-1"><option>CV-042 · Belt Conveyor</option><option>PM-011 · Pump</option></select>
+        </div>
+        <div class="field">
+          <label class="field__label" for="wo-2">Jenis <span class="field__req">*</span></label>
+          <select class="ctl" id="wo-2"><option>Corrective</option><option>Preventive</option><option>Emergency</option></select>
+        </div>
+        <div class="field">
+          <label class="field__label" for="wo-3">Tanggal</label>
+          <input class="ctl" id="wo-3" type="date" value="2026-10-24">
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="wo-4">Running Hours</label>
+          <div class="ctl-unit"><input class="ctl ctl--num" id="wo-4" type="number" step="0.1" value="12480.5"><span class="ctl-unit__suffix">HM</span></div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="wo-5">Downtime</label>
+          <div class="ctl-unit"><input class="ctl ctl--num" id="wo-5" type="number" step="0.1" value="3.5"><span class="ctl-unit__suffix">JAM</span></div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="wo-6">Teknisi</label>
+          <input class="ctl" id="wo-6" value="Andi Supriadi">
+        </div>
+
+        <div class="field span-2">
+          <label class="field__label" for="wo-7">Deskripsi</label>
+          <input class="ctl" id="wo-7" value="Bearing sisi drive bergetar 4,2 mm/s">
+        </div>
+        <div class="field">
+          <label class="field__label" for="wo-8">Prioritas</label>
+          <select class="ctl" id="wo-8"><option>Alpha</option><option>Bravo</option><option>Charlie</option></select>
+        </div>
+
+        <div class="field span-2">
+          <label class="field__label" for="wo-9">Tindakan</label>
+          <textarea class="ctl" id="wo-9" rows="2">Ganti bearing 6205-2RS, cek alignment.</textarea>
+        </div>
+        <div class="field">
+          <span class="field__label">Tutup WO</span>
+          <label class="toggle"><input type="checkbox" checked><span class="toggle__track"></span><span style="font-size:13px">Selesai</span></label>
+          <span class="field__hint">Menandai pekerjaan tuntas.</span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn--ghost" type="button">Batal</button>
+        <button class="btn btn--primary" type="button">Simpan WO</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin:0 0 16px;font-size:16px;font-weight:600">Request Part — baris item</h3>
+      <div class="grid g4">
+        <div class="field">
+          <label class="field__label" for="rp-1">Part number <span class="field__req">*</span></label>
+          <input class="ctl" id="rp-1" value="SKF-6205-2RS">
+        </div>
+        <div class="field">
+          <label class="field__label" for="rp-2">Nama</label>
+          <input class="ctl" id="rp-2" value="Bearing SKF 6205">
+        </div>
+        <div class="field">
+          <label class="field__label" for="rp-3">Qty</label>
+          <div class="ctl-unit"><input class="ctl ctl--num" id="rp-3" type="number" value="4"><span class="ctl-unit__suffix">PCS</span></div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="rp-4">Prioritas</label>
+          <select class="ctl" id="rp-4"><option>Tinggi</option><option>Normal</option><option>Rendah</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel--recess">
+      <h3 style="margin:0 0 14px;font-size:14px;font-weight:600">Filter bar — Work Orders</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="search" style="min-width:220px;flex:1">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9.2 9.2 12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <input aria-label="Cari WO atau asset" placeholder="Cari WO / asset…">
+        </div>
+        <select class="ctl ctl--xs" aria-label="Filter sektor" style="width:auto;min-width:140px"><option>Semua sektor</option><option>Milling</option></select>
+        <select class="ctl ctl--xs" aria-label="Filter status" style="width:auto;min-width:120px"><option>Semua status</option><option>Buka</option></select>
+        <input class="ctl ctl--xs" type="date" aria-label="Tanggal mulai" value="2026-10-01" style="width:auto">
+        <input class="ctl ctl--xs" type="date" aria-label="Tanggal akhir" value="2026-10-24" style="width:auto">
+        <div class="seg">
+          <button type="button" aria-pressed="true">Hari</button>
+          <button type="button" aria-pressed="false">Minggu</button>
+          <button type="button" aria-pressed="false">Bulan</button>
+        </div>
+      </div>
+      <p class="old-note" style="margin:12px 0 0">Semua kontrol 32 px — lolos target 24 px, dan tetap padat.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════ 6. RESPONSIF ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">06</span><h2 class="sec-t">Perilaku responsif</h2></div>
+    <p class="sec-d">Satu markup, tiga lebar. Grid turun 3 → 2 → 1 kolom pada <b>640 / 480 px lebar kontainer</b>. Sengaja container query, bukan breakpoint viewport: modal Log WO yang sempit di layar 1440 px tidak boleh dipaksa tiga kolom.</p>
+
+    <div class="devices">
+      <div class="device device--360">
+        <p class="device__cap"><b>360 px</b><span>HP operator</span></p>
+        <div class="form-grid">
+          <div class="field">
+            <label class="field__label" for="m1">Asset <span class="field__req">*</span></label>
+            <select class="ctl" id="m1"><option>CV-042 · Belt Conveyor</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="m2">Jenis</label>
+            <select class="ctl" id="m2"><option>Corrective</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="m3">Running Hours</label>
+            <div class="ctl-unit"><input class="ctl ctl--num" id="m3" value="12480.5"><span class="ctl-unit__suffix">HM</span></div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="m4">Downtime</label>
+            <div class="ctl-unit"><input class="ctl ctl--num" id="m4" value="3.5"><span class="ctl-unit__suffix">JAM</span></div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="m5">Teknisi</label>
+            <input class="ctl" id="m5" value="Andi S.">
+          </div>
+        </div>
+        <div class="form-actions" style="padding-top:16px;margin-top:16px">
+          <button class="btn btn--primary" type="button" style="width:100%">Simpan</button>
+        </div>
+      </div>
+
+      <div class="device device--560">
+        <p class="device__cap"><b>560 px</b><span>tablet kecil</span></p>
+        <div class="form-grid">
+          <div class="field">
+            <label class="field__label" for="t1">Asset <span class="field__req">*</span></label>
+            <select class="ctl" id="t1"><option>CV-042 · Belt Conveyor</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="t2">Jenis</label>
+            <select class="ctl" id="t2"><option>Corrective</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="t3">Running Hours</label>
+            <div class="ctl-unit"><input class="ctl ctl--num" id="t3" value="12480.5"><span class="ctl-unit__suffix">HM</span></div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="t4">Downtime</label>
+            <div class="ctl-unit"><input class="ctl ctl--num" id="t4" value="3.5"><span class="ctl-unit__suffix">JAM</span></div>
+          </div>
+          <div class="field span-2">
+            <label class="field__label" for="t5">Deskripsi</label>
+            <input class="ctl" id="t5" value="Bearing sisi drive bergetar 4,2 mm/s">
+          </div>
+        </div>
+      </div>
+
+      <div class="device device--full">
+        <p class="device__cap"><b>isi panel ≥ 640 px</b><span>desktop / control station</span></p>
+        <div class="form-grid">
+          <div class="field">
+            <label class="field__label" for="d1">Asset <span class="field__req">*</span></label>
+            <select class="ctl" id="d1"><option>CV-042 · Belt Conveyor</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="d2">Jenis</label>
+            <select class="ctl" id="d2"><option>Corrective</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="d3">Tanggal</label>
+            <input class="ctl" id="d3" type="date" value="2026-10-24">
+          </div>
+          <div class="field">
+            <label class="field__label" for="d4">Running Hours</label>
+            <div class="ctl-unit"><input class="ctl ctl--num" id="d4" value="12480.5"><span class="ctl-unit__suffix">HM</span></div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="d5">Downtime</label>
+            <div class="ctl-unit"><input class="ctl ctl--num" id="d5" value="3.5"><span class="ctl-unit__suffix">JAM</span></div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="d6">Teknisi</label>
+            <input class="ctl" id="d6" value="Andi Supriadi">
+          </div>
+          <div class="field span-2">
+            <label class="field__label" for="d7">Deskripsi</label>
+            <input class="ctl" id="d7" value="Bearing sisi drive bergetar 4,2 mm/s">
+          </div>
+          <div class="field">
+            <label class="field__label" for="d8">Prioritas</label>
+            <select class="ctl" id="d8"><option>Alpha</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 7. SPESIFIKASI ══════════════ -->
+  <section>
+    <div class="sec-h"><span class="sec-n">07</span><h2 class="sec-t">Spesifikasi implementasi</h2></div>
+    <p class="sec-d">Kalau mockup ini disetujui, ini yang masuk ke <code style="font-family:var(--mono)">src/css/forms.css</code> dan ke 174 kontrol.</p>
+
+    <div class="panel">
+      <table class="spec">
+        <thead><tr><th>Token</th><th>Nilai</th><th>Alasan</th></tr></thead>
+        <tbody>
+          <tr><td>--field-h</td><td><code>44px</code></td><td>Touch envelope minimum dari design doc §Layout</td></tr>
+          <tr><td>--field-h-sm</td><td><code>36px</code></td><td>Toolbar & form padat; masih ≥ 24 px</td></tr>
+          <tr><td>--field-h-xs</td><td><code>32px</code></td><td>Filter bar — menggantikan 21 px yang gagal WCAG 2.5.8</td></tr>
+          <tr><td>--field-px</td><td><code>12px</code></td><td>Satu padding horizontal untuk semua varian</td></tr>
+          <tr><td>--field-radius</td><td><code>8px</code></td><td>design doc §Shapes: 0.5rem default</td></tr>
+          <tr><td>surface</td><td><code>--tac-surface-recessed</code></td><td>Satu token — buang pemakaian <code>container-low</code> di RequestPart</td></tr>
+          <tr><td>border</td><td><code>--tac-border-tactical</code></td><td>Hover naik ke <code>--tac-outline-variant</code></td></tr>
+          <tr><td>focus ring</td><td><code>0 0 0 2px primary/45</code></td><td>Menggantikan <code>outline:none</code> di style.css:135</td></tr>
+          <tr><td>well shadow</td><td><code>inset 2px 2px 5px …</code></td><td>Neumorphism recessed dari design doc §Elevation</td></tr>
+          <tr><td>label</td><td><code>12px mono · .1em · uppercase</code></td><td>label-mono-sm — sudah ≥ 12 px, lolos audit font-size</td></tr>
+          <tr><td>grid</td><td><code>1 → 2 (480) → 3 (640)</code></td><td>Container query, bukan breakpoint viewport — form di dalam modal sempit tidak boleh jadi 3 kolom hanya karena layarnya lebar</td></tr>
+          <tr><td>angka</td><td><code>tabular-nums</code></td><td>Kolom HM/downtime sejajar antar baris</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <p style="margin:0 0 12px;font-weight:600;font-size:14px">Yang ikut berubah, di luar CSS</p>
+      <table class="spec">
+        <thead><tr><th>Berkas</th><th>Tindakan</th></tr></thead>
+        <tbody>
+          <tr><td>src/css/forms.css</td><td>Baru — layer token + 4 varian + state</td></tr>
+          <tr><td>src/css/style.css:112-136</td><td>Blok <code>!important</code> global diganti import forms.css</td></tr>
+          <tr><td>19 berkas markup</td><td>174 kontrol disapu ke <code>field</code> / <code>field-sm</code> / <code>field-inline</code> / <code>field-check</code></td></tr>
+          <tr><td>public/pages/PMSchedule.html</td><td><code>input[type=checkbox]</code> tanpa class diberi gaya</td></tr>
+          <tr><td>sw.js</td><td><code>CACHE_NAME</code> naik — <code>src/**</code> + <code>public/**</code> berubah</td></tr>
+          <tr><td>tests/</td><td>+ tes kontrak: setiap kontrol punya label/aria-label & tinggi ≥ 24 px</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

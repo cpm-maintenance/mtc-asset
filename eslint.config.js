@@ -27,6 +27,10 @@ export default [
       '.firebase/**',
       'coverage/**',
       'scratch/**',
+      // Working dir tool archify (kandidat JSON + skrip sekali pakai dari sesi
+      // diagram). Bukan sumber aplikasi — skrip .mjs di dalamnya memakai
+      // `process`/`console` global Node dan membuat lint merah tanpa sebab.
+      '.archify/**',
       'public/**',
       '*.min.js',
     ],

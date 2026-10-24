@@ -154,7 +154,7 @@
       <div class="flex flex-wrap items-center gap-space-xs">
         <!-- Equipment Selector -->
         <select x-model="pmFilterEquip"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none max-w-[200px]">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none max-w-[200px] field-compact">
           <option value="">ALL EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
             <option :value="e.EquipmentID" x-text="(e.Nama || e.EquipmentID)"></option>
@@ -163,7 +163,7 @@
 
         <!-- Status Selector -->
         <select x-model="pmFilterStatus"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">ALL STATUS</option>
           <option value="pending">PENDING / DUE</option>
           <option value="completed">COMPLETED</option>
@@ -172,7 +172,7 @@
 
         <!-- Priority Selector -->
         <select x-model="pmFilterPriority"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">ALL PRIORITY</option>
           <option value="High">HIGH</option>
           <option value="Medium">MEDIUM</option>

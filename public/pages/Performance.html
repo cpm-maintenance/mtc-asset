@@ -147,7 +147,7 @@
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">EQUIPMENT:</span>
         <select x-model="perfFilterEquip"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none min-w-[12rem]">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none min-w-[12rem] field-compact">
           <option value="">SEMUA EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
             <option :value="e.EquipmentID" x-text="e.Nama"></option>
@@ -158,7 +158,7 @@
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">AREA:</span>
         <select x-model="perfFilterArea"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">SEMUA AREA</option>
           <template x-for="area in [...new Set(performanceData.map(p => p.area).filter(Boolean))]" :key="area">
             <option :value="area" x-text="area"></option>
@@ -169,7 +169,7 @@
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">PERIODE:</span>
         <select x-model="kpiFilter"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="yearly">YEARLY</option>
           <option value="monthly">MONTHLY</option>
           <option value="weekly">WEEKLY</option>
@@ -180,7 +180,7 @@
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">TANGGAL:</span>
         <input type="date" x-model="kpiFilterDate" aria-label="Tanggal acuan"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
       </div>
 
       <button type="button" x-show="perfFilterEquip || perfFilterArea"

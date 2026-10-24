@@ -1,3 +1,113 @@
+## 📝 S36-form (2026-10-24) — Sistem kontrol form bertoken: 174 kontrol, satu tinggi per konteks
+
+Live **sw v50** (belum di-push). Mockup: `design/mockups/form-controls.html` (standalone, 43 KB,
+tanpa build) — disetujui sebelum implementasi.
+
+### Temuan awal (inventaris, bukan taksiran)
+| Metrik | Angka |
+|---|---|
+| Kontrol form di repo | **174** (input 139 · select 19 · textarea 2 · 14 hidden) |
+| Kombinasi `(tag, class)` unik | **79** |
+| Berkas terdampak | 19 (`index.html` + 18 fragmen `public/pages/`) |
+| Tinggi kontrol sebelum | 21 px (filter) · 24–40 px (form) — **di bawah WCAG 2.2 target 24 px** |
+| Token surface dipakai | 2 (`recessed` + `container-low`) · radius 0/4/8/16 px |
+
+Akar masalahnya `src/css/style.css:112` — satu blok `!important` memaksa bg/border/radius untuk
+SEMUA kontrol. Efeknya utility Tailwind di markup mati, tidak ada jalan opt-out, dan tinggi
+kontrol sepenuhnya ditentukan padding acak di 79 kombinasi kelas.
+
+### Yang berubah
+- **`src/css/style.css`** — blok `!important` diganti sistem bertoken. Menang lewat
+  spesifisitas `:is()` (0,2,1), bukan `!important`. Token baru: `--field-h` 44 px ·
+  `--field-h-sm` 36 px · `--field-h-xs` 32 px · `--field-px` 12 px · `--field-radius` 8 px ·
+  `--field-ring` (2 px emas) · `--field-ring-err` · `--field-well` (inset neumorphic).
+- **State lengkap** — hover, `:focus`/`:focus-visible` (ring 2 px, menggantikan `outline:none`
+  tanpa pengganti), `[aria-invalid='true']`, `:disabled`, `[readonly]` (border putus-putus),
+  checkbox/radio 24 px + `accent-color`.
+- **Opt-out `.tac-well`** — kontrol di dalam well (layar login) tetap transparan tanpa border;
+  tanpa ini bg/border ganda menutupi well. Terukur: `#login-id`/`#login-key` 44 px,
+  `background rgba(0,0,0,0)`, `border 0px`.
+- **41 kontrol filter di 15 berkas** ditandai `field-compact` → 32 px. Kriteria penandaan:
+  punya `bg-tac-surface-recessed` + `font-label-mono` + bukan `w-full`. Terukur 32 px.
+- **`.form-grid`** 1 → 2 → 3 kolom menurut **lebar wadah**. `container-type` dipasang di induk
+  lewat `form:has(> .form-grid)`; cadangan media query di `@supports not selector(:has(*))`.
+  Diterapkan ke 3 baris form Spare Part di `app-shell.html`. Terukur di modal 430 px: **2 kolom**
+  (media query murni memberi **3 kolom ~130 px** — itu yang ditolak).
+- **`tests/form-controls.test.js`** (13 tes) mengunci token, larangan kembalinya blok
+  `!important`, fokus yang tidak boleh mematikan outline tanpa `box-shadow`, sweep
+  `field-compact`, dan container-type di induk (bukan di grid).
+- **`eslint.config.js`** — `.archify/**` masuk ignores; skrip `.mjs` di working dir tool itu
+  memakai `process`/`console` dan membuat `npm run lint` merah tanpa sebab.
+
+### Gerbang (dijalankan di turn yang sama)
+- tsc **0**
+- eslint **0 error / 0 warning**
+- vitest **1782 tes / 76 berkas** (dari 1771/75; +13 tes baru)
+- coverage **96,43 / 86,12 / 96,55 / 97,75** — identik baseline, threshold tidak diturunkan
+- build ok · precache **66/66**
+- E2E **5 passed / 3 skipped** (54,3 s) — 3 skip = `css-critical-path` yang butuh `E2E_PREVIEW=1`
+- Bukti menggigit: mutasi `--field-h-xs: 20px` → 2 tes merah; satu kontrol kehilangan
+  `field-compact` → 1 tes merah; keduanya revert hijau.
+
+### Belum dikerjakan (sengaja)
+- **Sweep label**: 16 kontrol di markup belum punya `<label for>`/`aria-label` (input pencarian
+  di filter bar). Tidak masuk pass ini karena mengubah markup + butuh keputusan teks label.
+- **71 `grid-cols-2` lain** belum dipindah ke `.form-grid`; hanya 3 baris form Spare Part.
+- **Checkbox `PMSchedule.html` tanpa class** masih memakai `accent-color` global, bukan kotak
+  kustom seperti mockup.
+
+### Pelajaran
+1. **Container query di elemen grid tidak bisa meng-query dirinya sendiri.** `container-type`
+   di `.form-grid` membuat aturan `@container … { .form-grid { … } }` tidak pernah cocok dan
+   grid jatuh permanen ke 1 kolom — tanpa satu pun error. Wadahnya harus induk.
+2. **Media query untuk form di dalam modal salah sasaran.** Modal Spare Part hanya 430 px di
+   layar 1280 px; media query memaksanya 3 kolom ~130 px. Ukur lebar wadah, bukan viewport.
+3. **`:is()` menggantikan `!important` tanpa kehilangan daya tekan** — (0,2,1) sudah mengalahkan
+   utility (0,1,0), dan opt-out cukup ditulis sesudahnya satu tingkat lebih tinggi.
+4. **Probe sintetis (fragmen di-inject) tidak bisa dipercaya untuk tinggi kontrol** kalau modal
+   bertumpuk `position:fixed`; satu input terbaca 19 px di sana. Angka yang dipakai adalah hasil
+   sesi emulator nyata.
+
+## 📝 S36-diagram (2026-10-24) — Peta sistem MTC-Asset: 4 artefak diagram
+
+**Archify 3.2.0 dipasang permanen** sebagai skill Hermes: paket di `%LOCALAPPDATA%\hermes\skills\archify`, shim bash di `~/.local/bin/archify` (sudah di PATH), launcher Windows di `<paket>\bin\archify.cmd`. Perintah `archify <subcommand>` langsung jalan tanpa path panjang. Tidak ada entri di npm global, tidak ada di `node_modules` repo.
+
+Dibangun dengan Archify 3.2.0 (dipasang permanen sebagai skill Hermes — lihat baris di atas; **bukan** `npm i archify`, nama itu paket lain). Clone sementara di scratch sudah dihapus; semua artefak dibuat dari paket terpasang.
+
+### Artefak (semua lolos 4 gate: validate · deliver · check · browser-check)
+| File | Tipe | Isi |
+|---|---|---|
+| `docs/mtc-asset-usage-flow.html` | workflow | 5 lane · 17 node · 19 relasi — 10 modul README (termasuk KPI Analytics + AI Analysis) |
+| `docs/mtc-asset-work-order-lifecycle.html` | lifecycle | 8 status WO + jalur tolak/revisi |
+| `docs/mtc-asset-request-part-sequence.html` | sequence | 6 partisipan · 12 pesan — request part → stok |
+| `docs/mtc-asset-dataflow.html` | dataflow | 4 tahap — form → RTDB → cache/push → log/KPI |
+| `docs/mtc-asset-architecture.html` | architecture | 10 komponen · 3 boundary — PWA, Firebase, pihak ketiga, Vercel |
+| `docs/mtc-asset-data-tree.html` | tree | 16 simpul — struktur koleksi RTDB |
+| `docs/mtc-asset-pm-schedule-sequence.html` | sequence | 6 partisipan · 10 pesan — jadwal jatuh tempo → auto-log |
+| `docs/mtc-asset-ai-analysis-sequence.html` | sequence | 6 partisipan · 10 pesan — konteks WO → provider + cadangan |
+| `docs/mtc-asset-permission-matrix.html` | HTML table | 10 modul × 3 peran (bukan archify — matriks adalah tabel) |
+| `docs/mtc-asset-offline-sync-sequence.html` | sequence | 6 partisipan · 10 pesan — tulis offline → antrean → sinkron |
+| `docs/mtc-asset-release-lifecycle.html` | lifecycle | 5 tahap — commit → build → preview → produksi → klien |
+| `docs/mtc-asset-kpi-formula.html` | dataflow | 4 tahap — wh/stb/bd/freq → avail → PA → gap |
+| `docs/mtc-asset-backup-sequence.html` | sequence | 6 partisipan · 10 pesan — backup, verifikasi, restore |
+| `docs/mtc-asset-import-sequence.html` | sequence | 6 partisipan · 10 pesan — CSV/XLSX → validasi → RTDB |
+| `docs/mtc-asset-observability.html` | dataflow | 4 tahap — error + web vitals → DSN → dashboard/alert |
+| `docs/mtc-asset-diagrams.html` | index | halaman penghubung kelima belasnya |
+| `docs/mtc-asset-dashboard.html` | dashboard | grid 16 kartu + filter jenis + pencarian + panel pratinjau (iframe dimuat saat diklik) |
+
+Sumber kandidat JSON: `.archify/{workflow-usage,lifecycle-wo,sequence-requestpart,dataflow}-*/candidate.json`.
+`.archify/` **belum** masuk `.gitignore` — tambahkan sebelum commit kalau tidak mau ikut.
+
+### Batas keras Archify yang terukur (biar tidak mengulang trial-error)
+- `col` maksimum **5** → maksimum 6 kolom.
+- Satu node per lane per kolom; `yOffset` **tidak** menambah baris (lane height tetap) → 5 lane × 6 kolom plafon praktis 16–18 node.
+- 6 lane mustahil: tinggi minimum 838 px, sedangkan rasio canvas wajib ≥ 1,55 dan lebar ≤ 1240 → gagal.
+- Lebar node ≤ 60 px agar clearance antar kolom 10 px (gate butuh 8 px terarah / 28 px langsung).
+- Sublabel ≤ 8 karakter agar font tetap ≥ 6 px pada skala desktop.
+- Phase `fromCol`/`toCol` tidak boleh berbagi kolom; label fase ≤ ~92 px per kolom.
+- `finalize` menolak menimpa `*.browser-check.json` lama — hapus sidecar dulu.
+- Perbaikan cepat: `ARCHIFY_UPDATE_CHECK_DISABLED=1` untuk semua run skrip.
+
 ## 📝 S33ah (2026-10-22) — `logo.png` 16,1 → 4,7 KiB (total login **151 → 140 KiB**) + `exportData` format excel|csv (G)
 
 Live **sw v49**. Tiga commit: `b93d2ab` (WebP header + `exportData`) · `2255d8a` (palette q90) ·

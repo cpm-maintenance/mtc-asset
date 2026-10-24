@@ -49,7 +49,7 @@
       <div class="flex flex-col gap-1">
         <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">Equipment</label>
         <select x-model="historyEquipId" @change="historyPage=1" aria-label="Pilih equipment"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-md text-label-mono-md px-2 py-1.5 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-md text-label-mono-md px-2 py-1.5 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact">
           <option value="all">SEMUA EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
             <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
@@ -71,16 +71,16 @@
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">PERIODE:</span>
         <input type="date" x-model="historyDateFrom" aria-label="Tanggal mulai"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary field-compact">
         <span class="text-tac-on-surface-variant font-label-mono-sm text-label-mono-sm">s/d</span>
         <input type="date" x-model="historyDateTo" aria-label="Tanggal akhir"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary field-compact">
       </div>
 
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">JENIS:</span>
         <select x-model="historyFilterType" aria-label="Filter jenis pekerjaan"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact">
           <option value="">SEMUA JENIS</option>
           <option value="PM">PM</option>
           <option value="Repair">Repair</option>
@@ -95,7 +95,7 @@
       <div class="flex items-center gap-1">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">STATUS:</span>
         <select x-model="historyFilterStatus" aria-label="Filter status pekerjaan"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact">
           <option value="">SEMUA STATUS</option>
           <option value="Pending">Pending</option>
           <option value="In Progress">In Progress</option>
@@ -417,7 +417,7 @@
     <div class="flex items-center gap-2 font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">
       <span x-text="'MENAMPILKAN ' + ((historyPage-1)*historyPerPage+1) + '-' + Math.min(historyPage*historyPerPage, historyFilteredLogs.length) + ' DARI ' + historyFilteredLogs.length"></span>
       <select x-model="historyPerPage" @change="historyPage=1" aria-label="Baris per halaman"
-        class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer">
+        class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact">
         <option value="10">10</option>
         <option value="20">20</option>
         <option value="50">50</option>

@@ -174,7 +174,7 @@
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SEKTOR:</span>
           <select x-model="equipSectorFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA AREA</option>
             <template x-for="sec in woSectorOptions" :key="sec">
               <option :value="sec" x-text="sec"></option>
@@ -186,7 +186,7 @@
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STATUS:</span>
           <select x-model="equipStatusFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="">SEMUA STATUS</option>
             <option value="Active">Active</option>
             <option value="In Maintenance">In Maintenance</option>
@@ -199,7 +199,7 @@
         <div class="flex items-center gap-1">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
           <select x-model="equipSortBy"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
             <option value="name">NAMA UNIT (A-Z)</option>
             <option value="critical">KRITIKALITAS (HIGH FIRST)</option>
             <option value="health">HEALTH (LOWEST FIRST)</option>

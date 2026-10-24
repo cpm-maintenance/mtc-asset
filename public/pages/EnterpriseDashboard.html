@@ -22,7 +22,7 @@
       <div class="flex items-center gap-1">
         <span class="material-symbols-outlined text-tac-primary text-[16px]">factory</span>
         <select x-model="plantFilter"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">SEMUA PLANT</option>
           <option value="Mill1">MILL 1</option>
           <option value="Mill2">MILL 2</option>
@@ -32,7 +32,7 @@
       <div class="flex items-center gap-1">
         <span class="material-symbols-outlined text-tac-primary text-[16px]">group_work</span>
         <select x-model="deptFilter"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">SEMUA DEPT</option>
           <option value="Mechanical">Mechanical</option>
           <option value="Electrical">Electrical</option>
@@ -44,10 +44,10 @@
       <div class="flex items-center gap-1">
         <span class="material-symbols-outlined text-tac-primary text-[16px]">event</span>
         <input type="date" x-model="kpiDateFrom" aria-label="Tanggal mulai"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby">→</span>
         <input type="date" x-model="kpiDateTo" aria-label="Tanggal akhir"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
       </div>
 
       <button type="button" @click="refreshDashboard()"

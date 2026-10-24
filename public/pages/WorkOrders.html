@@ -253,7 +253,7 @@
         <span class="uppercase">SEKTOR:</span>
         <label for="wo-sector" class="sr-only">Filter sektor</label>
         <select id="wo-sector" x-model="woSectorFilter"
-          class="bg-tac-surface-recessed text-tac-on-surface px-2 py-1 rounded outline-none font-label-mono-sm text-label-mono-sm shadow-inner cursor-pointer">
+          class="bg-tac-surface-recessed text-tac-on-surface px-2 py-1 rounded outline-none font-label-mono-sm text-label-mono-sm shadow-inner cursor-pointer field-compact">
           <option value="">ALL SECTORS (FLEET-WIDE)</option>
           <template x-for="sec in woSectorOptions" :key="sec">
             <option :value="sec" x-text="sec"></option>
@@ -262,7 +262,7 @@
 
         <label for="wo-priority" class="sr-only">Filter prioritas</label>
         <select id="wo-priority" x-model="filterWOPriority"
-          class="bg-tac-surface-recessed text-tac-on-surface px-2 py-1 rounded outline-none font-label-mono-sm text-label-mono-sm shadow-inner cursor-pointer">
+          class="bg-tac-surface-recessed text-tac-on-surface px-2 py-1 rounded outline-none font-label-mono-sm text-label-mono-sm shadow-inner cursor-pointer field-compact">
           <option value="">PRIORITY: ALL</option>
           <option value="Emergency">ALPHA (EMERGENCY)</option>
           <option value="Urgent">BRAVO (URGENT)</option>
@@ -276,11 +276,11 @@
     <div class="flex flex-wrap gap-space-sm items-center pt-1 border-t border-tac-border-subtle">
       <label for="wo-date-from" class="sr-only">Tanggal dari</label>
       <input id="wo-date-from" type="date" x-model="filterDateFrom" title="Tanggal dari"
-        class="px-2 py-1 bg-tac-surface-recessed rounded text-tac-on-surface font-label-mono-sm text-label-mono-sm w-36 outline-none">
+        class="px-2 py-1 bg-tac-surface-recessed rounded text-tac-on-surface font-label-mono-sm text-label-mono-sm w-36 outline-none field-compact">
       <span class="text-tac-status-standby font-label-mono-sm">→</span>
       <label for="wo-date-to" class="sr-only">Tanggal sampai</label>
       <input id="wo-date-to" type="date" x-model="filterDateTo" title="Tanggal sampai"
-        class="px-2 py-1 bg-tac-surface-recessed rounded text-tac-on-surface font-label-mono-sm text-label-mono-sm w-36 outline-none">
+        class="px-2 py-1 bg-tac-surface-recessed rounded text-tac-on-surface font-label-mono-sm text-label-mono-sm w-36 outline-none field-compact">
       <button type="button" x-show="filterDateFrom || filterDateTo" @click="filterDateFrom=''; filterDateTo=''"
         class="px-2 py-1 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors">
         CLEAR DATES

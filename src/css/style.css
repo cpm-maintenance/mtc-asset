@@ -77,9 +77,9 @@
   --text-muted: #a78bfa;
 }
 
-[data-theme='light'] input,
-[data-theme='light'] select,
-[data-theme='light'] textarea {
+[data-theme='light'] :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select:not([multiple]),
+  textarea) {
   background-color: #f1f5f9;
   border-color: #e2e8f0;
   color: #0f172a;
@@ -106,33 +106,196 @@ h1, h2, h3, h4 {
   font-weight: 700;
 }
 
-/* Inputs Refinement — token Tactical Slate (theme-aware).
- * !important dipakai karena banyak input memasang utility `bg-*`/`text-*` sendiri;
- * tanpa ini bentuk kontrol jatuh ke style lama (rgba putih 3%, aksen #ffd700). */
-input, select, textarea {
-  background-color: rgb(var(--tac-surface-recessed)) !important;
-  border: 1px solid rgb(var(--tac-border-tactical)) !important;
-  color: rgb(var(--tac-on-surface)) !important;
-  border-radius: 0.5rem !important;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+/* ═══════════════════════════════════════════════════════════════════════
+   FORM CONTROL SYSTEM — satu sistem untuk 174 kontrol di 19 berkas.
+   Spec: design/mockups/form-controls.html · token: design/DESIGN-TACTICAL.md
+
+   Kenapa :is() dan bukan !important seperti versi sebelumnya:
+   utility Tailwind (`.p-3`, `.bg-tac-*`) berbobot (0,1,0) dan akan menang
+   atas selector elemen (0,0,1). `:is()` mengambil bobot argumen terberatnya,
+   jadi blok ini (0,2,1) menang tanpa !important — dan opt-out per-konteks
+   cukup ditulis sesudahnya dengan bobot satu tingkat lebih tinggi.
+
+   ponytail: tinggi/padding dipaksa dari sini, bukan dari markup. Ceiling —
+   satu kontrol yang butuh ukuran lain harus lewat `.field-compact` atau
+   opt-out ber-bobot lebih tinggi. Upgrade path: sapu markup ke kelas
+   `field`/`field-sm`/`field-inline`, lalu hapus pemaksaan di sini.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --field-h: 44px;        /* form — touch envelope design doc §Layout */
+  --field-h-sm: 36px;     /* toolbar */
+  --field-h-xs: 32px;     /* filter bar — > WCAG 2.2 (2.5.8) 24px */
+  --field-px: 12px;
+  --field-radius: 8px;    /* design doc §Shapes: 0.5rem default */
+  --field-ring: 0 0 0 2px rgb(var(--tac-primary) / 0.45);
+  --field-ring-err: 0 0 0 2px rgb(var(--tac-status-emergency) / 0.45);
+  --field-well: inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.04);
 }
 
-/* Placeholders follow theme muted color */
-input::placeholder, select::placeholder, textarea::placeholder {
-  color: rgb(var(--tac-on-surface-variant)) !important;
-  opacity: 0.75;
-}
-input.placeholder-slate-500::placeholder, input.placeholder-slate-600::placeholder,
-textarea.placeholder-slate-500::placeholder, textarea.placeholder-slate-600::placeholder {
-  color: rgb(var(--tac-on-surface-variant)) !important;
-  opacity: 0.75;
-}
-
-input:focus, select:focus, textarea:focus {
-  background-color: rgb(var(--tac-surface-recessed)) !important;
-  border-color: rgb(var(--tac-primary)) !important;
-  box-shadow: 0 0 0 1px rgb(var(--tac-primary) / 0.35) !important;
+/* Daftar kontrol: sengaja satu sumber supaya base & state tidak menyimpang. */
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea) {
+  height: var(--field-h);
+  padding: 0 var(--field-px);
+  color: rgb(var(--tac-on-surface));
+  background-color: rgb(var(--tac-surface-recessed));
+  border: 1px solid rgb(var(--tac-border-tactical));
+  border-radius: var(--field-radius);
+  box-shadow: var(--field-well);
   outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+:is(textarea) {
+  height: auto;
+  min-height: 88px;
+  padding: 10px var(--field-px);
+  line-height: 20px;
+  resize: vertical;
+}
+
+/* Chevron digambar sendiri — native arrow tidak ikut warna tema. */
+select:not([multiple]) {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2394a3b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+/* Placeholder — utility `placeholder:text-*` di markup tetap menang (0,1,1). */
+:is(input, select, textarea)::placeholder {
+  color: rgb(var(--tac-on-surface-variant));
+  opacity: 0.75;
+}
+
+/* ── State ─────────────────────────────────────────────────────────────── */
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea):hover:not(:disabled):not([readonly]) {
+  border-color: rgb(var(--tac-outline-variant));
+}
+
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea):focus,
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea):focus-visible {
+  border-color: rgb(var(--tac-primary));
+  box-shadow: var(--field-well), var(--field-ring);
+}
+
+/* aria-invalid — dipakai Alpine lewat :aria-invalid, dan manual di markup. */
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea)[aria-invalid='true'] {
+  border-color: rgb(var(--tac-status-emergency));
+  box-shadow: var(--field-well), var(--field-ring-err);
+}
+
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea):disabled {
+  background-color: rgb(var(--tac-surface-container-low));
+  border-color: var(--tac-line-subtle);
+  color: rgb(var(--tac-status-standby) / 0.55);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+:is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select:not([multiple]),
+    textarea)[readonly] {
+  background-color: rgb(var(--tac-surface-container-low));
+  color: rgb(var(--tac-on-surface-variant));
+  border-style: dashed;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Checkbox & radio: 24px (WCAG 2.5.8), warna aksen dari token. */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  accent-color: rgb(var(--tac-primary-container));
+  cursor: pointer;
+}
+
+/* ── Varian ukuran ─────────────────────────────────────────────────────── */
+/* `.field-compact` boleh dipasang di kontrolnya sendiri (filter bar yang
+   kontrolnya sudah bertanda) atau di wadahnya. */
+:is(.field-compact,
+    .field-compact :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+                       select:not([multiple]),
+                       textarea)) {
+  height: var(--field-h-xs);
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+:is(.field-compact, .field-compact :is(textarea)):is(textarea) {
+  height: auto;
+  min-height: 56px;
+  padding: 6px 10px;
+}
+
+/* ── Opt-out: kontrol di dalam well yang sudah menggambar dirinya sendiri
+      (layar login). Tanpa ini, bg/border ganda menutupi .tac-well. ─────── */
+.tac-well :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
+              select:not([multiple]),
+              textarea) {
+  height: auto;
+  min-height: 44px;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ── Grid form responsif: 1 → 2 → 3 kolom menurut LEBAR WADAH, bukan viewport.
+      Modal Spare Part di layar 1280 px hanya selebar ~430 px; media query
+      memaksanya jadi 3 kolom ~130 px. Container query menjawab lebar wadah,
+      tetapi elemen grid tidak bisa meng-query dirinya sendiri — jadi
+      `container-type` dipasang di induknya lewat `:has()`, dan media query
+      dipakai sebagai cadangan bila `:has()` tidak didukung. ─────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+.form-grid > .span-2 { grid-column: 1 / -1; }
+
+@supports selector(:has(*)) {
+  form:has(> .form-grid),
+  div:has(> .form-grid) {
+    container-type: inline-size;
+  }
+  @container (min-width: 400px) {
+    .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @container (min-width: 640px) {
+    .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .form-grid > .span-2 { grid-column: span 2; }
+  }
+}
+
+@supports not selector(:has(*)) {
+  @media (min-width: 640px) {
+    .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .form-grid > .span-2 { grid-column: span 2; }
+  }
 }
 
 /* Native select dropdown follows theme */
