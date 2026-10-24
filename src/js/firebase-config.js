@@ -18,6 +18,7 @@
 import {
   app as firebaseApp,
   auth,
+  firebaseConfig,
   signOut, onAuthStateChanged, signInWithEmailAndPassword,
   setPersistence, browserSessionPersistence, browserLocalPersistence, createUserWithEmailAndPassword,
   sendPasswordResetEmail
@@ -25,6 +26,9 @@ import {
 
 window.firebaseApp = firebaseApp;
 window.auth = auth;
+// Dipakai `auth.js → createUser` untuk membuat app Firebase sekunder
+// (pembuatan akun tidak boleh menggeser sesi admin di `window.auth`).
+window.firebaseConfig = firebaseConfig;
 window.signOut = signOut;
 window.onAuthStateChanged = onAuthStateChanged;
 window.signInWithEmailAndPassword = signInWithEmailAndPassword;

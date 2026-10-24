@@ -251,30 +251,72 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         }
         
         this.isLoading = true;
+        /** @type {any} */
+        let secondaryApp = null;
         try {
-            // Create user in Firebase Auth
-            const cred = await window.createUserWithEmailAndPassword(window.auth, email, password);
-            
-            // Update user profile with role
+            // Akun WAJIB dibuat di app Firebase sekunder.
+            // `createUserWithEmailAndPassword` menggeser `currentUser` ke akun
+            // baru; kalau dijalankan di `window.auth`, penulisan profil
+            // `Users/<uid>` dilakukan oleh akun baru itu (role-nya belum ada)
+            // sehingga `Users/$uid/role.validate` menolak dengan
+            // PERMISSION_DENIED — hasilnya akun Auth yatim tanpa profil, dan
+            // percobaan berikutnya gagal `auth/email-already-in-use`.
+            const { initializeApp, getApps, deleteApp } = await import('firebase/app');
+            const { getAuth } = await import('firebase/auth');
+            const SECONDARY = 'user-create';
+            const stale = getApps().find((/** @type {any} */ a) => a.name === SECONDARY);
+            if (stale) await deleteApp(stale).catch(() => {});
+            secondaryApp = initializeApp(window.firebaseConfig, SECONDARY);
+            const secondaryAuth = getAuth(secondaryApp);
+
+            /** @type {string} */
+            let uid;
+            try {
+                const cred = await window.createUserWithEmailAndPassword(secondaryAuth, email, password);
+                uid = cred.user.uid;
+            } catch (/** @type {any} */ err) {
+                if (err?.code !== 'auth/email-already-in-use') throw err;
+                // Email sudah terdaftar di Auth — sisa percobaan yang gagal
+                // menulis profil. Adopsi: masuk di app sekunder dengan password
+                // yang diketik admin; uid lama itulah yang profilnya ditulis.
+                try {
+                    const cred = await window.signInWithEmailAndPassword(secondaryAuth, email, password);
+                    uid = cred.user.uid;
+                } catch {
+                    throw new Error(
+                        `Email ${email} sudah terdaftar di Firebase Auth dengan password lain. ` +
+                        `Reset password akun itu (Firebase Console → Authentication → Users), ` +
+                        `atau hapus akunnya lalu buat ulang dari sini.`
+                    );
+                }
+            }
+
+            // Update user profile with role — ditulis oleh sesi ADMIN di app utama.
             const userData = {
-                uid: cred.user.uid,
+                uid: uid,
                 email: email,
                 role: role,
                 createdAt: new Date().toISOString(),
                 createdBy: this.user?.email || 'admin'
             };
             
-            await window.set(window.ref(window.db, `Users/${cred.user.uid}`), userData);
+            await window.set(window.ref(window.db, `Users/${uid}`), userData);
             
             this.showNotification(`User ${email} created as ${role}`);
             logger.debug('[Auth] User created:', email, role);
             
-            return { success: true, user: cred.user };
+            return { success: true, user: { uid } };
         } catch (/** @type {any} */ error) {
             console.error('[Auth] Create user error:', error);
             this.showNotification("Failed to create user: " + error.message, "error");
             return { success: false, message: error.message };
         } finally {
+            if (secondaryApp) {
+                const { deleteApp } = await import('firebase/app');
+                const { getAuth, signOut: signOutSecondary } = await import('firebase/auth');
+                try { await signOutSecondary(getAuth(secondaryApp)); } catch { /* sesi sekunder boleh gagal */ }
+                try { await deleteApp(secondaryApp); } catch { /* sudah dihapus */ }
+            }
             this.isLoading = false;
         }
     },

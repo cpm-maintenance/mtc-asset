@@ -42,6 +42,8 @@ declare global {
     __loadFullCss?: () => Promise<boolean>;
     /** Firebase App instance (di-set firebase-config.js). */
     firebaseApp?: any;
+    /** Config Firebase — dipakai createUser untuk app sekunder (firebase-config.js). */
+    firebaseConfig?: any;
     /** Muat SDK RTDB + helper-nya ke window.* setelah login — di-set firebase-config.js. */
     __loadDataLayer?: () => Promise<any>;
     __loadNotifications?: () => Promise<any>;

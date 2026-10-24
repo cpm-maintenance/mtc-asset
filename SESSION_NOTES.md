@@ -1,3 +1,26 @@
+## 🔧 S37-create-user-fix (2026-10-24) — Admin tidak bisa menambah user (`auth/email-already-in-use`)
+
+Live **sw v54**. Mengatasi `[Auth] Create user error: FirebaseError: Error (auth/email-already-in-use)`.
+
+### Root Cause
+1. `createUser()` memanggil `createUserWithEmailAndPassword(window.auth, …)` — API ini **menggeser `currentUser`** ke akun baru, jadi sesi admin hilang tepat setelah akun dibuat.
+2. Penulisan profil `Users/<uid>` karenanya dilakukan oleh akun baru itu, yang belum punya `role`. Rule `Users/$uid/role.validate` (`root.child('Users').child(auth.uid).child('role').val() === 'admin' || data.val() === newData.val()`) menolak → `PERMISSION_DENIED`.
+3. Hasilnya **akun Auth yatim**: ada di Authentication, tidak ada di RTDB. Percobaan ulang dengan email sama selalu gagal `auth/email-already-in-use`.
+
+### Perbaikan
+- Akun dibuat di **app Firebase sekunder** (`initializeApp(config, 'user-create')` + `getAuth`), dimuat dinamis (`import('firebase/app')`, `import('firebase/auth')`) sehingga tidak menambah chunk jalur login — 8 entri `modulepreload` sebelum & sesudah, set chunk identik.
+- Profil `Users/<uid>` ditulis oleh sesi **admin** di app utama → lolos `.write` (cabang admin) dan `role.validate`.
+- **Adopsi akun yatim**: bila `auth/email-already-in-use`, `signInWithEmailAndPassword` dicoba di app sekunder dengan password yang diketik admin. Cocok → uid lama dipakai, profilnya ditulis. Tidak cocok → pesan berisi instruksi reset/hapus di Firebase Console.
+- Cleanup `finally`: `signOut` + `deleteApp` app sekunder (gagal pun tidak menjatuhkan alur); app basi bernama sama dihapus lebih dulu.
+- `window.firebaseConfig` dibuka di `firebase-config.js`; `globals.d.ts` diperbarui.
+
+### Verifikasi
+- `tests/auth-module.test.js` +9 tes (65 di berkas itu): auth sekunder dipakai, sesi admin tidak di-signOut, adopsi uid lama, password beda → gagal rapi, cleanup tahan gagal, app basi dihapus.
+- Gerbang: tsc **0**, eslint **0 error**, vitest **1799 lulus / 76 berkas**, coverage 96,41 / 86 / 96,55 / 97,69 (exit 0), build **0**, `verify:precache` **OK 66 berkas**.
+
+### Sisa / catatan
+- Akun yatim lama hanya bisa diadopsi kalau admin tahu password-nya; kalau tidak, harus dihapus di Firebase Console (Authentication → Users). Tidak ada jalur client-side untuk mencari uid dari email.
+
 ## 📝 S36-approve-wo-fix (2026-10-24) — Perbaikan bug permission_denied saat Approve Work Order
 
 Live **sw v53**. Mengatasi error `Approve WO Error: Error: permission_denied`.

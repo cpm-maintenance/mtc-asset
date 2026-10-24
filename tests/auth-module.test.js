@@ -21,12 +21,25 @@ import { authModule } from '../src/js/modules/auth.js';
 // lagi menempel di chunk boot. Mock modul (bukan window) membuktikan jalur
 // dynamic import benar-benar dipakai, bukan stub global.
 vi.mock('firebase/auth', () => ssoMock);
+// App sekunder untuk `createUser` — `firebase/app` di-mock supaya tes tidak
+// perlu SDK asli dan bisa memeriksa app mana yang dipakai.
+const appMock = vi.hoisted(() => ({
+    initializeApp: vi.fn((options, name) => ({ name, options })),
+    getApps: vi.fn(() => []),
+    deleteApp: vi.fn(async () => {}),
+}));
+vi.mock('firebase/app', () => appMock);
 // Satu referensi objek yang sama untuk factory mock & tes: mutasi di tes
 // (mis. menonaktifkan provider) terlihat oleh `import('firebase/auth')`
 // di dalam auth.js.
 const ssoMock = vi.hoisted(() => ({
     GoogleAuthProvider: class {},
     signInWithPopup: vi.fn(),
+    // `createUser` membuat akun di app Firebase SEKUNDER supaya sesi admin tidak
+    // tergeser (lihat auth.js). `getAuth`/`signOut` diambil dari dynamic import
+    // `firebase/auth`, jadi keduanya harus ada di mock yang sama.
+    getAuth: vi.fn((app) => ({ kind: 'secondary-auth', app })),
+    signOut: vi.fn(async () => {}),
     // Resolver WAJIB diberikan eksplisit di jalur SSO: `auth` dibuat lewat
     // `initializeAuth` tanpa resolver supaya iframe `__/auth/iframe` tidak
     // dimuat di layar login (lihat db.js).
@@ -36,6 +49,7 @@ function stubFirebase(overrides = {}) {
     const fns = {
         db: { name: 'db' },
         auth: { name: 'auth' },
+        firebaseConfig: { projectId: 'demo-mtc-asset' },
         browserSessionPersistence: 'session',
         browserLocalPersistence: 'local',
         ref: vi.fn((db, path) => ({ path })),
@@ -734,5 +748,146 @@ describe('submitLogin — prefetch pasca-auth', () => {
 
         await expect(ctx.submitLogin()).resolves.toBe('ok');
         expect(ctx.login).toHaveBeenCalledTimes(1);
+    });
+});
+
+/**
+ * `createUser` dulu memanggil `createUserWithEmailAndPassword(window.auth, ...)`.
+ * Panggilan itu MENGGESER currentUser ke akun baru, sehingga penulisan
+ * `Users/<uid>` dilakukan oleh akun baru (role belum ada) dan ditolak rule
+ * `Users/$uid/role.validate` — hasilnya akun Auth yatim tanpa profil, lalu
+ * percobaan berikutnya gagal `auth/email-already-in-use`. Tes di bawah mengunci
+ * bentuk yang benar: akun dibuat di app sekunder, profil ditulis oleh admin.
+ */
+describe('createUser — akun dibuat di app sekunder (sesi admin tidak tergeser)', () => {
+    beforeEach(() => {
+        appMock.initializeApp.mockClear();
+        appMock.getApps.mockReset().mockReturnValue([]);
+        appMock.deleteApp.mockReset().mockResolvedValue(undefined);
+        ssoMock.getAuth.mockClear();
+        ssoMock.signOut.mockReset().mockResolvedValue(undefined);
+    });
+
+    it('createUserWithEmailAndPassword dipanggil dengan auth app sekunder, bukan window.auth', async () => {
+        const fb = stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'baru' } })),
+        });
+        const ctx = makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } });
+
+        await ctx.createUser('teknisi@x.id', 'pw', 'user');
+
+        const authArg = fb.createUserWithEmailAndPassword.mock.calls[0][0];
+        expect(authArg).not.toBe(fb.auth);
+        expect(authArg.kind).toBe('secondary-auth');
+        expect(appMock.initializeApp).toHaveBeenCalledTimes(1);
+        // Sesi admin di app utama tidak boleh di-signOut.
+        expect(fb.signOut).not.toHaveBeenCalled();
+    });
+
+    it('app sekunder dihapus setelah selesai', async () => {
+        stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'baru' } })),
+        });
+        await makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } }).createUser('a@b.c', 'pw');
+        expect(appMock.deleteApp).toHaveBeenCalledTimes(1);
+    });
+
+    it('email-already-in-use + password cocok: uid lama diadopsi, profil ditulis', async () => {
+        const fb = stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => {
+                throw Object.assign(new Error('exists'), { code: 'auth/email-already-in-use' });
+            }),
+            signInWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'lama' } })),
+        });
+        const ctx = makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } });
+
+        const res = await ctx.createUser('teknisi@x.id', 'pw', 'supervisor');
+
+        expect(res.success).toBe(true);
+        expect(res.user.uid).toBe('lama');
+        expect(fb.set.mock.calls[0][0]).toEqual({ path: 'Users/lama' });
+        expect(fb.set.mock.calls[0][1]).toMatchObject({ uid: 'lama', role: 'supervisor' });
+    });
+
+    it('email-already-in-use + password beda: gagal dengan instruksi Console, profil tidak ditulis', async () => {
+        const fb = stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => {
+                throw Object.assign(new Error('exists'), { code: 'auth/email-already-in-use' });
+            }),
+            signInWithEmailAndPassword: vi.fn(async () => {
+                throw Object.assign(new Error('wrong'), { code: 'auth/wrong-password' });
+            }),
+        });
+        const ctx = makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } });
+
+        const res = await ctx.createUser('teknisi@x.id', 'salah', 'user');
+
+        expect(res.success).toBe(false);
+        expect(res.message).toMatch(/Firebase Console/);
+        expect(fb.set).not.toHaveBeenCalled();
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('error selain email-already-in-use diteruskan apa adanya, app sekunder tetap dibersihkan', async () => {
+        const fb = stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => {
+                throw Object.assign(new Error('network-request-failed'), { code: 'auth/network-request-failed' });
+            }),
+        });
+        const ctx = makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } });
+
+        const res = await ctx.createUser('teknisi@x.id', 'pw', 'user');
+
+        expect(res).toEqual({ success: false, message: 'network-request-failed' });
+        expect(fb.set).not.toHaveBeenCalled();
+        expect(fb.signInWithEmailAndPassword).not.toHaveBeenCalled();
+        expect(appMock.deleteApp).toHaveBeenCalledTimes(1);
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('app sekunder basi dari percobaan sebelumnya dihapus dulu', async () => {
+        const stale = { name: 'user-create' };
+        appMock.getApps.mockReturnValue([{ name: 'default' }, stale]);
+        stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'baru' } })),
+        });
+
+        await makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } }).createUser('a@b.c', 'pw');
+
+        // sekali untuk app basi, sekali untuk app yang baru dibuat
+        expect(appMock.deleteApp).toHaveBeenCalledTimes(2);
+        expect(appMock.deleteApp.mock.calls[0][0]).toBe(stale);
+    });
+
+    it('cleanup yang gagal (signOut/deleteApp) tidak menjatuhkan createUser', async () => {
+        ssoMock.signOut.mockRejectedValue(new Error('signOut mati'));
+        appMock.deleteApp.mockRejectedValue(new Error('deleteApp mati'));
+        const fb = stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'baru' } })),
+        });
+
+        const res = await makeCtx({ isAdmin: true, user: { email: 'admin@x.id' } })
+            .createUser('teknisi@x.id', 'pw', 'user');
+
+        expect(res.success).toBe(true);
+        expect(fb.set).toHaveBeenCalledTimes(1);
+    });
+
+    it('password kosong saja: tetap ditolak sebelum menyentuh Firebase', async () => {
+        const fb = stubFirebase();
+        const res = await makeCtx({ isAdmin: true }).createUser('teknisi@x.id', '');
+
+        expect(res).toEqual({ success: false, message: 'Email and password required' });
+        expect(fb.createUserWithEmailAndPassword).not.toHaveBeenCalled();
+    });
+
+    it('admin tanpa objek user: createdBy jatuh ke "admin"', async () => {
+        const fb = stubFirebase({
+            createUserWithEmailAndPassword: vi.fn(async () => ({ user: { uid: 'baru' } })),
+        });
+
+        await makeCtx({ isAdmin: true, user: null }).createUser('teknisi@x.id', 'pw', 'user');
+
+        expect(fb.set.mock.calls[0][1]).toMatchObject({ createdBy: 'admin' });
     });
 });
