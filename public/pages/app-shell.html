@@ -120,7 +120,7 @@
         <p class="text-tac-on-surface-variant text-sm mt-2 leading-relaxed">This action will mark the WO as rejected. Please provide a reason.</p>
       </div>
       <div class="mb-5 relative">
-        <textarea aria-label="Type rejection reason" x-model="rejectReason" placeholder="Type rejection reason..." class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-on-surface-variant rounded-xl focus:border-tac-status-emergency/40 focus:ring-1 focus:ring-tac-status-emergency/20 transition-all outline-none" rows="4"></textarea>
+        <textarea aria-label="Alasan penolakan" x-model="rejectReason" placeholder="Type rejection reason..." class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-on-surface-variant rounded-xl focus:border-tac-status-emergency/40 focus:ring-1 focus:ring-tac-status-emergency/20 transition-all outline-none" rows="4"></textarea>
       </div>
       <div class="flex gap-3 relative">
         <button @click="showRejectModal = false; rejectReason = ''; activeRejectId = null" 
@@ -154,17 +154,17 @@
       <form @submit.prevent="submitCreateUser()" class="space-y-4 relative">
         <div>
           <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Email</label>
-          <input aria-label="Email" type="email" x-model="newUserForm.email" required placeholder="user@company.com" 
+          <input aria-label="Email pengguna baru" type="email" x-model="newUserForm.email" required placeholder="user@company.com" 
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-on-surface-variant rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
         </div>
         <div>
           <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Password</label>
-          <input aria-label="Password" type="password" x-model="newUserForm.password" required placeholder="Min 6 characters" minlength="6" 
+          <input aria-label="Kata sandi" type="password" x-model="newUserForm.password" required placeholder="Min 6 characters" minlength="6" 
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-on-surface-variant rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
         </div>
         <div>
           <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Role</label>
-          <select aria-label="Role" x-model="newUserForm.role" 
+          <select aria-label="Peran pengguna" x-model="newUserForm.role" 
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
             <option value="user" class="bg-tac-surface-recessed">User</option>
             <option value="admin" class="bg-tac-surface-recessed">Admin</option>
@@ -277,12 +277,12 @@
       <form @submit.prevent="saveEditUser()" class="space-y-4 relative">
         <div>
           <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Email</label>
-          <input aria-label="Email" type="email" x-model="editUserForm.email" required placeholder="user@company.com" 
+          <input aria-label="Email pengguna" type="email" x-model="editUserForm.email" required placeholder="user@company.com" 
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-on-surface-variant rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
         </div>
         <div>
           <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">Role</label>
-          <select aria-label="Role" x-model="editUserForm.role" 
+          <select aria-label="Peran pengguna" x-model="editUserForm.role" 
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
             <option value="user" class="bg-tac-surface-recessed">User</option>
             <option value="admin" class="bg-tac-surface-recessed">Admin</option>
@@ -941,7 +941,7 @@
           <div class="space-y-4">
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Provider</label>
-              <select aria-label="Provider" x-model="aiProvider" @change="updateModelOptions()" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg">
+              <select aria-label="Provider AI" x-model="aiProvider" @change="updateModelOptions()" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg">
                 <option value="openai">OpenAI</option>
                 <option value="claude">Claude</option>
                 <option value="openrouter">OpenRouter</option>
@@ -949,21 +949,21 @@
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Model</label>
-              <select aria-label="Model" x-model="aiModel" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg">
+              <select aria-label="Model AI" x-model="aiModel" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg">
                 <template x-for="opt in aiModelOptions" :key="opt.value">
                   <option :value="opt.value" x-text="opt.label"></option>
                 </template>
               </select>
-              <input aria-label="model-id (contoh: openai/gpt-4o)" x-show="aiModel === '__custom__'" type="text" x-model="customModelInput" placeholder="model-id (contoh: openai/gpt-4o)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg mt-2">
+              <input aria-label="ID model kustom" x-show="aiModel === '__custom__'" type="text" x-model="customModelInput" placeholder="model-id (contoh: openai/gpt-4o)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg mt-2">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">API Keys (Max 5 - Auto Rotate)</label>
               <div class="space-y-2">
-                <input aria-label="API Keys (Max 5 - Auto Rotate)" type="password" x-model="aiApiKeyInput1" placeholder="API Key 1 (utama)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
-                <input aria-label="API Keys (Max 5 - Auto Rotate)" type="password" x-model="aiApiKeyInput2" placeholder="API Key 2 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
-                <input aria-label="API Key 3 (backup)" type="password" x-model="aiApiKeyInput3" placeholder="API Key 3 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
-                <input aria-label="API Key 4 (backup)" type="password" x-model="aiApiKeyInput4" placeholder="API Key 4 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
-                <input aria-label="API Key 5 (backup)" type="password" x-model="aiApiKeyInput5" placeholder="API Key 5 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
+                <input aria-label="API key 1 (utama)" type="password" x-model="aiApiKeyInput1" placeholder="API Key 1 (utama)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
+                <input aria-label="API key 2 (cadangan)" type="password" x-model="aiApiKeyInput2" placeholder="API Key 2 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
+                <input aria-label="API key 3 (cadangan)" type="password" x-model="aiApiKeyInput3" placeholder="API Key 3 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
+                <input aria-label="API key 4 (cadangan)" type="password" x-model="aiApiKeyInput4" placeholder="API Key 4 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
+                <input aria-label="API key 5 (cadangan)" type="password" x-model="aiApiKeyInput5" placeholder="API Key 5 (backup)" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle rounded-lg text-sm">
               </div>
               <p class="text-[9px] text-tac-status-standby mt-2">Isi beberapa API key untuk failover otomatis jika limit tercapai</p>
             </div>
@@ -1097,17 +1097,17 @@
       <form @submit.prevent="submitEquipment()" class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Asset Identifier</label>
-          <input aria-label="Asset Identifier" type="text" x-model="equipForm.id" required placeholder="NEXUS-XXX" :readonly="isEditingEquip"
+          <input aria-label="ID asset" type="text" x-model="equipForm.id" required placeholder="NEXUS-XXX" :readonly="isEditingEquip"
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
         </div>
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Designation Name</label>
-          <input aria-label="Designation Name" type="text" x-model="equipForm.nama" required placeholder="System Node Name"
+          <input aria-label="Nama asset" type="text" x-model="equipForm.nama" required placeholder="System Node Name"
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
         </div>
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Classification</label>
-          <select aria-label="Classification" x-model="equipForm.tipe"
+          <select aria-label="Tipe equipment" x-model="equipForm.tipe"
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
             <option>Crusher</option>
             <option>Ball Mill</option>
@@ -1121,12 +1121,12 @@
         </div>
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operation Sector</label>
-          <input aria-label="Operation Sector" type="text" x-model="equipForm.lokasi" placeholder="Area Coordinate"
+          <input aria-label="Lokasi" type="text" x-model="equipForm.lokasi" placeholder="Area Coordinate"
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
         </div>
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operational Status</label>
-          <select aria-label="Operational Status" x-model="equipForm.status"
+          <select aria-label="Status operasional" x-model="equipForm.status"
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
             <option value="Active">Operational</option>
             <option value="In Maintenance">Under Repair</option>
@@ -1136,7 +1136,7 @@
         </div>
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Criticality Level</label>
-          <select aria-label="Criticality Level" x-model="equipForm.criticality"
+          <select aria-label="Tingkat kekritisan" x-model="equipForm.criticality"
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
             <option value="High">Priority Alpha</option>
             <option value="Medium">Priority Beta</option>
@@ -1145,7 +1145,7 @@
         </div>
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Current HM (Meter)</label>
-          <input aria-label="Current HM (Meter)" type="number" x-model="equipForm.current" min="0" step="0.1" class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
+          <input aria-label="Running hours saat ini" type="number" x-model="equipForm.current" min="0" step="0.1" class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle">
         </div>
         
         <!-- Asset Photo Upload -->
@@ -1197,24 +1197,24 @@
         <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Identifier</label>
-            <input aria-label="Part Identifier" type="text" x-model="partForm.id" required placeholder="SKU-XXXX" :readonly="isEditingPart"
+            <input aria-label="ID spare part" type="text" x-model="partForm.id" required placeholder="SKU-XXXX" :readonly="isEditingPart"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Component Name</label>
-            <input aria-label="Component Name" type="text" x-model="partForm.nama" required placeholder="Nomenclature"
+            <input aria-label="Nama komponen" type="text" x-model="partForm.nama" required placeholder="Nomenclature"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
         </div>
         <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Brief Designation</label>
-            <input aria-label="Brief Designation" type="text" x-model="partForm.namaSingkat" placeholder="Alias"
+            <input aria-label="Nama singkat" type="text" x-model="partForm.namaSingkat" placeholder="Alias"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Number</label>
-            <input aria-label="Part Number" type="text" x-model="partForm.partNumber" placeholder="Mfr P/N"
+            <input aria-label="Nomor part pabrikan" type="text" x-model="partForm.partNumber" placeholder="Mfr P/N"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
         </div>
@@ -1223,7 +1223,7 @@
           <div class="bg-tac-surface-card/60 border border-tac-border-tactical p-4 rounded-2xl max-h-48 overflow-y-auto border-tac-gold-bright/10 space-y-2">
             <template x-for="e in equipment" :key="e.EquipmentID">
               <label class="flex items-center gap-3 p-2 hover:bg-tac-gold-bright/5 rounded-xl cursor-pointer transition-colors group">
-                <input aria-label="Equip Ids" type="checkbox" :value="e.EquipmentID" x-model="partForm.equipIds" 
+                <input aria-label="Equipment terkait" type="checkbox" :value="e.EquipmentID" x-model="partForm.equipIds" 
                   class="w-4 h-4 rounded border-tac-gold-bright/20 bg-black text-tac-gold-bright focus:ring-tac-gold-bright/50">
                 <div class="flex-1 min-w-0">
                   <p class="text-[10px] font-black text-tac-on-surface truncate" x-text="e.Nama"></p>
@@ -1240,24 +1240,24 @@
         <div class="grid grid-cols-3 gap-4">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Current Stock</label>
-            <input aria-label="Current Stock" type="number" x-model="partForm.stok" placeholder="0" min="0"
+            <input aria-label="Stok saat ini" type="number" x-model="partForm.stok" placeholder="0" min="0"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center">
           </div>
           <div>
             <label class="text-[9px] text-tac-status-emergency/60 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Safety Level</label>
-            <input aria-label="Safety Level" type="number" x-model="partForm.minStock" placeholder="0" min="0"
+            <input aria-label="Stok minimum" type="number" x-model="partForm.minStock" placeholder="0" min="0"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center text-tac-status-emergency border-tac-status-emergency/20 rounded-xl">
           </div>
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Unit Price (IDR)</label>
-            <input aria-label="Unit Price (IDR)" type="number" x-model="partForm.harga" placeholder="0" min="0"
+            <input aria-label="Harga satuan" type="number" x-model="partForm.harga" placeholder="0" min="0"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center">
           </div>
         </div>
         <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Storage Sector</label>
-            <input aria-label="Storage Sector" type="text" x-model="partForm.lokasi" placeholder="Warehouse"
+            <input aria-label="Lokasi penyimpanan" type="text" x-model="partForm.lokasi" placeholder="Warehouse"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
           <div>
@@ -1272,22 +1272,22 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Last Replaced</label>
-              <input aria-label="Last Replaced" type="date" x-model="partForm.lastReplaceDate"
+              <input aria-label="Tanggal penggantian terakhir" type="date" x-model="partForm.lastReplaceDate"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Avg Lifetime (Days)</label>
-              <input aria-label="Avg Lifetime (Days)" type="number" x-model="partForm.avgLifetimeDays" placeholder="365" min="1"
+              <input aria-label="Umur pakai rata-rata (hari)" type="number" x-model="partForm.avgLifetimeDays" placeholder="365" min="1"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Usage Hours</label>
-              <input aria-label="Usage Hours" type="number" x-model="partForm.usageHours" placeholder="0" min="0"
+              <input aria-label="Jam pemakaian" type="number" x-model="partForm.usageHours" placeholder="0" min="0"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Avg Lifetime (Hours)</label>
-              <input aria-label="Avg Lifetime (Hours)" type="number" x-model="partForm.avgLifetimeHours" placeholder="0" min="0"
+              <input aria-label="Umur pakai rata-rata (HM)" type="number" x-model="partForm.avgLifetimeHours" placeholder="0" min="0"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-center">
             </div>
           </div>
@@ -1324,12 +1324,12 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div class="md:col-span-1">
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
-            <input aria-label="Timeline Date" type="date" x-model="performanceForm.date" required id="perf-date" name="perf-date"
+            <input aria-label="Tanggal pencatatan" type="date" x-model="performanceForm.date" required id="perf-date" name="perf-date"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-tac-on-surface">
           </div>
           <div class="md:col-span-1">
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Asset Index</label>
-            <select aria-label="Asset Index" x-model="performanceForm.equipmentId" @change="onPerfEquipChange()" required id="perf-equip" name="perf-equip"
+            <select aria-label="Equipment" x-model="performanceForm.equipmentId" @change="onPerfEquipChange()" required id="perf-equip" name="perf-equip"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-tac-on-surface">
               <option value="" disabled>-- Select Asset Node --</option>
               <template x-for="e in equipment">
@@ -1339,7 +1339,7 @@
           </div>
           <div class="md:col-span-1">
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Ops Area</label>
-            <input aria-label="Ops Area" type="text" x-model="performanceForm.area" placeholder="Zone/Pit"
+            <input aria-label="Area operasi" type="text" x-model="performanceForm.area" placeholder="Zone/Pit"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
           </div>
         </div>
@@ -1349,17 +1349,17 @@
           <div class="form-grid">
             <div>
               <label class="text-[10px] text-tac-status-repair uppercase font-black mb-2 block text-center" title="Hour Meter: pembacaan kumulatif akhir periode">HM (Running Hrs)</label>
-              <input aria-label="HM (Running Hrs)" type="number" x-model="performanceForm.hm" step="0.1" min="0" placeholder="0.0"
+              <input aria-label="Running hours (HM)" type="number" x-model="performanceForm.hm" step="0.1" min="0" placeholder="0.0"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-status-repair text-center text-sm">
             </div>
             <div>
               <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black mb-2 block text-center">Work (WH)</label>
-              <input aria-label="Work (WH)" type="number" x-model="performanceForm.wh" step="0.01" @input="updatePerfHours('wh')"
+              <input aria-label="Working hours" type="number" x-model="performanceForm.wh" step="0.01" @input="updatePerfHours('wh')"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-on-surface text-center text-sm">
             </div>
             <div>
               <label class="text-[8px] text-tac-status-emergency/60 uppercase font-black mb-2 block text-center">Total Down</label>
-              <input aria-label="Total Down" type="number" x-model="performanceForm.bd" step="0.01" readonly
+              <input aria-label="Breakdown" type="number" x-model="performanceForm.bd" step="0.01" readonly
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-status-emergency text-center text-sm opacity-60">
             </div>
             <div>
@@ -1369,12 +1369,12 @@
             </div>
             <div>
               <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black mb-2 block text-center">BD Freq</label>
-              <input aria-label="BD Freq" type="number" x-model="performanceForm.freq" readonly
+              <input aria-label="Frekuensi" type="number" x-model="performanceForm.freq" readonly
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-on-surface text-center text-sm opacity-60">
             </div>
             <div class="col-span-2 md:col-span-1">
               <label class="text-[8px] text-tac-gold-bright/60 uppercase font-black mb-2 block text-center">Target PA%</label>
-              <input aria-label="Target PA%" type="number" x-model="performanceForm.paPlan"
+              <input aria-label="PA plan" type="number" x-model="performanceForm.paPlan"
                 class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-gold-bright text-center text-sm">
             </div>
           </div>
@@ -1400,21 +1400,21 @@
                 <button type="button" @click="removeBDEvent(idx)" aria-label="Remove breakdown event" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-tac-status-emergency/20 text-tac-status-emergency flex items-center justify-center hover:bg-tac-status-emergency hover:text-tac-on-surface transition-all z-10"><span class="material-symbols-outlined text-[16px]">close</span></button>
                 
                 <div class="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4 border-b border-tac-border-subtle pb-4">
-                   <select aria-label="Category" x-model="event.category" class="bg-tac-surface-container-low p-3 rounded-xl text-xs font-black text-tac-gold-bright uppercase tracking-widest outline-none w-full md:w-auto">
+                   <select aria-label="Kategori kejadian" x-model="event.category" class="bg-tac-surface-container-low p-3 rounded-xl text-xs font-black text-tac-gold-bright uppercase tracking-widest outline-none w-full md:w-auto">
                       <option value="Mechanical">Mechanical</option>
                       <option value="Electrical">Electrical</option>
                       <option value="Operational">Operational</option>
                    </select>
-                   <input aria-label="Component (e.g., Valve)" type="text" x-model="event.component" placeholder="Component (e.g., Valve)..." class="flex-1 w-full bg-tac-surface-container-low p-3 rounded-xl text-xs font-bold text-tac-on-surface border-none outline-none focus:ring-1 focus:ring-tac-gold-bright placeholder:text-tac-on-surface-variant">
+                   <input aria-label="Komponen" type="text" x-model="event.component" placeholder="Component (e.g., Valve)..." class="flex-1 w-full bg-tac-surface-container-low p-3 rounded-xl text-xs font-bold text-tac-on-surface border-none outline-none focus:ring-1 focus:ring-tac-gold-bright placeholder:text-tac-on-surface-variant">
                    <div class="md:ml-auto flex items-center gap-2 bg-tac-surface-container-low p-2 rounded-xl w-full md:w-auto">
-                      <input aria-label="Duration" type="number" x-model="event.duration" step="0.01" @input="updatePerfHours('bd')" class="w-20 bg-transparent text-center text-sm font-bold p-1 outline-none">
+                      <input aria-label="Durasi" type="number" x-model="event.duration" step="0.01" @input="updatePerfHours('bd')" class="w-20 bg-transparent text-center text-sm font-bold p-1 outline-none">
                       <span class="text-xs text-tac-status-standby uppercase font-black pr-2">Hrs</span>
                    </div>
                 </div>
                 
-                <input aria-label="Failure Description" type="text" x-model="event.problem" placeholder="Failure Description..." class="w-full bg-tac-surface-container-low rounded-xl text-sm border-none p-4 mb-4 placeholder:text-tac-on-surface-variant focus:ring-1 focus:ring-tac-gold-bright">
+                <input aria-label="Deskripsi kegagalan" type="text" x-model="event.problem" placeholder="Failure Description..." class="w-full bg-tac-surface-container-low rounded-xl text-sm border-none p-4 mb-4 placeholder:text-tac-on-surface-variant focus:ring-1 focus:ring-tac-gold-bright">
                 
-                <select aria-label="Rca" x-model="event.rca" class="w-full bg-tac-surface-container-low rounded-xl p-4 text-xs font-bold text-tac-on-surface-variant border-none outline-none focus:ring-1 focus:ring-tac-gold-bright">
+                <select aria-label="RCA" x-model="event.rca" class="w-full bg-tac-surface-container-low rounded-xl p-4 text-xs font-bold text-tac-on-surface-variant border-none outline-none focus:ring-1 focus:ring-tac-gold-bright">
                   <option value="Fatigue/Wear">Root Cause: Fatigue / Wear</option>
                   <option value="Human Error">Root Cause: Human Error</option>
                   <option value="Design/Quality">Root Cause: Design / Quality</option>
@@ -1429,14 +1429,14 @@
         <div class="form-grid">
           <div>
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black mb-2 block ml-1">Operational Type</label>
-            <select aria-label="Operational Type" x-model="performanceForm.type" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
+            <select aria-label="Jenis pencatatan" x-model="performanceForm.type" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
               <option value="Unscheduled">Emergency (Unsch)</option>
               <option value="Scheduled">Planned (Sch)</option>
             </select>
           </div>
           <div>
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black mb-2 block ml-1">Neural Root Cause (Primary)</label>
-            <select aria-label="Neural Root Cause (Primary)" x-model="performanceForm.rca" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
+            <select aria-label="RCA" x-model="performanceForm.rca" class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
               <option value="None">No Anomaly</option>
               <option value="Human Error">Human Error</option>
               <option value="Fatigue/Wear">Natural Wear</option>
@@ -1478,7 +1478,7 @@
         <div x-show="!isLogDetailView || isEditingLog" class="form-grid">
           <div>
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Neural Target (Asset)</label>
-            <select aria-label="Neural Target (Asset)" x-model="logForm.equipmentId" required
+            <select aria-label="Equipment" x-model="logForm.equipmentId" required
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
               <option value="">-- Choose Asset Index --</option>
               <template x-for="e in equipment">
@@ -1486,12 +1486,12 @@
               </template>
               <option value="EXTERNAL">EXTERNAL - Other / External Request</option>
             </select>
-            <input aria-label="Enter external equipment/asset name" x-show="logForm.equipmentId === 'EXTERNAL'" type="text" x-model="logForm.externalEquipName" placeholder="Enter external equipment/asset name..." x-bind:style="logForm.equipmentId === 'EXTERNAL' ? 'display:block' : 'display:none'"
+            <input aria-label="Nama equipment eksternal" x-show="logForm.equipmentId === 'EXTERNAL'" type="text" x-model="logForm.externalEquipName" placeholder="Enter external equipment/asset name..." x-bind:style="logForm.equipmentId === 'EXTERNAL' ? 'display:block' : 'display:none'"
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold mt-2">
           </div>
           <div>
             <label class="text-[8px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Timeline Date</label>
-            <input aria-label="Timeline Date" type="date" x-model="logForm.date" required
+            <input aria-label="Tanggal pekerjaan" type="date" x-model="logForm.date" required
               class="w-full p-3 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold text-tac-on-surface">
           </div>
         </div>
@@ -1499,7 +1499,7 @@
         <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Activity Type</label>
-            <select aria-label="Activity Type" x-model="logForm.type"
+            <select aria-label="Jenis pekerjaan" x-model="logForm.type"
               class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
               <option value="PM">Prev. Maintenance (PM)</option>
               <option value="Repair">Repair</option>
@@ -1512,7 +1512,7 @@
           </div>
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Mission Status</label>
-            <select aria-label="Mission Status" x-model="logForm.status"
+            <select aria-label="Status pekerjaan" x-model="logForm.status"
               @change="if (logForm.status === 'Completed' && !logForm.completedDate) logForm.completedDate = new Date().toISOString().split('T')[0]"
               class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
               <option value="Pending">Pending</option>
@@ -1529,7 +1529,7 @@
           <div class="form-grid">
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Priority Level</label>
-              <select aria-label="Priority Level" x-model="logForm.woPriority"
+              <select aria-label="Prioritas work order" x-model="logForm.woPriority"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
                 <option value="Planned">Planned - Schedule normally</option>
                 <option value="Normal">Normal - Can wait</option>
@@ -1539,27 +1539,27 @@
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Assigned Technician</label>
-              <input aria-label="Assigned Technician" type="text" x-model="logForm.assignedTo" placeholder="Technician name"
+              <input aria-label="Teknisi" type="text" x-model="logForm.assignedTo" placeholder="Technician name"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Due Date</label>
-              <input aria-label="Due Date" type="date" x-model="logForm.dueDate"
+              <input aria-label="Tenggat" type="date" x-model="logForm.dueDate"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Est. Hours</label>
-              <input aria-label="Est. Hours" type="number" x-model="logForm.estimatedHours" placeholder="0" min="0"
+              <input aria-label="Estimasi jam" type="number" x-model="logForm.estimatedHours" placeholder="0" min="0"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Actual Hours</label>
-              <input aria-label="Actual Hours" type="number" x-model="logForm.actualHours" placeholder="0" min="0" step="0.1"
+              <input aria-label="Jam aktual" type="number" x-model="logForm.actualHours" placeholder="0" min="0" step="0.1"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div x-show="logForm.status === 'Completed'">
               <label class="text-[9px] text-tac-status-operational/70 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Completed Date</label>
-              <input aria-label="Completed Date" type="date" x-model="logForm.completedDate" :max="new Date().toISOString().split('T')[0]"
+              <input aria-label="Tanggal selesai" type="date" x-model="logForm.completedDate" :max="new Date().toISOString().split('T')[0]"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
           </div>
@@ -1571,7 +1571,7 @@
           <div class="form-grid">
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Request Source</label>
-              <select aria-label="Request Source" x-model="logForm.requestSource"
+              <select aria-label="Sumber permintaan" x-model="logForm.requestSource"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
                 <option value="Production">Production</option>
                 <option value="Maintenance">Maintenance</option>
@@ -1584,17 +1584,17 @@
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Requested By</label>
-              <input aria-label="Requested By" type="text" x-model="logForm.requestedBy" placeholder="Name of requester"
+              <input aria-label="Diminta oleh" type="text" x-model="logForm.requestedBy" placeholder="Name of requester"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Request Date</label>
-              <input aria-label="Request Date" type="date" x-model="logForm.requestDate"
+              <input aria-label="Tanggal permintaan" type="date" x-model="logForm.requestDate"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
             <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Approved By</label>
-              <input aria-label="Approved By" type="text" x-model="logForm.approvedBy" placeholder="Supervisor/Manager name"
+              <input aria-label="Disetujui oleh" type="text" x-model="logForm.approvedBy" placeholder="Supervisor/Manager name"
                 class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-xs font-bold">
             </div>
           </div>
@@ -1603,21 +1603,21 @@
         <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Operational Down (Hrs)</label>
-            <input aria-label="Operational Down (Hrs)" type="number" x-model="logForm.downtime" step="0.1" placeholder="0.0"
+            <input aria-label="Downtime (jam)" type="number" x-model="logForm.downtime" step="0.1" placeholder="0.0"
               class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-on-surface">
           </div>
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Cost ($)</label>
-            <input aria-label="Cost ($)" type="number" x-model="logForm.cost" placeholder="0"
+            <input aria-label="Biaya" type="number" x-model="logForm.cost" placeholder="0"
               class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-on-surface">
           </div>
                       <div>
               <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Running Hours (HM)</label>
-              <input aria-label="Running Hours (HM)" type="number" x-model="logForm.hm" placeholder="0.0" min="0" step="0.1" class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-on-surface">
+              <input aria-label="Running hours (HM)" type="number" x-model="logForm.hm" placeholder="0.0" min="0" step="0.1" class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle font-black text-tac-on-surface">
             </div>
 <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Root Cause (RCA)</label>
-            <select aria-label="Root Cause (RCA)" x-model="logForm.rca" class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-[10px] font-bold">
+            <select aria-label="RCA" x-model="logForm.rca" class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-[10px] font-bold">
               <option value="PM">Normal PM</option>
               <option value="Human Error">Human Error</option>
               <option value="Fatigue/Wear">Fatigue/Wear</option>
@@ -1629,7 +1629,7 @@
 
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Technical Briefing</label>
-          <textarea aria-label="Technical Briefing" x-model="logForm.desc" required placeholder="Input technical findings..."
+          <textarea aria-label="Temuan teknis" x-model="logForm.desc" required placeholder="Input technical findings..."
             class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle h-32"></textarea>
         </div>
 
@@ -1681,7 +1681,7 @@
                   <option :value="p.PartID" x-text="(p.NamaSingkat || p.NamaPart) + (p.PartNumber ? ' (' + p.PartNumber + ')' : '')"></option>
                 </template>
               </select>
-              <input aria-label="Qty" type="number" x-model="part.qty" min="1" placeholder="Qty"
+              <input aria-label="Jumlah" type="number" x-model="part.qty" min="1" placeholder="Qty"
                 class="w-20 p-4 bg-tac-surface-recessed border border-tac-border-subtle text-center font-black text-tac-on-surface">
               <button type="button" @click="removePartFromLog(index)" aria-label="Remove part"
                 class="text-tac-status-emergency bg-tac-surface-card/60 border border-tac-border-tactical hover:bg-tac-status-emergency/20 w-12 h-12 rounded-xl border-tac-status-emergency/20 transition-all flex items-center justify-center shadow-xl"><span class="material-symbols-outlined text-[16px]">close</span></button>

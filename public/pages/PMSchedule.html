@@ -153,7 +153,7 @@
       <!-- Dropdown Selects -->
       <div class="flex flex-wrap items-center gap-space-xs">
         <!-- Equipment Selector -->
-        <select aria-label="Pm Filter Equip" x-model="pmFilterEquip"
+        <select aria-label="Filter equipment PM" x-model="pmFilterEquip"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none max-w-[200px] field-compact">
           <option value="">ALL EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
@@ -162,7 +162,7 @@
         </select>
 
         <!-- Status Selector -->
-        <select aria-label="Pm Filter Status" x-model="pmFilterStatus"
+        <select aria-label="Filter status PM" x-model="pmFilterStatus"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">ALL STATUS</option>
           <option value="pending">PENDING / DUE</option>
@@ -171,7 +171,7 @@
         </select>
 
         <!-- Priority Selector -->
-        <select aria-label="Pm Filter Priority" x-model="pmFilterPriority"
+        <select aria-label="Filter prioritas PM" x-model="pmFilterPriority"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none field-compact">
           <option value="">ALL PRIORITY</option>
           <option value="High">HIGH</option>
@@ -578,12 +578,12 @@
       <form @submit.prevent="submitPM()" class="space-y-4">
         <div>
           <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Task Name *</label>
-          <input aria-label="Task Name" type="text" x-model="pmForm.taskName" placeholder="e.g. Ganti Oli, Greasing, Inspect Belt..." required
+          <input aria-label="Nama tugas PM" type="text" x-model="pmForm.taskName" placeholder="e.g. Ganti Oli, Greasing, Inspect Belt..." required
             class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-status-standby focus:border-tac-primary outline-none transition-all">
         </div>
         <div>
           <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Target Equipment *</label>
-          <select aria-label="Target Equipment" x-model="pmForm.equipmentId" required
+          <select aria-label="Equipment target" x-model="pmForm.equipmentId" required
             class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
             <option value="">Select Equipment</option>
             <template x-for="e in equipment" :key="e.EquipmentID">
@@ -593,18 +593,18 @@
         </div>
         <div>
           <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Directive Description</label>
-          <textarea aria-label="Directive Description" x-model="pmForm.description" rows="2"
+          <textarea aria-label="Deskripsi pekerjaan" x-model="pmForm.description" rows="2"
             class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-status-standby focus:border-tac-primary outline-none transition-all resize-none"
             placeholder="Operational notes or standard procedures..."></textarea>
         </div>
         <div class="form-grid">
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">PM Scheduled Date *</label>
-            <input aria-label="PM Scheduled Date" type="date" x-model="pmForm.date" required class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <input aria-label="Tanggal jadwal PM" type="date" x-model="pmForm.date" required class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
           </div>
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Recurrence Cycle</label>
-            <select aria-label="Recurrence Cycle" x-model="pmForm.frequency" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <select aria-label="Siklus pengulangan" x-model="pmForm.frequency" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
               <option value="none">No Repeat (One-off)</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -616,20 +616,20 @@
         <div class="form-grid">
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Trigger Basis</label>
-            <select aria-label="Trigger Basis" x-model="pmForm.basis" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <select aria-label="Dasar pemicu" x-model="pmForm.basis" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
               <option value="calendar">Calendar Window</option>
               <option value="hours">Running Hours (HM)</option>
             </select>
           </div>
           <div x-show="pmForm.basis === 'hours'">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">HM Interval (Hours)</label>
-            <input aria-label="HM Interval (Hours)" type="number" x-model="pmForm.intervalHours" min="0" step="100" placeholder="e.g. 500" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <input aria-label="Interval HM (jam)" type="number" x-model="pmForm.intervalHours" min="0" step="100" placeholder="e.g. 500" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
           </div>
         </div>
         <div class="form-grid">
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Priority Level</label>
-            <select aria-label="Priority Level" x-model="pmForm.priority" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <select aria-label="Tingkat prioritas" x-model="pmForm.priority" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
               <option value="High">HIGH</option>
               <option value="Medium">MEDIUM</option>
               <option value="Low">LOW</option>
@@ -637,7 +637,7 @@
           </div>
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider mb-1 block">Assigned Specialist</label>
-            <input aria-label="Assigned Specialist" type="text" x-model="pmForm.assignedTo" placeholder="e.g. Maintenance Crew" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
+            <input aria-label="Teknisi penanggung jawab" type="text" x-model="pmForm.assignedTo" placeholder="e.g. Maintenance Crew" class="w-full p-2.5 bg-tac-surface-recessed border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none">
           </div>
         </div>
         <div class="flex gap-2 pt-2 border-t border-tac-border-subtle">

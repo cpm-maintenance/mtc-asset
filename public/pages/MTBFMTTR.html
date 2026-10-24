@@ -111,7 +111,7 @@
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-tac-primary text-[18px]">precision_manufacturing</span>
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">UNIT ANALISIS:</span>
-        <select aria-label="Mtbf Filter Equip" x-model="mtbfFilterEquip" @change="renderMTBFMTTRChart()"
+        <select aria-label="Filter equipment MTBF" x-model="mtbfFilterEquip" @change="renderMTBFMTTRChart()"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1.5 rounded border border-tac-border-subtle outline-none min-w-[16rem] field-compact">
           <option value="">-- PILIH EQUIPMENT --</option>
           <template x-for="eq in equipment" :key="eq.EquipmentID">

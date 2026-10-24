@@ -1,3 +1,46 @@
+## 📝 S36-form-c (2026-10-24) — Label 110 kontrol dirapikan + verifikasi viewport HP
+
+Live **sw v52** (belum di-push). Lanjutan S36-form-b.
+
+### Yang berubah
+- **110 `aria-label`** yang sebelumnya hasil turunan mesin (`All Logs Jenis Filter`, `Pm Filter
+  Equip`, `Mp Month`) diganti teks Indonesia yang enak dibaca (`Filter jenis log`, `Filter
+  equipment PM`, `Bulan rencana`). Istilah teknis tetap Inggris sesuai konvensi UI repo:
+  WORK ORDER, PM, MTBF, HM, RCA, PA plan, working hours, breakdown.
+- **`sw.js` v51 → v52.**
+
+### Verifikasi viewport HP (emulasi CDP, bukan resize)
+| Properti | Nilai |
+|---|---|
+| Viewport | 360×800, dpr **3**, `mobile=true` |
+| `pointer: coarse` | **true** |
+| Overflow horizontal | **0 px** |
+| Kontrol terlihat | 3 (layar login) |
+| Tinggi kontrol terkecil | **24 px** (checkbox) · input 44 px |
+| Service worker aktif | ya |
+
+Screenshot dibaca dengan `vision_analyze`: tidak ada teks terpotong, tidak ada elemen meluber,
+tidak ada kontrol bertumpuk, dan checkbox tampil sebagai kotak bergaris gelap — bukan kotak
+putih native. Emulasi direset setelah probe.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- vitest **1789 tes / 76 berkas**
+- coverage **96,43 / 86,12 / 96,55 / 97,75** — identik
+- build ok · precache **66/66**
+- E2E **5 passed / 3 skipped** (39,1 s)
+
+### Jebakan yang kena di sesi ini
+**`vite dev` yatim di port 3000 membuat seluruh E2E gagal dengan `auth/invalid-credential`.**
+Gejalanya menyesatkan: `#login-id` tetap terisi, tombol tidak disabled, `submitLogin` ada,
+`isLoading` false — hanya gate yang tidak terbuka. Penyebabnya `reuseExistingServer: true` di
+`playwright.config.js` memakai ulang dev server sisa run sebelumnya yang berjalan **tanpa**
+`VITE_USE_EMULATORS=1`, sehingga sign-in menembak Firebase produksi dan user E2E tidak ada di
+sana. Perbaikannya: matikan listener **3000** juga (bukan cuma 9000/9099) sebelum menjalankan
+ulang. Probe diagnosis yang dipakai: tangkap `pageerror` + `console` lalu baca
+`auth/invalid-credential` dari log — bukan menyimpulkan dari `toBeHidden` yang timeout.
+
 ## 📝 S36-form-b (2026-10-24) — Nama aksesibel 132 kontrol, 14 grid form, checkbox kustom
 
 Lanjutan S36-form. Live **sw v51** (belum di-push).
