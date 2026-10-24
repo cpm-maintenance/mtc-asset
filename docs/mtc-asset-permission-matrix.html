@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTC-Asset — Matriks Izin per Peran</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 48px 24px 72px;
+    background: #0b0f14; color: #e6edf3;
+    font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 25px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede { color: #8b98a5; margin: 0 0 28px; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left; font-weight: 600; font-size: 11.5px;
+    letter-spacing: .08em; text-transform: uppercase; color: #8b98a5;
+    padding: 10px 12px; border-bottom: 1px solid #1f2937;
+  }
+  thead th:not(:first-child) { text-align: center; width: 132px; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid #131a22; vertical-align: top; }
+  tbody td:not(:first-child) { text-align: center; }
+  tbody tr:hover td { background: #0f151c; }
+  .mod { font-weight: 600; }
+  .sub { display: block; color: #6b7683; font-size: 12px; font-weight: 400; margin-top: 1px; }
+  .yes { color: #3fb950; font-weight: 600; }
+  .no  { color: #30363d; }
+  .ro  { color: #d29922; font-weight: 600; }
+  .own { color: #58a6ff; font-weight: 600; }
+  .legend { margin-top: 22px; color: #6b7683; font-size: 12.5px; line-height: 2; }
+  .legend b { font-weight: 600; }
+  footer { margin-top: 36px; color: #55606b; font-size: 12.5px; }
+  footer code { color: #8b98a5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Matriks Izin per Peran</h1>
+  <p class="lede">Batas yang ditegakkan Firebase rules, bukan sekadar menu yang disembunyikan. Sumber: README bagian <em>Role-Based Access</em>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Modul</th>
+        <th>User</th>
+        <th>Supervisor</th>
+        <th>Admin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="mod">Dashboard</span><span class="sub">statistik, chart status, biaya, downtime</span></td>
+        <td class="ro">lihat</td>
+        <td class="ro">lihat</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">Equipment</span><span class="sub">CRUD, scan QR, unggah foto, status</span></td>
+        <td class="ro">lihat</td>
+        <td class="yes">penuh</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">Spare Parts</span><span class="sub">stok, ambang min/max, tautan ke aset</span></td>
+        <td class="ro">lihat</td>
+        <td class="yes">penuh</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">Request Part</span><span class="sub">pengajuan multi-item, rantai persetujuan</span></td>
+        <td class="own">ajukan</td>
+        <td class="own">setujui</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">Work Orders</span><span class="sub">approve, reject, start, complete, ekspor PDF</span></td>
+        <td class="no">—</td>
+        <td class="yes">penuh</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">PM Schedule</span><span class="sub">kalender, Gantt, auto-log dari jadwal</span></td>
+        <td class="no">—</td>
+        <td class="yes">penuh</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">Performance</span><span class="sub">entri KPI, perhitungan PA</span></td>
+        <td class="no">—</td>
+        <td class="yes">penuh</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">KPI Analytics</span><span class="sub">PA vs aktual, top event, Pareto RCA</span></td>
+        <td class="no">—</td>
+        <td class="ro">lihat</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">All Logs</span><span class="sub">riwayat aktivitas, impor CSV/XLSX</span></td>
+        <td class="no">—</td>
+        <td class="yes">penuh</td>
+        <td class="yes">penuh</td>
+      </tr>
+      <tr>
+        <td><span class="mod">AI Analysis</span><span class="sub">chat multi-provider, analisa WO</span></td>
+        <td class="no">—</td>
+        <td class="own">pakai</td>
+        <td class="yes">penuh</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="legend">
+    <b class="yes">penuh</b> — buat, ubah, hapus &nbsp;·&nbsp;
+    <b class="own">ajukan / setujui / pakai</b> — aksi terbatas pada satu langkah alur &nbsp;·&nbsp;
+    <b class="ro">lihat</b> — baca saja &nbsp;·&nbsp;
+    <b class="no">—</b> — modul tidak muncul untuk peran ini
+  </div>
+
+  <footer>
+    Role disimpan di profil pengguna dan ditegakkan <code>database.rules.json</code>; menyembunyikan menu bukan kontrol akses.
+  </footer>
+</div>
+</body>
+</html>

@@ -112,3 +112,11 @@ preview.log
 
 # graphify knowledge graph output
 graphify-out/
+
+# archify diagram working dir (sumber JSON + artefak pipeline, lokal)
+.archify/
+# artefak pipeline archify di docs/ — deliverable-nya *.html
+docs/*.browser-check.json
+docs/*.delivery.json
+docs/*.finalize.json
+docs/*.finalize-summary.json

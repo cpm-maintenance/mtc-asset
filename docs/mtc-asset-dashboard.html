@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTC-Asset — Dashboard Peta Sistem</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0f14;
+    --panel: #0f151c;
+    --line: #1f2937;
+    --line-soft: #131a22;
+    --ink: #e6edf3;
+    --muted: #8b98a5;
+    --dim: #55606b;
+    --accent: #2f81f7;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --purple: #a371f7;
+    --cyan: #39c5cf;
+    --rose: #f85149;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+
+  header {
+    padding: 18px 22px 14px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap;
+  }
+  .brand h1 { font-size: 19px; margin: 0 0 2px; letter-spacing: -0.01em; }
+  .brand p { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .stats { display: flex; gap: 18px; margin-left: auto; }
+  .stat { text-align: right; }
+  .stat b { display: block; font-size: 17px; font-weight: 600; }
+  .stat span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+
+  .toolbar {
+    padding: 12px 22px; border-bottom: 1px solid var(--line);
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .chip {
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    padding: 5px 11px; border-radius: 999px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: all .12s;
+  }
+  .chip:hover { border-color: #2b3a4d; color: var(--ink); }
+  .chip[aria-pressed="true"] { background: #16283d; border-color: var(--accent); color: #cfe3ff; }
+  .chip .n { color: var(--dim); margin-left: 5px; }
+  .chip[aria-pressed="true"] .n { color: #7aa9e6; }
+  #q {
+    margin-left: auto; background: var(--panel); border: 1px solid var(--line);
+    color: var(--ink); padding: 6px 12px; border-radius: 8px; font: inherit; font-size: 12.5px;
+    min-width: 220px;
+  }
+  #q:focus { outline: none; border-color: var(--accent); }
+
+  main { flex: 1; display: flex; min-height: 0; }
+
+  .grid {
+    flex: 1; overflow-y: auto; padding: 16px 22px 40px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px;
+    align-content: start;
+  }
+  .item {
+    text-align: left; cursor: pointer; font-family: inherit;
+    border: 1px solid var(--line); background: var(--panel); color: inherit;
+    border-radius: 10px; padding: 13px 14px; transition: border-color .12s, transform .12s;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .item:hover { border-color: #2f81f7; transform: translateY(-1px); }
+  .item[aria-current="true"] { border-color: var(--accent); background: #101c2b; }
+  .item .top { display: flex; align-items: center; gap: 8px; }
+  .item h3 { font-size: 13.5px; margin: 0; font-weight: 600; line-height: 1.35; }
+  .item p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .type {
+    font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px; flex: none;
+  }
+  .t-workflow   { color: #cfe3ff; background: #16283d; }
+  .t-lifecycle  { color: #d9c7ff; background: #241a3a; }
+  .t-sequence   { color: #b7f0f4; background: #10333a; }
+  .t-dataflow   { color: #c8f0cf; background: #123020; }
+  .t-architecture { color: #ffe0b2; background: #33260f; }
+  .t-tree       { color: #ffd0d0; background: #331618; }
+  .t-table      { color: #c9d4e0; background: #1b232c; }
+  .t-index      { color: #c9d4e0; background: #1b232c; }
+
+  .preview {
+    width: 46%; min-width: 380px; border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; background: #080c10;
+  }
+  .preview-head {
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px; font-size: 12.5px;
+  }
+  .preview-head strong { font-weight: 600; }
+  .preview-head a { margin-left: auto; color: var(--accent); text-decoration: none; font-size: 12px; }
+  .preview-head a:hover { text-decoration: underline; }
+  .preview iframe { flex: 1; width: 100%; border: 0; background: #0b0f14; }
+  .empty { color: var(--dim); padding: 26px 18px; font-size: 13px; text-align: center; }
+
+  footer {
+    padding: 9px 22px; border-top: 1px solid var(--line);
+    color: var(--dim); font-size: 11.5px;
+  }
+  footer code { color: var(--muted); }
+  .hide { display: none !important; }
+
+  @media (max-width: 900px) {
+    .preview { display: none; }
+    .stats { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>MTC-Asset — Dashboard Peta Sistem</h1>
+    <p id="sub">Semua artefak diagram, satu layar. Klik kartu untuk pratinjau.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="s-total">0</b><span>Artefak</span></div>
+    <div class="stat"><b id="s-types">0</b><span>Jenis</span></div>
+    <div class="stat"><b style="color:var(--ok)">4/4</b><span>Gate</span></div>
+  </div>
+</header>
+
+<div class="toolbar" id="filters"></div>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <aside class="preview" id="preview">
+    <div class="preview-head">
+      <strong id="p-title">Belum ada pilihan</strong>
+      <a id="p-open" href="#" target="_blank" rel="noopener">buka tab baru ↗</a>
+    </div>
+    <div class="empty" id="p-empty">Pilih satu artefak di kiri.</div>
+    <iframe id="p-frame" class="hide" title="Pratinjau artefak"></iframe>
+  </aside>
+</main>
+
+<footer>
+  Dibangun dengan Archify 3.2.0 (MIT) · setiap diagram lolos <code>validate</code> · <code>deliver</code> · <code>check</code> · <code>browser-check</code> · sumber kandidat di <code>.archify/</code>
+</footer>
+
+<script>
+const ARTEFAK = [
+  { id: 'usage-flow', tipe: 'workflow', judul: 'Alur penggunaan sistem', meta: '5 lane · 17 node · 19 relasi', ket: 'Sepuluh modul README: login, peran, aset, parts, request, scan QR, RTDB, cache, push, order, approval, PM, log, performa, analytics, AI.' },
+  { id: 'work-order-lifecycle', tipe: 'lifecycle', judul: 'Siklus hidup work order', meta: '8 status · 8 transisi', ket: 'Draft sampai arsip, termasuk jalur tolak dan revisi.' },
+  { id: 'request-part-sequence', tipe: 'sequence', judul: 'Request part — urutan pesan', meta: '6 partisipan · 12 pesan', ket: 'Pengajuan, push ke supervisor, persetujuan, pengurangan stok.' },
+  { id: 'dataflow', tipe: 'dataflow', judul: 'Alur data form ke laporan', meta: '4 tahap · 8 node · 8 aliran', ket: 'Input, simpan ke RTDB, sinkron cache/push, keluar sebagai log dan KPI.' },
+  { id: 'architecture', tipe: 'architecture', judul: 'Arsitektur teknis', meta: '10 komponen · 3 boundary · 10 koneksi', ket: 'PWA statis, Firebase, pihak ketiga di tepi, Vercel serverless.' },
+  { id: 'data-tree', tipe: 'tree', judul: 'Struktur data RTDB', meta: '16 simpul', ket: 'Pohon koleksi: equipment, parts, workOrders, pmSchedules, dan lainnya.' },
+  { id: 'pm-schedule-sequence', tipe: 'sequence', judul: 'PM Schedule — jatuh tempo ke auto-log', meta: '6 partisipan · 10 pesan', ket: 'Pemicu harian membuat WO otomatis dan mencatat log sendiri.' },
+  { id: 'ai-analysis-sequence', tipe: 'sequence', judul: 'AI Analysis — konteks ke provider', meta: '6 partisipan · 10 pesan', ket: 'Konteks WO, kunci di server, ada provider cadangan.' },
+  { id: 'permission-matrix', tipe: 'table', judul: 'Matriks izin per peran', meta: '10 modul × 3 peran', ket: 'Penuh, ajukan/setujui/pakai, lihat, atau tidak muncul.' },
+  { id: 'backup-sequence', tipe: 'sequence', judul: 'Backup dan restore', meta: '6 partisipan · 10 pesan', ket: 'Arsip bertanggal dengan hash, restore dari arsip terverifikasi.' },
+  { id: 'import-sequence', tipe: 'sequence', judul: 'Impor CSV/XLSX', meta: '6 partisipan · 10 pesan', ket: 'Diurai di browser, baris ditolak kembali dengan alasan.' },
+  { id: 'observability', tipe: 'dataflow', judul: 'Error dan web vitals', meta: '4 tahap · 7 node', ket: 'Exception dan LCP/CLS/INP sampai dashboard dan alert.' },
+  { id: 'offline-sync-sequence', tipe: 'sequence', judul: 'Sinyal hilang — tulis offline', meta: '6 partisipan · 10 pesan', ket: 'Antrean lokal, terkirim saat sinyal kembali, jejak tetap dicatat.' },
+  { id: 'release-lifecycle', tipe: 'lifecycle', judul: 'Rilis — commit ke klien', meta: '5 tahap · 4 transisi', ket: 'Build, preview dengan anggaran performa, produksi, versi SW naik.' },
+  { id: 'kpi-formula', tipe: 'dataflow', judul: 'Perhitungan KPI', meta: '4 tahap · 8 node · 7 aliran', ket: 'wh, stb, bd, freq → avail → PA → gap terhadap rencana.' },
+  { id: 'diagrams', tipe: 'index', judul: 'Halaman index (versi daftar)', meta: '15 tautan', ket: 'Tampilan lama: daftar kartu tanpa pratinjau.' },
+];
+
+const LABEL = {
+  all: 'Semua', workflow: 'Workflow', lifecycle: 'Lifecycle', sequence: 'Sequence',
+  dataflow: 'Dataflow', architecture: 'Arsitektur', tree: 'Tree', table: 'Tabel', index: 'Index',
+};
+
+const grid = document.getElementById('grid');
+const filters = document.getElementById('filters');
+const q = document.createElement('input');
+q.id = 'q';
+q.type = 'search';
+q.placeholder = 'cari artefak…';
+q.setAttribute('aria-label', 'Cari artefak');
+
+let aktif = 'all';
+let kueri = '';
+
+const jenisAda = ['all', ...Object.keys(LABEL).filter((k) => k !== 'all' && ARTEFAK.some((a) => a.tipe === k))];
+
+for (const jenis of jenisAda) {
+  const b = document.createElement('button');
+  b.className = 'chip';
+  b.type = 'button';
+  b.setAttribute('aria-pressed', String(jenis === aktif));
+  b.dataset.jenis = jenis;
+  const n = jenis === 'all' ? ARTEFAK.length : ARTEFAK.filter((a) => a.tipe === jenis).length;
+  b.innerHTML = `${LABEL[jenis]}<span class="n">${n}</span>`;
+  b.addEventListener('click', () => {
+    aktif = jenis;
+    for (const c of filters.querySelectorAll('.chip')) c.setAttribute('aria-pressed', String(c.dataset.jenis === aktif));
+    render();
+  });
+  filters.appendChild(b);
+}
+filters.appendChild(q);
+q.addEventListener('input', () => { kueri = q.value.trim().toLowerCase(); render(); });
+
+function cocok(a) {
+  if (aktif !== 'all' && a.tipe !== aktif) return false;
+  if (!kueri) return true;
+  return (a.judul + ' ' + a.ket + ' ' + a.meta + ' ' + a.tipe).toLowerCase().includes(kueri);
+}
+
+function render() {
+  const daftar = ARTEFAK.filter(cocok);
+  grid.replaceChildren();
+
+  if (daftar.length === 0) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = 'Tidak ada artefak yang cocok.';
+    grid.appendChild(p);
+  }
+
+  for (const a of daftar) {
+    const btn = document.createElement('button');
+    btn.className = 'item';
+    btn.type = 'button';
+    btn.dataset.id = a.id;
+    btn.setAttribute('aria-current', 'false');
+    // Aman: isi di bawah berasal dari konstanta ARTEFAK (literal di berkas ini),
+    // bukan dari input pengguna, URL, atau data jaringan.
+    btn.innerHTML = `
+      <span class="top">
+        <span class="type t-${a.tipe}">${LABEL[a.tipe]}</span>
+        <h3>${a.judul}</h3>
+      </span>
+      <p>${a.ket}</p>
+      <p style="color:var(--dim);font-size:11.5px">${a.meta}</p>`;
+    btn.addEventListener('click', () => pilih(a, btn));
+    grid.appendChild(btn);
+  }
+
+  document.getElementById('s-total').textContent = String(ARTEFAK.length);
+  document.getElementById('s-types').textContent = String(new Set(ARTEFAK.map((a) => a.tipe)).size);
+  document.getElementById('sub').textContent = `${daftar.length} dari ${ARTEFAK.length} artefak ditampilkan · klik kartu untuk pratinjau.`;
+}
+
+const frame = document.getElementById('p-frame');
+const empty = document.getElementById('p-empty');
+const pTitle = document.getElementById('p-title');
+const pOpen = document.getElementById('p-open');
+
+function pilih(a, btn) {
+  for (const el of grid.querySelectorAll('.item')) el.setAttribute('aria-current', 'false');
+  if (btn) btn.setAttribute('aria-current', 'true');
+  pTitle.textContent = a.judul;
+  pOpen.href = `mtc-asset-${a.id}.html`;
+  empty.classList.add('hide');
+  frame.classList.remove('hide');
+  frame.src = `mtc-asset-${a.id}.html`;
+}
+
+render();
+</script>
+</body>
+</html>

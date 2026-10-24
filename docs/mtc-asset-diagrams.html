@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTC-Asset — Peta Sistem</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 48px 24px 72px;
+    background: #0b0f14; color: #e6edf3;
+    font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede { color: #8b98a5; margin: 0 0 36px; }
+  h2.sec { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: #55606b; margin: 30px 0 10px; font-weight: 600; }
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid #1f2937; border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 12px;
+    background: #0f151c; transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: #2f81f7; transform: translateY(-1px); }
+  .card h2 { font-size: 16px; margin: 0 0 4px; font-weight: 600; }
+  .card p { margin: 0; color: #8b98a5; font-size: 13.5px; }
+  .tag {
+    display: inline-block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: #2f81f7; border: 1px solid #1c3a5e; border-radius: 999px;
+    padding: 2px 8px; margin-bottom: 10px;
+  }
+  footer { margin-top: 40px; color: #55606b; font-size: 12.5px; }
+  footer code { color: #8b98a5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">MTC-Asset</span>
+  <h1>Peta Sistem</h1>
+  <p class="lede">Lima belas artefak dari satu sumber: README, AGENT_CONTEXT, dan modul nyata di repo. Semua standalone — buka offline, tanpa server.</p>
+
+  <a class="card" href="mtc-asset-dashboard.html" style="border-color:#1c3a5e;background:#101c2b">
+    <h2>→ Dashboard: lihat semuanya di satu layar</h2>
+    <p>Grid kartu dengan filter jenis, pencarian, dan panel pratinjau langsung — tanpa membuka tab satu per satu.</p>
+  </a>
+
+  <h2 class="sec">Alur</h2>
+
+  <a class="card" href="mtc-asset-usage-flow.html">
+    <h2>Alur penggunaan sistem</h2>
+    <p>5 lane, 17 node, 19 relasi — sepuluh modul README dari login sampai AI Analysis.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-work-order-lifecycle.html">
+    <h2>Siklus hidup work order</h2>
+    <p>8 status dari draft sampai arsip, termasuk jalur tolak dan revisi yang kembali ke draft.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-request-part-sequence.html">
+    <h2>Request part — urutan pesan</h2>
+    <p>6 partisipan, 12 pesan: pengajuan, push ke supervisor, persetujuan, pengurangan stok, dan jalur penolakan.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-dataflow.html">
+    <h2>Alur data form ke laporan</h2>
+    <p>4 tahap: input, simpan ke RTDB, sinkron ke cache dan push, lalu keluar sebagai log dan KPI.</p>
+  </a>
+
+  <h2 class="sec">Struktur</h2>
+
+  <a class="card" href="mtc-asset-architecture.html">
+    <h2>Arsitektur teknis</h2>
+    <p>PWA statis, Firebase Auth + RTDB + rules, service worker, dan pihak ketiga di tepi: OneSignal, ImgBB, Sentry, Vercel.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-data-tree.html">
+    <h2>Struktur data RTDB</h2>
+    <p>Pohon koleksi: equipment, parts, workOrders, pmSchedules, performance, requests, logs, users.</p>
+  </a>
+
+  <h2 class="sec">Modul khusus</h2>
+
+  <a class="card" href="mtc-asset-pm-schedule-sequence.html">
+    <h2>PM Schedule — jatuh tempo sampai auto-log</h2>
+    <p>6 partisipan, 10 pesan: pemicu harian membaca jadwal, membuat WO otomatis, mencatat log sendiri.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-ai-analysis-sequence.html">
+    <h2>AI Analysis — konteks WO ke beberapa provider</h2>
+    <p>6 partisipan, 10 pesan: konteks diambil dari WO, kunci tetap di server, ada provider cadangan.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-permission-matrix.html">
+    <h2>Matriks izin per peran</h2>
+    <p>10 modul × 3 peran: penuh, ajukan/setujui/pakai, lihat, atau tidak muncul sama sekali.</p>
+  </a>
+
+  <h2 class="sec">Operasional</h2>
+
+  <a class="card" href="mtc-asset-backup-sequence.html">
+    <h2>Backup dan restore</h2>
+    <p>6 partisipan, 10 pesan: orkestrator memanggil ekspor Firebase, arsip diberi tanggal dan hash, restore selalu dari arsip terverifikasi.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-import-sequence.html">
+    <h2>Impor CSV/XLSX</h2>
+    <p>6 partisipan, 10 pesan: berkas diurai di browser, kolom wajib diperiksa, baris valid masuk sementara yang ditolak kembali dengan alasan.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-observability.html">
+    <h2>Error dan web vitals sampai tindakan</h2>
+    <p>4 tahap: exception dan LCP/CLS/INP dikumpulkan, dikirim lewat DSN publik, lalu berujung di dashboard dan alert.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-offline-sync-sequence.html">
+    <h2>Sinyal hilang — tulis offline lalu sinkron</h2>
+    <p>6 partisipan, 10 pesan: catatan masuk antrean lokal, terkirim saat sinyal kembali, jejaknya tetap dicatat.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-release-lifecycle.html">
+    <h2>Rilis — commit sampai klien memakai versi baru</h2>
+    <p>5 tahap: build, preview dengan anggaran performa, produksi, lalu service worker menarik aset baru.</p>
+  </a>
+
+  <a class="card" href="mtc-asset-kpi-formula.html">
+    <h2>Perhitungan KPI dari isian ke gap</h2>
+    <p>4 tahap: wh, stb, bd, freq → avail → PA (avail/24) → gap terhadap rencana 90 persen.</p>
+  </a>
+
+  <footer>
+    Dibangun dengan Archify 3.2.0 (MIT). Sumber kandidat ada di <code>.archify/</code> — setiap artefak lolos 4 gate:
+    <code>validate</code>, <code>deliver</code>, <code>check</code>, <code>browser-check</code>.
+  </footer>
+</div>
+</body>
+</html>
