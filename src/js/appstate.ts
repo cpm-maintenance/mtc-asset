@@ -139,6 +139,8 @@ export interface AppState {
   kpiFilter?: string;
   kpiFilterDate?: any;
   logForm?: any;
+  /** Pesan validasi per field pada form log (diisi validateLogForm). */
+  logFormErrors?: Record<string, string>;
   loginForm: Record<string, any>;
   /** Mode akses layar login: 'email' | 'pin' | 'sso'. */
   loginMode?: string;
@@ -452,6 +454,10 @@ export interface AppState {
   get filteredLogs(): any;
   get filteredParts(): any;
   get filteredPartsForLog(): any;
+  /** Jumlah field form log yang belum valid. */
+  get logFormErrorCount(): number;
+  /** False selama masih ada field wajib kosong / tanggal terbalik. */
+  get isLogFormValid(): boolean;
   get filteredPerformanceData(): any;
   /** Halaman Performance (Tactical Slate). */
   get perfKpi(): any;
@@ -656,6 +662,8 @@ export interface AppState {
   submitLog: (...args: any[]) => any;
   submitManualScan: (...args: any[]) => any;
   submitPM: (...args: any[]) => any;
+  /** Isi pesan inline per field (aturan blokir tetap validateLogForm di utils). */
+  syncLogFormErrors: () => boolean;
   submitPerformance: (...args: any[]) => any;
   submitRequisition: (...args: any[]) => any;
   submitSparePart: (...args: any[]) => any;

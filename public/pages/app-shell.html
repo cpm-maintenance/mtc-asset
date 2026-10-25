@@ -1484,11 +1484,12 @@
       <form @submit.prevent="submitLog()" class="space-y-6">
 
         <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3 text-tac-gold-bright">🗂️ Asset &amp; Activity</h4>
-        <div x-show="!isLogDetailView || isEditingLog" class="form-grid" x-cloak>
+        <div x-show="!isLogDetailView || isEditingLog" class="form-grid form-grid--two" x-cloak>
           <div>
-            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Neural Target (Asset)</label>
-            <select aria-label="Equipment" x-model="logForm.equipmentId" required
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Neural Target (Asset) <span class="text-tac-status-emergency" aria-hidden="true">*</span></label>
+            <select aria-label="Equipment" x-model="logForm.equipmentId" required aria-required="true" @change="logFormErrors.equipmentId = ''"
               class="w-full">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.equipmentId" x-text="logFormErrors.equipmentId" x-cloak></p>
               <option value="">-- Choose Asset Index --</option>
               <template x-for="e in equipment">
                 <option :value="e.EquipmentID" x-text="e.EquipmentID + ' - ' + e.Nama"></option>
@@ -1499,9 +1500,10 @@
               class="w-full" x-cloak>
           </div>
           <div>
-            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Timeline Date</label>
-            <input aria-label="Tanggal pekerjaan" type="date" x-model="logForm.date" required
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Timeline Date <span class="text-tac-status-emergency" aria-hidden="true">*</span></label>
+            <input aria-label="Tanggal pekerjaan" type="date" x-model="logForm.date" required aria-required="true" @input="logFormErrors.date = ''"
               class="w-full">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.date" x-text="logFormErrors.date" x-cloak></p>
           </div>
         </div>
 
@@ -1535,7 +1537,7 @@
         <!-- Work Order Section -->
         <div class="mt-6 pt-6 border-t border-tac-gold-bright/20">
           <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3">⚡ Work Order Settings</h4>
-          <div class="form-grid">
+          <div class="form-grid form-grid--two">
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Priority Level</label>
               <select aria-label="Prioritas work order" x-model="logForm.woPriority"
@@ -1553,18 +1555,23 @@
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Due Date</label>
-              <input aria-label="Tenggat" type="date" x-model="logForm.dueDate"
+              <input aria-label="Tenggat" type="date" x-model="logForm.dueDate" @input="logFormErrors.dueDate = ''"
                 class="w-full">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.dueDate" x-text="logFormErrors.dueDate" x-cloak></p>
             </div>
-            <div>
+            <div class="relative">
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Est. Hours</label>
-              <input aria-label="Estimasi jam" type="number" x-model="logForm.estimatedHours" placeholder="0" min="0"
-                class="w-full">
+              <input aria-label="Estimasi jam" type="number" x-model="logForm.estimatedHours" @input="logFormErrors.estimatedHours = ''" placeholder="0" min="0"
+                class="w-full pr-12 text-right font-label-mono-md text-label-mono-md">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.estimatedHours" x-text="logFormErrors.estimatedHours" x-cloak></p>
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">hrs</span>
             </div>
-            <div>
+            <div class="relative">
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Actual Hours</label>
-              <input aria-label="Jam aktual" type="number" x-model="logForm.actualHours" placeholder="0" min="0" step="0.1"
-                class="w-full">
+              <input aria-label="Jam aktual" type="number" x-model="logForm.actualHours" @input="logFormErrors.actualHours = ''" placeholder="0" min="0" step="0.1"
+                class="w-full pr-12 text-right font-label-mono-md text-label-mono-md">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.actualHours" x-text="logFormErrors.actualHours" x-cloak></p>
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">hrs</span>
             </div>
             <div x-show="logForm.status === 'Completed'" x-cloak>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Completed Date</label>
@@ -1574,10 +1581,13 @@
           </div>
         </div>
 
-        <!-- Department Request Section -->
-        <div class="mt-6 pt-6 border-t border-tac-gold-bright/20">
-          <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3">🏢 Department Request</h4>
-          <div class="form-grid">
+        <!-- Department Request Section (opsional, terlipat) -->
+        <details class="mt-6 pt-6 border-t border-tac-gold-bright/20">
+          <summary class="flex items-center gap-3 cursor-pointer list-none">
+            <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-0">🏢 Department Request</h4>
+            <span class="ml-auto font-label-mono-sm text-label-mono-sm text-tac-sync-cyan border border-tac-sync-cyan/40 rounded px-2 py-0.5 uppercase">Opsional · 4 field</span>
+          </summary>
+          <div class="form-grid form-grid--two mt-3">
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Request Source</label>
               <select aria-label="Sumber permintaan" x-model="logForm.requestSource"
@@ -1607,26 +1617,29 @@
                 class="w-full">
             </div>
           </div>
-        </div>
+        </details>
 
         <!-- Diagnosis & Briefing Section -->
         <div class="mt-6 pt-6 border-t border-tac-gold-bright/20">
           <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3 text-tac-status-repair">🧠 Diagnosis &amp; Briefing</h4>
-          <div class="form-grid">
-            <div>
+          <div class="form-grid form-grid--two">
+            <div class="relative">
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Operational Down (Hrs)</label>
               <input aria-label="Downtime (jam)" type="number" x-model="logForm.downtime" step="0.1" placeholder="0.0"
-                class="w-full">
+                class="w-full pr-12 text-right font-label-mono-md text-label-mono-md">
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">hrs</span>
             </div>
-            <div>
+            <div class="relative">
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Cost ($)</label>
               <input aria-label="Biaya" type="number" x-model="logForm.cost" placeholder="0"
-                class="w-full">
+                class="w-full pr-12 text-right font-label-mono-md text-label-mono-md">
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">$</span>
             </div>
-            <div>
+            <div class="relative">
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Running Hours (HM)</label>
               <input aria-label="Running hours (HM)" type="number" x-model="logForm.hm" placeholder="0.0" min="0" step="0.1"
-                class="w-full">
+                class="w-full pr-12 text-right font-label-mono-md text-label-mono-md">
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">HM</span>
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Root Cause (RCA)</label>
@@ -1641,9 +1654,10 @@
           </div>
 
           <div class="mt-4">
-            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Technical Briefing</label>
-            <textarea aria-label="Temuan teknis" x-model="logForm.desc" required placeholder="Input technical findings..."
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Technical Briefing <span class="text-tac-status-emergency" aria-hidden="true">*</span></label>
+            <textarea aria-label="Temuan teknis" x-model="logForm.desc" required aria-required="true" @input="logFormErrors.desc = ''" placeholder="Input technical findings..."
               class="w-full"></textarea>
+            <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.desc" x-text="logFormErrors.desc" x-cloak></p>
           </div>
         </div>
 
@@ -1703,9 +1717,20 @@
           </template>
         </div>
 
-        <button type="submit"
-          class="w-full bg-tac-primary-container font-black tracking-[0.3em] p-6 rounded-2xl shadow-xl mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container"
-          x-text="isEditingLog ? 'Execute Update' : 'Initialize Protocol'"></button>
+        <div class="sticky bottom-0 -mx-5 sm:-mx-8 px-5 sm:px-8 py-3 mt-6 border-t border-tac-border-subtle bg-tac-surface-card/95 backdrop-blur">
+          <div class="flex items-center gap-3">
+            <span class="font-label-mono-sm text-label-mono-sm uppercase"
+              x-text="logFormErrorCount === 0 ? 'Wajib terisi' : logFormErrorCount + ' field belum valid'"
+              :class="logFormErrorCount === 0 ? 'text-tac-status-operational' : 'text-tac-status-emergency'"></span>
+            <div class="ml-auto flex items-center gap-2">
+              <button type="button" @click="showLogModal = false"
+                class="h-10 px-4 rounded-lg border border-tac-border-tactical text-tac-status-standby font-label-mono-sm text-label-mono-sm uppercase hover:text-tac-on-surface">Cancel</button>
+              <button type="submit" :disabled="!isLogFormValid"
+                class="h-10 px-5 rounded-lg font-label-mono-md text-label-mono-md font-black uppercase tracking-[0.2em] bg-tac-primary-container text-tac-on-primary-container disabled:opacity-40 disabled:cursor-not-allowed"
+                x-text="isEditingLog ? 'Execute Update' : 'Initialize Protocol'"></button>
+            </div>
+          </div>
+        </div>
       </form>
     </div>
   </div>

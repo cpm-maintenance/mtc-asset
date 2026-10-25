@@ -73,3 +73,52 @@ describe('modal New System Entry — tata letak konsisten', () => {
         }
     });
 });
+
+describe('modal New System Entry — tata letak desktop (S39h)', () => {
+    it('seksi 4-field memakai grid 2 kolom (form-grid--two), bukan 3 kolom penuh', () => {
+        const twoCol = [...modal.matchAll(/class="form-grid form-grid--two[^"]*"/g)];
+        expect(twoCol.length).toBe(4);
+    });
+
+    it('footer aksi menempel di dasar modal', () => {
+        expect(modal).toContain('sticky bottom-0');
+        expect(modal).toContain(':disabled="!isLogFormValid"');
+        expect(modal).toContain('x-text="logFormErrorCount');
+    });
+
+    it('seksi Department Request terlipat (<details>) dan ditandai opsional', () => {
+        const i = modal.indexOf('Department Request Section (opsional, terlipat)');
+        expect(i).toBeGreaterThan(-1);
+        const end = modal.indexOf('</details>', i);
+        expect(end, 'penutup </details> tidak ditemukan').toBeGreaterThan(i);
+        const block = modal.slice(i, end);
+        expect(block).toContain('<details');
+        expect(block).toContain('<summary');
+        expect(block).toContain('Opsional · 4 field');
+        // keempat field Department Request ada di dalam blok terlipat
+        expect(block).toContain('logForm.requestSource');
+        expect(block).toContain('logForm.approvedBy');
+    });
+
+    it('tiga field wajib bertanda * dan aria-required', () => {
+        expect(modal.match(/aria-hidden="true">\*<\/span>/g)).toHaveLength(3);
+        expect(modal.match(/aria-required="true"/g)).toHaveLength(3);
+    });
+
+    it('field numerik rata kanan dengan satuan di dalam field', () => {
+        for (const unit of ['hrs', '$', 'HM']) {
+            expect(modal).toContain(`>${unit}</span>`);
+        }
+        expect(modal.match(/text-right font-label-mono-md/g)).toHaveLength(5);
+    });
+
+    it('setiap pesan error punya x-show + x-text dan tidak tampil sebelum boot', () => {
+        for (const key of ['equipmentId', 'date', 'desc', 'dueDate', 'estimatedHours', 'actualHours']) {
+            const show = modal.match(new RegExp(`x-show="logFormErrors\\.${key}"`, 'g')) || [];
+            const text = modal.match(new RegExp(`x-text="logFormErrors\\.${key}"`, 'g')) || [];
+            expect(show.length, `x-show ${key}`).toBe(1);
+            expect(text.length, `x-text ${key}`).toBe(1);
+        }
+        expect(modal.match(/logFormErrors\.[a-zA-Z]+" x-text="logFormErrors/g)).toBeTruthy();
+    });
+});

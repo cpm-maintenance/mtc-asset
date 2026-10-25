@@ -27,6 +27,54 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     // Semua akses ke logs harus melalui this.logs yang berasal dari dataModule
     // (karena dataModule di-spread sebelum logsModule di app.js)
     
+    /** Pesan validasi per field; diisi `validateLogForm()` dan dipakai markup. */
+    logFormErrors: {},
+
+    /** Jumlah field yang belum valid pada form log (dihitung langsung dari state). */
+    get logFormErrorCount() {
+        const f = this.logForm || {};
+        const errors = this.logFormErrors || {};
+        let n = 0;
+        if (!f.equipmentId) n += 1;
+        if (!f.date) n += 1;
+        if (!f.desc || !String(f.desc).trim()) n += 1;
+        if (errors.dueDate) n += 1;
+        if (errors.estimatedHours) n += 1;
+        if (errors.actualHours) n += 1;
+        return n;
+    },
+
+    /** Tombol submit memakai ini; `true` hanya bila tidak ada field bermasalah. */
+    get isLogFormValid() {
+        return this.logFormErrorCount === 0;
+    },
+
+    /**
+     * Mengisi `logFormErrors` (pesan per field) untuk ditampilkan di markup.
+     * Aturan blokir tetap `validateLogForm()` di utils — fungsi ini hanya
+     * menerjemahkan kondisi yang sama ke pesan per field, plus dua aturan yang
+     * tidak ada di utils: tenggat lebih awal dari tanggal, dan angka negatif.
+     */
+    syncLogFormErrors() {
+        const f = this.logForm || {};
+        /** @type {Record<string, string>} */
+        const errors = {};
+        if (!f.equipmentId) errors.equipmentId = 'Pilih aset dulu';
+        if (!f.date) errors.date = 'Tanggal wajib diisi';
+        if (!f.desc || !String(f.desc).trim()) errors.desc = 'Temuan teknis wajib diisi';
+        if (f.date && f.dueDate && String(f.dueDate) < String(f.date)) {
+            errors.dueDate = 'Tenggat lebih awal dari tanggal pekerjaan';
+        }
+        for (const key of ['estimatedHours', 'actualHours']) {
+            const v = f[key];
+            if (v !== '' && v !== null && v !== undefined && Number(v) < 0) {
+                errors[key] = 'Tidak boleh negatif';
+            }
+        }
+        this.logFormErrors = errors;
+        return Object.keys(errors).length === 0;
+    },
+
     openLogModal(isEdit = false, data = null, fromDetail = false) {
         this.isEditingLog = isEdit;
         this.isLogDetailView = fromDetail && !isEdit;
@@ -283,6 +331,10 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     },
 
     async submitLog() {
+        // Isi pesan inline per field; keputusan blokir tetap milik
+        // `validateLogForm()` dari utils supaya hanya ada satu sumber aturan.
+        this.syncLogFormErrors();
+
         const errors = validateLogForm(this.logForm);
         if (errors.length > 0) {
             this.showNotification(errors[0], "error");

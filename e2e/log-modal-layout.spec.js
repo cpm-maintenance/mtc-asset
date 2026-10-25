@@ -61,7 +61,61 @@ test.describe('Modal New System Entry — hasil render', () => {
         });
         expect(numericValues).toEqual(['', '', '', '', '']);
 
-        expect(metrics.controlCount).toBeGreaterThanOrEqual(15);
+        // Footer aksi menempel di dasar modal dan tombol submit menunggu field wajib.
+        const chrome = await page.evaluate(() => {
+            const root = [...document.querySelectorAll('form')].find((f) =>
+                f.querySelector('[aria-label="Equipment"]')
+            );
+            const footer = root.querySelector('.sticky');
+            const submit = root.querySelector('button[type="submit"]');
+            const dept = [...root.querySelectorAll('details')].find((d) =>
+                d.textContent.includes('Department Request')
+            );
+            const deptGrid = dept ? dept.querySelector('.form-grid') : null;
+            return {
+                hasFooter: !!footer,
+                footerVisible: !!footer && footer.getBoundingClientRect().height > 0,
+                submitDisabled: !!submit && submit.disabled,
+                deptCollapsed: !!dept && !dept.open,
+                deptFieldsHidden: !!deptGrid && deptGrid.getBoundingClientRect().height === 0,
+                submitLabel: submit ? submit.textContent.trim() : '',
+            };
+        });
+        expect(chrome.hasFooter).toBe(true);
+        expect(chrome.footerVisible).toBe(true);
+        expect(chrome.submitDisabled).toBe(true);
+        expect(chrome.submitLabel).toBe('Initialize Protocol');
+        expect(chrome.deptCollapsed).toBe(true);
+        expect(chrome.deptFieldsHidden).toBe(true);
+
+        // Setelah field wajib diisi, tombol aktif dan pesan inline hilang.
+        // Alpine memperbarui efek di microtask, jadi nilainya di-poll.
+        await page.evaluate(() => {
+            const app = globalThis.app;
+            app.logForm.equipmentId = app.equipment[0]?.EquipmentID || 'EQ-E2E-001';
+            app.logForm.desc = 'Temuan uji';
+            app.logForm.date = new Date().toISOString().split('T')[0];
+            app.syncLogFormErrors();
+        });
+        await expect
+            .poll(
+                () =>
+                    page.evaluate(() => {
+                        const root = [...document.querySelectorAll('form')].find((f) =>
+                            f.querySelector('[aria-label="Equipment"]')
+                        );
+                        return {
+                            disabled: root.querySelector('button[type="submit"]').disabled,
+                            errors: Object.keys(globalThis.app.logFormErrors || {}).length,
+                        };
+                    }),
+                { timeout: 5000 }
+            )
+            .toEqual({ disabled: false, errors: 0 });
+
+        // 18 kontrol total, 4 di antaranya di seksi Department Request yang
+        // terlipat secara default → 14 yang benar-benar terlihat.
+        expect(metrics.controlCount).toBeGreaterThanOrEqual(14);
         expect(metrics.heights).toEqual([44]);
         for (const h of metrics.textareaHeights) expect(h).toBeGreaterThanOrEqual(44);
         expect(metrics.labelCount).toBeGreaterThanOrEqual(10);

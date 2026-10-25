@@ -330,6 +330,11 @@ input[type='radio']:disabled {
 }
 .form-grid > .span-2 { grid-column: 1 / -1; }
 
+/* Varian 2 kolom maksimum — untuk seksi yang jumlah field-nya kelipatan 2,
+   supaya tidak ada ekor 3+1 di grid 3 kolom. Tetap container-driven (lebar
+   wadah), bukan breakpoint viewport: modal 430 px di layar 1280 px harus
+   tetap 1 kolom. */
+
 @supports selector(:has(*)) {
   form:has(> .form-grid),
   div:has(> .form-grid) {
@@ -352,6 +357,26 @@ input[type='radio']:disabled {
     .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .form-grid > .span-2 { grid-column: span 2; }
   }
+}
+
+@supports selector(:has(*)) {
+  @container (min-width: 400px) {
+    .form-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+}
+
+@supports not selector(:has(*)) {
+  @media (min-width: 640px) {
+    .form-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+}
+
+/* <details> tertutup harus benar-benar menyembunyikan isinya.
+   Gaya UA (`details:not([open]) > *`) kalah oleh `.form-grid { display: grid }`
+   milik author, sehingga tanpa aturan ini grid di dalam seksi terlipat tetap
+   tampil walau elemennya tertutup. */
+details:not([open]) > *:not(summary) {
+  display: none;
 }
 
 /* Native select dropdown follows theme */
