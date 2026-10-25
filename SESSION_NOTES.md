@@ -1,3 +1,36 @@
+## 🔧 S39b · `approveWO` record hantu + `showNotification` tanpa `await` (2026-10-25)
+
+**Live sw v58 → v59** (`83dc8b9`). Dua bug ditemukan dari konsol dev server saat operator menguji alur approve di localhost.
+
+### Bug 1 — `permission_denied` saat Approve WO
+- Gejala: `update at /HistoryLog/LOG-1792201969665 failed: permission_denied`, lalu `Approve WO Error`.
+- Bukti node-nya tidak ada: `database:get /HistoryLog/LOG-1792201969665` → **`null`**; `--shallow` saat itu 15 key, id tersebut tidak di dalamnya.
+- Sebab: `approveWO()` mengirim `update()` **parsial** 6 field. `.validate` `HistoryLog/$logId` menuntut `hasChildren(['LogID','EquipmentID','Jenis','Deskripsi'])`; pada node yang tidak ada, `newData` hanya 6 field itu → validate gagal dan Firebase melaporkannya sebagai `permission_denied` (bukan pesan validasi) — mudah salah dibaca sebagai masalah role.
+- Perbaikan: guard `get()` → `snap.exists()` **sebelum** potong stok; kalau kosong → record dibuang dari `this.logs`, notifikasi jelas, halaman dimuat ulang. Gagal jaringan tidak memblokir approve (masuk `logger.warn`, alur lanjut).
+
+### Bug 2 — unhandled rejection dari notifikasi browser
+- Gejala: `TypeError: ServiceWorkerRegistration.showNotification: No active worker for scope http://localhost:3000/` sebagai unhandled rejection, 3×.
+- Sebab: `registration.showNotification(...)` dipanggil **tanpa `await`**, jadi rejection lolos dari `try/catch`; dan di dev server tidak ada worker aktif sehingga jalur SW selalu melempar, sementara fallback `new Notification` tidak pernah dipakai.
+- Perbaikan: `await`, plus `if (!registration?.active) return showDirect()`.
+
+### Tes
+- `tests/approve-wo-ghost.test.js` (3): node tidak ada → nol `update`/`set`/`runTransaction`, record dibuang, pesan jelas; node ada → update parsial tetap jalan; `get` gagal → approve lanjut.
+- `tests/notification-sw-fallback.test.js` (5): tanpa `serviceWorker`, izin ditolak, `active` kosong → fallback langsung, worker aktif → `showNotification` ditunggu, `showNotification` menolak → ditangkap (bukan unhandled).
+- Dua tes lama diperbarui ke kontrak baru: `components.test.js` (approve butuh node ada → `fb.get` mengembalikan `exists: true`), `notification-checkers.test.js` (registration stub diberi `active: {}`).
+- **Dibuktikan menggigit**: guard dihapus + `await` dibuang → `2 failed | 6 passed`, lalu dikembalikan.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1978 tes / 89 berkas**
+- coverage **97,18 / 89,00 / 97,27 / 98,37** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **11 passed (50,8 s)**
+- live: `sw.js` = **mtc-asset-v59**; guard ada di `assets/app-mOB2Cv5p.js`; `notification-*.js` live sudah `await i.showNotification(...)` + cek `i?.active`
+
+### Catatan data
+`HistoryLog` saat ini **15** record, semuanya `Completed`. Dua record hilang dibanding 14:29 (`LOG-1792078671160`, `LOG-1792078852510`/MTC-004) — dihapus lewat UI saat pengujian, bukan oleh skrip.
+
 ## 🛡️ S39 · Gate hapus `Performance`: premis kartu salah — yang nyata kurang adalah tesnya (2026-10-25)
 
 **Live tetap sw v58** (`1f33b02` + `b4b5721`). Hanya `tests/**` yang berubah, jadi `CACHE_NAME` **tidak** dinaikkan (§2 skill) dan tidak ada byte baru yang diunduh perangkat operator.
