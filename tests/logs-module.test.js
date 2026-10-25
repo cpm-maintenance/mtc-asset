@@ -768,7 +768,11 @@ describe('submitLog — jalur online: payload, Equipment, Stats', () => {
 
         expect(refPaths(fb)).toEqual(['SpareParts/P1/Stok', 'SpareParts/P2/Stok']);
         expect(fb.runTransaction.mock.calls[0][1](10)).toBe(8);
-        expect(fb.runTransaction.mock.calls[1][1](undefined)).toBe(-3);
+        // S38f: part yang tidak ada (curr undefined) → transaksi DIBATALKAN.
+        // Dulu tes ini mengunci `-3`, yaitu persis bug yang membuat RTDB menolak
+        // tulisan `Stok` saja dengan `permission_denied`.
+        expect(fb.runTransaction.mock.calls[1][1](undefined)).toBeUndefined();
+        expect(fb.runTransaction.mock.calls[1][1](2)).toBe(0);
     });
 
     it('woNumber ada → stok tidak dipotong (dipotong saat approve)', async () => {

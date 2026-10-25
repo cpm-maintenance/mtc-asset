@@ -1,3 +1,55 @@
+## 🐞 S38f-stock-restore-guard (2026-10-25) — `Restore parts stock error: permission_denied` saat hapus WO
+
+Live **sw v58** (`src/**` berubah ⇒ `CACHE_NAME` naik).
+
+### Gejala
+Hapus Work Order → konsol operator: `Restore parts stock error: Error: permission_denied` (stack di `assets/data-layer-*.js`). Stok part tidak kembali.
+
+### Root cause
+`deleteItem()` memulihkan stok dengan transaksi ke **child** `SpareParts/<id>/Stok`:
+
+```js
+(curr) => (curr || 0) + Number(p.qty)
+```
+
+Kalau `id` part di `PartsUsed` sudah tidak ada di `SpareParts` (id menggantung), `curr` = `null` dan transaksi menulis **hanya** `Stok`. `.validate` node part menuntut `hasChildren(['NamaPart','Stok','MinStock'])`, jadi tulisan itu ditolak dan Firebase melaporkan `permission_denied`. Mekanisme itu dibuktikan dengan rules asli di emulator (bukan dugaan): `SpareParts/P-GHOST/Stok` → `assertFails`, part lengkap → `assertSucceeds`.
+
+Kelas bug yang sama ada di dua tempat lain: `submitLog` memotong stok tanpa guard `curr === null` **dan** tanpa clamp (bisa menulis `Stok` negatif → ditolak `.validate Stok >= 0`). Hanya `approveWO` yang sudah dijaga sejak S36.
+
+### Perbaikan (tiga lokasi, satu bentuk)
+`src/js/modules/data.js` (restore saat delete), `src/js/modules/logs.js` (potong saat submitLog, dan approveWO dinormalkan):
+
+```js
+if (curr === null || typeof curr === 'undefined') return undefined; // part tidak ada → batalkan
+const qty = Number(p.qty);
+if (!Number.isFinite(qty) || qty <= 0) return undefined;            // qty rusak → batalkan
+return Math.max(0, Number(curr) ± qty);                             // tidak pernah negatif
+```
+
+### Tes
+| Berkas | Isi |
+|---|---|
+| `tests/delete-stock-restore.test.js` (baru, 3 tes) | callback transaksi: `null` → `undefined`, `qty` bukan angka → `undefined`, `qty` negatif → `undefined`, stok normal `5 + 2 = 7` |
+| `tests/stock-transaction-guard.test.js` (baru, 4 tes) | kontrak sumber: ketiga lokasi `SpareParts/<id>/Stok` wajib memuat `curr === null`, `Number.isFinite(qty)`, dan `Math.max(0` |
+| `tests/rules/database.rules.test.js` (+4 tes) | rules asli: part tidak ada → ditolak; part lengkap → admin & supervisor boleh; user biasa ditolak |
+| `tests/logs-module.test.js` (1 tes diperbarui) | asersi lama mengunci `-3` (bug); sekarang `undefined` saat part tidak ada dan `0` saat stok kurang |
+
+Kedua tes baru dibuktikan **merah dulu**: `delete-stock-restore` 3 failed (callback mengembalikan `2`), dan kontrak sumber merah saat `Number.isFinite` dihapus dari `data.js`.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- test:run **1933 lulus / 84 berkas**
+- test:rules **38 lulus**
+- coverage **exit 0** — 97,13 / 88,56 / 97,34 / 98,37
+- build **0**
+- verify:precache **OK 66 berkas**
+- E2E **11 passed (35,6 s)**
+
+### Sisa
+- Stok yang gagal dipulihkan (part sudah tidak ada) sekarang **dilewati tanpa suara**. Kalau operator perlu tahu, tambahkan `showNotification` sekali per delete yang melewatkan part — belum dilakukan supaya tidak menambah derau.
+- Emulator E2E memakai rules terbuka (`e2e/database.e2e.rules.json`), jadi jalur `permission_denied` hanya bisa diuji lewat `npm run test:rules`, bukan Playwright.
+
 ## 🐞 S38e-delete-wo-gate (2026-10-25) — Supervisor tidak bisa menghapus WO
 
 Live **sw v57** (`public/pages/**` berubah ⇒ `CACHE_NAME` naik).

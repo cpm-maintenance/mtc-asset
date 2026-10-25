@@ -312,3 +312,37 @@ describe('P0-3 · Requisitions — user boleh create pending, hanya admin/superv
     await assertSucceeds(db.ref('Requisitions/REQ_seed').remove());
   });
 });
+
+describe('SpareParts — Stok hanya boleh ditulis pada part yang lengkap', () => {
+  // S38f: transaksi pemulihan stok pada part yang tidak ada menghasilkan
+  // `permission_denied`, karena `.validate` node part menuntut
+  // NamaPart + Stok + MinStock. Kode klien sekarang membatalkan transaksi itu.
+  it('part tidak ada → menulis Stok saja ditolak', async () => {
+    const db = testEnv.authenticatedContext(ADMIN.uid).database();
+    await assertFails(db.ref('SpareParts/P-GHOST/Stok').set(5));
+  });
+
+  it('part lengkap → admin boleh mengubah Stok', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref('SpareParts/P1').set({ NamaPart: 'Seal', Stok: 1, MinStock: 2 });
+    });
+    const db = testEnv.authenticatedContext(ADMIN.uid).database();
+    await assertSucceeds(db.ref('SpareParts/P1/Stok').set(3));
+  });
+
+  it('part lengkap → supervisor boleh memulihkan Stok', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref('SpareParts/P2').set({ NamaPart: 'Bearing', Stok: 0, MinStock: 1 });
+    });
+    const db = testEnv.authenticatedContext(SUPERVISOR.uid).database();
+    await assertSucceeds(db.ref('SpareParts/P2/Stok').set(4));
+  });
+
+  it('user biasa tidak boleh mengubah Stok', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref('SpareParts/P3').set({ NamaPart: 'Gasket', Stok: 2, MinStock: 1 });
+    });
+    const db = testEnv.authenticatedContext(USER.uid).database();
+    await assertFails(db.ref('SpareParts/P3/Stok').set(9));
+  });
+});

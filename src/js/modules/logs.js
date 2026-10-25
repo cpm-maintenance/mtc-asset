@@ -471,7 +471,12 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     if (!p.id) continue;
                     try {
                         await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
-                            return (curr || 0) - Number(p.qty);
+                            // Part tidak ada / qty rusak → batalkan: menulis Stok saja ditolak
+                            // `.validate` node part (`permission_denied`).
+                            if (curr === null || typeof curr === 'undefined') return undefined;
+                            const qty = Number(p.qty);
+                            if (!Number.isFinite(qty) || qty <= 0) return undefined;
+                            return Math.max(0, Number(curr) - qty);
                         });
                     } catch(/** @type {any} */ e) {
                         console.error('[DeductStock] Error:', e);
@@ -586,7 +591,9 @@ async approveWO(logId) {
                     try {
                         await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
                             if (curr === null || typeof curr === 'undefined') return undefined;
-                            return Math.max(0, (curr || 0) - Number(p.qty));
+                            const qty = Number(p.qty);
+                            if (!Number.isFinite(qty) || qty <= 0) return undefined;
+                            return Math.max(0, Number(curr) - qty);
                         });
                     } catch (/** @type {any} */ err) {
                         logger.warn('[approveWO] Gagal potong stok part ' + p.id + ':', err);

@@ -733,8 +733,17 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                             for (const p of usedParts) {
                                 if (p.id && p.qty) {
                                     await window.runTransaction(
-                                        window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), 
-                                        (/** @type {any} */ curr) => (curr || 0) + Number(p.qty)
+                                        window.ref(window.db, 'SpareParts/' + p.id + '/Stok'),
+                                        (/** @type {any} */ curr) => {
+                                            // Part yang tidak ada (id menggantung di PartsUsed) tidak
+                                            // boleh ditulisi Stok saja: `.validate` node part menuntut
+                                            // NamaPart + Stok + MinStock, jadi tulisannya ditolak
+                                            // `permission_denied`. Batalkan transaksi (undefined).
+                                            if (curr === null || typeof curr === 'undefined') return undefined;
+                                            const qty = Number(p.qty);
+                                            if (!Number.isFinite(qty) || qty <= 0) return undefined;
+                                            return Math.max(0, Number(curr) + qty);
+                                        }
                                     );
                                     logger.debug('[DeleteLog] Restored stock:', p.id, '+' + p.qty);
                                 }
