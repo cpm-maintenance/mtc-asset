@@ -1,3 +1,32 @@
+## 📈 S37b-coverage-margin (2026-10-25) — Branch coverage diberi margin
+
+Live **sw v54** (tidak berubah — hanya `tests/**` yang disentuh).
+
+### Masalah
+Branch coverage tepat **86,00 %** (5560/6465) — lulus tapi tanpa margin; satu cabang baru tanpa tes langsung merah.
+
+### Yang dikerjakan
+- `tests/chart-palette.test.js` (baru, 9 tes): passthrough nama token mentah, alpha opsional (termasuk alpha `0`), fallback abu-abu saat token CSS tidak terpasang / `getComputedStyle` melempar, invalidasi cache per tanda tema.
+- `tests/component-loader.test.js` (baru, 9 tes): cache hit tanpa `fetch` kedua, HTTP gagal → rejection, injeksi ke elemen target, `preload`, `clearCache`, singleton `window.componentLoader`.
+- `tests/export-module.test.js` (+6 tes): cabang state kosong `exportData` — `window.Alpine` absen, state `null`/`undefined`, ternary `typeof … === 'string'` untuk `events`/`PartsUsed`/`PhotoURLs`, `EquipmentIDs` array vs string.
+
+Catatan jebakan: `chart-palette` menyimpan cache per tanda tema, jadi tema harus **unik per tes** — kalau tidak, nilai cache dari tes sebelumnya membuat asersi fallback lolos/gagal secara palsu.
+
+### Hasil
+| Metrik | Sebelum | Sesudah |
+|---|---|---|
+| Branches | 86,00 % (5560/6465) | **86,35 %** (5583/6465) |
+| Statements | 96,41 % | 96,83 % |
+| Functions | 96,55 % | 97,09 % |
+| Lines | 97,69 % | 98,19 % |
+| Tes | 1799 / 76 berkas | **1823 / 78 berkas** |
+
+Gerbang: tsc **0**, eslint **0 error**, coverage exit **0**, build **0**, `verify:precache` **OK 66 berkas**.
+
+### Sisa
+- Margin 0,35 poin = 23 cabang. Threshold `vitest.config.js` **tidak** dinaikkan (tetap 86) — ratchet baru masuk akal setelah margin ≥ 0,7 poin.
+- Sasaran berikutnya bila butuh margin lebih: `notification.js` (26 cabang terlewat), `bootstrap.js` (13), `requisition.js` blok `submitRequisition` edit-vs-baru (~12).
+
 ## 🔧 S37-create-user-fix (2026-10-24) — Admin tidak bisa menambah user (`auth/email-already-in-use`)
 
 Live **sw v54**. Mengatasi `[Auth] Create user error: FirebaseError: Error (auth/email-already-in-use)`.

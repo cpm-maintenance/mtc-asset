@@ -754,3 +754,94 @@ describe('export.js — exportToPDF', () => {
         expect(ctx.isLoading).toBe(false);
     });
 });
+
+/**
+ * Cabang "state kosong / Alpine tidak ada" — sisi kanan setiap `|| []`,
+ * `window.Alpine?.raw`, dan ternary `typeof … === 'string'` yang tidak pernah
+ * dieksekusi tes berdata. Ini justru kondisi nyata sebelum listener RTDB
+ * mengisi apa pun, jadi bukan cabang teoretis.
+ */
+describe('exportData — state kosong & Alpine absen', () => {
+    const originalAlpine = window.Alpine;
+    afterEach(() => { window.Alpine = originalAlpine; });
+
+    beforeEach(() => { window.Alpine = undefined; });
+
+    it('tanpa window.Alpine: memakai state mentah, tidak melempar', async () => {
+        const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ-1' }] });
+
+        await ctx.exportData('equip', 'csv');
+
+        expect(sheetRows()).toEqual([{ EquipmentID: 'EQ-1' }]);
+    });
+
+    it('state null/undefined diperlakukan sebagai array kosong', async () => {
+        const ctx = makeCtx({ logs: null, equipment: undefined, allParts: null, performanceData: undefined });
+
+        await ctx.exportData('logs', 'csv');
+        expect(sheetRows()).toEqual([]);
+
+        await ctx.exportData('equip', 'csv');
+        expect(sheetRows()).toEqual([]);
+    });
+
+    it('perf: events string dibiarkan, events objek di-JSON-kan, events kosong jadi []', async () => {
+        const ctx = makeCtx({
+            performanceData: [
+                { id: 'p1', events: 'sudah-string' },
+                { id: 'p2', events: [{ t: 1 }] },
+                { id: 'p3' },
+            ],
+        });
+
+        await ctx.exportData('perf', 'csv');
+
+        expect(sheetRows()).toEqual([
+            { id: 'p1', events: 'sudah-string' },
+            { id: 'p2', events: '[{"t":1}]' },
+            { id: 'p3', events: '[]' },
+        ]);
+    });
+
+    it('parts: EquipmentIDs array digabung, string dibiarkan', async () => {
+        const ctx = makeCtx({
+            allParts: [
+                { PartID: 'A', EquipmentIDs: ['EQ-1', 'EQ-2'] },
+                { PartID: 'B', EquipmentIDs: 'EQ-3' },
+            ],
+        });
+
+        await ctx.exportData('parts', 'csv');
+
+        expect(sheetRows()).toEqual([
+            { PartID: 'A', EquipmentIDs: 'EQ-1, EQ-2' },
+            { PartID: 'B', EquipmentIDs: 'EQ-3' },
+        ]);
+    });
+
+    it('logs: PartsUsed/PhotoURLs string dibiarkan, objek di-JSON-kan, kosong jadi []', async () => {
+        const ctx = makeCtx({
+            logs: [
+                { LogID: 'L1', PartsUsed: 'raw', PhotoURLs: 'url' },
+                { LogID: 'L2', PartsUsed: [{ id: 'p', qty: 1 }], PhotoURLs: ['u'] },
+                { LogID: 'L3' },
+            ],
+        });
+
+        await ctx.exportData('logs', 'csv');
+
+        expect(sheetRows()).toEqual([
+            { LogID: 'L1', PartsUsed: 'raw', PhotoURLs: 'url' },
+            { LogID: 'L2', PartsUsed: '[{"id":"p","qty":1}]', PhotoURLs: '["u"]' },
+            { LogID: 'L3', PartsUsed: '[]', PhotoURLs: '[]' },
+        ]);
+    });
+
+    it('tipe tak dikenal: data kosong, tidak melempar', async () => {
+        const ctx = makeCtx();
+
+        await ctx.exportData('tidak-ada', 'csv');
+
+        expect(sheetRows()).toEqual([]);
+    });
+});
