@@ -1,3 +1,35 @@
+## 🐞 S38e-delete-wo-gate (2026-10-25) — Supervisor tidak bisa menghapus WO
+
+Live **sw v57** (`public/pages/**` berubah ⇒ `CACHE_NAME` naik).
+
+### Gejala
+Operator dengan role **supervisor** tidak punya cara menghapus Work Order dari UI — tombol hapus tidak pernah muncul.
+
+### Root cause (Phase 1–3, terbukti di emulator)
+1. **Rules mengizinkan**: `database.rules.json` → `HistoryLog/$logId/.write` = `auth !== null && (role === 'admin' || role === 'supervisor')`. Sama untuk `Equipment`, `SpareParts`, `Performance`, `PM_Schedule`, `Stats`.
+2. **UI memblokir**: tombol hapus memakai `x-show="isAdmin"` — di `public/pages/WorkOrders.html:683`, `public/pages/AllLogs.html:211`, `public/pages/EquipmentDetail.html:38`.
+3. **Delete-nya sendiri sehat**: probe Playwright + emulator (role dipaksa `supervisor`) mencatat `{xShow: 'isAdmin', visible: false}` untuk kedua halaman, tetapi `deleteItem('HistoryLog', id)` yang dipanggil langsung tetap `modalShown: true` → `Record successfully deleted`, record hilang. Jadi yang salah **gate UI**, bukan backend.
+4. Probe pertama sempat mencatat `found: 0` tombol — itu **salah selektor** (`[title="Hapus log"]`; tombol di WorkOrders tidak punya `title`), bukan bukti tombol tidak ada.
+
+### Perbaikan
+- Tiga tombol hapus: `x-show="isAdmin"` → **`x-show="isAdminOrSupervisor"`** (WorkOrders, AllLogs, EquipmentDetail) — sejajar dengan rules dan dengan pola `SpareParts` yang sudah benar.
+- `tests/delete-gate-contract.test.js` (baru, 2 tes) membaca fragmen **dan** `database.rules.json`: setiap tombol `deleteItem('<node>', …)` wajib `x-show="isAdminOrSupervisor"` selama rules-nya menyebut `supervisor`. Dibuktikan **merah dulu** (2 failed) sebelum fragmen diubah.
+- `e2e/delete-wo.spec.js` (baru, 1 tes) — emulator, role dipaksa `supervisor`: login → halaman WO → tombol hapus **terlihat** → klik → modal konfirmasi → Delete → record hilang + notifikasi `Record successfully deleted`, nol `pageerror`; role dikembalikan ke `admin` di akhir supaya spec lain tidak terpengaruh.
+- Dibuktikan menggigit: `x-show` dikembalikan ke `isAdmin` → rebuild `dist-e2e` → **E2E merah** (`supervisor harus melihat tombol hapus WO`), lalu dipulihkan.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- test:run **1926 lulus / 81 berkas**
+- coverage **exit 0** — 97,14 / 88,55 / 97,34 / 98,37
+- build **0**
+- verify:precache **OK 66 berkas**
+- E2E **11 passed (34,6 s)**
+
+### Sisa / temuan sampingan
+- Tombol hapus **Performance** (`Performance.html:269` dan `:325`) tidak punya gate sama sekali — user biasa melihatnya lalu ditolak RTDB. Kandidat perbaikan berikutnya (`x-show="isAdminOrSupervisor"`).
+- Console Firefox pada tangkapan layar operator hanya berisi derau: `Ignoring unsupported entryTypes` (PerformanceObserver), font `Liberation Mono` diblokir proteksi fingerprinting, `-webkit-text-size-adjust`/`-moz-column-gap` diabaikan, dan `may not load or link to file:///`. Tidak ada error Firebase/`PERMISSION_DENIED` di sana — bukan penyebab bug ini.
+
 ## 🧭 S38d-focus-trap (2026-10-25) — Focus trap dialog + branch 88,02 → 88,55 %
 
 Live **sw v56** (`src/js/modules/confirm-dialog.js` berubah ⇒ `CACHE_NAME` naik).

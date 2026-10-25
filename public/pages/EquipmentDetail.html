@@ -35,7 +35,7 @@
         <span class="hidden sm:inline">MODIFY</span>
       </button>
 
-      <button type="button" x-show="isAdmin" @click="deleteItem('Equipment', selectedEquip.EquipmentID)" title="Hapus aset"
+      <button type="button" x-show="isAdminOrSupervisor" @click="deleteItem('Equipment', selectedEquip.EquipmentID)" title="Hapus aset"
         class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-status-emergency/20 text-tac-status-emergency font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
         <span class="material-symbols-outlined text-[16px]">close</span>
         <span class="hidden sm:inline">PURGE</span>

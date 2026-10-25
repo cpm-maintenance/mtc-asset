@@ -208,7 +208,7 @@
                   class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-sync-cyan hover:bg-tac-sync-cyan/20 flex items-center justify-center transition-colors">
                   <span class="material-symbols-outlined text-[16px]">edit_note</span>
                 </button>
-                <button type="button" x-show="isAdmin" @click.stop="deleteItem('HistoryLog', log.LogID)" title="Hapus log"
+                <button type="button" x-show="isAdminOrSupervisor" @click.stop="deleteItem('HistoryLog', log.LogID)" title="Hapus log"
                   class="w-8 h-8 rounded bg-tac-surface-container-high text-tac-status-emergency hover:bg-tac-status-emergency/20 flex items-center justify-center transition-colors">
                   <span class="material-symbols-outlined text-[16px]">close</span>
                 </button>

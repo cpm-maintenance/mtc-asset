@@ -680,7 +680,7 @@
                     </button>
                     <button type="button" x-show="isAdmin" @click="exportWOToPDF(log.LogID)"
                       class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-on-surface-variant hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors">PDF</button>
-                    <button type="button" x-show="isAdmin" @click="deleteItem('HistoryLog', log.LogID)"
+                    <button type="button" x-show="isAdminOrSupervisor" @click="deleteItem('HistoryLog', log.LogID)"
                       class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-error hover:bg-tac-error-container hover:text-tac-on-error-container font-label-mono-sm text-label-mono-sm transition-colors">DELETE</button>
                   </div>
                 </div>
