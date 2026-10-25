@@ -1,3 +1,44 @@
+## 🛡️ S39 · Gate hapus `Performance`: premis kartu salah — yang nyata kurang adalah tesnya (2026-10-25)
+
+**Live tetap sw v58** (`1f33b02` + `b4b5721`). Hanya `tests/**` yang berubah, jadi `CACHE_NAME` **tidak** dinaikkan (§2 skill) dan tidak ada byte baru yang diunduh perangkat operator.
+
+### Langkah 1 — probe: role `user` vs `supervisor` (emulator, Playwright)
+
+Probe sementara `e2e/tmp-perf-gate.spec.js` (dihapus setelah angkanya dicatat): seed emulator + satu baris `Performance/PERF-E2E-001`, role diubah lewat REST, lalu `currentPage = 'perf'` dipaksa seperti operator.
+
+| Role | `canAccess({allowedRole:'supervisor'})` | `currentPage` setelah dipaksa | `#perfTable` | Tombol hapus di DOM | Terlihat |
+|---|---|---|---|---|---|
+| `user` | false | **`dash`** (ditolak) | tidak ada | **0** | 0 |
+| `supervisor` | true | `perf` | ada | 2 (tabel + kartu mobile) | 1 |
+
+Hasil: `2 passed (33.7s)`, `pageerror` **0**.
+
+### Premis kartu salah — dan itu temuannya
+- Kedua tombol hapus (`Performance.html:269`, `:325`) **sudah** berada di dalam `<div x-show="isAdminOrSupervisor">` sejak `4695bd9` (2026-10-16), dibuktikan `git blame`.
+- Halaman `perf` sendiri `allowedRole: 'supervisor'` (`app.js:580/635`), dan `canAccess()` memakai `isAdminOrSupervisor` — role `user` tidak pernah bisa membuka halaman itu (`currentPage` dikembalikan ke `dash`).
+- Jadi tidak ada tombol tanpa gate, dan tidak ada jalan bagi `user` untuk melihatnya. Yang keliru adalah **cara memeriksanya**: `deleteButtons()` hanya membaca tag `<button>`, sehingga gate di div induk tidak terlihat — dan karena itu pula tidak ada tes yang menjaganya.
+
+### Langkah 2 — tes kontrak diperluas (bukan markup diubah)
+`tests/delete-gate-contract.test.js`: `enclosingDiv()` + `gatedDeleteButtons()` membaca gate dari tag tombol **atau** div pembungkus terdekat; `Performance` dan `SpareParts` masuk daftar. `public/**` tidak disentuh — dibuktikan `git diff --quiet -- src public index.html` = **0** setelah mutasi di-revert.
+
+**Dibuktikan menggigit**: `x-show` dihapus dari div induk `Performance.html:264` → `AssertionError: public/pages/Performance.html: tombol hapus Performance tanpa gate isAdminOrSupervisor` (1 failed | 3 passed), lalu di-revert.
+
+### Langkah 3 — coverage branches 88,56 → 88,98 %
+`tests/app-parts-filter-branches.test.js` (15 tes, hanya `tests/**`): guard `allParts` non-array, record `null`, lima jalur pencarian, tiga bentuk `EquipmentIDs`/`EquipmentID`, tiga `partStatusFilter`, empat `partSortBy`, paginasi + `canLoadMoreParts`, `_partMap` (cache + rebuild), `sidebarExpandedGroups` dari localStorage. `app.js` branch **85,89 → 87,37 %**. Threshold tetap **87** (margin ke 88,5 hanya 0,48 → belum ratchet).
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1970 tes / 87 berkas**
+- coverage **97,20 / 88,98 / 97,34 / 98,37** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **11 passed (36,0 s)**
+- live: `sw` **mtc-asset-v58**, `pages/Performance.html` live memuat **2** tombol hapus di dalam **3** kemunculan `x-show="isAdminOrSupervisor"`
+
+### Sisa / catatan
+- Gate setara untuk `deletePM` (`PMSchedule.html:778`), `deleteRequisition` (`RequestPart.html:245`, div induk) dan `deleteUser` (`app-shell.html:239`, hanya `u.uid !== user.uid` + panel admin) — semuanya ter-gate, tapi **belum** masuk tes kontrak karena bukan `deleteItem()`.
+- `app.js` masih 258 cabang terlewat pada awal sesi (201 baris); sisa terpadat: `heroHUD`, `dashKPIs`, `planningWOs`, `filteredWorkOrders`.
+
 ## ⚠️ S38h-c · `database:update` MENGGANTI record WO — dipulihkan (2026-10-25)
 
 ### Apa yang terjadi
