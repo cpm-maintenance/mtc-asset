@@ -1,3 +1,40 @@
+## 🎛️ S39f · Modal "New System Entry" dirapikan (2026-10-25)
+
+**Live sw v62 → v63** (`c2d361f`). Permintaan operator: form input WO baru dibuat rapi.
+
+### Yang tidak konsisten (terukur dari fragmen)
+| Item | Sebelum |
+|---|---|
+| Ukuran label | **4 ukuran berbeda** — `text-[8px]`, `text-[9px]`, `text-[10px]`, token 12px |
+| Tinggi kontrol | **2 tinggi** — `p-3` (40 px) di grup aset, `p-4` (48 px) di 17 kontrol lain, padahal `:is(input, select, textarea)` sudah menetapkan `--field-h: 44px` |
+| Judul grup | hanya **2 dari 3** grup punya judul (grup aset tanpa judul) |
+| `x-cloak` | 5 blok `x-show`, hanya modal root yang ber-`x-cloak` → input "external equipment" dan "tanggal selesai" berkedip sebelum Alpine boot |
+| Indentasi | blok HM/RCA masuk dengan indentasi tidak konsisten |
+
+### Sesudah
+- **20 label** → satu kelas: `font-label-mono-sm text-label-mono-sm … ml-0.5 mb-1.5 block` (12 px, di atas ambang keterbacaan).
+- **20 kontrol** → `class="w-full"` saja; tinggi/border/latar dari token `--field-h` (44 px).
+- **3 judul grup** seragam (`font-label-mono-md`): 🗂️ Asset & Activity · ⚡ Work Order Settings · 🏢 Department Request.
+- Semua `x-show` ber-`x-cloak`.
+- Teks kecil sisa (counter foto, tombol Link Part, empty-state parts) juga naik ke token 12 px.
+
+### Bukti hasil render (bukan hanya kelas)
+`e2e/log-modal-layout.spec.js` membuka modal di emulator lalu mengukur:
+`controlCount 18 · heights [44] · textarea ≥ 44 · labelCount 20 · labelFonts [12,16]` → **12 passed (41,6 s)** untuk seluruh suite.
+
+### Tes
+- `tests/log-form-layout.test.js` (5 tes kontrak fragmen: label token, tanpa `text-[8px]/[9px]`, tanpa `p-3/p-4` pada kontrol, `x-show` wajib `x-cloak`, tiga judul seragam). **Dibuktikan menggigit**: satu label dikembalikan ke `text-[9px]` + satu kontrol ke `p-4` → `3 failed | 2 passed`.
+- `tests/log-form-contract.test.js` (7 tes lama) tetap hijau — `actualHours`/`step="0.1"`/`completedDate`/`:max` tidak berubah.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1991 tes / 91 berkas**
+- coverage **97,19 / 88,94 / 97,22 / 98,38** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **12 passed (41,6 s)**
+- live: `sw.js` = **mtc-asset-v63**; fragmen live memuat kelas label baru + judul "Asset &amp; Activity"
+
 ## 🩹 S39e · Inisial teknisi pecah saat `assignedTo` berupa array (2026-10-25)
 
 **Live sw v61 → v62** (`5373d22`). Ditemukan dari pemantauan konsol dev server saat operator membuka kartu detail WO.
