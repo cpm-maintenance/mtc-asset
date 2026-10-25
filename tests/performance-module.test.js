@@ -425,3 +425,43 @@ describe('recomputeBD', () => {
         expect(ctx.showNotification).toHaveBeenCalledWith('BD disinkronkan dari WO: 1 record', 'success');
     });
 });
+
+describe('submitPerformance — cabang offline & audit opsional', () => {
+    it('offline: memperbarui entri lokal yang id-nya sudah ada', async () => {
+        const fb = stubFirebase();
+        const ctx = makeCtx({
+            isAdmin: true,
+            isOnline: false,
+            isEditingPerformance: true,
+            performanceData: [null, { id: 'PERF-9', createdBy: 'admin-lama' }],
+            performanceForm: validForm({ id: 'PERF-9' }),
+        });
+
+        await ctx.submitPerformance();
+
+        expect(fb.set).not.toHaveBeenCalled();
+        expect(ctx.performanceData[1].id).toBe('PERF-9');
+    });
+
+    it('online: mengabaikan entri null saat mencari duplikat', async () => {
+        const fb = stubFirebase();
+        const ctx = makeCtx({ isAdmin: true, performanceData: [null], performanceForm: validForm() });
+
+        await ctx.submitPerformance();
+
+        expect(fb.set).toHaveBeenCalledTimes(1);
+        expect(ctx.performanceData[0].id).toMatch(/^PERF-/);
+    });
+
+    it('tanpa auditModule: tetap menyimpan tanpa melempar', async () => {
+        const fb = stubFirebase();
+        const ctx = makeCtx({
+            isEditingPerformance: true,
+            performanceData: [{ id: 'PERF-9', createdBy: 'admin-lama' }],
+            performanceForm: validForm({ id: 'PERF-9' }),
+        });
+
+        await expect(ctx.submitPerformance()).resolves.toBeUndefined();
+        expect(fb.set).toHaveBeenCalledTimes(1);
+    });
+});

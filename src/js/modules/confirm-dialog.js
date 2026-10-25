@@ -134,6 +134,15 @@ export function showConfirmModal(options = {}) {
     okBtn.classList.add(...tone.button.split(' '));
     panel.classList.add('confirm-dialog-panel');
 
+    // Hormati preferensi sistem: tanpa transisi/scale saat reduced-motion.
+    const reduceMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+        okBtn.classList.remove('transition-all', 'active:scale-95');
+        cancelBtn.classList.remove('transition-all');
+    }
+
     const previousFocus = /** @type {any} */ (document.activeElement);
 
     return new Promise((resolve) => {
@@ -155,6 +164,15 @@ export function showConfirmModal(options = {}) {
             if (event.key === 'Escape') {
                 event.preventDefault();
                 close(false);
+                return;
+            }
+            // Focus trap: hanya dua tombol di panel, jadi Tab/Shift+Tab cukup
+            // menyiklus keduanya dan tidak pernah keluar ke elemen di belakang
+            // overlay (`aria-modal` tanpa trap = jebakan keyboard).
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                const next = document.activeElement === okBtn ? cancelBtn : okBtn;
+                next.focus();
             }
         }
 

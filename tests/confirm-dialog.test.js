@@ -186,3 +186,44 @@ describe('showConfirmModal — tampilan', () => {
         expect(confirm).toHaveBeenCalledWith('Lanjut?');
     });
 });
+
+describe('showConfirmModal — focus trap & reduced motion', () => {
+    it('Tab menyiklus dua tombol dan tidak keluar panel', async () => {
+        const pending = showConfirmModal({ message: 'Lanjut?' });
+        expect(document.activeElement).toBe(byAttr('ok'));
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+        expect(document.activeElement).toBe(byAttr('cancel'));
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+        expect(document.activeElement).toBe(byAttr('ok'));
+
+        byAttr('ok').click();
+        await pending;
+    });
+
+    it('Tab mengembalikan fokus ke panel bila fokus sempat keluar', async () => {
+        const outside = document.createElement('button');
+        document.body.appendChild(outside);
+        const pending = showConfirmModal({ message: 'Lanjut?' });
+
+        outside.focus();
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+
+        expect(document.activeElement).toBe(byAttr('ok'));
+        byAttr('cancel').click();
+        await pending;
+    });
+
+    it('membuang transisi saat prefers-reduced-motion aktif', async () => {
+        vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })));
+        const pending = showConfirmModal({ message: 'Lanjut?' });
+
+        expect(byAttr('ok').className).not.toContain('active:scale-95');
+        expect(byAttr('cancel').className).not.toContain('transition-all');
+
+        byAttr('cancel').click();
+        await pending;
+        vi.unstubAllGlobals();
+    });
+});

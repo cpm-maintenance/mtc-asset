@@ -763,3 +763,50 @@ describe('R6 Single Source Truth', () => {
     expect(computeBDFromLogs([], 'EQ1', '2026-08-01')).toBe(0);
   });
 });
+
+import { equipIdOf } from '../src/js/utils.js';
+
+describe('equipIdOf — kedua konvensi field', () => {
+    it('mengembalikan string kosong untuk record kosong', () => {
+        expect(equipIdOf(null)).toBe('');
+        expect(equipIdOf(undefined)).toBe('');
+        expect(equipIdOf({})).toBe('');
+    });
+
+    it('memprioritaskan equipmentId lalu EquipmentID', () => {
+        expect(equipIdOf({ equipmentId: 'eq-1' })).toBe('eq-1');
+        expect(equipIdOf({ EquipmentID: 'EQ-2' })).toBe('EQ-2');
+        expect(equipIdOf({ equipmentId: 'eq-3', EquipmentID: 'EQ-3' })).toBe('eq-3');
+    });
+});
+
+describe('calculatePartLifetime — pita status', () => {
+    const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
+
+    it('overdue saat umur pakai terlampaui', () => {
+        expect(calculatePartLifetime(daysAgo(60), 30).status).toBe('overdue');
+    });
+
+    it('warning saat sisa <= 30 hari', () => {
+        expect(calculatePartLifetime(daysAgo(10), 30).status).toBe('warning');
+    });
+
+    it('ok saat sisa > 30 hari', () => {
+        expect(calculatePartLifetime(daysAgo(1), 100).status).toBe('ok');
+    });
+});
+
+describe('validatePerformanceForm — HM', () => {
+    const base = { equipmentId: 'EQ-1', date: '2026-10-18', wh: 20, bd: 4, stb: 0, paPlan: 90 };
+
+    it('menerima hm undefined dan string kosong', () => {
+        expect(validatePerformanceForm({ ...base })).toEqual([]);
+        expect(validatePerformanceForm({ ...base, hm: '' })).toEqual([]);
+    });
+
+    it('menolak hm negatif', () => {
+        expect(validatePerformanceForm({ ...base, hm: -5 })).toContain(
+            'HM (Running Hours) must be a positive number'
+        );
+    });
+});

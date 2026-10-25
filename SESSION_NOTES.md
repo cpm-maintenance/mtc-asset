@@ -1,3 +1,38 @@
+## 🧭 S38d-focus-trap (2026-10-25) — Focus trap dialog + branch 88,02 → 88,55 %
+
+Live **sw v56** (`src/js/modules/confirm-dialog.js` berubah ⇒ `CACHE_NAME` naik).
+
+### Dialog: focus trap & reduced motion
+- **Tab/Shift+Tab menyiklus dua tombol** di panel (`okBtn` ⇄ `cancelBtn`) dan tidak pernah keluar ke elemen di belakang overlay — `aria-modal` tanpa trap adalah jebakan keyboard. Escape tetap menutup sebagai batal.
+- **`prefers-reduced-motion: reduce`** → kelas `transition-all`/`active:scale-95` dibuang dari kedua tombol, jadi tidak ada animasi saat OS memintanya.
+- 3 tes baru di `tests/confirm-dialog.test.js` (Tab maju/mundur, Tab saat fokus sempat keluar panel, reduced-motion). Total berkas ini **20 tes**.
+
+### Coverage 88,02 → 88,55 %
+| Berkas tes | Tambahan | Cabang |
+|---|---|---|
+| `tests/enterprise-kpi-module.test.js` | 7 tes | `calcReliability` 4 pita (Optimal/Good/Warning/Critical × status+warna), `calcMTBF`/`calcMTTR` dengan `performanceData` kosong dan fallback 24 jam + `EquipmentID`, `calcInventoryABC` kategori A/B/C dengan `Harga` kosong, `computeEnterpriseData` (prioritas WO Emergency/Urgent/Normal, label due today/tomorrow) |
+| `tests/performance-module.test.js` | 3 tes | `submitPerformance` jalur offline yang memperbarui entri lokal (`idx >= 0`), entri `null` saat mencari duplikat (`p &&`), audit opsional tanpa `window.auditModule` |
+| `tests/utils.test.js` | 5 tes | `equipIdOf` (null/undefined/`{}`, prioritas `equipmentId` vs `EquipmentID`), `calculatePartLifetime` pita overdue/warning/ok, `validatePerformanceForm` HM undefined/`''`/negatif |
+
+Hasil: **Branches 88,55 %** (5767/6512), statements 97,14, functions 97,34, lines 98,37, **1924 tes / 81 berkas**. Threshold tetap **87** — margin 1,55 poin; menaikkan ke 88 hanya menyisakan 0,55 (di bawah aturan ≥ 0,7), jadi belum di-ratchet.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- test:run **1924 lulus / 81 berkas**
+- coverage **exit 0** — 97,14 / 88,55 / 97,34 / 98,37
+- build **0**
+- verify:precache **OK 66 berkas**
+- E2E **10 passed (38,3 s)**
+
+### Jebakan
+- `calcInventoryABC` mengurutkan **menurun** menurut nilai, jadi part tanpa `Harga` (nilai 0) ada di **akhir** — asersi `abc[2].value` salah, harus `abc.at(-1)`.
+- `installConfirmDialog(undefined)` mengembalikan `true` karena parameter default menangkap `undefined`; uji cabang `false` pakai `null`.
+
+### Sisa
+- `app.js` 258 cabang terlewat (85,89 %) — sasaran berikutnya bila target 88,8 %.
+- `charts.js` 50 slot, `ai.js` 40 slot.
+
 ## 📈 S38c-coverage-e2e (2026-10-25) — Branch 87,36 → 88,02 % + E2E dialog konfirmasi
 
 Live **sw v55** (tidak berubah — hanya `tests/**`, `e2e/**`, `vitest.config.js`).

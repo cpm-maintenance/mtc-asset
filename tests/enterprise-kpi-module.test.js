@@ -585,3 +585,97 @@ describe('computeEnterpriseData & UI', () => {
         expect(ctx.expandedEquip).toBe('EQ-2');
     });
 });
+
+describe('calcReliability — pita status & warna', () => {
+    /** Tiga breakdown → failureCount 2, jadi mtbf = round(totalHrs / 2). */
+    const ctxWithMtbf = (totalHrs) =>
+        makeCtx({
+            logs: [
+                { LogID: 'L1', EquipmentID: 'EQ-1', Jenis: 'Breakdown' },
+                { LogID: 'L2', EquipmentID: 'EQ-1', Jenis: 'Breakdown' },
+                { LogID: 'L3', EquipmentID: 'EQ-1', Jenis: 'Breakdown' },
+            ],
+            performanceData: [{ equipmentId: 'EQ-1', wh: totalHrs }],
+        });
+
+    it('pct >= 90 → Optimal/green', () => {
+        expect(ctxWithMtbf(20000).calcReliability('EQ-1')).toMatchObject({ status: 'Optimal', color: 'green' });
+    });
+
+    it('pct 70-89 → Good/blue', () => {
+        expect(ctxWithMtbf(4800).calcReliability('EQ-1')).toMatchObject({ status: 'Good', color: 'blue' });
+    });
+
+    it('pct 50-69 → Warning/orange', () => {
+        expect(ctxWithMtbf(2400).calcReliability('EQ-1')).toMatchObject({ status: 'Warning', color: 'orange' });
+    });
+
+    it('pct < 50 → Critical/red', () => {
+        expect(ctxWithMtbf(1000).calcReliability('EQ-1')).toMatchObject({ status: 'Critical', color: 'red' });
+    });
+});
+
+describe('calcMTBF / calcMTTR — performanceData kosong & fallback jam', () => {
+    const logs = [
+        { LogID: 'L1', EquipmentID: 'EQ-1', Jenis: 'Breakdown' },
+        { LogID: 'L2', EquipmentID: 'EQ-1', Jenis: 'Breakdown' },
+    ];
+
+    it('memakai default 24 jam bila wh kosong dan membaca EquipmentID', () => {
+        const ctx = makeCtx({ logs, performanceData: [{ EquipmentID: 'EQ-1' }] });
+
+        expect(ctx.calcMTBF('EQ-1')).toBe(24);
+    });
+
+    it('aman saat performanceData belum terisi', () => {
+        const ctx = makeCtx({ logs, performanceData: undefined });
+
+        expect(ctx.calcMTBF('EQ-1')).toBe(0);
+        expect(ctx.calcMTTR('EQ-1')).toBe(0);
+    });
+});
+
+describe('calcInventoryABC — kategori & nilai tanpa Harga', () => {
+    it('membagi A/B/C menurut kumulatif nilai dan menganggap Harga kosong = 0', () => {
+        const ctx = makeCtx({
+            allParts: [
+                { PartID: 'P1', Stok: 8, Harga: 100 },
+                { PartID: 'P2', Stok: 1, Harga: 100 },
+                { PartID: 'P3', Stok: 5 },
+                { PartID: 'P4', Stok: 1, Harga: 100 },
+            ],
+        });
+
+        const abc = ctx.calcInventoryABC();
+
+        expect(abc.map((p) => p.category)).toEqual(['A', 'B', 'C', 'C']);
+        // part tanpa Harga punya nilai 0 dan terurut paling akhir
+        expect(abc.at(-1).PartID).toBe('P3');
+        expect(abc.at(-1).value).toBe(0);
+    });
+});
+
+describe('computeEnterpriseData — prioritas WO & label due', () => {
+    it('mengurutkan WO per prioritas dan menandai PM hari ini/besok', () => {
+        const ctx = makeCtx({
+            equipment: [{ EquipmentID: 'EQ-1' }],
+            performanceData: [{ equipmentId: 'EQ-1', wh: 100, bd: 0, stb: 0 }],
+            pmList: [
+                { pmId: 'A', status: 'pending', date: ymd(0) },
+                { pmId: 'B', status: 'pending', date: ymd(1) },
+                { pmId: 'C', status: 'pending', date: ymd(5) },
+            ],
+            logs: [
+                { LogID: 'L1', woNumber: 'WO-1', Status: 'Pending', woPriority: 'Emergency' },
+                { LogID: 'L2', woNumber: 'WO-2', Status: 'Pending', woPriority: 'Urgent' },
+                { LogID: 'L3', woNumber: 'WO-3', Status: 'Pending', woPriority: 'Normal' },
+            ],
+        });
+
+        ctx.computeEnterpriseData();
+
+        expect(ctx.enterpriseUpcomingPM.map((p) => p.due)).toEqual(['today', 'tomorrow', ymd(5)]);
+        expect(ctx.enterpriseCriticalWO.map((l) => l.LogID)).toEqual(['L1', 'L2', 'L3']);
+        expect(ctx.enterpriseKPIList).toHaveLength(8);
+    });
+});
