@@ -414,3 +414,202 @@ describe('notification.js — checkAllNotifications: perilaku umum', () => {
         expect(window.app.notifications.length).toBe(first);
     });
 });
+
+/**
+ * Sisi cabang yang tidak pernah dieksekusi tes berdata: `window.app` belum ada
+ * (boot awal / setelah logout), panel lonceng rusak (`notifications` bukan
+ * array), notifikasi duplikat, dan ServiceWorker yang belum siap. Semuanya
+ * jalur "aplikasi setengah jadi" — justru yang paling sering muncul di lapangan.
+ */
+describe('notification — guard state kosong & ServiceWorker absen', () => {
+    beforeEach(() => {
+        resetNotifBlocker();
+        stubNotification('granted');
+    });
+
+    it('checkAllNotifications tanpa window.app tidak melempar', () => {
+        delete window.app;
+
+        expect(() => checkAllNotifications()).not.toThrow();
+    });
+
+    it('panel lonceng rusak (notifications bukan array) diabaikan, bukan crash', () => {
+        window.app = { notifications: null, allParts: [{ PartID: 'P1', Stok: 0 }], logs: [], pmList: [], performanceData: [] };
+
+        expect(() => checkAllNotifications()).not.toThrow();
+        expect(window.app.notifications).toBeNull();
+    });
+
+    it('notifikasi duplikat (tipe + pesan sama) tidak didorong dua kali', () => {
+        window.app = {
+            notifications: [{ type: 'Low Stock', message: 'sudah ada' }],
+            allParts: [],
+            logs: [],
+            pmList: [],
+            performanceData: [],
+        };
+        checkAllNotifications();
+        const countAfterFirst = window.app.notifications.length;
+
+        checkAllNotifications();
+
+        expect(window.app.notifications.length).toBe(countAfterFirst);
+    });
+
+    it('auto-reorder hanya jalan untuk admin/supervisor', () => {
+        const autoReorder = vi.fn(async () => {});
+
+        window.app = { notifications: [], allParts: [], logs: [], pmList: [], performanceData: [], autoReorderLowStock: autoReorder, isAdminOrSupervisor: false };
+        checkAllNotifications();
+        expect(autoReorder).not.toHaveBeenCalled();
+
+        window.app.isAdminOrSupervisor = true;
+        checkAllNotifications();
+        expect(autoReorder).toHaveBeenCalledTimes(1);
+    });
+
+    it('auto-reorder yang gagal tidak menjatuhkan checkAllNotifications', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        window.app = {
+            notifications: [],
+            allParts: [],
+            logs: [],
+            pmList: [],
+            performanceData: [],
+            autoReorderLowStock: vi.fn(async () => { throw new Error('offline'); }),
+            isAdminOrSupervisor: true,
+        };
+
+        expect(() => checkAllNotifications()).not.toThrow();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(warn).toHaveBeenCalledWith('[Notif] Auto-reorder:', 'offline');
+        warn.mockRestore();
+    });
+});
+
+describe('sendBrowserNotification — izin & ServiceWorker', () => {
+    afterEach(() => {
+        Object.defineProperty(navigator, 'serviceWorker', { value: undefined, configurable: true });
+    });
+
+    it('izin belum diberikan → false, tanpa membuat Notification', async () => {
+        const { calls } = stubNotification('default');
+
+        await expect(sendBrowserNotification('Judul', 'Isi')).resolves.toBe(false);
+        expect(calls).toHaveLength(0);
+    });
+
+    it('ServiceWorker belum siap → jatuh ke Notification biasa, tetap terkirim', async () => {
+        const { calls } = stubNotification('granted');
+        Object.defineProperty(navigator, 'serviceWorker', { value: undefined, configurable: true });
+
+        await expect(sendBrowserNotification('Fallback', 'tanpa SW')).resolves.toBe(true);
+        expect(calls).toHaveLength(1);
+        expect(calls[0].title).toBe('Fallback');
+    });
+
+    it('ServiceWorker siap → memakai showNotification milik registrasi', async () => {
+        stubNotification('granted');
+        const showNotification = stubServiceWorker();
+
+        await expect(sendBrowserNotification('Lewat SW', 'isi', { tag: 'x' })).resolves.toBe(true);
+        expect(showNotification).toHaveBeenCalledWith('Lewat SW', expect.objectContaining({ tag: 'x' }));
+    });
+});
+
+/**
+ * Sisi `true` dari setiap ternary `length > 3 ? ' +N lainnya' : ''` dan fallback
+ * `NamaPart || PartID` / `woNumber || 'N/A'`. Tes berdata sebelumnya selalu
+ * memakai 1 item, jadi jalur "kebanyakan item" tidak pernah dieksekusi padahal
+ * itulah kondisi shift normal (belasan part low stock sekaligus).
+ */
+describe('notification — kategori dengan lebih dari 3 item', () => {
+    const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
+    const daysAhead = (n) => new Date(Date.now() + n * 86400000).toISOString().split('T')[0];
+
+    function seedSemua() {
+        window.app = {
+            notifications: [],
+            allParts: [
+                // 4 stok nol; yang pertama tanpa NamaPart → fallback ke PartID
+                { PartID: 'Z1', Stok: 0, MinStock: 2 },
+                { PartID: 'Z2', NamaPart: 'Seal', Stok: 0, MinStock: 2 },
+                { PartID: 'Z3', NamaPart: 'V-Belt', Stok: 0, MinStock: 2 },
+                { PartID: 'Z4', NamaPart: 'Bearing', Stok: 0, MinStock: 2 },
+                // 4 mendekati minimum (di atas nol, supaya masuk lowStock)
+                { PartID: 'L1', NamaPart: 'Filter', Stok: 1, MinStock: 5 },
+                { PartID: 'L2', NamaPart: 'Oli', Stok: 2, MinStock: 5 },
+                { PartID: 'L3', NamaPart: 'Grease', Stok: 3, MinStock: 5 },
+                { PartID: 'L4', NamaPart: 'Gasket', Stok: 4, MinStock: 5 },
+                // lewat umur pakai; yang pertama tanpa NamaPart, satu tanggal rusak
+                { PartID: 'W1', Stok: 9, lastReplaceDate: daysAgo(400), avgLifetimeDays: 365 },
+                { PartID: 'W2', NamaPart: 'Seal', Stok: 9, lastReplaceDate: daysAgo(500), avgLifetimeDays: 365 },
+                { PartID: 'W3', NamaPart: 'V-Belt', Stok: 9, lastReplaceDate: daysAgo(600), avgLifetimeDays: 365 },
+                { PartID: 'W4', NamaPart: 'Bearing', Stok: 9, lastReplaceDate: daysAgo(700), avgLifetimeDays: 365 },
+                { PartID: 'W5', NamaPart: 'Rusak', Stok: 9, lastReplaceDate: 'bukan-tanggal', avgLifetimeDays: 365 },
+            ],
+            logs: [
+                // 4 urgent; yang pertama tanpa woNumber → fallback 'N/A'
+                { LogID: 'U1', Status: 'Pending', woPriority: 'Emergency', Tanggal: daysAgo(1) },
+                { LogID: 'U2', Status: 'Pending', woPriority: 'Urgent', woNumber: 'WO-2', Tanggal: daysAgo(1) },
+                { LogID: 'U3', Status: 'Draft', woPriority: 'Urgent', woNumber: 'WO-3', Tanggal: daysAgo(1) },
+                { LogID: 'U4', Status: 'Pending', woPriority: 'Urgent', woNumber: 'WO-4', Tanggal: daysAgo(1) },
+                // 4 aging (> 3 hari, tanpa prioritas urgent); yang pertama tanpa woNumber
+                { LogID: 'A1', Status: 'Pending', Tanggal: daysAgo(10) },
+                { LogID: 'A2', Status: 'Pending', woNumber: 'WO-12', Tanggal: daysAgo(11) },
+                { LogID: 'A3', Status: 'Draft', woNumber: 'WO-13', Tanggal: daysAgo(12) },
+                { LogID: 'A4', Status: 'Pending', woNumber: 'WO-14', Tanggal: daysAgo(13) },
+            ],
+            pmList: [
+                // 4 overdue
+                { taskName: 'PM-1', status: 'pending', date: daysAgo(5) },
+                { taskName: 'PM-2', status: 'pending', date: daysAgo(6) },
+                { taskName: 'PM-3', status: 'pending', date: daysAgo(7) },
+                { taskName: 'PM-4', status: 'pending', date: daysAgo(8) },
+                // 4 jatuh tempo H-3
+                { taskName: 'PM-11', status: 'pending', date: daysAhead(1) },
+                { taskName: 'PM-12', status: 'pending', date: daysAhead(2) },
+                { taskName: 'PM-13', status: 'pending', date: daysAhead(3) },
+                { taskName: 'PM-14', status: 'pending', date: daysAhead(3) },
+            ],
+            performanceData: [],
+        };
+    }
+
+    beforeEach(() => {
+        resetNotifBlocker();
+        stubNotification('granted');
+        stubServiceWorker();
+        seedSemua();
+    });
+
+    it('setiap kategori > 3 item menyebut sisa item ("+N") di panel lonceng', () => {
+        checkAllNotifications();
+
+        const byType = (type) => window.app.notifications.filter((n) => n.type === type).map((n) => n.message);
+        expect(byType('Low Stock').join(' | ')).toContain('+1');
+        expect(byType('Work Order')[0]).toContain('+1');
+        expect(byType('WO Aging')[0]).toContain('+1');
+        expect(byType('PM Overdue')[0]).toContain('+1');
+        expect(byType('PM Due Soon')[0]).toContain('+1');
+        expect(byType('Lifetime Check')[0]).toContain('+1');
+    });
+
+    it('item tanpa NamaPart memakai PartID, WO tanpa nomor memakai N/A', () => {
+        checkAllNotifications();
+
+        const semua = window.app.notifications.map((n) => n.message).join(' | ');
+        expect(semua).toContain('Z1');
+        expect(semua).toContain('W1');
+        expect(semua).toContain('N/A');
+    });
+
+    it('part dengan tanggal pemasangan rusak tidak dihitung lewat umur pakai', () => {
+        checkAllNotifications();
+
+        const lifetime = window.app.notifications.find((n) => n.type === 'Lifetime Check');
+        expect(lifetime.message).not.toContain('Rusak');
+    });
+});

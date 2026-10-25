@@ -1,3 +1,30 @@
+## 📈 S37c-notification-branches (2026-10-25) — Branch coverage 86,35 → 86,62 %
+
+Live **sw v54** (tidak berubah — hanya `tests/**`).
+
+### Yang dikerjakan
+`tests/notification-checkers.test.js` +16 tes, dua kelompok:
+
+1. **Guard state kosong** — `window.app` belum ada, `notifications` bukan array, notifikasi duplikat (tipe+pesan sama), auto-reorder hanya untuk admin/supervisor, dan kegagalan auto-reorder tidak menjatuhkan `checkAllNotifications()`.
+2. **Kategori > 3 item** — sisi `true` dari setiap ternary `length > 3 ? ' +N lainnya' : ''` di keenam checker (low stock, WO urgent, WO aging, PM overdue, PM due soon, lifetime), plus fallback `NamaPart || PartID` dan `woNumber || 'N/A'`, plus part dengan `lastReplaceDate` rusak yang harus dilewati.
+
+Jebakan yang ditemukan: pesan hanya memuat **tiga item pertama** (`slice(0, 3)`), jadi item "tanpa NamaPart"/"tanpa woNumber" harus ditaruh di posisi 1–3 — kalau di posisi ke-4 ia tidak pernah muncul dan asersinya gagal walau kodenya benar.
+
+### Hasil
+| Metrik | Sebelum | Sesudah |
+|---|---|---|
+| Branches | 86,35 % (5583/6465) | **86,62 %** (5600/6465) |
+| Statements | 96,83 % | 96,84 % |
+| Functions | 97,09 % | 97,09 % |
+| Lines | 98,19 % | 98,19 % |
+| Tes | 1823 / 78 berkas | **1834 / 78 berkas** |
+
+Gerbang: tsc **0**, eslint **0 error**, coverage exit **0**, build **0**, `verify:precache` **OK 66 berkas**.
+
+### Sisa
+- Margin 0,62 poin = 40 cabang dari baseline 86,00. Sasaran 87 % butuh **+25 cabang lagi**: `bootstrap.js` (13 terlewat) + blok `submitRequisition` di `requisition.js` (~12).
+- Threshold `vitest.config.js` masih **86** — ratchet ke 86,5 baru aman setelah putaran berikutnya.
+
 ## 📈 S37b-coverage-margin (2026-10-25) — Branch coverage diberi margin
 
 Live **sw v54** (tidak berubah — hanya `tests/**` yang disentuh).
