@@ -1,3 +1,53 @@
+## 🌱 S38h-spare-parts-seeded (2026-10-25) — master `SpareParts` dibuat di produksi
+
+Live **sw v58** (tidak berubah — tidak ada `src/**`). **Data RTDB berubah.**
+
+### Masalah
+Node `SpareParts` **tidak ada** di RTDB produksi (root shallow: `PM_Schedule, SparePartLogs, Users, Equipment, AuditTrail, HistoryLog, _fcmTokens, AI_Settings, downtime, logs, Requisitions, Stats, Performance`). Akibatnya semua `PartsUsed` menunjuk part yang tidak ada → setiap transaksi stok ditolak `.validate` (`permission_denied`, S38f), stok tidak pernah bisa dipotong maupun dipulihkan.
+
+### Yang dikerjakan
+1. **Backup dulu**: `npm run backup:firebase` → `backups/backup-2026-10-25_13-51-07.json` (128 record).
+2. **Rencana dari data operator**, bukan karangan: `scripts/plan-spare-parts-seed.mjs` menyusun payload dari `Requisitions` (nama, 52 record), `SparePartLogs` (nama resmi + stok IN/OUT + equipment, 2 record), dan `HistoryLog` (memastikan semua id `PartsUsed` tercakup, 17 record). Id tanpa nama ditandai `needsReview`, bukan diisi nama palsu.
+3. **Terapkan**: `npx firebase database:set /SpareParts spare-parts-seed.json --project mtc-asset --instance mtc-asset-default-rtdb -f` (opsi `--confirm` tidak ada di versi ini; yang benar `-f`).
+4. **Verifikasi**: `scripts/audit-dangling-parts.mjs` dijalankan ulang → **0 referensi menggantung**.
+
+### Isi master (12 part)
+| PartID | Stok | Nama |
+|---|---|---|
+| `2810-CV-009` | 1 | Gearbox;H5Y307-20 Md100,Paramax |
+| `2810-CV-010` | 1 | Gearbox,With Backstop,H5Y307-13 Md100 |
+| `2810-CV-011` | 0 | Gearbox;100Mm Output Bore,H5Y307-13 |
+| `5060-FP-01` | 0 | ROLLER;RETURN,89X1810MM,WITH SHAFT 17MM |
+| `P-007` | 0 | Filter Press Feeding Pump Pemo, Front Hardalloy Sleeve … |
+| `P-008` | 0 | Filter Press Feeding Pump Pemo, Hardalloy Sleeve; Pn 1000039 … |
+| `P-010` | 0 | **`P-010`** (nama belum ada di sumber mana pun, `needsReview: true`) |
+| `P-011` | 0 | Filter Press Feeding Pump Pemo High Pressure Pump … |
+| `P-016` | 0 | Filter Press Feeding Pump Pemo Inlet Flange |
+| `P-021` | 0 | Filter Press Feeding Pump Pemo Aisi Seal Spacer |
+| `P-038` | 0 | Filter Press Feeding Pump Pemo Gaskets Kit |
+| `P-039` | 0 | Filter Press Feeding Pump Pemo Seal Locking Ring Aisi 316 |
+
+`MinStock: 0` + `isLowStock: false` supaya tidak memicu alarm stok rendah palsu.
+
+### Hasil audit sebelum vs sesudah
+| Metrik | Sebelum | Sesudah |
+|---|---|---|
+| Referensi part di `PartsUsed` | 3 | 3 |
+| Referensi menggantung | **3 (100 %)** | **0** |
+| Id unik hilang | 3 | **0** |
+
+### Perkakas
+| Berkas | Isi |
+|---|---|
+| `scripts/audit-dangling-parts.mjs` | baca-saja, memparse `PartsUsed` bentuk legacy, membandingkan dengan key `SpareParts` **dan** `PartID` |
+| `scripts/plan-spare-parts-seed.mjs` | menyusun payload master dari tiga ekspor; tidak menulis RTDB |
+| tes | 9 + 11 tes untuk kedua skrip |
+
+### Sisa
+- `P-010` masih bernama id; isi nama resminya saat sudah diketahui.
+- Stok 10 part lain = 0 (tidak ada jejak pergerakan). Perlu stock opname kalau ada saldo fisik.
+- `MinStock` semua 0 → fitur low-stock belum akan menyala sampai minimum diisi.
+
 ## 🐞 S38f-stock-restore-guard (2026-10-25) — `Restore parts stock error: permission_denied` saat hapus WO
 
 Live **sw v58** (`src/**` berubah ⇒ `CACHE_NAME` naik).
