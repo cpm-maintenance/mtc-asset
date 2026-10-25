@@ -1,3 +1,37 @@
+## 🗂️ S39c · WO yang sudah dihapus tetap tampil di menu Work Orders (2026-10-25)
+
+**Live sw v59 → v60** (`385b276`). Laporan operator: WO `MTC-005` sudah dihapus, kartunya masih ada di menu Work Orders.
+
+### Fakta
+- `database:get /HistoryLog` → **15** record, **tidak ada** `MTC-005`. Penghapusan di server **berhasil**; yang basi adalah state klien.
+- `filteredWorkOrders` (`app.js:1907`) membaca **`activeWorkOrders` lebih dulu** bila larik itu tidak kosong. `deleteItem()` hanya membersihkan `this.logs` — `activeWorkOrders` tidak pernah ikut dibersihkan, dan hanya dibangun ulang di listener `onChildAdded`.
+- **Tidak ada `onChildRemoved` di seluruh `src/js`** (dicek `grep -rn`). Jadi penghapusan dari tab/perangkat lain tidak pernah sampai ke state, dan `saveCache('logs', …)` + IndexedDB memunculkan record itu lagi setiap boot.
+
+### Perbaikan
+| Berkas | Perubahan |
+|---|---|
+| `src/js/modules/data.js` | `deleteItem()` jalur online **dan** offline membersihkan `activeWorkOrders` + `_woSeenIds`; listener `onChildRemoved` untuk `HistoryLog`; snapshot awal `onValue` memangkas record yang sudah tidak ada di server (hanya bila hasil query < cap 500) |
+| `src/js/data-layer.js` | ekspor `onChildRemoved` |
+| `src/js/firebase-config.js` | bridge `window.onChildRemoved` |
+| `src/js/globals.d.ts` | deklarasi `onChildRemoved?: any` |
+| `e2e/delete-wo.spec.js` | tidak lagi mengasumsikan pesan sukses jadi notifikasi terakhir — `onChildRemoved` kini bisa mengosongkan `logs` lebih dulu |
+
+### Tes
+5 tes baru di `tests/data.test.js`: `deleteItem(HistoryLog)` membersihkan `logs` **dan** `activeWorkOrders` (+ `_woSeenIds`), jalur offline sama, listener `onChildRemoved` membuang record, rekonsiliasi snapshot awal memangkas ghost dari cache, plus kontrak sumber untuk bridge/ekspor. **Dibuktikan menggigit**: dua baris pembersihan dihapus → `2 failed | 84 passed`, lalu dikembalikan.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1983 tes / 89 berkas**
+- coverage **97,24 / 88,98 / 97,36 / 98,41** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **11 passed (42,4 s)**
+- live: `sw.js` = **mtc-asset-v60**; `onChildRemoved` terverifikasi di `assets/main-D_DEW_f-.js`, `assets/app-D2MV7Dp0.js`, `assets/data-layer-DOdJyT2U.js`
+
+### Catatan
+- Untuk sesi di browser yang masih memegang state lama: satu kali reload (SW v60 mengambil alih). Setelah itu penghapusan dari perangkat lain langsung hilang tanpa reload.
+- Pola cacat yang sama masih terbuka untuk `Performance`, `Equipment`, `SpareParts` (semua listener-nya juga hanya `onChildAdded`).
+
 ## 🔧 S39b · `approveWO` record hantu + `showNotification` tanpa `await` (2026-10-25)
 
 **Live sw v58 → v59** (`83dc8b9`). Dua bug ditemukan dari konsol dev server saat operator menguji alur approve di localhost.
