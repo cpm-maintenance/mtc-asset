@@ -31,6 +31,46 @@ function writeRule(node) {
     return entry[child]['.write'];
 }
 
+/**
+ * Tag `<div ...>` terdekat yang **membungkus** sebuah tombol.
+ *
+ * Gate tidak selalu duduk di tag tombolnya: di `Performance.html` kedua tombol
+ * hapus berada di dalam `<div x-show="isAdminOrSupervisor">`. Pemeriksaan yang
+ * hanya membaca tag `<button>` melaporkan "tanpa gate" padahal gate-nya ada di
+ * induk — dan sebaliknya, menghapus induk itu tidak tertangkap tes mana pun.
+ */
+function enclosingDiv(html, index) {
+    let i = index;
+    let depth = 0;
+    while (i > 0) {
+        const close = html.lastIndexOf('</div>', i);
+        const open = html.lastIndexOf('<div', i);
+        if (open > close) {
+            if (depth === 0) {
+                const end = html.indexOf('>', open);
+                return html.slice(open, end + 1);
+            }
+            depth -= 1;
+            i = open;
+        } else if (close >= 0) {
+            depth += 1;
+            i = close;
+        } else {
+            return '';
+        }
+    }
+    return '';
+}
+
+/** Tombol + gate efektifnya: `x-show` di tag tombol, atau di div pembungkusnya. */
+function gatedDeleteButtons(html, node) {
+    const pattern = new RegExp(`<button[^>]*deleteItem\\('${node}'[^>]*>`, 'g');
+    return [...html.matchAll(pattern)].map((m) => ({
+        tag: m[0],
+        gate: m[0].includes('x-show="') ? m[0] : enclosingDiv(html, m.index),
+    }));
+}
+
 describe('gate tombol hapus vs database.rules.json', () => {
     it('HistoryLog: supervisor boleh menulis, jadi tombolnya wajib terlihat', () => {
         expect(writeRule('HistoryLog')).toContain("'supervisor'");
@@ -56,4 +96,26 @@ describe('gate tombol hapus vs database.rules.json', () => {
             expect(btn).toContain('x-show="isAdminOrSupervisor"');
         }
     });
+
+    // Dua node di bawah gate-nya duduk di `<div>` pembungkus, bukan di tag
+    // `<button>`. Diuji lewat `gatedDeleteButtons` supaya menghapus div itu
+    // langsung merah — bukan lolos karena tag tombolnya tidak diperiksa.
+    const ancestorGated = [
+        { node: 'Performance', file: 'public/pages/Performance.html' },
+        { node: 'SpareParts', file: 'public/pages/SpareParts.html' },
+    ];
+
+    for (const { node, file } of ancestorGated) {
+        it(`${node}: supervisor boleh menulis, gate boleh di induk tapi wajib ada`, () => {
+            expect(writeRule(node)).toContain("'supervisor'");
+
+            const buttons = gatedDeleteButtons(read(file), node);
+            expect(buttons.length, `${file}: tombol hapus ${node} tidak ditemukan`).toBeGreaterThan(0);
+            for (const { gate } of buttons) {
+                expect(gate, `${file}: tombol hapus ${node} tanpa gate isAdminOrSupervisor`).toContain(
+                    'x-show="isAdminOrSupervisor"'
+                );
+            }
+        });
+    }
 });
