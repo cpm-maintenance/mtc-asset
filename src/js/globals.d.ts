@@ -60,6 +60,7 @@ declare global {
     getDownloadURL?: any;
     onValue?: any;
     onChildAdded?: any;
+    onChildRemoved?: any;
     set?: any;
     update?: any;
     remove?: any;

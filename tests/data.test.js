@@ -8,6 +8,8 @@
  *    (listeners, pagination, offline queue, conflict resolution, delete)
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // Mock side-effect modules so importing data.js has no network/IDB cost.
 vi.mock('../src/js/modules/indexeddb.js', () => ({
@@ -1162,5 +1164,132 @@ describe('dataModule — saveToIndexedDB state kosong', () => {
 
         expect(idbManager.putBulk).toHaveBeenCalledTimes(4);
         expect(idbManager.putBulk).toHaveBeenCalledWith('equipment', []);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Sinkronisasi hapus WO (S39c)
+// ---------------------------------------------------------------------------
+
+describe('dataModule — hapus WO ikut membersihkan daftar Work Orders', () => {
+    it('deleteItem(HistoryLog) membuang record dari logs DAN activeWorkOrders', async () => {
+        const { remove } = setupFirebaseMock();
+        const ctx = makeCtx({
+            logs: [
+                { LogID: 'L1', woNumber: 'WO-1' },
+                { LogID: 'L2', woNumber: 'WO-2' },
+            ],
+            activeWorkOrders: [
+                { LogID: 'L1', woNumber: 'WO-1' },
+                { LogID: 'L2', woNumber: 'WO-2' },
+            ],
+            _woSeenIds: new Set(['L1', 'L2']),
+        });
+        window.get = vi.fn(async () => ({
+            val: () => ({ LogID: 'L1', PartsUsed: '[]' }),
+            exists: () => true,
+        }));
+
+        await ctx.deleteItem('HistoryLog', 'L1');
+
+        expect(remove).toHaveBeenCalledOnce();
+        expect(ctx.logs.map((l) => l.LogID)).toEqual(['L2']);
+        // `filteredWorkOrders` membaca activeWorkOrders lebih dulu; kalau larik
+        // ini tidak dibersihkan, WO yang sudah dihapus tetap tampil di menu.
+        expect(ctx.activeWorkOrders.map((l) => l.LogID)).toEqual(['L2']);
+        expect(ctx._woSeenIds.has('L1')).toBe(false);
+    });
+
+    it('jalur offline juga membersihkan activeWorkOrders', async () => {
+        setupFirebaseMock();
+        const ctx = makeCtx({
+            isOnline: false,
+            logs: [{ LogID: 'L1', woNumber: 'WO-1' }],
+            activeWorkOrders: [{ LogID: 'L1', woNumber: 'WO-1' }],
+        });
+
+        await ctx.deleteItem('HistoryLog', 'L1');
+
+        expect(ctx.logs).toEqual([]);
+        expect(ctx.activeWorkOrders).toEqual([]);
+    });
+
+    it('listener onChildRemoved terdaftar dan memakai SDK yang diekspor data-layer', () => {
+        const read = (/** @type {string} */ p) => readFileSync(resolve(process.cwd(), p), 'utf8');
+        const data = read('src/js/modules/data.js');
+        const bridge = read('src/js/firebase-config.js');
+        const layer = read('src/js/data-layer.js');
+
+        // Tanpa listener ini, penghapusan dari tab/perangkat lain tidak pernah
+        // sampai ke state: `onChildAdded` hanya menambah.
+        expect(data).toContain("window.onChildRemoved(histRef");
+        expect(data).toContain("this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l && l.LogID !== id)");
+        expect(bridge).toContain('window.onChildRemoved = m.onChildRemoved');
+        expect(layer).toMatch(/export \{[^}]*onChildRemoved/);
+    });
+});
+
+describe('dataModule.setupFirebaseListeners — hapus WO lintas perangkat (S39c)', () => {
+    it('onChildRemoved membuang WO dari logs + activeWorkOrders dan menyimpan cache', async () => {
+        setupFirebaseMock();
+        let removeCb = null;
+        window.onChildRemoved = vi.fn((_ref, cb) => {
+            removeCb = cb;
+            return vi.fn();
+        });
+
+        const ctx = makeCtx({
+            logs: [
+                { LogID: 'L1', woNumber: 'WO-1' },
+                { LogID: 'L2', woNumber: 'WO-2' },
+            ],
+            activeWorkOrders: [
+                { LogID: 'L1', woNumber: 'WO-1' },
+                { LogID: 'L2', woNumber: 'WO-2' },
+            ],
+            _woSeenIds: new Set(['L1', 'L2']),
+        });
+
+        ctx.setupFirebaseListeners();
+
+        expect(window.onChildRemoved).toHaveBeenCalled();
+        expect(typeof removeCb).toBe('function');
+
+        removeCb({ key: 'L1' });
+
+        expect(ctx.logs.map((l) => l.LogID)).toEqual(['L2']);
+        expect(ctx.activeWorkOrders.map((l) => l.LogID)).toEqual(['L2']);
+        expect(ctx._woSeenIds.has('L1')).toBe(false);
+    });
+
+    it('snapshot awal memangkas WO yang sudah tidak ada di server', async () => {
+        setupFirebaseMock();
+        const valueCbs = [];
+        window.onValue = vi.fn((ref, cb) => {
+            valueCbs.push({ ref, cb });
+            return vi.fn();
+        });
+
+        const ctx = makeCtx({
+            logs: [
+                { LogID: 'L1', woNumber: 'WO-1' },
+                { LogID: 'GHOST', woNumber: 'WO-GHOST' },
+            ],
+            activeWorkOrders: [
+                { LogID: 'L1', woNumber: 'WO-1' },
+                { LogID: 'GHOST', woNumber: 'WO-GHOST' },
+            ],
+        });
+
+        ctx.setupFirebaseListeners();
+        // Listener HistoryLog dikenali dari constraint limitToLast(500).
+        const hist = valueCbs.find((v) => JSON.stringify(v.ref).includes('"n":500'));
+        expect(hist, 'listener HistoryLog tidak terdaftar').toBeTruthy();
+
+        // Server hanya punya L1 — GHOST hidup lagi dari cache IndexedDB.
+        hist.cb({ val: () => ({ L1: { LogID: 'L1' } }) });
+
+        expect(ctx.logs.map((l) => l.LogID)).toEqual(['L1']);
+        expect(ctx.activeWorkOrders.map((l) => l.LogID)).toEqual(['L1']);
     });
 });

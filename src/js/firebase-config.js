@@ -54,6 +54,7 @@ window.__loadDataLayer = function loadDataLayer() {
       window.ref = m.ref;
       window.onValue = m.onValue;
       window.onChildAdded = m.onChildAdded;
+      window.onChildRemoved = m.onChildRemoved;
       window.set = m.set;
       window.update = m.update;
       window.remove = m.remove;

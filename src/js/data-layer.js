@@ -16,7 +16,7 @@
 import { getApp } from 'firebase/app'
 import { connectDatabaseEmulator } from 'firebase/database'
 import {
-  getDatabase, ref, onValue, onChildAdded, set, update, remove,
+  getDatabase, ref, onValue, onChildAdded, onChildRemoved, set, update, remove,
   get, query, limitToLast, runTransaction,
   orderByChild, endAt, equalTo, endBefore
 } from 'firebase/database'
@@ -28,4 +28,4 @@ if (import.meta.env.VITE_USE_EMULATORS === '1') {
 }
 
 export { db }
-export { ref, onValue, onChildAdded, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore }
+export { ref, onValue, onChildAdded, onChildRemoved, set, update, remove, get, query, limitToLast, runTransaction, orderByChild, endAt, equalTo, endBefore }

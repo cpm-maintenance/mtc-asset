@@ -82,10 +82,22 @@ test.describe('Hapus WO oleh supervisor (emulator)', () => {
                 timeout: 20_000,
             })
             .toBe(false);
-        expect(await page.evaluate(() => (globalThis.app.notifications || []).slice(-1)[0]?.message)).toBe(
-            'Record successfully deleted'
-        );
         expect(errors).toEqual([]);
+
+        // `onChildRemoved` kini mengosongkan `logs` lebih dulu (event RTDB bisa
+        // mendarat sebelum `deleteItem` selesai), jadi pesan sukses ditunggu
+        // terpisah — jangan diasumsikan sudah jadi notifikasi terakhir.
+        await expect
+            .poll(
+                () =>
+                    page.evaluate(() =>
+                        (globalThis.app.notifications || []).some(
+                            (n) => n && n.message === 'Record successfully deleted'
+                        )
+                    ),
+                { timeout: 10_000 }
+            )
+            .toBe(true);
 
         // Kembalikan role supaya spec lain tidak terpengaruh.
         await setRole(seeded.uid, 'admin');

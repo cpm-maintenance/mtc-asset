@@ -296,8 +296,23 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
 
         // Firebase fires onValue after initial child_added flood completes
         if (window.onValue) {
-            const unsubOnce = window.onValue(histRef, () => {
+            const unsubOnce = window.onValue(histRef, (/** @type {any} */ snap) => {
                 _initialHistoryLoaded = true;
+                // Rekonsiliasi cache: WO yang sudah dihapus di server tidak boleh
+                // hidup lagi dari IndexedDB (`saveCache('logs', …)`). Hanya aman
+                // bila hasil query belum menyentuh cap 500.
+                try {
+                    const data = snap?.val?.();
+                    const ids = new Set(Object.keys(data || {}));
+                    if (data && ids.size > 0 && ids.size < 500 && Array.isArray(this.logs)) {
+                        const pruned = this.logs.filter(l => l && l.LogID && ids.has(l.LogID));
+                        if (pruned.length !== this.logs.length) {
+                            this.logs = pruned;
+                            this.activeWorkOrders = pruned.filter(l => l.woNumber);
+                            saveCache('logs', pruned);
+                        }
+                    }
+                } catch { /* biarkan data apa adanya */ }
             }, { onlyOnce: true });
             if (typeof unsubOnce === 'function') this._listeners.push(unsubOnce);
         }
@@ -347,6 +362,26 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             this.logs = [];
             this.activeWorkOrders = [];
         }));
+
+        // Hapus record dari state saat dihapus di tab/perangkat lain. Tanpa ini
+        // `onChildAdded` hanya menambah: WO yang sudah tidak ada di RTDB tetap
+        // tampil di menu Work Orders sampai halaman dimuat ulang.
+        if (typeof window.onChildRemoved === 'function') {
+            this._listeners.push(window.onChildRemoved(histRef, (/** @type {any} */ snapshot) => {
+                try {
+                    const id = snapshot?.key || snapshot?.val?.()?.LogID;
+                    if (!id) return;
+                    this._woSeenIds?.delete(id);
+                    this.logs = (this.logs || []).filter(l => l && l.LogID !== id);
+                    this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l && l.LogID !== id);
+                    saveCache('logs', this.logs);
+                } catch (/** @type {any} */ e) {
+                    console.error('HistoryLog remove listener:', e);
+                }
+            }, (/** @type {any} */ error) => {
+                console.error('HistoryLog remove listener:', error);
+            }));
+        }
 
         // Performance: incremental onChildAdded + limitToLast(200)
         const perfRef = window.query(window.ref(window.db, 'Performance'), window.limitToLast(200));
@@ -657,6 +692,10 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     this.allParts = this.allParts.filter(p => p.PartID !== id);
                 } else if (node === 'HistoryLog') {
                     this.logs = this.logs.filter(l => l.LogID !== id);
+                    // `filteredWorkOrders` membaca activeWorkOrders lebih dulu:
+                    // tanpa baris ini WO yang dihapus tetap tampil di menu.
+                    this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l.LogID !== id);
+                    this._woSeenIds?.delete(id);
                 } else if (node === 'Performance') {
                     this.performanceData = this.performanceData.filter(p => p.id !== id);
                 }
@@ -782,6 +821,9 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 this.allParts = this.allParts.filter(p => p.PartID !== id);
             } else if (node === 'HistoryLog') {
                 this.logs = this.logs.filter(l => l.LogID !== id);
+                // Lihat catatan di jalur offline: activeWorkOrders ikut dibersihkan.
+                this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l.LogID !== id);
+                this._woSeenIds?.delete(id);
             } else if (node === 'Performance') {
                 this.performanceData = this.performanceData.filter(p => p.id !== id);
             }
