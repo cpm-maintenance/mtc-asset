@@ -1,3 +1,33 @@
+## ⚠️ S38h-c · `database:update` MENGGANTI record WO — dipulihkan (2026-10-25)
+
+### Apa yang terjadi
+Untuk menghapus item `P-010` dari `PartsUsed`, dipakai:
+
+```bash
+npx firebase database:update /HistoryLog/LOG-1792078852510 patch.json -f
+```
+
+Payload-nya `{"PartsUsed":[{"id":"P-011","qty":1}]}`. Hasilnya **bukan** merge: record `LOG-1792078852510` (MTC-004) tinggal berisi **satu** field (`PartsUsed`); 33 field lain (`LogID`, `EquipmentID`, `Jenis`, `Deskripsi`, `Status`, `woNumber`, `Downtime`, `Cost`, `HM`, dst.) hilang.
+
+### Pemulihan
+1. Sumber restore: ekspor `database:get /HistoryLog` pukul 13:32 (sebelum perubahan apa pun) — masih memuat record lengkap 34 field. `npm run backup:firebase` 14:01 **tidak** memuat record ini (backup melewatkan record yang sangat baru), jadi ekspor manual itulah yang menyelamatkan.
+2. Record asli disusun ulang di memori dengan `PartsUsed = [{"id":"P-011","qty":1}]` (item `P-010` dibuang).
+3. Ditulis dengan `database:set /HistoryLog/LOG-1792078852510 restore.json -f` → `Data persisted successfully`.
+4. Verifikasi: **34 field**, `Status: Completed`, `woNumber: MTC-004`, `EquipmentID: 5060-PU-12`, `Jenis: Breakdown`, `PartsUsed` hanya `P-011`; total log tetap **17**.
+5. Audit ulang: **0 referensi menggantung** (2 referensi part, keduanya valid).
+
+### Pelajaran (sudah masuk skill `mtc-asset-maintenance` §5)
+- `firebase database:update <path> <file>` di versi ini **mengganti** node, bukan merge. Untuk mengubah sebagian field: `database:get` → ubah di memori → `database:set` record penuh, atau REST `PATCH`.
+- Selalu simpan hasil `database:get` sebelum menulis; backup otomatis tidak selalu memuat record terbaru.
+
+### Status data sekarang
+| Item | Nilai |
+|---|---|
+| `SpareParts` | 11 part (P-010 dihapus) |
+| Referensi part di `PartsUsed` | 2, semuanya valid |
+| Referensi menggantung | **0** |
+| `HistoryLog` | 17 record, utuh |
+
 ## 🗑️ S38h-b · `P-010` dihapus dari master (2026-10-25)
 
 Permintaan operator: part `P-010` belum punya nama resmi di sumber mana pun, jadi dihapus.
