@@ -1,3 +1,41 @@
+## 🧠 S39g · Seksi "Diagnosis & Briefing" + field numerik kosong (2026-10-25)
+
+**Live sw v63 → v64** (`4259073`). Tindak lanjut tangkapan layar setelah S39f: dua sisa yang masih terbaca tidak rapi.
+
+### Temuan (dari render, bukan dari kelas)
+| # | Temuan |
+|---|---|
+| 1 | `ROOT CAUSE (RCA)` dan `TECHNICAL BRIEFING` tampil sebagai field lepas — tanpa judul seksi, jaraknya lebih rapat daripada jarak antar seksi lain |
+| 2 | Lima field numerik menampilkan `0` pada entri baru (`EST. HOURS`, `ACTUAL HOURS`, downtime, cost, running hours) sehingga terbaca seperti data terisi |
+
+### Perbaikan
+- Keduanya dipindah ke seksi baru berjudul **🧠 Diagnosis & Briefing** dengan pembungkus `mt-6 pt-6 border-t` yang sama seperti tiga seksi lain (grid 4 field + textarea penuh).
+- Default numerik jadi **string kosong** di dua tempat yang membangun form: `DEFAULT_LOG_FORM()` (`constants.ts`) **dan** objek `logForm` di `openLogModal()` (`logs.js`) — sebelumnya hanya salah satunya yang diubah sehingga perbaikan tidak terlihat. `submitLog` tetap menormalkan lewat `Number(...) || 0`, jadi data tersimpan tetap angka.
+- `md:grid-cols-2` **dibatalkan**: `tests/form-controls.test.js` melarang `grid-cols-2` di dalam `<form>` karena grid form harus mengikuti lebar wadah (`.form-grid` 1→2→3), bukan breakpoint viewport. Sisa asimetri 3+1 pada seksi 4-field adalah konsekuensi aturan itu, bukan cacat baru.
+
+### Bukti
+`e2e/log-modal-layout.spec.js` sekarang juga menuntut kelima field numerik bernilai `''` pada entri baru:
+
+| Metrik | Nilai |
+|---|---|
+| nilai field numerik | `['', '', '', '', '']` |
+| tinggi kontrol | `[44]` |
+| label | 20, font `[12, 16]` |
+
+Suite penuh **12 passed (35,7 s)**.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1991 tes / 91 berkas**
+- coverage **97,19 / 88,94 / 97,22 / 98,38** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **12 passed (35,7 s)**
+- live: `sw.js` = **mtc-asset-v64**; fragmen live memuat judul "Diagnosis &amp; Briefing"
+
+### Pelajaran
+Default form punya **dua sumber** (`constants.ts` dan `openLogModal()` di `logs.js`). Mengubah satu saja membuat perbaikan tampak "tidak ada perubahan" — persis keluhan operator. Cari keduanya (`grep -rn "downtime: 0"`).
+
 ## 🎛️ S39f · Modal "New System Entry" dirapikan (2026-10-25)
 
 **Live sw v62 → v63** (`c2d361f`). Permintaan operator: form input WO baru dibuat rapi.
