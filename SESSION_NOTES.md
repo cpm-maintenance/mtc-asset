@@ -1,3 +1,37 @@
+## 🧭 S39h · Form WO sesuai mockup desktop (2026-10-25)
+
+**Live sw v64 → v65** (`ebd1d2a`). Implementasi lima butir usulan desain.
+
+| # | Perubahan |
+|---|---|
+| 1 | **Department Request terlipat** — `<details>` dengan ringkasan `Opsional · 4 field`; kontrol terlihat turun 18 → **14** |
+| 2 | **Footer aksi menempel** (`sticky bottom-0`) berisi status `Wajib terisi` / `N field belum valid`, tombol Cancel, dan submit yang `:disabled` selama field wajib kosong |
+| 3 | **Grid 2 kolom** lewat `.form-grid--two` (container-driven, bukan breakpoint viewport) — seksi 4-field jadi 2×2, tidak ada lagi ekor 3+1 |
+| 4 | **Angka rata kanan + satuan di dalam field** (`hrs`, `$`, `HM`) pada 5 kontrol numerik |
+| 5 | **Validasi inline** — penanda `*` + `aria-required` pada 3 field wajib, pesan per field (`logFormErrors`), pesan hilang saat field diperbaiki |
+
+### Dua jebakan yang tertangkap
+1. **`validateLogForm` sudah ada** di `src/js/utils.js` (aturan blokir, pesan Inggris) dan diimpor `logs.js`. Percobaan pertama menambah method bernama sama di modul → menimpa import, `submitLog` berhenti memakai aturan lama, dan tes kontrak merah (`Equipment selection is required`). Perbaikan: method baru dinamai **`syncLogFormErrors()`**; aturan blokir tetap satu sumber di utils.
+2. **`details` tertutup tetap menampilkan isinya.** Gaya UA `details:not([open]) > *` kalah oleh `.form-grid { display: grid }` milik author. Tanpa aturan `details:not([open]) > *:not(summary) { display: none }`, seksi terlipat tetap tampil — dibuktikan E2E (`deptFieldsHidden` false) sebelum CSS ditambahkan.
+
+### Tes
+- `tests/log-form-validation.test.js` (6) — pesan per field, tenggat < tanggal, jam negatif, string kosong dianggap belum diisi, pesan hilang setelah diperbaiki.
+- `tests/log-form-layout.test.js` +6 — 4 grid `form-grid--two`, footer sticky, `<details>` + `</details>` mengurung 4 field, 3 penanda `*` + 3 `aria-required`, 5 input rata kanan, 6 pasang `x-show`/`x-text` pesan error.
+- `e2e/log-modal-layout.spec.js` — submit `disabled` di awal, footer terlihat, seksi 04 tertutup (`deptFieldsHidden`), lalu tombol aktif setelah field wajib diisi (di-poll karena Alpine memakai microtask).
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **2003 tes / 92 berkas**
+- coverage **97,17 / 88,93 / 97,23 / 98,39** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **12 passed (46,6 s)**
+- live: `sw.js` = **mtc-asset-v65**; fragmen live memuat `sticky bottom-0`, `form-grid--two`, dan `Opsional · 4 field`
+
+### Sisa
+- Prefill teknisi dari akun login **belum** dilakukan: planner sering menugaskan orang lain, jadi field dibiarkan kosong dengan validasi. Prefill `dueDate` +7 hari juga belum.
+- Seksi 04 tetap terbuka saat mengedit log lama? Belum diuji — `<details>` tidak punya state, jadi selalu tertutup saat modal dibuka ulang.
+
 ## 🧠 S39g · Seksi "Diagnosis & Briefing" + field numerik kosong (2026-10-25)
 
 **Live sw v63 → v64** (`4259073`). Tindak lanjut tangkapan layar setelah S39f: dua sisa yang masih terbaca tidak rapi.
