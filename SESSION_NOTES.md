@@ -1,3 +1,35 @@
+## 📈 S38-coverage-branches (2026-10-25) — Branch coverage 86,62 → 87,39 %, threshold 86 → 86,5
+
+Live **sw v54** (tidak berubah — hanya `tests/**` + `vitest.config.js`).
+
+### Yang dikerjakan
+Dua berkas tes baru, **39 tes**, sasaran dipilih dari `BRDA taken=0` di `coverage/lcov.info`:
+
+1. **`tests/bootstrap-branches.test.js`** (13 tes) — cabang mati di `src/js/bootstrap.js`: pesan `error` kosong (`e.message || ''`), rantai `&&` watcher `logs` (logs null / kosong / terisi), guard navigasi dengan `oldVal` kosong (`oldVal || 'dash'`), wadah chart dashboard & KPI yang belum dibuat, entri chart KPI `null`, pembersihan chart enterprise dengan `_appCharts` undefined **dan** `{}`, sisi `false` watcher `kpiFilter`/`kpiFilterDate`/`performanceData` dan watcher modal, serta `onUser()` yang memuat `window.__loadNotifications` (termasuk loader yang menolak).
+2. **`tests/requisition-branches.test.js`** (26 tes) — cabang sisa `src/js/modules/requisition.js`: `_reqPrevStatuses` yang tersisa tanpa `_reqSeenIds`, fallback `Someone`/`Item` untuk request baru, `openRequisitionModal` tanpa `itemName`, `submitRequisition` edit dengan default `itemType`/`priority`/`notes` dan record yang tidak ada di state, record baru tanpa `user`/prioritas (`Unknown`/`unknown`/`woNumber` dari `logs`), backlink WO saat `logs` undefined dan saat WO ditemukan, `autoReorderLowStock` dengan `allParts`/`requisitions` undefined + dedupe lewat `itemName`, `approveRequisition`/`markArrived`/`closeRequisition`/`bulkApproveRequisitions`/`deleteRequisition` saat `confirm()` dibatalkan, part yang tidak ada di `allParts`, `part.Stok` kosong dan `NamaPart` kosong, `itemAvail` tanpa `allParts`, dan `reqGetFilteredList` tanpa `createdAt`.
+3. **`vitest.config.js`**: `branches` **86 → 86,5**. Dibuktikan menggigit: `87,5` → `ERROR: Coverage for branches (87.25%) does not meet global threshold`, lalu dikembalikan ke `86,5` dan `npm run test:coverage` exit **0**.
+
+### Hasil
+| Metrik | Sebelum (S37c) | Sesudah |
+|---|---|---|
+| Branches | 86,62 % (5600/6465) | **87,39 %** (5650/6465) |
+| Statements | 96,84 % | **96,97 %** |
+| Functions | 97,09 % | **97,16 %** |
+| Lines | 98,19 % | **98,21 %** |
+| Tes | 1834 / 78 berkas | **1873 / 80 berkas** |
+| Threshold branches | 86 | **86,5** (margin 0,89 poin) |
+
+Gerbang: tsc **0**, eslint **0 error**, test:run **1873 lulus / 80 berkas**, coverage exit **0**, build **0**, `verify:precache` **OK 66 berkas**.
+
+### Sisa (dan kenapa tidak dikejar)
+- `bootstrap.js:112` — satu sisi `&&` (`window._appCharts` falsy) tetap `taken=0` walau jalur itu dipanggil di tes; slot cabangnya tidak bertambah. Satu cabang, tidak sepadan dengan waktu.
+- `requisition.js:189/191/214/216` — **mustahil dijangkau**: filter `itemName && quantity > 0` sudah menjamin `validItems[0].itemName` dan `i.quantity` terisi, jadi sisi kanan `|| item.itemName` dan `|| 0` mati secara struktural.
+- `requisition.js:442` — `openWOs` menyaring `l.woNumber` **sebelum** comparator, jadi `String(b.woNumber || '')` tidak pernah jatuh ke `''`.
+- Kandidat berikutnya bila butuh margin lagi: `data.js` (82,5 % branch), `export.js` (81,99 %), `logs.js` (84,9 %), `enterprise-kpi.js` (85,64 %), `performance.js` (85,64 %).
+
+### Brief sesi berikutnya (S39)
+Target: **branch 87,39 → 88,0 %** (± 40 cabang). Sasaran terukur dari `BRDA taken=0`: `data.js` + `export.js` + `logs.js` (tiga berkas terbesar yang branch-nya di bawah 85 %). Jangan sentuh `src/**`; kalau terpaksa, bump `CACHE_NAME`. Threshold jangan diturunkan; ratchet ke **87,5** hanya setelah hasil ≥ 88,2 %.
+
 ## 📈 S37c-notification-branches (2026-10-25) — Branch coverage 86,35 → 86,62 %
 
 Live **sw v54** (tidak berubah — hanya `tests/**`).

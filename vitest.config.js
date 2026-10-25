@@ -86,7 +86,7 @@ export default defineConfig({
             // Terukur 96,43 / 86,11 / 96,55 / 97,75 — jangan turunkan.
             thresholds: {
                 statements: 96,
-                branches: 86,
+                branches: 86.5,
                 functions: 96,
                 lines: 97,
             },
