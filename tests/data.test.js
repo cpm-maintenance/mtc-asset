@@ -1223,6 +1223,8 @@ describe('dataModule — hapus WO ikut membersihkan daftar Work Orders', () => {
         // Tanpa listener ini, penghapusan dari tab/perangkat lain tidak pernah
         // sampai ke state: `onChildAdded` hanya menambah.
         expect(data).toContain("window.onChildRemoved(histRef");
+        expect(data).toContain("window.onChildRemoved(spRef");
+        expect(data).toContain("window.onChildRemoved(perfRef");
         expect(data).toContain("this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l && l.LogID !== id)");
         expect(bridge).toContain('window.onChildRemoved = m.onChildRemoved');
         expect(layer).toMatch(/export \{[^}]*onChildRemoved/);
@@ -1233,8 +1235,9 @@ describe('dataModule.setupFirebaseListeners — hapus WO lintas perangkat (S39c)
     it('onChildRemoved membuang WO dari logs + activeWorkOrders dan menyimpan cache', async () => {
         setupFirebaseMock();
         let removeCb = null;
-        window.onChildRemoved = vi.fn((_ref, cb) => {
-            removeCb = cb;
+        window.onChildRemoved = vi.fn((ref, cb) => {
+            // Ada listener lain (SpareParts/Performance); ambil yang HistoryLog.
+            if (JSON.stringify(ref).includes('HistoryLog')) removeCb = cb;
             return vi.fn();
         });
 
@@ -1291,5 +1294,31 @@ describe('dataModule.setupFirebaseListeners — hapus WO lintas perangkat (S39c)
 
         expect(ctx.logs.map((l) => l.LogID)).toEqual(['L1']);
         expect(ctx.activeWorkOrders.map((l) => l.LogID)).toEqual(['L1']);
+    });
+
+    it('onChildRemoved juga membersihkan SpareParts dan Performance', () => {
+        setupFirebaseMock();
+        const cbs = {};
+        window.onChildRemoved = vi.fn((ref, cb) => {
+            const s = JSON.stringify(ref);
+            if (s.includes('SpareParts')) cbs.parts = cb;
+            else if (s.includes('Performance')) cbs.perf = cb;
+            return vi.fn();
+        });
+
+        const ctx = makeCtx({
+            allParts: [{ PartID: 'P1' }, { PartID: 'P2' }],
+            performanceData: [{ id: 'PF1' }, { id: 'PF2' }],
+        });
+
+        ctx.setupFirebaseListeners();
+        expect(typeof cbs.parts).toBe('function');
+        expect(typeof cbs.perf).toBe('function');
+
+        cbs.parts({ key: 'P1' });
+        cbs.perf({ key: 'PF1' });
+
+        expect(ctx.allParts.map((p) => p.PartID)).toEqual(['P2']);
+        expect(ctx.performanceData.map((p) => p.id)).toEqual(['PF2']);
     });
 });

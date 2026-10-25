@@ -283,6 +283,18 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             console.error('Spare Parts Listener Error:', error);
         }));
 
+        // Part yang dihapus di tab/perangkat lain harus hilang dari daftar:
+        // `onChildAdded` hanya menambah, dan cache IndexedDB memuatnya lagi.
+        if (typeof window.onChildRemoved === 'function') {
+            this._listeners.push(window.onChildRemoved(spRef, (/** @type {any} */ snapshot) => {
+                const id = snapshot?.key;
+                if (!id) return;
+                const next = (this.allParts || []).filter(p => p && p.PartID !== id);
+                this.allParts = next;
+                saveCache('allParts', next);
+            }, (/** @type {any} */ error) => console.error('Spare Parts remove listener:', error)));
+        }
+
         // HistoryLog: incremental onChildAdded + limitToLast (delta-only, no full re-download per write)
         // ponytail: cap 500 — naikkan bila dataset riil > 500 logs
         const histRef = window.query(window.ref(window.db, 'HistoryLog'), window.limitToLast(500));
@@ -402,6 +414,16 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 console.error('Performance Listener Error:', e);
             }
         }, (/** @type {any} */ error) => console.error('Performance Listener:', error)));
+
+        if (typeof window.onChildRemoved === 'function') {
+            this._listeners.push(window.onChildRemoved(perfRef, (/** @type {any} */ snapshot) => {
+                const id = snapshot?.key;
+                if (!id) return;
+                const next = (this.performanceData || []).filter(p => p && p.id !== id);
+                this.performanceData = next;
+                saveCache('performanceData', next);
+            }, (/** @type {any} */ error) => console.error('Performance remove listener:', error)));
+        }
 
         // 1. Listen to static Stats node
         this._listeners.push(window.onValue(window.ref(window.db, 'Stats'), (/** @type {any} */ snap) => {
