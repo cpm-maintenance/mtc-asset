@@ -1,3 +1,50 @@
+## 🩹 S39e · Inisial teknisi pecah saat `assignedTo` berupa array (2026-10-25)
+
+**Live sw v61 → v62** (`5373d22`). Ditemukan dari pemantauan konsol dev server saat operator membuka kartu detail WO.
+
+### Gejala
+```
+[console.warn] Alpine Expression Error: (intermediate value).slice(...).toUpperCase is not a function
+Expression: "(woSelected.assignedTo || '??').slice(0, 2).toUpperCase()"
+[Unhandled error] TypeError: (intermediate value).slice(...).toUpperCase is not a function
+```
+
+### Sebab
+`HistoryLog/*/assignedTo` di data legacy berbentuk **array**, bukan string:
+
+| Record | `assignedTo` |
+|---|---|
+| `LOG-1778150226931` | `['Yuli', 'Gunawan', 'Maruf M']` |
+| `LOG-1781228659633` | `['Sardi', 'Lutfi']` |
+| 12 record lain | string uid |
+
+`slice(0, 2)` pada array mengembalikan **array**, lalu `.toUpperCase()` melempar. Karena ekspresi ini hidup di dalam `x-text` blok detail, error-nya mematikan `initTree` untuk blok itu (bukan cuma satu huruf hilang).
+
+### Perbaikan
+`public/pages/WorkOrders.html:845`:
+
+```
+String([].concat(woSelected.assignedTo || '??')[0] || '??').slice(0, 2).toUpperCase()
+```
+
+`[].concat(x)` menormalkan string **dan** array ke larik, `[0]` mengambil teknisi pertama, `String(…)` menjaga sisa tipe aneh (angka, objek) tetap aman.
+
+### Tes
+`tests/wo-assignee-initials.test.js` (2 tes): mengekstrak ekspresi asli dari fragmen lalu menjalankannya untuk array 3 nama, array 2 nama, string uid, `''`, `undefined`, `null`, dan `[]` → `YU`, `SA`, `DH`, `??`, `??`, `??`, `??`; plus asersi bentuk lama tidak boleh kembali. **Dibuktikan menggigit**: fragmen dikembalikan ke bentuk lama → `2 failed`.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1986 tes / 90 berkas**
+- coverage **97,19 / 88,94 / 97,22 / 98,38** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **11 passed (41,7 s)**
+- live: `sw.js` = **mtc-asset-v62**; `pages/WorkOrders.html` live sudah memuat bentuk aman (`frag_fixed=True`)
+
+### Catatan
+- Tampilan nama teknisi pada record multi-teknisi masih keluar sebagai `Yuli,Gunawan,Maruf M` (`x-text="wo.assignedTo"` di AllLogs/PlanningBoard/WorkOrders:603). Tidak melempar error, tapi belum dirapikan — kandidat pekerjaan berikutnya.
+- Pemantauan konsol dev server: hanya satu kelas error ini yang muncul; nol `pageerror` lain.
+
 ## 🧩 S39d · Pola S39c ditutup untuk `SpareParts` & `Performance` (2026-10-25)
 
 **Live sw v60 → v61** (`63ef6cc`). Sisa dari S39c: tiga node masih hanya `onChildAdded`.
