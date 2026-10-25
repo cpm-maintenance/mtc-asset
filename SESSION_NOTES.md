@@ -1,3 +1,32 @@
+## 🧩 S39d · Pola S39c ditutup untuk `SpareParts` & `Performance` (2026-10-25)
+
+**Live sw v60 → v61** (`63ef6cc`). Sisa dari S39c: tiga node masih hanya `onChildAdded`.
+
+### Yang diperiksa dulu
+| Node | Listener | Status |
+|---|---|---|
+| `HistoryLog` | `onChildAdded` + `onChildRemoved` | ditutup di S39c |
+| `SpareParts` | `onChildAdded` saja | **ditutup di sini** |
+| `Performance` | `onChildAdded` saja | **ditutup di sini** |
+| `Equipment` | `onValue` (snapshot penuh) | sudah self-healing — tidak butuh listener tambahan |
+
+### Perubahan
+`src/js/modules/data.js`: `onChildRemoved` untuk `spRef` (buang `PartID`, `saveCache('allParts', …)`) dan `perfRef` (buang `id`, `saveCache('performanceData', …)`), keduanya di balik guard `typeof window.onChildRemoved === 'function'` seperti listener HistoryLog.
+
+### Tes
+`tests/data.test.js`: kontrak sumber kini mengunci ketiga registrasi (`histRef`, `spRef`, `perfRef`), plus satu tes perilaku yang memanggil kedua callback baru dan memastikan lariknya menyusut. **Dibuktikan menggigit**: kedua registrasi dikembalikan ke `onChildAdded` → `2 failed | 87 passed`; dikembalikan → `89 passed`.
+
+Catatan proses: mutasi pertama menyentuh **semua** kemunculan `window.onChildAdded(spRef` (termasuk listener penambah), sehingga 11 tes merah. Yang benar adalah mengubah baris registrasi `onChildRemoved` saja — nomor baris menentukan, bukan kemunculan pertama (pelajaran yang sama dengan pembersihan `no-unused-vars` di skill).
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **1984 tes / 89 berkas**
+- coverage **97,19 / 88,94 / 97,22 / 98,38** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **11 passed (38,4 s)**
+- live: `sw.js` = **mtc-asset-v61**; `assets/app-jQtR_WV7.js` memuat `onChildRemoved` **6×** dan label `remove listener` **4×**
+
 ## 🗂️ S39c · WO yang sudah dihapus tetap tampil di menu Work Orders (2026-10-25)
 
 **Live sw v59 → v60** (`385b276`). Laporan operator: WO `MTC-005` sudah dihapus, kartunya masih ada di menu Work Orders.
