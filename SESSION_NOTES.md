@@ -1,3 +1,48 @@
+## 🔔 S38b-confirm-dialog (2026-10-25) — `window.confirm()` diganti dialog in-app di semua modul
+
+Live **sw v55** (`src/**` berubah ⇒ `CACHE_NAME` naik).
+
+### Masalah
+12 pemanggilan `confirm()` bawaan browser tersebar di 5 modul (auth, logs, pm-schedule, requisition, ui). Tampilannya kotak putih bawaan Chrome — tidak ikut tema gelap Tactical, tidak bisa diberi judul/ikon/tone, dan teks panjang (deep reset) terbaca seperti peringatan sistem.
+
+### Yang dikerjakan
+- **`src/js/modules/confirm-dialog.js` (baru)** — `showConfirmModal({message,title,confirmLabel,cancelLabel,tone})` membuat satu overlay imperatif (bukan markup Alpine) di `document.body`: panel `bg-tac-surface-card/95` + `backdrop-blur-xl` + `border-tac-border-tactical`, chip ikon (gold untuk `primary`, merah untuk `danger`), judul `font-black`, pesan `whitespace-pre-line`, dua tombol `min-h-11` (44 px). Klik OK → `true`, Batal/Escape/klik latar → `false`, fokus awal ke **Batal** untuk `danger` dan ke **OK** untuk `primary`, fokus dikembalikan ke elemen pemicu, dialog kedua menutup yang pertama sebagai batal (tidak menumpuk).
+- **Seam `window.__confirmModal`** — `askConfirm(message, opts)` memakai dialog modern bila provider terpasang, dan jatuh ke `window.confirm()` bila tidak. `main.js` memanggil `installConfirmDialog()` sebelum Alpine boot. Konsekuensi penting: **1800+ tes lama tidak berubah** karena di jsdom provider tidak terpasang.
+- **12 call site** diganti `await askConfirm(...)` dengan judul, label, dan tone per aksi: logout, kirim reset password, hapus user (`danger`), approve WO saat stok kurang (`danger`), hapus tugas PM (`danger`), selesaikan PM massal, 5 aksi requisition (hapus = `danger`), dan **deep reset** (`danger`, judul "Deep reset aplikasi", tombol "Reset sekarang").
+- **`tests/confirm-dialog.test.js` (baru, 17 tes)** — jalur seam (tanpa provider, `confirm` tidak ada, provider terpasang), keputusan OK/Batal/Escape/klik latar/klik panel, singleton, label default & kustom, fokus per tone, pemulihan fokus, dan fallback saat `document.body` belum ada.
+
+### Bukti browser nyata (Chromium 390×844, build `dist/`)
+| Ukuran | Nilai terukur |
+|---|---|
+| Provider terpasang (`window.__confirmModal`) | `true` |
+| Panel | 358 × 316 px, bg `rgba(22,29,39,0.95)`, border 1 px `rgb(40,52,70)` |
+| Tombol | 308 × 44 px (keduanya), label 11 px mono uppercase |
+| Tone `danger` | ikon `warning`, chip `rgba(239,68,68,0.15)`, fokus awal **Batal** |
+| Tone `primary` | ikon `help`, OK `rgb(251,191,36)` solid, fokus awal **OK** |
+| Klik Batal / OK | `false` / `true`, overlay hilang (`0` dialog tersisa) |
+| Overflow-X dokumen | 0 px |
+| Error konsol / `pageerror` | 0 |
+
+### Biaya
+| Metrik | Nilai |
+|---|---|
+| Muatan jalur login (gzip, 10 berkas `modulepreload`) | 61.498 → **62.895 B (+1.397 B / +1,36 KiB)** |
+| Jumlah entri `modulepreload` | 10 → **10** (tidak ada chunk baru) |
+| Branches | 87,39 → **87,36 %** (kode baru +39 cabang, 9 di antaranya struktural) |
+| Tes | 1873 → **1890 / 81 berkas** |
+
+Gerbang: tsc **0**, eslint **0 error / 0 warning**, test:run **1890 lulus / 81 berkas**, coverage exit **0** (96,98 / 87,36 / 97,18 / 98,22), build **0**, `verify:precache` **OK 66 berkas**, **E2E 8 passed (37,7 s)**.
+
+### Jebakan yang ditemukan
+- **`tests/legacy-palette.test.js` menangkap ligatur ikon di luar subset.** Ikon `bolt` untuk tone `primary` tidak ada di `src/css/icon-subset.txt` → tes merah ("ligatur di luar allowlist akan tampil sebagai teks, bukan ikon"). Diganti `help` (ada di subset bersama `warning`, `check`, `info`, `error`, `refresh`, `sync`, `task_alt`, `logout`). Setiap ikon baru di string JS wajib dicek ke subset itu lebih dulu.
+- **`innerHTML` hanya untuk konstanta statis.** `MARKUP` tidak berinterpolasi; seluruh teks dinamis diisi `textContent`, jadi tidak ada jalur XSS dari judul/pesan.
+- **Tes `installConfirmDialog(undefined)` mengembalikan `true`**, karena parameter default menangkap `undefined` — untuk menguji cabang `false` harus `null`.
+- A/B muatan login dilakukan dengan `git stash push -u` → `npm run build` → ukur → `git stash pop` → **`npm run build` lagi**; tanpa build ulang setelah `pop`, `dist/` tetap build baseline.
+
+### Sisa
+- Dialog belum punya focus-trap penuh (Tab bisa keluar panel ke elemen di belakang overlay). Kalau perlu: tangkap `Tab` dan siklus antar dua tombol.
+- `alert()` tidak ada lagi di `src/js/modules/**` (dicek), jadi tidak ada jalur notifikasi bawaan browser lain yang tertinggal.
+
 ## 📈 S38-coverage-branches (2026-10-25) — Branch coverage 86,62 → 87,39 %, threshold 86 → 86,5
 
 Live **sw v54** (tidak berubah — hanya `tests/**` + `vitest.config.js`).

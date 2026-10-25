@@ -21,6 +21,7 @@
  */
 
 import { DEFAULT_PM_FORM } from '../constants';
+import { askConfirm } from './confirm-dialog.js';
 
 export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
   // --- STATE ---
@@ -291,7 +292,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   },
 
   async deletePM(pmId) {
-    if (!confirm('Delete this PM task?')) return;
+    if (!(await askConfirm('Tugas PM ini dihapus dari jadwal dan tidak bisa dikembalikan.', { title: 'Hapus tugas PM', confirmLabel: 'Hapus', tone: 'danger' }))) return;
 
     try {
       await window.remove(window.ref(window.db, `PM_Schedule/${pmId}`));
@@ -325,7 +326,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   async bulkCompletePM() {
     const ids = this.pmSelectedIds;
     if (!ids.length) return this.showNotification('No tasks selected', 'error');
-    if (!confirm(`Complete ${ids.length} selected PM tasks?`)) return;
+    if (!(await askConfirm(`${ids.length} tugas PM terpilih akan ditandai selesai.`, { title: 'Selesaikan tugas PM', confirmLabel: 'Tandai selesai' }))) return;
 
     this.pmLoading = true;
     try {

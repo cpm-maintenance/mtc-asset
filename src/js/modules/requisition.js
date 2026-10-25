@@ -26,6 +26,7 @@
 import { sendBrowserNotification } from './notification.js';
 import { checkPartAvailability } from '../utils.js';
 import { sendPushViaProxy } from './push-client.js';
+import { askConfirm } from './confirm-dialog.js';
 
 const NEW_LINE_ITEM = () => ({
     itemType: 'part',
@@ -311,7 +312,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
     },
 
     async approveRequisition(reqId) {
-        if (!confirm('Setujui dan proses pemesanan permintaan ini?')) return;
+        if (!(await askConfirm('Permintaan ini akan disetujui dan diproses untuk pemesanan.', { title: 'Setujui permintaan', confirmLabel: 'Setujui' }))) return;
         try {
             const now = new Date().toISOString();
             const updates = {
@@ -333,7 +334,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
     },
 
     async markArrived(reqId) {
-        if (!confirm('Tandai barang sudah tiba?')) return;
+        if (!(await askConfirm('Stok part terkait akan ditambah sesuai jumlah permintaan.', { title: 'Barang sudah tiba', confirmLabel: 'Tandai tiba' }))) return;
         try {
             const now = new Date().toISOString();
             const today = now.split('T')[0];
@@ -368,7 +369,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
     },
 
     async closeRequisition(reqId) {
-        if (!confirm('Tutup permintaan ini?')) return;
+        if (!(await askConfirm('Permintaan ini ditutup dan keluar dari daftar aktif.', { title: 'Tutup permintaan', confirmLabel: 'Tutup' }))) return;
         try {
             const now = new Date().toISOString();
             const updates = {
@@ -392,7 +393,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
     async bulkApproveRequisitions() {
         const ids = [...this.reqSelectedIds];
         if (!ids.length) return;
-        if (!confirm(`Approve ${ids.length} request(s)? This will update stock.`)) return;
+        if (!(await askConfirm(`${ids.length} permintaan terpilih akan disetujui dan stok part ikut diperbarui.`, { title: 'Setujui massal', confirmLabel: 'Setujui semua' }))) return;
         
         const now = new Date().toISOString();
         let success = 0;
@@ -423,7 +424,7 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
     },
 
     async deleteRequisition(reqId) {
-        if (!confirm('Hapus permintaan ini?')) return;
+        if (!(await askConfirm('Permintaan ini dihapus permanen dari database.', { title: 'Hapus permintaan', confirmLabel: 'Hapus', tone: 'danger' }))) return;
         try {
             await window.remove(window.ref(window.db, `Requisitions/${reqId}`));
             this.requisitions = this.requisitions.filter(r => r.id !== reqId);

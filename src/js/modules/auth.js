@@ -1,5 +1,6 @@
 // @ts-check
 import { logger } from '../logger.js';
+import { askConfirm } from './confirm-dialog.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * Auth module for MTC.NEXUS
@@ -207,7 +208,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     },
 
     async logout() {
-        if (confirm('Are you sure you want to logout?')) {
+        if (await askConfirm('Sesi login akan diakhiri dan kamu kembali ke layar masuk.', { title: 'Keluar aplikasi', confirmLabel: 'Keluar' })) {
             this.isLoading = true;
             try {
                 await window.signOut(window.auth);
@@ -394,7 +395,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     async sendPasswordReset(uid) {
         const user = this.allUsers.find(u => u.uid === uid);
         if (!user?.email) return;
-        if (!confirm(`Send password reset email to ${user.email}?`)) return;
+        if (!(await askConfirm(`Email reset password akan dikirim ke ${user.email}.`, { title: 'Kirim reset password', confirmLabel: 'Kirim' }))) return;
         try {
             await window.sendPasswordResetEmail(window.auth, user.email);
             this.showNotification(`Reset email sent to ${user.email}`);
@@ -426,7 +427,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     
     async deleteUser(uid) {
         if (!this.isAdmin || !uid) return;
-        if (!confirm('Are you sure you want to delete this user? This cannot be undone.')) return;
+        if (!(await askConfirm('Akun operator ini dihapus permanen. Tindakan ini tidak bisa dibatalkan.', { title: 'Hapus user', confirmLabel: 'Hapus', tone: 'danger' }))) return;
         
         this.isLoading = true;
         try {

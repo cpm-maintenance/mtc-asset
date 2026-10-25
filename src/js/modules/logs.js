@@ -7,6 +7,7 @@ import { logger } from '../logger.js';
 import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs } from '../utils.js';
 import { DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
+import { askConfirm } from './confirm-dialog.js';
 
 export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     _lastHM: null,
@@ -571,7 +572,10 @@ async approveWO(logId) {
             const missing = this.woAvailability(log).filter((/** @type {any} */ a) => !a.ok);
             if (missing.length > 0) {
                 const names = missing.map((/** @type {any} */ m) => (m.partId || '?') + ' (-' + (m.shortage || 0) + ')').join(', ');
-                if (!confirm('Stok tidak cukup untuk ' + names + '. Tetap approve (part dipesan via requisition) / batalkan?\n\nOK = tetap approve\nBatal = batalkan approve')) {
+                if (!(await askConfirm(
+                    'Stok tidak cukup untuk ' + names + '. Approve tetap bisa dilanjutkan, tetapi part akan dipesan lewat requisition.',
+                    { title: 'Stok part kurang', confirmLabel: 'Tetap approve', cancelLabel: 'Batalkan', tone: 'danger' }
+                ))) {
                     this.showNotification('Approve dibatalkan — stok kurang', 'info');
                     return;
                 }

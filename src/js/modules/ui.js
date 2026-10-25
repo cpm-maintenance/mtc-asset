@@ -7,6 +7,7 @@ import { logger } from '../logger.js';
 // Lazy-load qrcode (only used for QR modal — keeps it out of initial bundle)
 import { CONSTANTS } from '../constants';
 import { uiCore, readThemeMode } from './ui-core.js';
+import { askConfirm } from './confirm-dialog.js';
 
 // Cloudinary unsigned uploads. An unsigned preset is *designed* to be used from the
 // browser, so there is no API secret anywhere in the client — nothing to leak, nothing
@@ -337,7 +338,10 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     },
 
     async systemReset() {
-        if (!confirm("⚠️ CAUTION: This will perform a DEEP RESET of the application cache, unregister service workers, and logout. This resolves sync or performance issues. Proceed?")) return;
+        if (!(await askConfirm(
+            'Cache aplikasi, service worker, dan sesi login akan dihapus, lalu halaman dimuat ulang. Pakai ini kalau data tidak sinkron atau aplikasi terasa lambat.',
+            { title: 'Deep reset aplikasi', confirmLabel: 'Reset sekarang', tone: 'danger' }
+        ))) return;
         
         this.isLoading = true;
         try {

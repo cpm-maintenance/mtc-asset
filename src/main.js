@@ -7,6 +7,12 @@ import './css/tactical-icons.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
 import { logger } from './js/logger.js';
+import { installConfirmDialog } from './js/modules/confirm-dialog.js';
+
+// Dialog konfirmasi in-app dipasang sebelum Alpine boot: `askConfirm()` di
+// modul mana pun memakai `window.__confirmModal` bila ada, dan jatuh ke
+// `window.confirm()` kalau tidak — jalur tes/jsdom tetap seperti semula.
+installConfirmDialog();
 
 // Sentry Error Tracking (Production only) — lazy import, 435KB gak dibundle kalo DSN kosong.
 //
