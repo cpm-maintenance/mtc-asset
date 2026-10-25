@@ -83,21 +83,23 @@ export async function sendBrowserNotification(title, body, options = {}) {
     // Must have permission
     if (Notification.permission !== 'granted') return false;
 
-    // Check if SW is available
-    if (!navigator.serviceWorker?.ready) {
-      // Fallback: regular notification
-       
-      new Notification(title, {
-        body,
-        icon: '/logo.png',
-        ...options,
-      });
+    // Fallback langsung tanpa ServiceWorker (dev server / worker belum aktif).
+    const showDirect = () => {
+      new Notification(title, { body, icon: '/logo.png', ...options });
       return true;
-    }
+    };
 
-    // Use ServiceWorker for better control
+    // Check if SW is available
+    if (!navigator.serviceWorker?.ready) return showDirect();
+
+    // Use ServiceWorker for better control — hanya bila worker-nya benar-benar aktif.
+    // Di dev server tidak ada worker aktif, dan `showNotification` melempar
+    // "No active worker for scope"; tanpa `await` lemparan itu lolos dari try/catch
+    // sebagai unhandled rejection.
     const registration = await navigator.serviceWorker.ready;
-    registration.showNotification(title, {
+    if (!registration?.active) return showDirect();
+
+    await registration.showNotification(title, {
       body,
       icon: '/logo.png',
       badge: '/logo.png',

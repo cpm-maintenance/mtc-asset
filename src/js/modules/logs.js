@@ -561,6 +561,23 @@ async approveWO(logId) {
             return;
         }
 
+        // Node bisa sudah tidak ada (record hantu dari cache/queue offline, atau WO
+        // dihapus dari perangkat lain). `update()` parsial ke node yang tidak ada
+        // selalu ditolak `.validate` (`hasChildren(['LogID','EquipmentID','Jenis','Deskripsi'])`)
+        // dan dilaporkan sebagai `permission_denied` — mudah salah dibaca sebagai
+        // masalah role. Cek dulu sebelum memotong stok.
+        try {
+            const snap = await window.get(window.ref(window.db, 'HistoryLog/' + logId));
+            if (!snap.exists()) {
+                this.logs = this.logs.filter((l) => l.LogID !== logId);
+                this.showNotification('WO ini tidak ada lagi di database — halaman dimuat ulang', 'error');
+                setTimeout(() => { try { window.location.reload(); } catch { /* jsdom */ } }, 1200);
+                return;
+            }
+        } catch (/** @type {any} */ e) {
+            logger.warn('[approveWO] gagal memeriksa node:', e?.message);
+        }
+
         try {
             /** @type {Record<string, any>} */
             const updates = {

@@ -33,7 +33,7 @@ function stubNotification(permission = 'granted', requestResult = 'granted') {
 /** Stub `navigator.serviceWorker.ready` dengan registration palsu. */
 function stubServiceWorker(showNotification = vi.fn(async () => {})) {
     Object.defineProperty(navigator, 'serviceWorker', {
-        value: { ready: Promise.resolve({ showNotification }) },
+        value: { ready: Promise.resolve({ active: {}, showNotification }) },
         configurable: true,
     });
     return showNotification;

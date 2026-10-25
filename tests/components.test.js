@@ -242,6 +242,8 @@ describe('Alpine component — Work Order approval', () => {
 
     it('approves a WO as admin/supervisor and writes status to Firebase', async () => {
         const ctx = await mount('<button @click="approveWO(\'L1\')">approve</button>', { logs: [{ ...wo }] });
+        // Guard S39: approveWO memeriksa dulu apakah node-nya masih ada.
+        fb.get.mockResolvedValue({ val: () => ({ LogID: 'L1' }), exists: () => true });
 
         fireEvent.click(screen.getByText('approve'));
 
@@ -269,6 +271,9 @@ describe('Alpine component — Work Order approval', () => {
             logs: [{ LogID: 'L2', woNumber: 'WO-2', Status: 'Pending', PartsUsed: '[{"id":"P1","qty":2}]' }],
             allParts: [{ PartID: 'P1', Stok: 10 }],
         });
+
+        // Guard S39: node WO harus ada supaya approve lanjut memotong stok.
+        fb.get.mockResolvedValue({ val: () => ({ LogID: 'L2' }), exists: () => true });
 
         fireEvent.click(screen.getByText('approve'));
 
