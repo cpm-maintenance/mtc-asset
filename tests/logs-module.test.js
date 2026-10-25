@@ -1195,3 +1195,50 @@ describe('submitLog — retry, audit trail, refresh 500 ms', () => {
         expect(ctx.showLogModal).toBe(false);
     });
 });
+
+describe('rejectWO — normalisasi legacy & notifikasi global', () => {
+    it('menormalkan field legacy, memakai appState, dan menandai log global', async () => {
+        const fb = stubFirebase();
+        const log = { LogID: 'L1', Downtime: '12', Cost: '', HM: 99, Deskripsi: 'x'.repeat(600) };
+        const ctx = makeCtx({ logs: [log], user: null });
+        window.appState = { logs: [{ LogID: 'L1' }] };
+
+        await ctx.rejectWO('L1', 'stok kosong');
+
+        const [, updates] = fb.update.mock.calls[0];
+        expect(updates).toMatchObject({ rejectedBy: 'supervisor', Downtime: 12, Cost: 0, HM: '99' });
+        expect(updates.Deskripsi).toHaveLength(500);
+        // log tanpa woNumber → pesan memakai LogID
+        expect(ctx.notifications[0].message).toBe('Your WO #L1 has been rejected');
+        expect(window.appState.logs[0]).toMatchObject({ Status: 'Rejected' });
+    });
+});
+
+describe('getLastHM — cache & state kosong', () => {
+    it('memakai cache selama referensi logs sama', () => {
+        const logs = [{ EquipmentID: 'EQ1', HM: 100, Tanggal: '2026-01-01' }];
+        const ctx = makeCtx({ logs });
+
+        expect(ctx.getLastHM('EQ1')).toBe('100');
+
+        logs.push({ EquipmentID: 'EQ1', HM: 200, Tanggal: '2026-02-01' });
+        expect(ctx.getLastHM('EQ1')).toBe('100');
+    });
+
+    it('aman saat logs belum terisi', () => {
+        const ctx = makeCtx({ logs: undefined });
+
+        expect(ctx.getLastHM('EQ1')).toBe('-');
+    });
+
+    it('mengurutkan log tanpa Tanggal sebagai string kosong', () => {
+        const ctx = makeCtx({
+            logs: [
+                { EquipmentID: 'EQ1', HM: 50 },
+                { EquipmentID: 'EQ1', HM: 70, Tanggal: '2026-03-01' },
+            ],
+        });
+
+        expect(ctx.getLastHM('EQ1')).toBe('70');
+    });
+});

@@ -1,3 +1,42 @@
+## 📈 S38c-coverage-e2e (2026-10-25) — Branch 87,36 → 88,02 % + E2E dialog konfirmasi
+
+Live **sw v55** (tidak berubah — hanya `tests/**`, `e2e/**`, `vitest.config.js`).
+
+### Langkah 1 — branch coverage ke ≥ 88,0 %
+Sasaran dari `BRDA taken=0`, tiga berkas terbesar: `export.js` (74 slot), `logs.js` (72), `data.js` (70). Tidak ada `src/**` yang disentuh.
+
+| Berkas tes | Tambahan | Cabang yang ditutup |
+|---|---|---|
+| `tests/export-module.test.js` | 5 tes | `exportToPDF` (seluruh field equipment terisi → 8 sisi `||` + tabel log/PM/part; jalur kosong; guard tanpa equipment) dan `exportWOToPDF` (`window.Alpine.raw` dipakai 3×; `logs`/`equipment`/`allParts` undefined) |
+| `tests/logs-module.test.js` | 4 tes | `rejectWO` normalisasi legacy (`Downtime` string, `Cost` string kosong, `HM` numerik, `Deskripsi` 600 char dipotong 500), fallback `rejectedBy: 'supervisor'`, `window.appState`, `idx >= 0`; `getLastHM` cache per referensi `logs`, `logs` undefined, comparator tanpa `Tanggal` |
+| `tests/data.test.js` | 4 tes | `checkPendingWorkOrders` (larik notifikasi sendiri + salin ke `appState`), `loadMoreEquipment` dengan `filteredEquip` undefined, getter `paginatedEquip` tanpa `filteredEquip`, `saveToIndexedDB` dengan empat koleksi undefined |
+
+Hasil: **Branches 87,36 → 88,02 %** (5682 → 5725 / 6504), statements 97,05, functions 97,18, lines 98,29. Threshold `vitest.config.js` **86,5 → 87** (margin 1,02) dan **dibuktikan menggigit**: `88,5` → `ERROR: Coverage for branches (88.02%) does not meet global threshold`, lalu dikembalikan ke `87` (exit 0).
+
+### Langkah 2 — E2E dialog konfirmasi (`e2e/confirm-dialog.spec.js`, 2 tes)
+1. **Deep reset**: login emulator → `app.systemReset()` → overlay `[role="alertdialog"]` berjudul "Deep reset aplikasi" tampil, fokus awal di **Batal** (tone danger), klik Batal menutup dialog, sesi tetap login, dan **tidak ada** event `dialog` bawaan browser.
+2. **Escape**: `app.closeRequisition()` → dialog "Tutup permintaan" tampil, fokus awal di **OK** (tone primary), `Escape` menutupnya, tetap tanpa dialog bawaan.
+
+**Dibuktikan menggigit**: `installConfirmDialog();` dikomentari di `src/main.js` → rebuild `dist-e2e` → **2 tes merah** (`expect(locator).toBeVisible() failed`), lalu dikembalikan dan `git diff --quiet -- src/main.js` = **identik dengan HEAD** (tidak perlu bump `CACHE_NAME`).
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- test:run **1903 lulus / 81 berkas**
+- coverage **exit 0** — 97,05 / 88,02 / 97,18 / 98,29 (threshold 87)
+- build **0**
+- verify:precache **OK 66 berkas**
+- E2E **10 passed (44,4 s)** — 2 spec baru ikut jalan
+
+### Jebakan
+- `jsPDF.doc.autoTable` adalah stub bersama; `beforeEach` hanya membersihkan `jsPDF.ctor`, jadi asersi `not.toHaveBeenCalled()` pada tes berikutnya gagal palsu. Panggil `mockClear()` di awal tes yang mengasersi negatif.
+- `makeCtx({ equipment })` meng-*override* dengan objek, bukan larik — `Alpine.raw(this.equipment)` lalu `equipment.find` melempar dan generator tidak pernah dipanggil. Selalu bungkus: `equipment: [equipment]`.
+- `data.js:468` (`equipHasMore` saat `nextPage.length >= equipLimit`) **tidak bisa dijangkau**: `nextPage` di-slice dari `filteredEquip` mulai `currentLength`, jadi selalu kosong. Jangan dikejar.
+
+### Sisa
+- `app.js` masih 258 cabang terlewat (85,89 %) — sasaran berikutnya bila target 88,5 %.
+- Dialog konfirmasi belum punya focus-trap Tab penuh.
+
 ## 🔔 S38b-confirm-dialog (2026-10-25) — `window.confirm()` diganti dialog in-app di semua modul
 
 Live **sw v55** (`src/**` berubah ⇒ `CACHE_NAME` naik).

@@ -845,3 +845,92 @@ describe('exportData — state kosong & Alpine absen', () => {
         expect(sheetRows()).toEqual([]);
     });
 });
+
+describe('export.js — exportToPDF', () => {
+    const equip = {
+        EquipmentID: 'EQ-1',
+        Nama: 'Crusher',
+        Lokasi: 'Pit A',
+        Status: 'Running',
+        Tipe: 'Jaw',
+        SerialNumber: 'SN-1',
+        Vendor: 'Metso',
+        Criticality: 'High',
+        NextPMDate: '2026-11-01',
+        InstallDate: '2020-01-01',
+    };
+
+    it('merender bagian equipment, log, PM, dan part saat data tersedia', async () => {
+        const ctx = makeCtx({
+            equipment: [equip],
+            logs: [
+                {
+                    LogID: 'L1',
+                    EquipmentID: 'EQ-1',
+                    Tanggal: '2026-01-01',
+                    Jenis: 'Repair',
+                    Deskripsi: 'Ganti bearing',
+                    Status: 'Completed',
+                    HM: 1200,
+                },
+            ],
+            pmList: [{ equipmentId: 'EQ-1', date: '2026-02-01', taskName: 'Ganti oli', status: 'pending' }],
+            allParts: [
+                { PartID: 'P1', NamaPart: 'Bearing', Stok: 2, MinStock: 5, EquipmentIDs: ['EQ-1'] },
+            ],
+        });
+
+        await ctx.exportToPDF(equip);
+
+        expect(jsPDF.ctor).toHaveBeenCalled();
+        // log + PM + part masing-masing satu tabel
+        expect(jsPDF.doc.autoTable).toHaveBeenCalledTimes(3);
+        expect(jsPDF.doc.save).toHaveBeenCalledWith('Asset_EQ-1.pdf');
+        expect(ctx.showNotification).toHaveBeenCalledWith('✅ Asset report exported');
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('memakai teks kosong saat log/PM/part tidak ada', async () => {
+        jsPDF.doc.autoTable.mockClear();
+        jsPDF.doc.save.mockClear();
+        const ctx = makeCtx({ logs: [], pmList: [], allParts: [] });
+        const minimal = { EquipmentID: 'EQ-2' };
+
+        await ctx.exportToPDF(minimal);
+
+        expect(jsPDF.doc.autoTable).not.toHaveBeenCalled();
+        expect(jsPDF.doc.save).toHaveBeenCalledWith('Asset_EQ-2.pdf');
+    });
+
+    it('menolak tanpa equipment', async () => {
+        const ctx = makeCtx();
+
+        await ctx.exportToPDF(null);
+
+        expect(ctx.showNotification).toHaveBeenCalledWith('No equipment selected', 'error');
+        expect(jsPDF.ctor).not.toHaveBeenCalled();
+    });
+});
+
+describe('export.js — exportWOToPDF cabang Alpine & state kosong', () => {
+    it('memakai Alpine.raw untuk melepas proxy sebelum generator', async () => {
+        window.Alpine = { raw: vi.fn((x) => x) };
+        const log = { LogID: 'L1', EquipmentID: 'EQ-1' };
+        const equipment = { EquipmentID: 'EQ-1' };
+        const parts = [{ PartID: 'P1' }];
+        const ctx = makeCtx({ logs: [log], equipment: [equipment], allParts: parts });
+
+        await ctx.exportWOToPDF('L1');
+
+        expect(window.Alpine.raw).toHaveBeenCalledTimes(3);
+        expect(generateProfessionalWOPDF).toHaveBeenCalledWith(log, equipment, parts);
+    });
+
+    it('aman saat logs/equipment/allParts belum terisi', async () => {
+        const ctx = makeCtx({ logs: undefined, equipment: undefined, allParts: undefined });
+
+        await ctx.exportWOToPDF('L1');
+
+        expect(ctx.showNotification).toHaveBeenCalledWith('Work order not found', 'error');
+    });
+});

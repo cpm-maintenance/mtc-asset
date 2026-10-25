@@ -1109,3 +1109,58 @@ describe('dataModule.deleteItem branches', () => {
         vi.restoreAllMocks();
     });
 });
+
+describe('dataModule — checkPendingWorkOrders (notifikasi global)', () => {
+    it('membuat larik notifikasi sendiri dan menyalin ke appState', async () => {
+        setupFirebaseMock(async () => ({
+            val: () => ({ L1: { Status: 'Pending', woNumber: 'WO-1', Jenis: 'Repair' } }),
+        }));
+        window.appState = {};
+        const ctx = makeCtx({ notifications: undefined });
+
+        await ctx.checkPendingWorkOrders();
+
+        expect(ctx.notifications).toHaveLength(1);
+        expect(ctx.notifications[0]).toMatchObject({ type: 'Work Order', icon: 'schedule' });
+        expect(window.appState.notifications).toHaveLength(1);
+    });
+});
+
+describe('dataModule — loadMoreEquipment state kosong', () => {
+    it('aman saat filteredEquip belum ada', async () => {
+        const ctx = makeCtx({
+            filteredEquip: undefined,
+            equipment: [{ EquipmentID: 'A' }],
+            equipHasMore: true,
+            equipLoadingMore: false,
+            equipLimit: 2,
+        });
+
+        await ctx.loadMoreEquipment();
+
+        expect(ctx.equipHasMore).toBe(false);
+        expect(ctx.equipLoadingMore).toBe(false);
+    });
+
+    it('paginatedEquip memakai larik kosong saat filteredEquip belum ada', () => {
+        const ctx = makeCtx({ search: 'pump', filteredEquip: undefined });
+
+        expect(ctx.paginatedEquip).toEqual([]);
+    });
+});
+
+describe('dataModule — saveToIndexedDB state kosong', () => {
+    it('menulis empat koleksi kosong saat state belum terisi', async () => {
+        const ctx = makeCtx({
+            equipment: undefined,
+            allParts: undefined,
+            logs: undefined,
+            performanceData: undefined,
+        });
+
+        await ctx.saveToIndexedDB();
+
+        expect(idbManager.putBulk).toHaveBeenCalledTimes(4);
+        expect(idbManager.putBulk).toHaveBeenCalledWith('equipment', []);
+    });
+});
