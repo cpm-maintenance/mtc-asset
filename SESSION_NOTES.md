@@ -1,3 +1,12 @@
+## 🗑️ S38h-b · `P-010` dihapus dari master (2026-10-25)
+
+Permintaan operator: part `P-010` belum punya nama resmi di sumber mana pun, jadi dihapus.
+
+- Perintah: `npx firebase database:remove /SpareParts/P-010 --project mtc-asset --instance mtc-asset-default-rtdb -f` → `Data removed successfully`.
+- Master sekarang **11 part** (dari 12).
+- Audit ulang: **1 referensi menggantung** — `P-010` masih disebut di `HistoryLog` `LOG-1792078852510` (MTC-004, qty 1). Referensi ini **tidak berbahaya** sejak S38f: transaksi stok untuk part yang tidak ada dibatalkan, bukan ditolak `permission_denied`.
+- Kalau nanti mau bersih total: hapus item `P-010` dari `PartsUsed` log itu (mengubah record WO selesai — sengaja belum dilakukan tanpa persetujuan).
+
 ## 🌱 S38h-spare-parts-seeded (2026-10-25) — master `SpareParts` dibuat di produksi
 
 Live **sw v58** (tidak berubah — tidak ada `src/**`). **Data RTDB berubah.**
