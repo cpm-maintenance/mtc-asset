@@ -59,13 +59,14 @@ describe('modal New System Entry — tata letak konsisten', () => {
         }
     });
 
-    it('tiga grup punya judul yang seragam', () => {
+    it('empat grup punya judul yang seragam', () => {
         const headers = [...modal.matchAll(/<h4 class="([^"]*)">([^<]*)</g)].map((m) => ({ cls: m[1], text: m[2].trim() }));
-        expect(headers).toHaveLength(3);
+        expect(headers).toHaveLength(4);
         expect(headers.map((h) => h.text)).toEqual([
             '🗂️ Asset &amp; Activity',
             '⚡ Work Order Settings',
             '🏢 Department Request',
+            '🧠 Diagnosis &amp; Briefing',
         ]);
         for (const h of headers) {
             expect(h.cls).toContain('font-label-mono-md');

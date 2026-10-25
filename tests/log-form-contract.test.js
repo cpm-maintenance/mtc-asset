@@ -41,7 +41,13 @@ describe('form log — field yang disubmit punya input di UI', () => {
 
     // Tanpa deklarasi ini `x-model` mengikat ke properti undefined dan nilai
     // awalnya tidak pernah ter-reset saat modal dibuka ulang.
-    expect(form).toHaveProperty('actualHours', 0);
+    // Nilai awal numerik sengaja string kosong: field baru harus tampil kosong
+    // dengan placeholder, bukan "0" yang terbaca seperti data terisi.
+    // `submitLog` menormalkan dengan Number(...) || 0, jadi simpanan tetap angka.
+    expect(form).toHaveProperty('actualHours', '');
+    expect(form).toHaveProperty('estimatedHours', '');
+    expect(form).toHaveProperty('downtime', '');
+    expect(form).toHaveProperty('cost', '');
     expect(form).toHaveProperty('completedDate', '');
   });
 

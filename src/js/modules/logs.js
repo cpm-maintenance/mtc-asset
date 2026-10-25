@@ -164,8 +164,10 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 logId: '', 
                 type: 'PM', 
                 desc: '', 
-                downtime: 0, 
-                cost: 0,
+                // String kosong: field baru tampil kosong (placeholder), bukan "0".
+                // submitLog menormalkan dengan Number(...) || 0.
+                downtime: '',
+                cost: '',
                 equipmentId: fromDetail ? (this.selectedEquip?.EquipmentID || '') : '',
                 date: new Date().toISOString().split('T')[0], 
                 tech: 'Maintenance Team',
@@ -180,8 +182,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 woNumber: woNum,
                 assignedTo: '',
                 dueDate: '',
-                estimatedHours: 0,
-                actualHours: 0,
+                estimatedHours: '',
+                actualHours: '',
                 completedDate: '',
                 // Department Request fields
                 requestSource: 'Production',

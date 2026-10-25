@@ -39,12 +39,12 @@ export const DEFAULT_PART_FORM = () => ({
 });
 
 export const DEFAULT_LOG_FORM = () => ({
-  logId: '', type: 'PM', desc: '', downtime: 0, cost: 0, equipmentId: '',
+  logId: '', type: 'PM', desc: '', downtime: '', cost: '', equipmentId: '',
   date: new Date().toISOString().split('T')[0], tech: 'Maintenance Team',
   parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM',
   // Work Order Fields
   woPriority: 'Normal', woNumber: '', assignedTo: '', dueDate: '',
-  estimatedHours: 0, actualHours: 0, laborCost: 0, completedDate: '',
+  estimatedHours: '', actualHours: '', laborCost: 0, completedDate: '',
   // Department Request Fields
   requestSource: 'Production', requestedBy: '', requestDate: new Date().toISOString().split('T')[0],
   approvedBy: '', approvalDate: '',

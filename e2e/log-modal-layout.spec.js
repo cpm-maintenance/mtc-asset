@@ -48,6 +48,19 @@ test.describe('Modal New System Entry — hasil render', () => {
             };
         });
 
+        // Entri baru: field numerik harus kosong (placeholder), bukan "0".
+        const numericValues = await page.evaluate(() => {
+            const root = [...document.querySelectorAll('form')].find((f) =>
+                f.querySelector('[aria-label="Equipment"]')
+            );
+            const labels = ['Estimasi jam', 'Jam aktual', 'Downtime (jam)', 'Biaya', 'Running hours (HM)'];
+            return labels.map((l) => {
+                const el = root.querySelector(`[aria-label="${l}"]`);
+                return el ? el.value : 'MISSING';
+            });
+        });
+        expect(numericValues).toEqual(['', '', '', '', '']);
+
         expect(metrics.controlCount).toBeGreaterThanOrEqual(15);
         expect(metrics.heights).toEqual([44]);
         for (const h of metrics.textareaHeights) expect(h).toBeGreaterThanOrEqual(44);
