@@ -1,3 +1,31 @@
+## 🏷️ S42d · Kartu tag: semua teks huruf kapital (2026-10-26)
+
+**Live sw v73 → v74** (`4d5211b`).
+
+| Elemen | Sebelum | Sesudah |
+|---|---|---|
+| penjelas | `for more information` | `FOR MORE INFORMATION` |
+| nama aset | `Pompa E2E` | `POMPA E2E` |
+| lokasi | `Area E2E` | `AREA E2E` |
+| ID | `EQ-E2E-001` | tetap (mono, sudah kapital) |
+| label cetak PDF | nama aset apa adanya | `String(nama).toUpperCase()` — sama dengan kartu |
+
+Huruf kapital dipasang lewat kelas `uppercase` (bukan mengubah data), jadi nama aset di database tetap seperti aslinya; label cetak ikut kapital karena `uppercase` CSS tidak berlaku di PDF, di situ string-nya yang diubah.
+
+### Tes
+- `tests/qr-asset-tag.test.js` (+1): tiga baris kartu wajib ber-`uppercase` (penjelas, ID, nama, lokasi).
+- `tests/ui-qr.test.js`: label cetak harus `'CRUSHER'` (data `Crusher`), bukan `'Crusher'`.
+
+### Bukti
+Teks kartu dibacakan ulang dari render: `MTC · MAINTENANCE · ASSET REGISTRY · SCAN ME · FOR MORE INFORMATION · EQ-E2E-001 · POMPA E2E · AREA E2E` — tidak ada huruf kecil.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2042 tes / 96 berkas**
+- coverage **96,64 / 88,96 / 96,99 / 97,79** (exit **0**) · build **0** · precache **66/66**
+- E2E **15 passed (41,0 s)** · live **mtc-asset-v74**
+
+---
+
 ## 🏷️ S42c · Kartu tag: lokasi saja, status aset dibuang (2026-10-26)
 
 **Live sw v72 → v73** (`cf8da97`).
