@@ -1,3 +1,29 @@
+## 🏷️ S41c · PDF Work Order — kolom seimbang + pita statistik 5 sel (2026-10-26)
+
+**Live sw v69 → v70** (`d12be20`).
+
+### Cacat yang diperbaiki
+| Cacat (terukur, bukan opini) | Sebab | Perbaikan |
+|---|---|---|
+| Lubang menggantung 17 mm di bawah kolom kiri | tinggi panel (8 baris) > tinggi kolom kiri (deskripsi 4 baris), lalu `y = max(...)` | panel dan kolom kiri **berbagi tinggi**: `cardH = max(natural, leftH + 2,4)`; kelebihan ruang masuk ke jarak **sebelum** seksi 02, bukan menumpuk di dasar kolom |
+| Tepi atas kedua kolom tidak sejajar | panel mulai di `bodyTop`, judul seksi di baseline → beda 2,4 mm | `cardTop = bodyTop − 2,4` (setinggi huruf kapital judul) |
+| `DEPARTMENT` memenuhi panel 8 baris | semua metadata ditumpuk di panel | `DEPARTMENT` pindah ke pita statistik → pita **5 sel** (ISSUED · DUE · DEPARTMENT · PRIORITY · STATUS), panel 7 baris |
+
+### Bukti geometri (pdfplumber, halaman 1)
+- tepi atas: judul `01` **158,4 pt** vs panel **157,6 pt** (selisih 0,3 mm)
+- tepi bawah: teks deskripsi **344,8 pt** vs panel **355,5 pt** (padding 3,8 mm, bukan lubang)
+- tepi kanan semua blok tetap **555,6 pt (196 mm)**; **0** kata bertumpuk
+
+### Catatan alat
+`vision_analyze` memberi 8/10 untuk halaman yang sama dan tiga "cacat" sisanya bukan cacat: blok tanda tangan kosong (formulir memang belum ditandatangani), perbedaan tanggal `ISSUED 18` vs `Printed 26` (dua fakta berbeda), dan QTY "rata kiri" (padahal rata kanan). Penilaian visual dipakai untuk kesan kasar; keputusan layout selalu dari bbox.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2029 tes / 95 berkas**
+- coverage **97,08 / 88,97 / 97,13 / 98,34** (exit **0**) · build **0** · precache **66/66**
+- E2E **14 passed (50,4 s)** · live **mtc-asset-v70**
+
+---
+
 ## 🏷️ S41b · PDF Work Order revisi 2 — masthead ink + panel job card (2026-10-26)
 
 **Live sw v68 → v69** (`f44dca8`).
