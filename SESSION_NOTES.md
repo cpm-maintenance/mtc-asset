@@ -1,3 +1,41 @@
+## 🐞 S45c · WO yang dihapus kembali setelah "Muat ulang data" (2026-10-26)
+
+**Live sw v80 → v81** (`ff6d93f`). Bug lapangan dari Manuel.
+
+### Reproduksi
+Langkah operator: hapus WO di menu Work Orders → notifikasi "Record successfully deleted" → klik **Muat ulang data** → WO kembali. Difoto sebelum diperbaiki.
+
+### Akar masalah — dua lapis, keduanya cache IndexedDB
+1. **`refreshData()` memuat ulang cache.** Ia memanggil `setupFirebaseListeners()`, dan baris pertama fungsi itu `this.loadFromIndexedDB()` yang **menimpa** `this.logs` dengan snapshot IndexedDB. Record yang sudah dihapus dari server masih ada di cache → hidup lagi.
+2. **Jalur hapus tidak pernah menulis cache.** `deleteItem()` memangkas `this.logs`/`activeWorkOrders`/`_woSeenIds`, lalu berharap `onChildRemoved` yang menulis cache (lewat `saveCache` ber-debounce 250 ms). Kalau refresh datang sebelum tulisan itu mendarat — atau bila listener tidak sempat jalan — record tetap di IndexedDB.
+
+Lubang ketiga ditemukan sambil membaca: rekonsiliasi `onValue` digerbangi `ids.size > 0`, jadi **server kosong + cache penuh** tidak pernah dipangkas.
+
+### Perbaikan
+| Berkas | Bentuk |
+|---|---|
+| `data.js` | `setupFirebaseListeners({ fromCache })` — default `true`; `loadFromIndexedDB()` hanya saat `fromCache` |
+| `data.js` | `saveCache` diekspos sebagai `this._cacheWriter`; `deleteItem` memangkas cache di **kedua** jalur (online & offline queue) |
+| `data.js` | gerbang rekonsiliasi jadi `ids.size < 500` (server kosong ikut memangkas) |
+| `app.js` | `refreshData()` → `setupFirebaseListeners({ fromCache: false })` |
+| `appstate.ts` | deklarasi `_cacheWriter` |
+
+### Tes
+- `tests/delete-wo-reload-cache.test.js` (**7**, baru): `_cacheWriter` menerima daftar tanpa WO yang dihapus (online + offline), aman saat `_cacheWriter` belum ada; kontrak `fromCache: false` di `refreshData`, gerbang `loadFromIndexedDB`, dan hilangnya syarat `ids.size > 0`. Dibuktikan menggigit: `fromCache: false` dilepas → **1 failed**.
+- `e2e/delete-wo-reload.spec.js` (**baru**): meniru langkah operator — hapus `WO-E2E-001` → tunggu hilang → `refreshData()` → tuntut tetap hilang **dan** node server sudah tidak ada. Sebelum perbaikan tes ini gagal (flaky: lolos hanya di retry); sesudah perbaikan lulus langsung.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2067 tes / 98 berkas**
+- coverage **96,63 / 88,96 / 97,01 / 97,81** (exit **0**) · build **0** · precache **66/66**
+- E2E **19 passed (1,1 m)** · live **mtc-asset-v81** (`assets/app-DLyCnUQ1.js`: `fromCache` ×2, `_cacheWriter`)
+
+### Pelajaran
+- **`refreshData()` bukan "ambil ulang dari server"** — sebelum perbaikan ia justru menimpa state dengan cache. Setiap fungsi yang memanggil `setupFirebaseListeners()` harus sadar efek sampingnya.
+- **Cache yang ditulis lewat listener tidak cukup** untuk operasi destruktif: hapus harus menulis cache sendiri, jangan bergantung pada debounce 250 ms.
+- Saat menyelidiki, `firebase database:get` **tidak membaca database yang dipakai aplikasi**: CLI menunjuk instance legacy (US) sementara app memakai `mtc-asset-default-rtdb.asia-southeast1.firebasedatabase.app`. Root key di CLI tidak memuat `HistoryLog` sama sekali — sempat terbaca seperti "data hilang". Selalu bandingkan dengan `VITE_FIREBASE_DATABASE_URL` di `.env` sebelum menyimpulkan.
+
+---
+
 ## 🏷️ S45b · Tombol QR juga di mode tree — chip dipecah dua tombol (2026-10-26)
 
 **Live sw v79 → v80** (`161c628`).
