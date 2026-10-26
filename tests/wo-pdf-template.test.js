@@ -124,7 +124,7 @@ describe('pita meta', () => {
         ['Emergency', '185,28,28'],
         ['Urgent', '180,83,9'],
         ['Planned', '5,150,105'],
-        ['Normal', '198,152,58'],
+        ['Normal', '191,155,90'],
     ])('prioritas %s → titik tone %s', async (priority, rgb) => {
         await generateProfessionalWOPDF({ ...WO, woPriority: priority }, EQUIP, []);
         expect(colors()).toContain(rgb);
@@ -182,7 +182,8 @@ describe('deskripsi tidak dipotong', () => {
         jsPDF.doc.splitTextToSize.mockReturnValueOnce(['a', 'b', 'c', 'd', 'e', 'f']);
         await generateProfessionalWOPDF({ ...WO, Deskripsi: 'panjang' }, EQUIP, []);
 
-        expect(jsPDF.doc.splitTextToSize).toHaveBeenCalledWith('panjang', 177);
+        // Kolom kiri 106 mm, teks menjorok 5 mm dari rail emas.
+        expect(jsPDF.doc.splitTextToSize).toHaveBeenCalledWith('panjang', 101);
         const rendered = jsPDF.doc.text.mock.calls
             .filter((c) => Array.isArray(c[0]))
             .map((c) => c[0]);
@@ -248,8 +249,10 @@ describe('ringkasan biaya', () => {
         const t = texts();
         expect(t).toContain('DOWNTIME');
         expect(t).toContain('6 hrs');
-        expect(t).toContain('MAN HOURS');
-        expect(t).toContain('6 h est · 5.5 h act');
+        expect(t).toContain('EST. HOURS');
+        expect(t).toContain('ACTUAL HOURS');
+        expect(t).toContain('6 h');
+        expect(t).toContain('5,5 h');
         expect(t).toContain('TOTAL COST');
         expect(t).toContain('Rp 1.500.000');
     });
@@ -288,7 +291,7 @@ describe('tanda tangan & footer', () => {
         expect(t).toContain('APPROVED BY');
         expect(t).toContain('EXECUTED BY');
         expect(t.filter((x) => x === 'Name / Position')).toHaveLength(3);
-        expect(t.some((x) => x.startsWith('MTC System v2.0  ·  Printed '))).toBe(true);
+        expect(t.some((x) => x.startsWith('MTC System v2.0  ·  Form MTC-WO-01  ·  Printed '))).toBe(true);
         expect(t).toContain('Page 1 of 2');
         expect(t).toContain('Page 2 of 2');
         expect(jsPDF.doc.setPage).toHaveBeenCalledWith(2);

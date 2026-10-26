@@ -1,32 +1,37 @@
 /**
- * Work Order PDF — premium maintenance form (S41).
+ * Work Order PDF — premium maintenance form, revisi 2 (S41b).
  *
- * Prinsip desain:
- *  · Kertas putih, tinta slate, satu aksen emas. Tidak ada blok abu-abu besar;
- *    pemisah memakai hairline, bukan slab, supaya dokumen terbaca seperti
- *    formulir teknis profesional — bukan tangkapan layar.
- *  · Setiap seksi punya penanda (kotak emas + label berspasi), bukan bar gelap
- *    yang memakan 8 mm per seksi.
- *  · Isi tidak pernah dipotong diam-diam: deskripsi dibungkus penuh, tabel parts
- *    memuat semua baris, dan blok yang tidak muat pindah halaman utuh.
- *  · Tanda tangan tidak lagi dipaku ke dasar halaman (dulu `yPos = pageHeight -
- *    55`, sehingga isi panjang menabraknya) — blok tanda tangan mengalir setelah
- *    isi, dan baru "didorong" ke bawah kalau memang ada ruang.
+ * Perubahan dari revisi 1: dokumen tidak lagi berupa deretan baris rata kiri.
+ *  · Masthead **ink full-bleed** 27 mm dengan aksen emas — titik masuk mata,
+ *    sekaligus membawa identitas (monogram, perusahaan, jenis dokumen, nomor WO).
+ *  · Pita statistik di bawah masthead: ISSUED / DUE / PRIORITY / STATUS, tone
+ *    berupa pil berwarna + teks, jadi tetap terbaca saat dicetak hitam-putih.
+ *  · Badan dua kolom: kiri untuk aset + deskripsi, kanan **panel JOB CARD**
+ *    berisi seluruh metadata pekerjaan. Panel inilah yang membuat halaman
+ *    terbaca "dirancang", bukan daftar baris.
+ *  · Seksi bernomor (01…04) supaya alur baca jelas: aset → lingkup → parts →
+ *    tanda tangan.
+ *  · TOTAL COST adalah jangkar angka terbesar; tanda tangan memakai panel
+ *    bertanda tangan basah dengan catatan keabsahan.
+ *
+ * Prinsip yang dijaga: tidak ada isi yang dipotong diam-diam (deskripsi penuh,
+ * semua baris parts), dan tidak ada koordinat yang dipaku ke dasar halaman.
  */
 const PW = 210;
 const PH = 297;
 const M = 14;
 const CW = PW - M * 2;
-const BOTTOM = PH - 22; // batas isi; di bawahnya zona footer
+const BOTTOM = PH - 22;
 
 const C = {
-    ink: [17, 24, 39],
-    ink2: [31, 41, 55],
+    ink: [15, 23, 42],
+    ink2: [30, 41, 59],
     slate: [100, 116, 139],
     mute: [148, 163, 184],
     line: [226, 232, 240],
     paper: [248, 250, 252],
-    gold: [198, 152, 58],
+    gold: [191, 155, 90],
+    goldSoft: [246, 240, 226],
     white: [255, 255, 255],
     danger: [185, 28, 28],
     success: [5, 150, 105],
@@ -34,6 +39,11 @@ const C = {
     warn: [180, 83, 9],
     neutral: [71, 85, 105],
 };
+
+/** Angka gaya Indonesia: 4.5 → `4,5`. */
+function num(value) {
+    return String(value).replace('.', ',');
+}
 
 function formatCurrency(num) {
     if (!num) return 'Rp 0';
@@ -50,20 +60,6 @@ function formatDate(value) {
     return `${m[3]} ${bulan[idx] || m[2]} ${m[1]}`;
 }
 
-function priorityTone(priority) {
-    if (priority === 'Emergency') return C.danger;
-    if (priority === 'Urgent') return C.warn;
-    if (priority === 'Planned') return C.success;
-    return C.gold;
-}
-
-function statusTone(status) {
-    if (status === 'Completed') return C.success;
-    if (status === 'In Progress') return C.info;
-    if (status === 'Pending') return C.warn;
-    return C.neutral;
-}
-
 /**
  * `assignedTo` di RTDB bisa berupa larik (multi-teknisi). Disalin lokal, bukan
  * diimpor dari `utils.js`, supaya modul PDF tetap daun — tanpa rantai
@@ -77,6 +73,20 @@ function formatAssignees(value) {
     }
     if (typeof value === 'string') return value.trim() || 'UNASSIGNED';
     return 'UNASSIGNED';
+}
+
+function priorityTone(priority) {
+    if (priority === 'Emergency') return C.danger;
+    if (priority === 'Urgent') return C.warn;
+    if (priority === 'Planned') return C.success;
+    return C.gold;
+}
+
+function statusTone(status) {
+    if (status === 'Completed') return C.success;
+    if (status === 'In Progress') return C.info;
+    if (status === 'Pending') return C.warn;
+    return C.neutral;
 }
 
 export async function generateProfessionalWOPDF(log, equipment, _parts) {
@@ -99,7 +109,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
 
     let y = 0;
 
-    // ── primitif ────────────────────────────────────────────────────────────
+    // ── primitif tipografi ──────────────────────────────────────────────────
     const ink = () => doc.setTextColor(...C.ink);
     const slate = () => doc.setTextColor(...C.slate);
 
@@ -109,13 +119,29 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         doc.line(x1, yTop, x2, yTop);
     }
 
-    function label(text, x, yTop, color = C.slate) {
+    /** Label kecil huruf besar berspasi. */
+    function label(text, x, yTop, color = C.slate, size = 5.9) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6.2);
-        doc.setCharSpace(0.35);
+        doc.setFontSize(size);
+        doc.setCharSpace(0.4);
         doc.setTextColor(...color);
         doc.text(String(text).toUpperCase(), x, yTop);
         doc.setCharSpace(0);
+    }
+
+    /** Judul seksi bernomor: `01` emas + judul + garis. */
+    function sectionTitle(index, text, yTop, x = M, right = PW - M) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.6);
+        doc.setCharSpace(0.2);
+        doc.setTextColor(...C.gold);
+        doc.text(String(index).padStart(2, '0'), x, yTop);
+        doc.setCharSpace(0.7);
+        ink();
+        doc.text(String(text).toUpperCase(), x + 7.4, yTop);
+        const w = doc.getTextWidth(String(text).toUpperCase());
+        doc.setCharSpace(0);
+        hairline(x + 9.6 + w, right, yTop - 0.9, C.line, 0.25);
     }
 
     function truncate(text, maxWidth) {
@@ -126,239 +152,233 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         return cut + '…';
     }
 
-    function sectionTitle(text, yTop) {
-        doc.setFillColor(...C.gold);
-        doc.rect(M, yTop - 2.4, 2.2, 2.2, 'F');
+    function value(text, x, yTop, size = 9) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.6);
-        doc.setCharSpace(0.55);
+        doc.setFontSize(size);
         ink();
-        doc.text(text.toUpperCase(), M + 5, yTop);
-        const w = doc.getTextWidth(text.toUpperCase());
+        doc.text(String(text), x, yTop);
+    }
+
+    /** Pil berwarna + teks putih; lebar mengikuti isi. */
+    function pill(text, x, yTop, fill) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.2);
+        doc.setCharSpace(0.4);
+        const w = doc.getTextWidth(text) + 7;
+        doc.setFillColor(...fill);
+        doc.roundedRect(x, yTop, w, 5.6, 1.2, 1.2, 'F');
+        doc.setTextColor(...C.white);
+        doc.text(text, x + w / 2, yTop + 3.9, { align: 'center' });
         doc.setCharSpace(0);
-        hairline(M + 8 + w, PW - M, yTop - 0.9, C.line, 0.25);
+        return w;
     }
 
-    function pair(x, yTop, key, value, width) {
-        label(key, x, yTop);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9.2);
-        ink();
-        const shown = value === '' || value === null || value === undefined ? '-' : value;
-        doc.text(truncate(shown, width), x, yTop + 5);
-    }
-
-    function twoCol(yTop, left, right) {
-        const half = (CW - 6) / 2;
-        pair(M, yTop, left[0], left[1], half - 4);
-        pair(M + half + 6, yTop, right[0], right[1], half - 4);
-    }
-
-    // ── header halaman 1 ────────────────────────────────────────────────────
+    // ── masthead ────────────────────────────────────────────────────────────
     function masthead() {
+        doc.setFillColor(...C.ink);
+        doc.rect(0, 0, PW, 27, 'F');
         doc.setFillColor(...C.gold);
-        doc.rect(0, 0, PW, 1.8, 'F');
+        doc.rect(0, 27, PW, 1.4, 'F');
 
-        doc.setFillColor(...C.white);
+        // Monogram: kotak bergaris emas, huruf emas.
         doc.setDrawColor(...C.gold);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(M, 10, 13, 13, 2.2, 2.2, 'FD');
+        doc.setLineWidth(0.45);
+        doc.roundedRect(M, 7.5, 13, 13, 2.4, 2.4, 'S');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.2);
-        doc.setCharSpace(0.5);
-        ink();
-        doc.text('MTC', M + 6.5, 18.2, { align: 'center' });
+        doc.setCharSpace(0.6);
+        doc.setTextColor(...C.gold);
+        doc.text('MTC', M + 6.5, 15.8, { align: 'center' });
         doc.setCharSpace(0);
 
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12.6);
-        ink();
-        doc.text('PT. CITRA PALU MINERALS', M + 17, 15.4);
+        doc.setFontSize(12.4);
+        doc.setTextColor(...C.white);
+        doc.text('PT. CITRA PALU MINERALS', M + 17.5, 13.4);
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.4);
-        doc.setCharSpace(0.5);
-        slate();
-        doc.text('MAINTENANCE TECHNICAL CENTER', M + 17, 20.2);
+        doc.setFontSize(6.2);
+        doc.setCharSpace(0.55);
+        doc.setTextColor(148, 163, 184);
+        doc.text('MAINTENANCE TECHNICAL CENTER', M + 17.5, 18.4);
         doc.setCharSpace(0);
 
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(15.4);
-        ink();
-        doc.text('WORK ORDER', PW - M, 15.4, { align: 'right' });
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.4);
-        doc.setCharSpace(0.5);
-        slate();
-        doc.text('MAINTENANCE REQUEST FORM', PW - M, 20.2, { align: 'right' });
+        doc.setFontSize(15.6);
+        doc.setCharSpace(0.6);
+        doc.setTextColor(...C.white);
+        doc.text('WORK ORDER', PW - M, 13.4, { align: 'right' });
         doc.setCharSpace(0);
 
-        // Nomor WO sebagai "stub" bergaris emas — identitas dokumen.
         doc.setFont('courier', 'bold');
-        doc.setFontSize(8.4);
-        const woW = doc.getTextWidth(woNumber) + 9;
-        const woX = PW - M - woW;
-        doc.setFillColor(...C.white);
-        doc.setDrawColor(...C.gold);
-        doc.setLineWidth(0.35);
-        doc.roundedRect(woX, 24, woW, 7.6, 1.2, 1.2, 'FD');
-        ink();
-        doc.text(woNumber, woX + woW / 2, 29.1, { align: 'center' });
-
-        hairline(M, PW - M, 33);
-        y = 38;
+        doc.setFontSize(9.6);
+        doc.setCharSpace(0.4);
+        doc.setTextColor(...C.gold);
+        doc.text(woNumber, PW - M, 19.6, { align: 'right' });
+        doc.setCharSpace(0);
     }
 
     /** Header tipis untuk halaman lanjutan. */
     function continuationHeader() {
+        doc.setFillColor(...C.ink);
+        doc.rect(0, 0, PW, 13, 'F');
         doc.setFillColor(...C.gold);
-        doc.rect(0, 0, PW, 1.8, 'F');
+        doc.rect(0, 13, PW, 1.2, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8.6);
-        ink();
-        doc.text('PT. CITRA PALU MINERALS', M, 11.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.4);
-        slate();
-        doc.text('WORK ORDER · ' + woNumber, PW - M, 11.5, { align: 'right' });
-        hairline(M, PW - M, 15.5);
+        doc.setFontSize(8.4);
+        doc.setTextColor(...C.white);
+        doc.text('PT. CITRA PALU MINERALS', M, 8.6);
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.gold);
+        doc.text('WORK ORDER · ' + woNumber, PW - M, 8.6, { align: 'right' });
+        y = 21;
     }
 
     function newPage() {
         doc.addPage();
         continuationHeader();
-        y = 23;
     }
 
     function ensure(height) {
         if (y + height > BOTTOM) newPage();
     }
 
-    // ── masthead + pita meta ────────────────────────────────────────────────
+    // ── masthead + pita statistik ───────────────────────────────────────────
     masthead();
 
-    const metaCells = [
+    const stats = [
         { key: 'Issued', value: formatDate(log.Tanggal) },
         { key: 'Due', value: log.dueDate ? formatDate(log.dueDate) : '—' },
         { key: 'Priority', value: String(priority).toUpperCase(), tone: priorityTone(priority) },
         { key: 'Status', value: String(status).toUpperCase(), tone: statusTone(status) },
     ];
-    const cellW = CW / metaCells.length;
-    metaCells.forEach((cell, i) => {
-        const x = M + i * cellW;
-        label(cell.key, x, y - 2);
-        if (cell.tone) {
-            doc.setFillColor(...cell.tone);
-            doc.circle(x + 1.5, y + 3.1, 1.4, 'F');
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8.8);
-            doc.setTextColor(...cell.tone);
-            doc.text(cell.value, x + 5, y + 5);
-        } else {
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9.4);
-            ink();
-            doc.text(cell.value, x, y + 5);
-        }
+    const statW = CW / stats.length;
+    stats.forEach((cell, i) => {
+        const x = M + i * statW;
+        label(cell.key, x, 35.5);
+        if (cell.tone) pill(cell.value, x, 39.2, cell.tone);
+        else value(cell.value, x, 43, 9.4);
         if (i > 0) {
             doc.setDrawColor(...C.line);
             doc.setLineWidth(0.2);
-            doc.line(x - 4, y - 4, x - 4, y + 6);
+            doc.line(x - 4.5, 34, x - 4.5, 44);
         }
     });
-    y += 11;
-    hairline(M, PW - M, y);
+    hairline(M, PW - M, 49);
 
-    // ── equipment / work details / request ──────────────────────────────────
-    // ROW = jarak label→label berikutnya (6 pt label + 9,2 pt nilai butuh >=10,5 mm);
-    // GAP = jarak antar seksi. Dua nilai berbeda — menyamakannya membuat label
-    // baris kedua menabrak nilai baris pertama.
-    const ROW = 11;
-    const GAP = 8;
+    // ── badan dua kolom ─────────────────────────────────────────────────────
+    const leftX = M;
+    const leftW = 106;
+    const rightX = M + 114;
+    const rightW = CW - 114;
 
-    y += 8;
-    sectionTitle('Equipment / Asset', y);
-    y += 8;
+    const bodyTop = 58;
+    const GAP = 10;
+    y = bodyTop;
+
+    // Kiri: aset
+    sectionTitle(1, 'Equipment / Asset', y, leftX, leftX + leftW);
+    y += 8.6;
     if (isExternal) {
-        pair(M, y, 'External Asset', log.externalEquipName || '-', CW);
-        y += ROW;
-        twoCol(y, ['Source', log.requestSource || '-'], ['Location', equipment?.Lokasi || '-']);
+        label('External Asset', leftX, y);
+        value(truncate(log.externalEquipName || '-', leftW), leftX, y + 4.8, 9.6);
+        y += 12;
+        label('Source', leftX, y);
+        value(truncate(log.requestSource || '-', leftW), leftX, y + 4.8);
     } else {
-        pair(M, y, 'Equipment', (equipment?.EquipmentID || '-') + ' · ' + (equipment?.Nama || '-'), CW);
-        y += ROW;
-        twoCol(y, ['Location', equipment?.Lokasi || '-'], ['Asset Status', equipment?.Status || '-']);
+        label('Equipment', leftX, y);
+        value(truncate((equipment?.EquipmentID || '-') + ' · ' + (equipment?.Nama || '-'), leftW), leftX, y + 4.8, 9.6);
+        y += 12;
+        label('Location', leftX, y);
+        value(truncate(equipment?.Lokasi || '-', leftW * 0.62), leftX, y + 4.8);
+        label('Asset Status', leftX + leftW * 0.66, y);
+        value(truncate(equipment?.Status || '-', leftW * 0.34), leftX + leftW * 0.66, y + 4.8);
     }
     y += GAP;
 
-    ensure(34);
-    sectionTitle('Work Details', y);
-    y += 8;
-    twoCol(y, ['Type', log.Jenis || 'PM'], ['Category', log.rca || 'PM']);
-    y += ROW;
-    twoCol(y, ['Technician', log.Technician || '-'], ['Assigned To', formatAssignees(log.assignedTo)]);
-    y += GAP;
-
-    ensure(30);
-    sectionTitle('Request', y);
-    y += 8;
-    twoCol(y, ['Department', log.requestSource || '-'], ['Requested By', log.requestedBy || '-']);
-    y += ROW;
-    twoCol(y, ['Request Date', formatDate(log.requestDate)], ['Approved By', log.approvedBy || '-']);
-    y += GAP;
-
-    // ── description (penuh, tidak dipotong) ─────────────────────────────────
-    ensure(28);
-    sectionTitle('Description', y);
-    y += 8;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.2);
-    ink();
+    // Kiri: deskripsi
+    sectionTitle(2, 'Description', y, leftX, leftX + leftW);
+    y += 8.4;
     const descTop = y - 3.4;
-    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), CW - 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.8);
+    ink();
+    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), leftW - 5);
     for (const line of descLines) {
-        ensure(6);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9.2);
+        doc.setFontSize(8.8);
         ink();
-        doc.text(line, M + 5, y);
-        y += 4.5;
+        doc.text(line, leftX + 5, y);
+        y += 4.4;
     }
     doc.setFillColor(...C.gold);
-    doc.rect(M, descTop, 1.2, y - descTop - 1.6, 'F');
-    y += 6;
+    doc.rect(leftX, descTop, 1.2, Math.max(4, y - descTop - 1.6), 'F');
+    const leftBottom = y;
+
+    // Kanan: panel JOB CARD
+    const cardRows = [
+        ['Type', log.Jenis || 'PM'],
+        ['Category', log.rca || 'PM'],
+        ['Technician', log.Technician || '-'],
+        ['Assigned To', formatAssignees(log.assignedTo)],
+        ['Department', log.requestSource || '-'],
+        ['Requested By', log.requestedBy || '-'],
+        ['Request Date', formatDate(log.requestDate)],
+        ['Approved By', log.approvedBy || '-'],
+    ];
+    const cardTop = bodyTop - 5;
+    const cardRowH = 8.4;
+    const cardH = Math.max(11 + cardRows.length * cardRowH, leftBottom - cardTop);
+    doc.setFillColor(...C.paper);
+    doc.roundedRect(rightX, cardTop, rightW, cardH, 1.8, 1.8, 'F');
+    doc.setFillColor(...C.gold);
+    doc.rect(rightX, cardTop, 1.4, cardH, 'F');
+    label('Work Details', rightX + 6, cardTop + 7, C.ink2, 6.4);
+    hairline(rightX + 6, rightX + rightW - 5, cardTop + 9.4, C.line, 0.2);
+    let cy = cardTop + 16;
+    for (const [key, val] of cardRows) {
+        label(key, rightX + 6, cy, C.slate, 5.9);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.7);
+        ink();
+        doc.text(truncate(val, rightW - 12), rightX + 6, cy + 4.3);
+        cy += cardRowH;
+    }
+
+    y = Math.max(leftBottom, cardTop + cardH) + GAP;
 
     // ── parts ───────────────────────────────────────────────────────────────
     if (parseParts.length > 0) {
-        ensure(22);
-        sectionTitle('Parts Used', y);
-        y += 6;
+        ensure(26);
+        sectionTitle(3, 'Parts Used', y);
+        y += 6.4;
 
-        const colNo = M + 2;
-        const colPart = M + 14;
-        const colDesc = M + 64;
-        const colQtyRight = PW - M - 4;
-        const descMax = colQtyRight - colDesc - 22;
+        const colNo = M + 3;
+        const colPart = M + 16;
+        const colDesc = M + 66;
+        const colQtyRight = PW - M - 5;
+        const descMax = colQtyRight - colDesc - 20;
 
         const tableHead = () => {
             doc.setFillColor(...C.ink);
-            doc.roundedRect(M, y, CW, 6, 0.8, 0.8, 'F');
+            doc.rect(M, y, CW, 6.4, 'F');
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6);
+            doc.setFontSize(5.9);
             doc.setCharSpace(0.45);
             doc.setTextColor(...C.white);
-            doc.text('NO', colNo + 3, y + 4.3, { align: 'center' });
-            doc.text('PART NUMBER', colPart, y + 4.3);
-            doc.text('DESCRIPTION', colDesc, y + 4.3);
-            doc.text('QTY', colQtyRight, y + 4.3, { align: 'right' });
+            doc.text('NO', colNo, y + 4.2, { align: 'center' });
+            doc.text('PART NUMBER', colPart, y + 4.2);
+            doc.text('DESCRIPTION', colDesc, y + 4.2);
+            doc.text('QTY', colQtyRight, y + 4.2, { align: 'right' });
             doc.setCharSpace(0);
-            y += 6;
+            y += 6.4;
         };
         tableHead();
 
         let totalQty = 0;
         parseParts.forEach((part, i) => {
-            if (y + 5.4 > BOTTOM) {
+            if (y + 5.6 > BOTTOM) {
                 newPage();
                 tableHead();
             }
@@ -366,92 +386,94 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
             totalQty += qty;
             if (i % 2 === 1) {
                 doc.setFillColor(...C.paper);
-                doc.rect(M, y, CW, 5.4, 'F');
+                doc.rect(M, y, CW, 5.6, 'F');
             }
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7.4);
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(7);
             doc.setTextColor(...C.mute);
-            doc.text(String(i + 1).padStart(2, '0'), colNo + 3, y + 4.2, { align: 'center' });
+            doc.text(String(i + 1).padStart(2, '0'), colNo, y + 4, { align: 'center' });
             doc.setFont('courier', 'bold');
-            doc.setFontSize(7.6);
+            doc.setFontSize(7.4);
             ink();
-            doc.text(truncate(part?.id || part?.PartID || '-', colDesc - colPart - 6), colPart, y + 4.2);
+            doc.text(truncate(part?.id || part?.PartID || '-', colDesc - colPart - 6), colPart, y + 4);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(7.4);
             doc.setTextColor(...C.ink2);
-            doc.text(truncate(part?.name || part?.NamaPart || '-', descMax), colDesc, y + 4.2);
+            doc.text(truncate(part?.name || part?.NamaPart || '-', descMax), colDesc, y + 4);
             doc.setFont('helvetica', 'bold');
             ink();
-            doc.text(String(qty), colQtyRight, y + 4.2, { align: 'right' });
-            hairline(M, PW - M, y + 5.4, C.line, 0.15);
-            y += 5.4;
+            doc.text(String(qty), colQtyRight, y + 4, { align: 'right' });
+            hairline(M, PW - M, y + 5.6, C.line, 0.15);
+            y += 5.6;
         });
 
-        ensure(8);
-        hairline(M, PW - M, y, C.gold, 0.3);
+        // Baris total: jeda putih 1,2 mm + latar krem + garis emas tegas, angka
+        // sejajar kolom QTY — supaya terbaca sebagai penutup tabel, bukan baris ke-7.
+        ensure(10);
+        y += 1.2;
+        doc.setFillColor(...C.ink2);
+        doc.rect(M, y, CW, 7.4, 'F');
+        doc.setFillColor(...C.gold);
+        doc.rect(M, y, CW, 0.7, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6.6);
-        doc.setCharSpace(0.4);
-        slate();
-        doc.text('TOTAL ITEMS', colPart, y + 4.6);
+        doc.setFontSize(6.4);
+        doc.setCharSpace(0.45);
+        doc.setTextColor(...C.white);
+        doc.text('TOTAL ITEMS', colDesc, y + 5);
         doc.setCharSpace(0);
-        ink();
-        doc.setFontSize(8);
-        doc.text(String(totalQty), colQtyRight, y + 4.6, { align: 'right' });
-        y += 8;
+        doc.setFontSize(8.8);
+        doc.setTextColor(...C.white);
+        doc.text(String(totalQty), colQtyRight, y + 5.1);
+        y += 14;
     }
 
     // ── ringkasan biaya ─────────────────────────────────────────────────────
     const hasHours = log.estimatedHours || log.actualHours;
     if (log.Downtime || log.Cost || hasHours) {
-        ensure(20);
-        doc.setFillColor(...C.paper);
-        doc.roundedRect(M, y, CW, 16, 1.6, 1.6, 'F');
+        ensure(22);
+        doc.setFillColor(...C.goldSoft);
+        doc.roundedRect(M, y, CW, 17, 1.8, 1.8, 'F');
         doc.setFillColor(...C.gold);
-        doc.rect(M, y, 1.6, 16, 'F');
+        doc.rect(M, y, 1.4, 17, 'F');
 
-        const cells = [{ key: 'Downtime', value: log.Downtime ? String(log.Downtime) + ' hrs' : '—' }];
+        const cells = [{ key: 'Downtime', value: log.Downtime ? num(log.Downtime) + ' hrs' : '—' }];
         if (hasHours) {
-            cells.push({
-                key: 'Man Hours',
-                value:
-                    (log.estimatedHours ? String(log.estimatedHours) : '—') +
-                    ' h est · ' +
-                    (log.actualHours ? String(log.actualHours) : '—') +
-                    ' h act',
-            });
+            cells.push({ key: 'Est. Hours', value: log.estimatedHours ? num(log.estimatedHours) + ' h' : '—' });
+            cells.push({ key: 'Actual Hours', value: log.actualHours ? num(log.actualHours) + ' h' : '—' });
         }
         cells.push({ key: 'Total Cost', value: formatCurrency(log.Cost), accent: true });
 
         const w = CW / cells.length;
         cells.forEach((cell, i) => {
-            const x = M + 8 + i * w;
-            label(cell.key, x, y + 5.4);
+            const x = M + 9 + i * w;
+            label(cell.key, x, y + 5.6, C.slate, 5.8);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(cell.accent ? 13 : 11);
+            doc.setFontSize(cell.accent ? 13.4 : 10.6);
             ink();
-            doc.text(cell.value, x, y + (cell.accent ? 12.4 : 11.6));
-            if (cell.accent) hairline(x, x + doc.getTextWidth(cell.value), y + 13.2, C.gold, 0.4);
+            doc.text(cell.value, x, y + 12.4);
+            if (cell.accent) hairline(x, x + doc.getTextWidth(cell.value), y + 13.6, C.gold, 0.6);
         });
-        y += 20;
+        y += 23;
     }
 
     // ── tanda tangan ────────────────────────────────────────────────────────
-    ensure(24);
-    // Kalau ruang sisa lega, dorong blok tanda tangan ke bawah halaman supaya
-    // formulir terlihat seimbang — tanpa memaku ke koordinat tetap.
-    if (BOTTOM - y > 34) y = BOTTOM - 26;
+    ensure(32);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.8);
+    doc.setTextColor(...C.mute);
+    doc.text('Valid only with original signatures.', M, y);
+    y += 5;
 
     const sigW = (CW - 12) / 3;
     ['Requested By', 'Approved By', 'Executed By'].forEach((title, i) => {
         const x = M + i * (sigW + 6);
-        label(title, x, y);
-        hairline(x, x + sigW, y + 13, C.ink, 0.5);
+        label(title, x, y, C.ink2, 6.2);
+        hairline(x, x + sigW, y + 14, C.ink, 0.5);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.2);
-        doc.setTextColor(...C.mute);
-        doc.text('Name / Position', x, y + 17);
-        doc.text('Date & Time', x, y + 20.5);
+        doc.setFontSize(6);
+        doc.setTextColor(...C.slate);
+        doc.text('Name / Position', x, y + 18);
+        doc.text('Date & Time', x, y + 21.5);
     });
 
     // ── footer semua halaman ────────────────────────────────────────────────
@@ -460,12 +482,13 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     const stamp = formatDate(now.toISOString().slice(0, 10)) + ' · ' + now.toTimeString().slice(0, 5);
     for (let page = 1; page <= total; page++) {
         doc.setPage(page);
-        hairline(M, PW - M, PH - 16);
+        hairline(M, PW - M, PH - 16, C.line, 0.25);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(6.8);
         doc.setTextColor(...C.slate);
-        doc.text('MTC System v2.0  ·  Printed ' + stamp + '  ·  ' + woNumber, M, PH - 11);
+        doc.text('MTC System v2.0  ·  Form MTC-WO-01  ·  Printed ' + stamp + '  ·  ' + woNumber, M, PH - 11);
         doc.text('Page ' + page + ' of ' + total, PW - M, PH - 11, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
     }
 
     doc.save('WorkOrder_' + (log.woNumber || 'DRAFT') + '.pdf');
