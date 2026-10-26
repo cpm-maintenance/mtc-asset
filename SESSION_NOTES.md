@@ -1,3 +1,33 @@
+## 🏷️ S43 · Print Tag: hanya kartu yang keluar di kertas (2026-10-26)
+
+**Live sw v76 → v77** (`7e1b173`).
+
+### Masalah
+`Print Tag` memanggil `window.print()` langsung, jadi yang tercetak **seluruh aplikasi**: overlay gelap, judul modal, tombol, sidebar. Percobaan pertama lewat `@media print { body * { visibility: hidden } }` **gagal**: latar gelap dan tombol tetap tercetak (bukti: screenshot media print).
+
+### Perbaikan (deterministik)
+| Bagian | Bentuk |
+|---|---|
+| `printTag()` (`ui.js`) | kloning kartu ke `#print-root` di akhir `body`, panggil `window.print()`, bersihkan di `afterprint` (+ jaring pengaman 30 s) |
+| CSS cetak | `body > *:not(#print-root) { display: none !important }` — bukan `visibility`, jadi tidak ada perang specificity; kartu dipatok `width: 78mm`, `print-color-adjust: exact` |
+| Tombol | `@click="window.print()"` → `@click="printTag()"` |
+
+### Dua jebakan yang tertangkap E2E (bukan tebakan)
+1. **Klon kehilangan `src`.** `cloneNode` menyalin atribut, tetapi binding Alpine (`:src`) ikut terbawa; `initTree` mengevaluasi di luar scope, gagal, lalu **menghapus atributnya** → QR tampil sebagai ikon gambar rusak. Perbaikan: `stripAlpineBindings(clone)` (buang `x-*`, `:prop`, `@event`) + salin `src` dari elemen hidup (`img.currentSrc`).
+2. **`loading="lazy"` pada QR di modal** membuat gambar tidak pernah dimuat saat berada di kontainer `display:none`; atribut dihapus dari markup modal.
+
+### Tes
+- `tests/ui-qr.test.js` (+3): `printTag` tanpa kartu → `print` langsung; dengan kartu → `#print-root` berisi klon **tanpa** binding Alpine tapi `src` utuh; `afterprint` membersihkan.
+- `tests/qr-asset-tag.test.js` (+2): tombol memakai `printTag()`; CSS cetak memuat `body > *:not(#print-root)` + `#print-root .asset-tag { width: 78mm }`.
+- `e2e/qr-asset-tag.spec.js` (+1 tes): `window.print` di-stub, lalu di media `print` dibuktikan `#print-root` = `block`, **semua** anak body lain `display: none`, lebar kartu 240–340 px (≈78 mm), dan QR di dalam klon benar-benar termuat (`naturalWidth > 0`).
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2044 tes / 96 berkas**
+- coverage **96,61 / 88,95 / 96,93 / 97,80** (exit **0**) · build **0** · precache **66/66**
+- E2E **16 passed (48,7 s)** · live **mtc-asset-v77**
+
+---
+
 ## 🏷️ S42f · FOR DETAILED INFORMATION — bentuk baku (2026-10-26)
 
 **Live sw v75 → v76** (`75266a1`). `for detail information` → `for detailed information` (dirender `FOR DETAILED INFORMATION`), sesuai bentuk baku Inggris. Dua asersi di `tests/qr-asset-tag.test.js` ikut diperbarui.
