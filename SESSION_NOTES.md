@@ -1,3 +1,32 @@
+## 🏷️ S45b · Tombol QR juga di mode tree — chip dipecah dua tombol (2026-10-26)
+
+**Live sw v79 → v80** (`161c628`).
+
+Sisa dari S45: mode **hierarki** (`showEquipTree`) belum punya aksi QR, karena tiap unit di sana sudah berupa `<button @click="goToDetail(...)">` utuh — menambah tombol di dalamnya berarti `<button>` bersarang, yang tidak sah di HTML (browser memecah DOM-nya dan Alpine kehilangan target).
+
+### Perbaikan
+| Bagian | Bentuk |
+|---|---|
+| Chip unit (`Equipment.html`) | satu `<div class="inline-flex … group">` berisi **dua tombol bersaudara**: navigasi (`goToDetail`, tanpa latar sendiri) + QR (`@click.stop="openEquipQR"`, `aria-label` statis, **24×24 px**, `border-l` sebagai pemisah) |
+| Latar chip | dipindah ke wadah (`bg-tac-surface-container-high` + `hover:bg-tac-surface-elevated`), supaya dua tombol terbaca satu unit |
+
+### Tes
+- `tests/equip-qr-row.test.js` (**+3**, total **11**): kedalaman `<button>` di chip maksimum **1** (dihitung dengan walker, bukan regex — komentar markup menyebut `<button>` sebagai teks sehingga komentar dibuang dulu), tombol QR ber-`aria-label` statis + `.stop`, target ≥ 24 px. Dibuktikan menggigit: satu `</button>` dihapus → **1 failed**.
+- `e2e/qr-asset-tag.spec.js`: tes S45 diperluas ke mode tree (tutup modal → `showEquipTree = true` → klik chip QR → tag tampil, `naturalWidth > 0`, `currentPage` tetap `equip`).
+
+### Jebakan: locator mengunci elemen yang lalu tersembunyi
+Versi pertama memakai `page.locator('button[aria-label="Buka kartu tag QR"]:visible').first()`. Setelah mode tree aktif, tombol **grid** jadi tersembunyi tetapi locator sudah terikat ke elemen itu → `click` menunggu 60 s lalu timeout (Playwright menandainya *flaky* karena lolos di retry). `:visible` dievaluasi saat resolusi, bukan saat aksi. Perbaikan: pilih lewat kelas ukuran yang unik per mode — `button.h-7[…]` (grid) dan `button.h-6[…]` (tree).
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2060 tes / 97 berkas**
+- coverage **96,63 / 88,97 / 97,01 / 97,81** (exit **0**) · build **0** · precache **66/66**
+- E2E **18 passed (56,7 s)** · live **mtc-asset-v80** (fragmen live: `openEquipQR` ×2, `Buka kartu tag QR` ×2, wadah chip ada)
+
+### Sisa
+- Tidak ada. Daftar aset (grid **dan** tree) kini punya aksi QR satu klik.
+
+---
+
 ## 🏷️ S45 · Tombol QR per kartu aset — tag satu klik dari daftar (2026-10-26)
 
 **Live sw v78 → v79** (`80d1f3e`).
