@@ -1,3 +1,29 @@
+## 🏷️ S42b · Kartu tag: buang "work order", penjelas bahasa Inggris (2026-10-26)
+
+**Live sw v71 → v72** (`c214b31`).
+
+### Perubahan
+| Sebelum | Sesudah |
+|---|---|
+| `untuk membuka riwayat & work order aset ini` | `for more information` |
+| header modal `QR penanda aset` | `QR asset identifier` |
+
+Seluruh teks UI kartu sekarang bahasa Inggris; yang tersisa berbahasa Indonesia hanya **nama aset** (`Pompa E2E`) — itu data milik operator, bukan label.
+
+### Tes
+- `tests/qr-asset-tag.test.js` (+2): penjelas harus `for more information`, dan kartu **tidak boleh** memuat `work order` (case-insensitive) — supaya kalimat lama tidak kembali.
+
+### Bukti
+- `cv2.QRCodeDetector` → `'EQ-E2E-001'` pada 640 px **dan** 240 px (badge tetap tidak merusak kode).
+- Teks kartu dibacakan ulang dari render: `MTC · MAINTENANCE · ASSET REGISTRY · MTC · SCAN ME · for more information · EQ-E2E-001 · Pompa E2E · Area E2E · Operational` — tanpa "work order".
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2040 tes / 96 berkas**
+- coverage **96,64 / 88,96 / 96,99 / 97,79** (exit **0**) · build **0** · precache **66/66**
+- E2E **15 passed (1,1 m)** · live **mtc-asset-v72**
+
+---
+
 ## 🏷️ S42 · Asset tag QR — desain premium + SCAN ME (2026-10-26)
 
 **Live sw v70 → v71** (`d2577d4`).
