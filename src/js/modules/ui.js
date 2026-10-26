@@ -113,6 +113,18 @@ function stripAlpineBindings(node) {
     for (const child of [...node.children]) stripAlpineBindings(child);
 }
 
+/**
+ * Unduh data URL sebagai berkas lewat anchor sementara.
+ * @param {string} dataUrl
+ * @param {string} filename
+ */
+function triggerDownload(dataUrl, filename) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataUrl;
+    link.click();
+}
+
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
     manualScanId: '',
@@ -238,12 +250,32 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         setTimeout(() => document.getElementById('print-root')?.remove(), 30_000);
     },
 
-    downloadQR() {
+    /**
+     * Unduh **kartu tag utuh** sebagai PNG, bukan QR telanjang — sama dengan
+     * yang keluar saat dicetak. Kartu di-render ulang lewat `html2canvas`
+     * (sudah ikut bersama `jspdf`) supaya hasilnya identik dengan yang terlihat;
+     * kalau render gagal, jatuh ke PNG QR saja agar tombol tidak mati.
+     */
+    async downloadQR() {
+        const id = this.selectedEquip?.EquipmentID || 'asset';
+        const card = /** @type {HTMLElement | null} */ (document.querySelector('[data-testid="asset-tag"]'));
+        if (card) {
+            try {
+                const { default: html2canvas } = await import('html2canvas');
+                const canvas = await html2canvas(card, {
+                    backgroundColor: '#ffffff',
+                    scale: 3,
+                    logging: false,
+                    useCORS: true,
+                });
+                triggerDownload(canvas.toDataURL('image/png'), `TAG_${id}.png`);
+                return;
+            } catch (err) {
+                console.warn('Tag PNG capture failed, fallback ke QR:', err);
+            }
+        }
         if (!this.qrCodeDataUrl) return;
-        const link = document.createElement('a');
-        link.download = `QR_${this.selectedEquip?.EquipmentID || 'asset'}.png`;
-        link.href = this.qrCodeDataUrl;
-        link.click();
+        triggerDownload(this.qrCodeDataUrl, `QR_${id}.png`);
     },
 
     // Bulk: generate QR for ALL equipment → single PDF (A4 grid 3×5)

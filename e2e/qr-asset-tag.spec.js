@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { writeFileSync } from 'node:fs';
+import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 
 import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
 
@@ -132,4 +132,27 @@ test('cetak hanya mengeluarkan kartu tag, bukan seluruh aplikasi', async ({ page
     expect(printed.cardWidth).toBeLessThan(340);
 
     await page.screenshot({ path: PRINT });
+});
+
+test('Save PNG mengunduh kartu utuh, bukan QR telanjang', async ({ page }) => {
+    await loginAndOpenTag(page);
+
+    const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('button', { name: /save png/i }).click(),
+    ]);
+
+    expect(download.suggestedFilename()).toMatch(/^TAG_.+\.png$/);
+
+    const file = await download.path();
+    const buf = readFileSync(file);
+    // Signature PNG + lebar/tinggi dari chunk IHDR.
+    expect(buf.slice(1, 4).toString()).toBe('PNG');
+    const width = buf.readUInt32BE(16);
+    const height = buf.readUInt32BE(20);
+    // Kartu 78 mm ≈ 295 px @96dpi, dirender `scale: 3` → ±885 px.
+    expect(width).toBeGreaterThan(600);
+    expect(height).toBeGreaterThan(width);
+
+    if (process.env.QR_PNG_OUT) copyFileSync(file, process.env.QR_PNG_OUT);
 });

@@ -18,6 +18,11 @@ vi.mock('qrcode', () => ({
 }));
 
 const pdfCalls = { addImage: [], addPage: 0, save: [], text: [], frame: [] };
+const h2c = vi.hoisted(() => ({
+  fn: vi.fn(async () => ({ toDataURL: () => 'data:image/png;base64,CARD' })),
+}));
+vi.mock('html2canvas', () => ({ default: h2c.fn }));
+
 vi.mock('jspdf', () => ({
   jsPDF: class {
     addImage(...args) { pdfCalls.addImage.push(args); }
@@ -71,12 +76,53 @@ describe('QR — generateQR / downloadQR', () => {
     expect(() => uiModule.downloadQR.call(ctx)).not.toThrow();
   });
 
-  it('downloadQR memicu klik anchor unduhan', () => {
+  it('downloadQR tanpa kartu: jatuh ke PNG QR', async () => {
     const ctx = makeCtx({ qrCodeDataUrl: 'data:image/png;base64,X', selectedEquip: { EquipmentID: 'EQ-1' } });
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    uiModule.downloadQR.call(ctx);
-    expect(clickSpy).toHaveBeenCalled();
+    const clicks = [];
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function () {
+        clicks.push(this.download);
+      });
+    await uiModule.downloadQR.call(ctx);
+    expect(clicks).toEqual(['QR_EQ-1.png']);
     clickSpy.mockRestore();
+  });
+
+  it('downloadQR memotret kartu tag utuh (bukan QR telanjang)', async () => {
+    document.body.innerHTML = '<div data-testid="asset-tag"><img src="data:image/png;base64,QR"></div>';
+    const ctx = makeCtx({ qrCodeDataUrl: 'data:image/png;base64,QR', selectedEquip: { EquipmentID: 'EQ-7' } });
+    const clicks = [];
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function () {
+        clicks.push({ name: this.download, href: this.href });
+      });
+
+    await uiModule.downloadQR.call(ctx);
+
+    expect(h2c.fn).toHaveBeenCalled();
+    expect(clicks[0].name).toBe('TAG_EQ-7.png');
+    expect(clicks[0].href).toContain('base64,CARD');
+    clickSpy.mockRestore();
+    document.body.innerHTML = '';
+  });
+
+  it('html2canvas gagal → tetap mengunduh QR, tidak melempar', async () => {
+    document.body.innerHTML = '<div data-testid="asset-tag"></div>';
+    h2c.fn.mockRejectedValueOnce(new Error('boom'));
+    const ctx = makeCtx({ qrCodeDataUrl: 'data:image/png;base64,QR', selectedEquip: { EquipmentID: 'EQ-9' } });
+    const clicks = [];
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function () {
+        clicks.push(this.download);
+      });
+
+    await expect(uiModule.downloadQR.call(ctx)).resolves.toBeUndefined();
+    expect(clicks).toEqual(['QR_EQ-9.png']);
+    clickSpy.mockRestore();
+    document.body.innerHTML = '';
   });
 });
 
