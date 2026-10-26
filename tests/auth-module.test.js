@@ -77,8 +77,8 @@ function makeCtx(overrides = {}) {
     ctx.userRole = 'user';
     ctx.isAdmin = false;
     ctx.allUsers = [];
-    ctx.newUserForm = { email: '', password: '', role: 'user' };
-    ctx.editUserForm = { uid: '', email: '', role: 'user' };
+    ctx.newUserForm = { email: '', password: '', role: 'user', phone: '' };
+    ctx.editUserForm = { uid: '', email: '', role: 'user', phone: '' };
     ctx.showCreateUserModal = false;
     ctx.showEditUserModal = false;
     ctx.showNotification = vi.fn();
@@ -339,23 +339,23 @@ describe('modal create user', () => {
         const ctx = makeCtx({ newUserForm: { email: 'x', password: 'y', role: 'admin' } });
         ctx.openCreateUserModal();
         expect(ctx.showCreateUserModal).toBe(true);
-        expect(ctx.newUserForm).toEqual({ email: '', password: '', role: 'user' });
+        expect(ctx.newUserForm).toEqual({ email: '', password: '', role: 'user', phone: '' });
 
         ctx.showCreateUserModal = true;
         ctx.newUserForm = { email: 'a', password: 'b', role: 'admin' };
         ctx.closeCreateUserModal();
         expect(ctx.showCreateUserModal).toBe(false);
-        expect(ctx.newUserForm).toEqual({ email: '', password: '', role: 'user' });
+        expect(ctx.newUserForm).toEqual({ email: '', password: '', role: 'user', phone: '' });
     });
 
     it('submit sukses menutup modal, gagal membiarkannya terbuka', async () => {
         const ctx = makeCtx({ isAdmin: true });
         ctx.createUser = vi.fn(async () => ({ success: true }));
         ctx.closeCreateUserModal = vi.fn();
-        ctx.newUserForm = { email: 'a@b.c', password: 'p', role: 'user' };
+        ctx.newUserForm = { email: 'a@b.c', password: 'p', role: 'user', phone: '' };
 
         await ctx.submitCreateUser();
-        expect(ctx.createUser).toHaveBeenCalledWith('a@b.c', 'p', 'user');
+        expect(ctx.createUser).toHaveBeenCalledWith('a@b.c', 'p', 'user', '');
         expect(ctx.closeCreateUserModal).toHaveBeenCalled();
 
         ctx.createUser = vi.fn(async () => ({ success: false, message: 'nope' }));
@@ -370,14 +370,14 @@ describe('edit user', () => {
         const ctx = makeCtx();
         ctx.openEditUser({ uid: 'u1', email: 'a@b.c', role: 'admin' });
         expect(ctx.showEditUserModal).toBe(true);
-        expect(ctx.editUserForm).toEqual({ uid: 'u1', email: 'a@b.c', role: 'admin' });
+        expect(ctx.editUserForm).toEqual({ uid: 'u1', email: 'a@b.c', role: 'admin', phone: '' });
 
         ctx.openEditUser({ uid: 'u2', email: 'c@d.e' });
         expect(ctx.editUserForm.role).toBe('user');
 
         ctx.closeEditUserModal();
         expect(ctx.showEditUserModal).toBe(false);
-        expect(ctx.editUserForm).toEqual({ uid: '', email: '', role: 'user' });
+        expect(ctx.editUserForm).toEqual({ uid: '', email: '', role: 'user', phone: '' });
     });
 
     it('guard: bukan admin / uid kosong / email kosong → tidak menulis', async () => {

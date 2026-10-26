@@ -171,6 +171,12 @@
             <option value="supervisor" class="bg-tac-surface-recessed">Supervisor</option>
           </select>
         </div>
+        <div>
+          <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">No. WhatsApp</label>
+          <input aria-label="Nomor WhatsApp pengguna baru" type="tel" inputmode="tel" x-model="newUserForm.phone" placeholder="0812-3456-7890"
+            class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-status-standby rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
+          <p class="mt-1 ml-1 text-[10px] text-tac-status-standby">Dipakai reminder WhatsApp saat WO di-approve.</p>
+        </div>
         <div class="flex gap-3 pt-2">
           <button type="button" @click="closeCreateUserModal()" 
             class="flex-1 px-4 py-3.5 rounded-xl bg-tac-surface-card/60 border border-tac-border-tactical border-tac-border-subtle text-tac-on-surface-variant font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-tac-surface-container hover:text-tac-on-surface transition-all">
@@ -294,6 +300,12 @@
           <span class="material-symbols-outlined text-xs">verified_user</span>
           Send Password Reset
         </button>
+        <div>
+          <label class="text-[9px] text-tac-status-standby uppercase font-black tracking-[0.15em] ml-1 mb-2 block">No. WhatsApp</label>
+          <input aria-label="Nomor WhatsApp pengguna" type="tel" inputmode="tel" x-model="editUserForm.phone" placeholder="0812-3456-7890"
+            class="w-full p-4 bg-tac-surface-recessed border border-tac-border-subtle text-tac-on-surface text-sm placeholder:text-tac-status-standby rounded-xl focus:border-tac-status-repair/40 focus:ring-1 focus:ring-tac-status-repair/20 transition-all outline-none">
+          <p class="mt-1 ml-1 text-[10px] text-tac-status-standby">Dipakai reminder WhatsApp saat WO di-approve.</p>
+        </div>
         <div class="flex gap-3 pt-2">
           <button type="button" @click="closeEditUserModal()" 
             class="flex-1 px-4 py-3.5 rounded-xl bg-tac-surface-card/60 border border-tac-border-tactical border-tac-border-subtle text-tac-on-surface-variant font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-tac-surface-container hover:text-tac-on-surface transition-all">

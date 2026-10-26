@@ -240,7 +240,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         }
     },
     
-    async createUser(email, password, role = 'user') {
+    async createUser(email, password, role = 'user', phone = '') {
         if (!email || !password) {
             this.showNotification("Email and password required", "error");
             return { success: false, message: "Email and password required" };
@@ -297,6 +297,8 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 uid: uid,
                 email: email,
                 role: role,
+                // Nomor WhatsApp teknisi — dipakai reminder WO approved.
+                phone: String(phone || '').trim(),
                 createdAt: new Date().toISOString(),
                 createdBy: this.user?.email || 'admin'
             };
@@ -324,23 +326,24 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     
     showCreateUserModal: false,
     showUserManagement: false,
-    newUserForm: { email: '', password: '', role: 'user' },
+    newUserForm: { email: '', password: '', role: 'user', phone: '' },
     
     openCreateUserModal() {
-        this.newUserForm = { email: '', password: '', role: 'user' };
+        this.newUserForm = { email: '', password: '', role: 'user', phone: '' };
         this.showCreateUserModal = true;
     },
     
     closeCreateUserModal() {
         this.showCreateUserModal = false;
-        this.newUserForm = { email: '', password: '', role: 'user' };
+        this.newUserForm = { email: '', password: '', role: 'user', phone: '' };
     },
     
     async submitCreateUser() {
         const result = await this.createUser(
             this.newUserForm.email,
             this.newUserForm.password,
-            this.newUserForm.role
+            this.newUserForm.role,
+            this.newUserForm.phone
         );
         
         if (result.success) {
@@ -352,16 +355,16 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     
     // Edit User
     showEditUserModal: false,
-    editUserForm: { uid: '', email: '', role: 'user' },
+    editUserForm: { uid: '', email: '', role: 'user', phone: '' },
     
     openEditUser(user) {
-        this.editUserForm = { uid: user.uid, email: user.email, role: user.role || 'user' };
+        this.editUserForm = { uid: user.uid, email: user.email, role: user.role || 'user', phone: user.phone || '' };
         this.showEditUserModal = true;
     },
     
     closeEditUserModal() {
         this.showEditUserModal = false;
-        this.editUserForm = { uid: '', email: '', role: 'user' };
+        this.editUserForm = { uid: '', email: '', role: 'user', phone: '' };
     },
     
     async saveEditUser() {
@@ -376,11 +379,12 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 ...existing,
                 email: this.editUserForm.email.trim(),
                 role: this.editUserForm.role,
+                phone: String(this.editUserForm.phone || '').trim(),
                 updatedAt: new Date().toISOString(),
             });
             const idx = this.allUsers.findIndex(u => u.uid === this.editUserForm.uid);
             if (idx !== -1) {
-                this.allUsers[idx] = { ...this.allUsers[idx], email: this.editUserForm.email.trim(), role: this.editUserForm.role };
+                this.allUsers[idx] = { ...this.allUsers[idx], email: this.editUserForm.email.trim(), role: this.editUserForm.role, phone: String(this.editUserForm.phone || '').trim() };
             }
             this.showNotification('User updated successfully');
             this.closeEditUserModal();
@@ -406,7 +410,12 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     },
     
     async loadAllUsers() {
-        if (!window.db || !this.isAdmin) return;
+        // Supervisor juga perlu daftar ini: reminder WhatsApp WO approved
+        // mencari nomor teknisi di `Users`. Halaman kelola pengguna tetap
+        // admin-only lewat gate UI. Fallback `isAdmin` menjaga konteks yang
+        // tidak memasang getter `isAdminOrSupervisor` (unit test / modul murni).
+        const canReadUsers = this.isAdminOrSupervisor ?? this.isAdmin;
+        if (!window.db || !canReadUsers) return;
         
         this.isLoading = true;
         try {

@@ -867,6 +867,14 @@
                 <span class="material-symbols-outlined text-[16px]">play_arrow</span>
                 <span>START</span>
               </button>
+              <!-- Reminder WhatsApp: tautan wa.me, nomor dari Users/<uid>/phone -->
+              <button type="button" x-show="woSelected.Status === 'Approved'"
+                @click="openWaReminder(woSelected)"
+                aria-label="Kirim reminder WhatsApp" title="Kirim reminder WhatsApp ke teknisi"
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-status-operational font-label-mono-sm text-label-mono-sm font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">notifications</span>
+                <span>REMINDER WA</span>
+              </button>
               <button type="button" x-show="isAdminOrSupervisor && (woSelected.Status === 'Approved' || woSelected.Status === 'In Progress')"
                 @click="completeWO(woSelected.LogID)"
                 class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-status-operational font-label-mono-sm text-label-mono-sm font-bold flex items-center justify-center gap-1 transition-colors">

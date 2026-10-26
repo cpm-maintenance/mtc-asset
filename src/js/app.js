@@ -17,6 +17,7 @@ import { chartToken } from './chart-palette.js';
 import { enterpriseKPI } from './modules/enterprise-kpi.js';
 import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
+import { whatsappModule } from './modules/whatsapp.js';
 import { DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_PERF_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
@@ -1156,6 +1157,7 @@ export function app() {
         ...chartModule,
         ...errorHandlerModule,
         ...bootstrapModule,
+        ...whatsappModule,
         ...enterpriseKPI,
 
         // --- CALCULATED PROPERTIES (GETTERS) ---

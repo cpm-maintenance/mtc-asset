@@ -163,6 +163,41 @@ export function isValidPhone(phone) {
 }
 
 /**
+ * Nomor telepon → digit internasional tanpa `+`, siap dipakai `wa.me`.
+ *
+ * Menerima bentuk yang benar-benar diketik operator: `0812-3456-7890`,
+ * `+62 812 3456 7890`, `62 812…`, atau `812…`. Nomor lokal yang diawali `0`
+ * diubah ke `62`; nomor yang sudah `62` dibiarkan.
+ *
+ * @param {string} phone
+ * @returns {string|null} digit 8–15 karakter, atau `null` bila tidak sah.
+ */
+export function waPhoneDigits(phone) {
+  if (!phone) return null;
+  const digits = String(phone).replace(/[^\d]/g, '');
+  if (digits.length < 8 || digits.length > 15) return null;
+  if (digits.startsWith('0')) return '62' + digits.slice(1);
+  if (digits.startsWith('62')) return digits;
+  if (digits.startsWith('8')) return '62' + digits;
+  return digits;
+}
+
+/**
+ * Tautan `wa.me` dengan teks terisi — kanal reminder tanpa server dan tanpa
+ * biaya: operator menekan tombol, WhatsApp terbuka, pengiriman tetap di tangan
+ * operator (tidak ada pesan yang terkirim diam-diam).
+ *
+ * @param {string} phone
+ * @param {string} text
+ * @returns {string|null} URL `https://wa.me/…?text=…`, atau `null` bila nomor tidak sah.
+ */
+export function waLink(phone, text) {
+  const digits = waPhoneDigits(phone);
+  if (!digits) return null;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(String(text ?? ''))}`;
+}
+
+/**
  * Validasi URL. URL bersifat opsional, jadi nilai kosong dianggap valid.
  *
  * @param {string} url - URL yang divalidasi.
