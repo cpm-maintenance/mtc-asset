@@ -1,3 +1,36 @@
+## 🏷️ S42 · Asset tag QR — desain premium + SCAN ME (2026-10-26)
+
+**Live sw v70 → v71** (`d2577d4`).
+
+### Yang dibuat
+| Permukaan | Bentuk |
+|---|---|
+| Modal preview (`app-shell.html`) | kartu tag putih: monogram MTC, `MAINTENANCE · ASSET REGISTRY`, QR 176 px dengan **empat bracket emas**, label **SCAN ME** diapit dua garis emas, subteks `untuk membuka riwayat & work order aset ini`, pembatas, lalu ID (mono) · nama · `lokasi · status` |
+| QR itu sendiri (`ui.js`) | `errorCorrectionLevel: 'H'` + **badge "MTC" di tengah** dengan halo putih **24 px (≈1 modul)** — bukan kotak tajam yang menempel di modul |
+| Label cetak (`downloadAllQRs`) | tiap sel A4 landscape jadi **kartu tag berbingkai emas** 3 mm: QR 16 mm, `SCAN ME`, ID, nama — sebelumnya QR telanjang + dua baris teks abu |
+| Fallback | canvas tidak tersedia (jsdom/WebView) → QR polos dikembalikan, bukan melempar |
+
+### Bukti fungsional (bukan asumsi)
+- QR hasil komposisi **tetap terbaca**: `cv2.QRCodeDetector` → `'EQ-E2E-001'` pada 640 px **dan** 240 px (badge + halo tidak merusak sinkronisasi).
+- `e2e/qr-asset-tag.spec.js` memotret kartu (`QR_SHOT`) dan menyimpan PNG QR mentah (`QR_IMG`) untuk dekode di luar browser; juga menuntut `naturalWidth > 0` supaya QR kosong tidak lolos.
+
+### Aturan tema yang harus dipatuhi
+`tests/legacy-palette.test.js` melarang `bg-white`/`text-white` dan **hex apa pun di markup**. Solusinya bukan mengecualikan tes, tapi memindahkan warna tag ke komponen `.asset-tag` di `src/css/style.css` (triplet RGB `--tag-ink`/`--tag-gold`/`--tag-muted`/`--tag-line`), markup memakai `rgb(var(--tag-gold))`. Pengecualian `bg-white` lama (kartu QR versi lama) **dihapus** — sekarang nol pengecualian.
+
+### Tes
+- `tests/qr-asset-tag.test.js` (9): modal memuat SCAN ME + penjelas, `:src="qrCodeDataUrl"`, identitas aset, 4 bracket token, tanpa hex/`bg-white`, tombol tutup/simpan/cetak; `ui.js` memakai ECC `H`, badge MTC, fallback, dan label cetak `SCAN ME` + bingkai.
+- `tests/ui-qr.test.js` (+3 asersi): mock jsPDF diperluas (`roundedRect`/`setDrawColor`/`setLineWidth`/`setFont`) dan bulk export harus menghasilkan 3 bingkai + 3 label `SCAN ME`.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- **2039 tes / 96 berkas**
+- coverage **96,64 / 88,96 / 96,99 / 97,79** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **15 passed (42,5 s)** di port 3100
+- live: `sw.js` = **mtc-asset-v71**; fragmen live memuat `data-testid="asset-tag"` dan `Scan Me`
+
+---
+
 ## 🏷️ S41c · PDF Work Order — kolom seimbang + pita statistik 5 sel (2026-10-26)
 
 **Live sw v69 → v70** (`d12be20`).
