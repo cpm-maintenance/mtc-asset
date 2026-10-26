@@ -1550,8 +1550,13 @@
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Assigned Technician</label>
-              <input aria-label="Teknisi" type="text" x-model="logForm.assignedTo" placeholder="Technician name"
+              <input aria-label="Teknisi" type="text" x-model="logForm.assignedTo" list="technician-suggestions" placeholder="Ketik atau pilih nama teknisi"
                 class="w-full">
+              <datalist id="technician-suggestions">
+                <template x-for="name in technicianSuggestions" :key="name">
+                  <option :value="name"></option>
+                </template>
+              </datalist>
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Due Date</label>

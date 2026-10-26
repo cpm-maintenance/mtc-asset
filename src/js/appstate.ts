@@ -454,6 +454,8 @@ export interface AppState {
   get filteredLogs(): any;
   get filteredParts(): any;
   get filteredPartsForLog(): any;
+  /** Saran nama teknisi (dari riwayat assignedTo) untuk datalist. */
+  get technicianSuggestions(): string[];
   /** Jumlah field form log yang belum valid. */
   get logFormErrorCount(): number;
   /** False selama masih ada field wajib kosong / tanggal terbalik. */

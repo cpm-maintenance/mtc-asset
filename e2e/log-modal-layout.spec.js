@@ -61,6 +61,28 @@ test.describe('Modal New System Entry — hasil render', () => {
         });
         expect(numericValues).toEqual(['', '', '', '', '']);
 
+        // Prefill & saran: tenggat = hari ini + 7, teknisi kosong tapi punya datalist.
+        const prefill = await page.evaluate(() => {
+            const isoPlus = (d) => new Date(Date.now() + d * 86400000).toISOString().split('T')[0];
+            const root = [...document.querySelectorAll('form')].find((f) =>
+                f.querySelector('[aria-label="Equipment"]')
+            );
+            const tech = root.querySelector('[aria-label="Teknisi"]');
+            const due = root.querySelector('[aria-label="Tenggat"]');
+            const list = tech ? tech.getAttribute('list') : null;
+            const dl = list ? root.querySelector('#' + list) : null;
+            return {
+                techValue: tech ? tech.value : 'MISSING',
+                techList: list,
+                options: dl ? dl.querySelectorAll('option').length : -1,
+                dueValue: due ? due.value : 'MISSING',
+                expectedDue: isoPlus(7),
+            };
+        });
+        expect(prefill.techValue).toBe('');
+        expect(prefill.techList).toBe('technician-suggestions');
+        expect(prefill.dueValue).toBe(prefill.expectedDue);
+
         // Footer aksi menempel di dasar modal dan tombol submit menunggu field wajib.
         const chrome = await page.evaluate(() => {
             const root = [...document.querySelectorAll('form')].find((f) =>

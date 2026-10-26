@@ -5,7 +5,7 @@ import { logger } from '../logger.js';
  * History log management module
  */
 import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs } from '../utils.js';
-import { DEFAULT_LOG_FORM } from '../constants';
+import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 import { askConfirm } from './confirm-dialog.js';
 
@@ -27,6 +27,30 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     // Semua akses ke logs harus melalui this.logs yang berasal dari dataModule
     // (karena dataModule di-spread sebelum logsModule di app.js)
     
+    /**
+     * Saran nama teknisi untuk datalist pada field "Assigned Technician".
+     *
+     * Sumbernya riwayat `assignedTo` di log yang sudah dimuat — **bukan** node
+     * `Users`, karena `.read` Users hanya untuk admin/supervisor sehingga daftar
+     * akan kosong bagi operator biasa. Nilai berupa uid Firebase disaring supaya
+     * yang muncul hanya nama orang.
+     */
+    get technicianSuggestions() {
+        const out = new Set();
+        for (const log of this.logs || []) {
+            const raw = log && log.assignedTo;
+            if (!raw) continue;
+            const values = Array.isArray(raw) ? raw : [raw];
+            for (const v of values) {
+                const name = typeof v === 'string' ? v.trim() : '';
+                if (!name) continue;
+                if (/^[A-Za-z0-9]{20,}$/.test(name)) continue; // uid, bukan nama
+                out.add(name);
+            }
+        }
+        return [...out].sort((a, b) => a.localeCompare(b)).slice(0, 20);
+    },
+
     /** Pesan validasi per field; diisi `validateLogForm()` dan dipakai markup. */
     logFormErrors: {},
 
@@ -229,7 +253,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 woPriority: 'Normal',
                 woNumber: woNum,
                 assignedTo: '',
-                dueDate: '',
+                dueDate: DEFAULT_DUE_DATE(),
                 estimatedHours: '',
                 actualHours: '',
                 completedDate: '',

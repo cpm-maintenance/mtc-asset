@@ -38,12 +38,19 @@ export const DEFAULT_PART_FORM = () => ({
   lastReplaceDate: '', avgLifetimeDays: 365, avgLifetimeHours: 0, usageHours: 0
 });
 
+/**
+ * Tanggal default tenggat WO: hari ini + 7 hari (ISO yyyy-mm-dd).
+ * Dipakai `DEFAULT_LOG_FORM()` dan `openLogModal()` supaya keduanya sama.
+ */
+export const DEFAULT_DUE_DATE = () =>
+  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
 export const DEFAULT_LOG_FORM = () => ({
   logId: '', type: 'PM', desc: '', downtime: '', cost: '', equipmentId: '',
   date: new Date().toISOString().split('T')[0], tech: 'Maintenance Team',
   parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM',
   // Work Order Fields
-  woPriority: 'Normal', woNumber: '', assignedTo: '', dueDate: '',
+  woPriority: 'Normal', woNumber: '', assignedTo: '', dueDate: DEFAULT_DUE_DATE(),
   estimatedHours: '', actualHours: '', laborCost: 0, completedDate: '',
   // Department Request Fields
   requestSource: 'Production', requestedBy: '', requestDate: new Date().toISOString().split('T')[0],

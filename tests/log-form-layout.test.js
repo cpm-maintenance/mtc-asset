@@ -122,3 +122,16 @@ describe('modal New System Entry — tata letak desktop (S39h)', () => {
         expect(modal.match(/logFormErrors\.[a-zA-Z]+" x-text="logFormErrors/g)).toBeTruthy();
     });
 });
+
+describe('modal New System Entry — prefill & saran (S39i)', () => {
+    it('field teknisi memakai datalist saran, bukan isi otomatis', () => {
+        const tag = modal.match(/<input[^>]*x-model="logForm\.assignedTo"[^>]*>/);
+        expect(tag, 'input teknisi tidak ditemukan').toBeTruthy();
+        expect(tag[0]).toContain('list="technician-suggestions"');
+        expect(tag[0]).not.toMatch(/value="/); // tidak ada nilai awal
+
+        const dl = modal.match(/<datalist id="technician-suggestions">[\s\S]*?<\/datalist>/);
+        expect(dl, 'datalist saran tidak ditemukan').toBeTruthy();
+        expect(dl[0]).toContain('x-for="name in technicianSuggestions"');
+    });
+});

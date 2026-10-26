@@ -9,6 +9,10 @@ import { defineConfig, devices } from '@playwright/test';
  * Dev server diberi VITE_USE_EMULATORS=1 sehingga src/js/db.js menyambung ke
  * emulator, bukan ke RTDB produksi.
  */
+// Port bisa digeser lewat E2E_PORT supaya suite tetap bisa dijalankan saat
+// dev server sudah memakai 3000 (sebelumnya bentrok dan harus mematikan dev dulu).
+const PORT = process.env.E2E_PORT || '3000';
+
 export default defineConfig({
     testDir: './e2e',
     fullyParallel: true,
@@ -20,7 +24,7 @@ export default defineConfig({
     // (terukur 22,3 s lokal). Runner lebih lambat, jadi beri 60 s di CI.
     timeout: process.env.CI ? 60_000 : 30_000,
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: `http://localhost:${PORT}`,
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
     },
@@ -51,9 +55,9 @@ export default defineConfig({
             // `stdout/stderr: 'pipe'` supaya kalau server mati, log Playwright
             // memuat pesan aslinya, bukan cuma "webServer was not able to start".
             command: process.env.E2E_PREVIEW
-                ? 'npx vite preview --outDir dist-e2e --port 3000 --strictPort'
-                : 'npm run dev -- --port 3000',
-            url: 'http://localhost:3000',
+                ? `npx vite preview --outDir dist-e2e --port ${PORT} --strictPort`
+                : `npm run dev -- --port ${PORT}`,
+            url: `http://localhost:${PORT}`,
             reuseExistingServer: !process.env.CI,
             timeout: 60_000,
             stdout: 'pipe',
