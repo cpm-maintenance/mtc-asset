@@ -250,6 +250,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     const stats = [
         { key: 'Issued', value: formatDate(log.Tanggal) },
         { key: 'Due', value: log.dueDate ? formatDate(log.dueDate) : '—' },
+        { key: 'Department', value: truncate(log.requestSource || '-', 30) },
         { key: 'Priority', value: String(priority).toUpperCase(), tone: priorityTone(priority) },
         { key: 'Status', value: String(status).toUpperCase(), tone: statusTone(status) },
     ];
@@ -275,6 +276,32 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
 
     const bodyTop = 58;
     const GAP = 10;
+
+    // Kolom kiri diukur lebih dulu, lalu **diseimbangkan** terhadap tinggi panel:
+    // tanpa ini, deskripsi pendek menyisakan lubang 15–20 mm di bawah kolom kiri
+    // sementara panel kanan berakhir jauh lebih rendah.
+    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), leftW - 5);
+    const leftH = 39 + descLines.length * 4.4;
+
+    const cardRows = [
+        ['Type', log.Jenis || 'PM'],
+        ['Category', log.rca || 'PM'],
+        ['Technician', log.Technician || '-'],
+        ['Assigned To', formatAssignees(log.assignedTo)],
+        ['Requested By', log.requestedBy || '-'],
+        ['Request Date', formatDate(log.requestDate)],
+        ['Approved By', log.approvedBy || '-'],
+    ];
+    // Panel mulai di ketinggian huruf kapital judul seksi (baseline − 2,4 mm),
+    // bukan di baseline-nya, supaya tepi atas kedua kolom benar-benar sejajar.
+    const cardTop = bodyTop - 2.4;
+    const cardRowH = 8.4;
+    // Panel dan kolom kiri berbagi tinggi yang sama: tepi atas sejajar, tepi bawah
+    // sejajar. Kelebihan ruang (kalau deskripsi pendek) masuk ke jarak **sebelum**
+    // seksi 02, bukan menumpuk sebagai lubang di dasar kolom.
+    const cardH = Math.max(11 + cardRows.length * cardRowH, leftH + 2.4);
+    const slack = Math.max(0, cardH - leftH - 2.4);
+
     y = bodyTop;
 
     // Kiri: aset
@@ -295,16 +322,12 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         label('Asset Status', leftX + leftW * 0.66, y);
         value(truncate(equipment?.Status || '-', leftW * 0.34), leftX + leftW * 0.66, y + 4.8);
     }
-    y += GAP;
+    y += GAP + slack;
 
     // Kiri: deskripsi
     sectionTitle(2, 'Description', y, leftX, leftX + leftW);
     y += 8.4;
     const descTop = y - 3.4;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.8);
-    ink();
-    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), leftW - 5);
     for (const line of descLines) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.8);
@@ -316,20 +339,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     doc.rect(leftX, descTop, 1.2, Math.max(4, y - descTop - 1.6), 'F');
     const leftBottom = y;
 
-    // Kanan: panel JOB CARD
-    const cardRows = [
-        ['Type', log.Jenis || 'PM'],
-        ['Category', log.rca || 'PM'],
-        ['Technician', log.Technician || '-'],
-        ['Assigned To', formatAssignees(log.assignedTo)],
-        ['Department', log.requestSource || '-'],
-        ['Requested By', log.requestedBy || '-'],
-        ['Request Date', formatDate(log.requestDate)],
-        ['Approved By', log.approvedBy || '-'],
-    ];
-    const cardTop = bodyTop - 5;
-    const cardRowH = 8.4;
-    const cardH = Math.max(11 + cardRows.length * cardRowH, leftBottom - cardTop);
+    // Kanan: panel JOB CARD (tingginya sendiri; kolom kiri yang menyesuaikan)
     doc.setFillColor(...C.paper);
     doc.roundedRect(rightX, cardTop, rightW, cardH, 1.8, 1.8, 'F');
     doc.setFillColor(...C.gold);
