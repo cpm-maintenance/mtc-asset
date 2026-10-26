@@ -17,7 +17,7 @@ vi.mock('qrcode', () => ({
   },
 }));
 
-const pdfCalls = { addImage: [], addPage: 0, save: [], text: [] };
+const pdfCalls = { addImage: [], addPage: 0, save: [], text: [], frame: [] };
 vi.mock('jspdf', () => ({
   jsPDF: class {
     addImage(...args) { pdfCalls.addImage.push(args); }
@@ -25,6 +25,10 @@ vi.mock('jspdf', () => ({
     save(name) { pdfCalls.save.push(name); }
     setFontSize() {}
     setTextColor() {}
+    setDrawColor() {}
+    setLineWidth() {}
+    setFont() {}
+    roundedRect(...args) { pdfCalls.frame.push(args); }
     text(...args) { pdfCalls.text.push(args); }
   },
 }));
@@ -49,6 +53,7 @@ beforeEach(() => {
   pdfCalls.addImage.length = 0;
   pdfCalls.text.length = 0;
   pdfCalls.save.length = 0;
+  pdfCalls.frame.length = 0;
   pdfCalls.addPage = 0;
 });
 
@@ -96,6 +101,12 @@ describe('QR — downloadAllQRs (bulk PDF)', () => {
     expect(pdfCalls.save).toHaveLength(1);
     expect(pdfCalls.save[0]).toMatch(/^QR_All_Equipment_/);
     expect(ctx.showNotification).toHaveBeenCalledWith('Exported 3 QR codes');
+
+    // Setiap label = kartu tag: bingkai emas + kata "SCAN ME" + ID aset.
+    expect(pdfCalls.frame).toHaveLength(3);
+    const labels = pdfCalls.text.map((c) => c[0]);
+    expect(labels.filter((t) => t === 'SCAN ME')).toHaveLength(3);
+    expect(labels).toEqual(expect.arrayContaining(['EQ-1', 'Crusher']));
   });
 
   it('menambah halaman baru setiap kelipatan 15 label (grid 3×5)', async () => {

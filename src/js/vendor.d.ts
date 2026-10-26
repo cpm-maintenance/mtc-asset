@@ -4,6 +4,8 @@
 
 declare module 'qrcode' {
   interface QROptions {
+    /** 'L' | 'M' | 'Q' | 'H' — H dipakai supaya badge tengah aman. */
+    errorCorrectionLevel?: string;
     width?: number;
     margin?: number;
     color?: { dark?: string; light?: string };

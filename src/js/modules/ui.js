@@ -26,6 +26,76 @@ const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOU
  */
 export { readThemeMode };
 
+/**
+ * QR aset + badge tengah "MTC" — dipakai modal preview dan unduhan PNG.
+ *
+ * `errorCorrectionLevel: 'H'` (30 % redundansi) yang membuat badge tengah aman:
+ * badge menutup ±3 % luas, jauh di bawah batas toleransi, jadi scanner murah
+ * tetap membaca. Kalau canvas tidak tersedia (jsdom, WebView aneh), fungsi ini
+ * mengembalikan QR polos — bukan melempar, karena QR polos tetap berfungsi.
+ * @param {string} text
+ * @returns {Promise<string>} data URL PNG
+ */
+async function buildAssetTagImage(text) {
+    const QRCode = (await import('qrcode')).default;
+    const plain = await QRCode.toDataURL(text, {
+        width: 640,
+        margin: 1,
+        errorCorrectionLevel: 'H',
+        color: { dark: '#0F172A', light: '#FFFFFF' },
+    });
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 640;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return plain;
+
+        const img = await new Promise((resolve, reject) => {
+            const el = new Image();
+            el.onload = () => resolve(el);
+            el.onerror = reject;
+            el.src = plain;
+        });
+        ctx.drawImage(img, 0, 0, 640, 640);
+
+        // Badge tengah: plat putih dengan radius yang sama dengan bingkai kartu,
+        // plus cincin putih 8 px supaya quiet zone QR di sekelilingnya tetap utuh.
+        // Radius cincin = 1 modul QR (±24 px pada 640 px untuk payload pendek):
+        // tanpa halo selebar satu modul, badge terbaca "ditempel" dan beberapa
+        // scanner kehilangan sinkronisasi walau ECC H.
+        const size = 108;
+        const x = (640 - size) / 2;
+        const y = (640 - size) / 2;
+        const r = 26;
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2 + 24, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + size, y, x + size, y + size, r);
+        ctx.arcTo(x + size, y + size, x, y + size, r);
+        ctx.arcTo(x, y + size, x, y, r);
+        ctx.arcTo(x, y, x + size, y, r);
+        ctx.closePath();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.strokeStyle = '#BF9B5A';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.fillStyle = '#0F172A';
+        ctx.font = 'bold 36px Helvetica, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('MTC', 320, 322);
+        return canvas.toDataURL('image/png');
+    } catch {
+        return plain;
+    }
+}
+
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
     manualScanId: '',
@@ -105,13 +175,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     async generateQR(id) {
         this.isLoading = true;
         try {
-            const QRCode = (await import('qrcode')).default;
-            const url = await QRCode.toDataURL(id, {
-                width: 400,
-                margin: 2,
-                color: { dark: '#0B0F1A', light: '#FFFFFF' }
-            });
-            this.qrCodeDataUrl = url;
+            this.qrCodeDataUrl = await buildAssetTagImage(id);
             this.showQRPreviewModal = true;
         } catch (err) {
             console.error('QR Generation Error:', err);
@@ -144,7 +208,6 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
             const doc = new jsPDF('l', 'mm', 'a4'); // landscape: 297×210mm
             const cols = 3, rows = 5, perPage = cols * rows;
             const cellW = 297 / cols, cellH = 210 / rows;
-            const qrSize = 36;
             let idx = 0;
 
             for (const eq of list) {
@@ -153,15 +216,34 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
                 const qr = await QRCode.toDataURL(id, { width: 240, margin: 1, color: { dark: '#0B0F1A', light: '#FFFFFF' } });
 
                 const col = idx % cols, row = Math.floor(idx / cols) % rows;
-                const cx = col * cellW + cellW / 2, cy = row * cellH + cellH / 2;
+                const x0 = col * cellW + 7;
+                const y0 = row * cellH + 5;
+                const tagW = cellW - 14;
+                const tagH = cellH - 10;
+                const qrSize = 16;
 
-                // QR centered slightly above middle
-                doc.addImage(qr, 'PNG', cx - qrSize / 2, cy - qrSize / 2, qrSize, qrSize);
-                // Label below
-                doc.setFontSize(8); doc.setTextColor(30, 30, 30);
-                doc.text(id, cx, cy + qrSize / 2 + 4, { align: 'center' });
-                doc.setFontSize(6); doc.setTextColor(120, 120, 120);
-                doc.text(name, cx, cy + qrSize / 2 + 9, { align: 'center' });
+                // Kartu tag: bingkai emas tipis + QR + "SCAN ME" + identitas aset.
+                // Label polos tanpa bingkai tidak bisa dipotong rapi dan terbaca
+                // seperti stiker sementara, bukan penanda aset.
+                doc.setDrawColor(191, 155, 90);
+                doc.setLineWidth(0.3);
+                doc.roundedRect(x0, y0, tagW, tagH, 3, 3, 'S');
+
+                doc.addImage(qr, 'PNG', x0 + (tagW - qrSize) / 2, y0 + 3, qrSize, qrSize);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(5.4);
+                doc.setTextColor(191, 155, 90);
+                doc.text('SCAN ME', x0 + tagW / 2, y0 + 22, { align: 'center' });
+
+                doc.setFontSize(7.4);
+                doc.setTextColor(15, 23, 42);
+                doc.text(id, x0 + tagW / 2, y0 + 26, { align: 'center' });
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(5.6);
+                doc.setTextColor(100, 116, 139);
+                doc.text(name, x0 + tagW / 2, y0 + 29.5, { align: 'center' });
 
                 idx++;
                 if (idx % perPage === 0 && idx < list.length) {

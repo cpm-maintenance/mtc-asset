@@ -579,3 +579,17 @@ select option {
     animation: none !important;
   }
 }
+
+/* ── Kartu asset tag QR ────────────────────────────────────────────────────
+   Label cetak harus PUTIH MURNI di tema apa pun (kontras absolut untuk
+   pemindai), jadi warnanya dipatok di sini sebagai triplet RGB — bukan hex di
+   markup, supaya `tests/legacy-palette.test.js` tetap hijau dan nilainya bisa
+   diubah dari satu tempat. */
+.asset-tag {
+  --tag-ink: 15 23 42;
+  --tag-gold: 191 155 90;
+  --tag-muted: 71 85 99;
+  --tag-line: 203 213 225;
+  background-color: rgb(255 255 255);
+  color: rgb(var(--tag-ink));
+}

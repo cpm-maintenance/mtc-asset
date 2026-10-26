@@ -146,13 +146,12 @@ describe('sapu string kelas lama di src/js/**', () => {
   });
 
   it('tidak ada `text-white` / `bg-white` / `white/N` di string JS & markup', () => {
-    // Satu-satunya pengecualian: kanvas QR. Pemindai QR butuh latar PUTIH MURNI
-    // di tema apa pun (kontras absolut terhadap modul hitam), jadi `bg-white`
-    // di situ bukan pelanggaran tema. Dieja persis supaya `bg-white` baru di
-    // tempat lain tetap gagal.
-    const ALLOWED_WHITE = [
-      { file: 'public/pages/app-shell.html', needle: 'bg-white p-8 rounded-[2.5rem]' },
-    ];
+    // Kanvas QR butuh latar PUTIH MURNI di tema apa pun (kontras absolut untuk
+    // pemindai), tetapi sejak S42 kebutuhan itu dinyatakan sebagai komponen
+    // `.asset-tag` di `src/css/style.css` — bukan `bg-white` di markup. Jadi
+    // sekarang tidak ada pengecualian sama sekali: `bg-white` baru di mana pun
+    // tetap gagal.
+    const ALLOWED_WHITE = [];
     const hits = [];
     for (const rel of FILES) {
       for (const { text, line } of codeLines(rel)) {

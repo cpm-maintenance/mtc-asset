@@ -1838,31 +1838,61 @@
     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all">
     <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
       x-transition:enter-end="opacity-100 scale-100"
-      class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-sm rounded-2xl sm:rounded-[3rem] p-5 sm:p-10 border-tac-gold-bright/20 text-center">
-      <div class="flex justify-between items-center mb-6 sm:mb-8">
-        <h3 class="text-xl font-black text-tac-on-surface uppercase tracking-tighter">Asset Signature</h3>
-        <button @click="showQRPreviewModal = false" aria-label="Close QR preview" class="text-tac-status-standby hover:text-tac-gold-bright transition-colors">
+      class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-sm rounded-3xl p-4 sm:p-6 border-tac-gold-bright/20">
+
+      <div class="flex justify-between items-center mb-3 sm:mb-4 px-1">
+        <div>
+          <h3 class="text-sm font-black text-tac-on-surface uppercase tracking-[0.2em]">Asset Tag</h3>
+          <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-widest">QR penanda aset</p>
+        </div>
+        <button @click="showQRPreviewModal = false" aria-label="Close QR preview"
+          class="text-tac-status-standby hover:text-tac-gold-bright transition-colors">
           <span class="material-symbols-outlined text-2xl">close</span>
         </button>
       </div>
-      
-      <div class="bg-white p-8 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-6 sm:mb-8 mx-auto w-fit border-8 border-tac-gold-bright/5">
-        <img :src="qrCodeDataUrl" loading="lazy" class="w-48 h-48 mx-auto" alt="Asset QR Code">
-      </div>
-      
-      <div class="space-y-3 mb-6 sm:mb-10">
-        <p class="text-tac-on-surface font-black text-xl tac-glow-text" x-text="selectedEquip?.Nama"></p>
-        <p class="text-tac-gold-bright font-mono font-bold tracking-[0.2em] text-xs" x-text="selectedEquip?.EquipmentID"></p>
+
+      <!-- Kartu tag: bagian yang dicetak & ditempel ke unit -->
+      <div data-testid="asset-tag" class="asset-tag relative overflow-hidden rounded-2xl shadow-[0_24px_60px_-24px_rgba(0,0,0,0.85)] ring-1 ring-[rgb(var(--tag-gold)/0.45)]">
+        <div class="h-1.5 bg-gradient-to-r from-[rgb(var(--tag-gold)/0.5)] via-[rgb(var(--tag-gold))] to-[rgb(var(--tag-gold)/0.5)]"></div>
+        <div class="px-5 pt-4 pb-5 text-center">
+          <div class="mb-3 flex items-center justify-center gap-2">
+            <span class="grid h-6 w-6 place-items-center rounded-md border border-[rgb(var(--tag-gold))] text-[8px] font-black tracking-tight text-[rgb(var(--tag-ink))]">MTC</span>
+            <span class="text-[8px] font-bold uppercase tracking-[0.28em] text-[rgb(var(--tag-muted))]">Maintenance · Asset Registry</span>
+          </div>
+
+          <div class="relative mx-auto h-48 w-48 p-3">
+            <img :src="qrCodeDataUrl" loading="lazy" class="h-full w-full object-contain" alt="Asset QR code">
+            <span class="pointer-events-none absolute left-0 top-0 h-4 w-4 rounded-tl border-l-2 border-t-2 border-[rgb(var(--tag-gold))]"></span>
+            <span class="pointer-events-none absolute right-0 top-0 h-4 w-4 rounded-tr border-r-2 border-t-2 border-[rgb(var(--tag-gold))]"></span>
+            <span class="pointer-events-none absolute bottom-0 left-0 h-4 w-4 rounded-bl border-b-2 border-l-2 border-[rgb(var(--tag-gold))]"></span>
+            <span class="pointer-events-none absolute bottom-0 right-0 h-4 w-4 rounded-br border-b-2 border-r-2 border-[rgb(var(--tag-gold))]"></span>
+          </div>
+
+          <div class="mt-4 flex items-center justify-center gap-2.5">
+            <span class="h-px w-8 bg-[rgb(var(--tag-gold)/0.6)]"></span>
+            <span class="text-[11px] font-black uppercase tracking-[0.34em] text-[rgb(var(--tag-ink))]">Scan Me</span>
+            <span class="h-px w-8 bg-[rgb(var(--tag-gold)/0.6)]"></span>
+          </div>
+          <p class="mt-1.5 text-[10px] leading-tight text-[rgb(var(--tag-muted))]">untuk membuka riwayat &amp; work order aset ini</p>
+
+          <div class="mt-4 h-px w-full bg-[rgb(var(--tag-line))]"></div>
+
+          <p class="mt-3 font-mono text-[11px] font-bold tracking-[0.18em] text-[rgb(var(--tag-ink))]"
+            x-text="selectedEquip?.EquipmentID || '—'"></p>
+          <p class="mt-1 text-sm font-bold leading-tight text-[rgb(var(--tag-ink))]" x-text="selectedEquip?.Nama || '—'"></p>
+          <p class="mt-1.5 text-[10px] text-[rgb(var(--tag-muted))]"
+            x-text="[selectedEquip?.Lokasi, selectedEquip?.Status].filter(Boolean).join(' · ')"></p>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
         <button @click="downloadQR()"
-          class="bg-tac-primary-container text-tac-on-primary-container font-black py-4 sm:py-5 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]">
-          <span class="material-symbols-outlined text-[16px]">download</span> Save Data
+          class="flex items-center justify-center gap-2 rounded-xl bg-tac-gold-bright py-3 text-[10px] font-black uppercase tracking-widest text-tac-on-surface-inverse shadow-lg transition-all hover:brightness-110 active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">download</span> Save PNG
         </button>
         <button @click="window.print()"
-          class="bg-tac-surface-card/60 border border-tac-border-tactical border-tac-gold-bright/20 text-tac-gold-bright font-black py-4 sm:py-5 rounded-2xl hover:border-tac-gold-bright transition-all uppercase tracking-widest text-[10px]">
-          <span class="material-symbols-outlined text-[16px] mr-2">description</span> Print Node
+          class="flex items-center justify-center gap-2 rounded-xl border border-tac-gold-bright/30 py-3 text-[10px] font-black uppercase tracking-widest text-tac-gold-bright transition-all hover:border-tac-gold-bright">
+          <span class="material-symbols-outlined text-[16px]">description</span> Print Tag
         </button>
       </div>
     </div>
