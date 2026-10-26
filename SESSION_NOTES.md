@@ -1,3 +1,15 @@
+## 🏷️ S42f · FOR DETAILED INFORMATION — bentuk baku (2026-10-26)
+
+**Live sw v75 → v76** (`75266a1`). `for detail information` → `for detailed information` (dirender `FOR DETAILED INFORMATION`), sesuai bentuk baku Inggris. Dua asersi di `tests/qr-asset-tag.test.js` ikut diperbarui.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2042 tes / 96 berkas**
+- coverage **96,64 / 88,96 / 96,99 / 97,79** (exit **0**) · build **0** · precache **66/66**
+- E2E **15 passed (49,3 s)** · live **mtc-asset-v76**
+- teks kartu dibacakan ulang dari render: `SCAN ME` + `FOR DETAILED INFORMATION`
+
+---
+
 ## 🏷️ S42e · Teks jadi FOR DETAIL INFORMATION (2026-10-26)
 
 **Live sw v74 → v75** (`96541cc`). Satu baris: penjelas kartu `for more information` → `for detail information` (dirender kapital: `FOR DETAIL INFORMATION`).
