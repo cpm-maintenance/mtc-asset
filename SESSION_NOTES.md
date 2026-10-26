@@ -1,3 +1,41 @@
+## 🏷️ S41b · PDF Work Order revisi 2 — masthead ink + panel job card (2026-10-26)
+
+**Live sw v68 → v69** (`f44dca8`).
+
+### Kenapa revisi 2
+Revisi 1 sudah bersih tapi masih terbaca "daftar baris": semua putih, semua hairline, tidak ada titik masuk mata. Revisi 2 memberi **struktur visual**, bukan hiasan.
+
+| Perubahan | Bentuk |
+|---|---|
+| Masthead | pita ink **full-bleed 27 mm** + garis emas 1,4 mm; monogram kotak emas, nama perusahaan putih, `WORK ORDER` putih 15,6 pt, nomor WO monogram emas di kanan |
+| Pita statistik | 4 sel (ISSUED · DUE · PRIORITY · STATUS); prioritas/status jadi **pil** ber-tone, baseline disamakan dengan nilai teks (y 39,2 → baseline 43) |
+| Badan dua kolom | kiri 106 mm: `01 EQUIPMENT / ASSET` + `02 DESCRIPTION`; kanan 68 mm: **panel JOB CARD** (`paper` + rail emas) berisi 8 baris metadata |
+| Panel menyesuaikan | `cardH = max(8 baris, tinggi kolom kiri)` → tepi bawah panel dan blok kiri rata, tidak ada tangga |
+| Seksi bernomor | `01…04` (aset → deskripsi → parts → biaya/tanda tangan), angka emas + judul berspasi + hairline |
+| Baris TOTAL ITEMS | **bar ink penuh** dengan garis emas di atasnya — penutup tabel, bukan baris ke-7 (label & angka putih, dikonfirmasi `pdfplumber`: `non_stroking_color = (1.0,)`) |
+| Ringkasan biaya | 4 sel: DOWNTIME · EST. HOURS · ACTUAL HOURS · TOTAL COST 13,4 pt + garis emas di bawah angka |
+| Desimal | `4,5 hrs` / `5,5 h` — konvensi Indonesia (`num()`), bukan titik |
+| Tanda tangan | catatan `Valid only with original signatures.` 5,8 pt di atas blok, tiga kolom, garis 0,5 pt, ruang tanda 14 mm — tidak lagi didorong ke dasar halaman |
+| Footer | `MTC System v2.0 · Form MTC-WO-01 · Printed … · <WO>` 6,8 pt + `Page x of y` |
+
+### Bukti geometri (bukan opini)
+- Tepi kanan semua blok = **555,6 pt (196 mm)** — masthead satu-satunya yang menyentuh 595,3 (full-bleed). Diverifikasi `pdfplumber` pada `rects`.
+- **0** kotak kata bertumpuk dari 235 kata; label baris kedua tidak menabrak nilai baris pertama.
+- WO contoh (6 parts, deskripsi 4 baris, biaya) muat **1 halaman**.
+
+### Catatan alat (penting untuk sesi berikutnya)
+`vision_analyze` pada render yang diperkecil **tidak stabil** sebagai penilai: tiga kali menilai dokumen yang sama memberi 7,5 / 7 / 6, dan dua "cacat" yang dilaporkan (label TOTAL hilang, panel kanan tidak sejajar) **terbukti salah** lewat `pdfplumber`. Pakai vision untuk kesan kasar saja; keputusan layout diambil dari angka bbox.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- **2029 tes / 95 berkas**
+- coverage **97,08 / 88,97 / 97,13 / 98,34** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **14 passed (50,2 s)** di port 3100
+- live: `sw.js` = **mtc-asset-v69**; chunk live memuat `Form MTC-WO-01`, `Valid only with original signatures`, `TOTAL ITEMS`
+
+---
+
 ## 🏷️ S41 · Template PDF Work Order — desain ulang premium (2026-10-26)
 
 **Live sw v67 → v68** (`9d9ca07`).
