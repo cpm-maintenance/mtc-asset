@@ -52,6 +52,19 @@ describe('modal Asset Tag', () => {
         expect(modal).not.toContain('selectedEquip?.Status');
     });
 
+    it('semua teks kartu huruf kapital', () => {
+        // Kelas `uppercase` wajib ada di baris yang isinya bisa huruf kecil:
+        // penjelas, ID, nama aset, dan lokasi.
+        for (const needle of [
+            'uppercase leading-tight tracking-[0.08em] text-[rgb(var(--tag-muted))]">for more information',
+            'uppercase tracking-[0.18em] text-[rgb(var(--tag-ink))]',
+            'uppercase leading-tight tracking-[0.02em] text-[rgb(var(--tag-ink))]',
+        ]) {
+            expect(modal).toContain(needle);
+        }
+        expect(modal).toContain('text-[10px] uppercase tracking-[0.08em]');
+    });
+
     it('punya bingkai sudut (4 penanda) dan garis emas atas', () => {
         const corners = modal.match(/border-\[rgb\(var\(--tag-gold\)\)\]/g) || [];
         expect(corners.length).toBeGreaterThanOrEqual(4);

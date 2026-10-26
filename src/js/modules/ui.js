@@ -212,7 +212,8 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
 
             for (const eq of list) {
                 const id = eq.EquipmentID || '-1';
-                const name = (eq.Nama || id).substring(0, 24);
+                // Label cetak selalu huruf kapital, sama seperti kartu di modal.
+                const name = String(eq.Nama || id).toUpperCase().substring(0, 24);
                 const qr = await QRCode.toDataURL(id, { width: 240, margin: 1, color: { dark: '#0B0F1A', light: '#FFFFFF' } });
 
                 const col = idx % cols, row = Math.floor(idx / cols) % rows;

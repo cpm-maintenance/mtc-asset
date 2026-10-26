@@ -106,7 +106,7 @@ describe('QR — downloadAllQRs (bulk PDF)', () => {
     expect(pdfCalls.frame).toHaveLength(3);
     const labels = pdfCalls.text.map((c) => c[0]);
     expect(labels.filter((t) => t === 'SCAN ME')).toHaveLength(3);
-    expect(labels).toEqual(expect.arrayContaining(['EQ-1', 'Crusher']));
+    expect(labels).toEqual(expect.arrayContaining(['EQ-1', 'CRUSHER']));
   });
 
   it('menambah halaman baru setiap kelipatan 15 label (grid 3×5)', async () => {
