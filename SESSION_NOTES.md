@@ -1,3 +1,30 @@
+## 🎨 S45f · Ikon WhatsApp untuk tombol reminder (2026-10-26)
+
+**Live sw v83 → v84** (`0d9216e`).
+
+Tombol reminder memakai ligatur `notifications` karena subset Material Symbols tidak punya glyph brand. Sekarang ikonnya **logo WhatsApp inline SVG**.
+
+### Kenapa SVG, bukan font ikon
+| Opsi | Alasan |
+|---|---|
+| Ligatur Material Symbols | brand WhatsApp **tidak ada** di set Material; `chat`/`forum`/`sms`/`send` juga absen dari `icon-subset.txt` |
+| **SVG inline** | **dipakai** — `viewBox="0 0 24 24"`, `fill="currentColor"`, `h-4 w-4`. Ikut warna token, tanpa hex, tanpa regenerasi font subset |
+| Menambah glyph ke font | perlu unduh ulang font + kunci ukuran; tidak sepadan untuk satu ikon |
+
+### Perubahan
+- `WorkOrders.html` + `RequestPart.html`: `<svg data-wa-icon …>` menggantikan `<span class="material-symbols-outlined">notifications</span>` pada kedua tombol reminder.
+- `tests/whatsapp-reminder.test.js` (**+1**, total **28**): kedua fragmen wajib memuat `data-wa-icon` dengan `fill="currentColor"`, dan **tidak boleh** kembali memakai ligatur `notifications` di dalam 600 karakter setelah pemanggilan. Dibuktikan menggigit: atribut diganti `data-x-icon` → **1 failed**.
+
+### Bukti render
+`getBBox()` pada SVG = **20×20** di dalam kotak 24 (x=2..22) → path utuh, bukan kotak kosong; `getComputedStyle(svg).fill` = `rgb(63, 191, 111)` → mengikuti `currentColor` tombol.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2095 tes / 99 berkas**
+- coverage **96,62 / 88,93 / 97,04 / 97,82** (exit **0**) · build **0** · precache **66/66**
+- E2E **19 passed (57,1 s)** · live **mtc-asset-v84** (fragmen WorkOrders & RequestPart: `data-wa-icon` ×1 masing-masing)
+
+---
+
 ## 💬 S45e · Tautan reminder sebelum approved + Request Part (2026-10-26)
 
 **Live sw v82 → v83** (`1731729`).
