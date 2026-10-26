@@ -1,3 +1,32 @@
+## 💬 S45e · Tautan reminder sebelum approved + Request Part (2026-10-26)
+
+**Live sw v82 → v83** (`1731729`).
+
+### Koreksi maksud (dari Manuel)
+S45d memasang tombol reminder setelah status **Approved**, dan tautannya mati kalau nomor penerima belum ada. Yang dimaksud: **tautan disiapkan SEBELUM approved**, operator meneruskan sendiri ke WhatsApp orang yang dituju. Jadi tautan tidak boleh bergantung pada nomor yang tersimpan.
+
+### Perubahan
+| Berkas | Bentuk |
+|---|---|
+| `utils.js` | `waShareLink()` → `https://wa.me/?text=…` **tanpa nomor** (WhatsApp membuka pemilih kontak) |
+| `whatsapp.js` | `buildWoReminder()` / `buildPartReminder()` **selalu** menghasilkan tautan: ke nomor teknisi bila `Users[].phone` ada, kalau tidak tautan generik. `woReminderText()` mengikuti status — `menunggu persetujuan` vs `disetujui`. `partReminderText()` menulis **setiap item** (qty + satuan + nomor part), bukan total. `openWaPartReminder()` untuk `Requisitions` |
+| `WorkOrders.html` | tombol REMINDER WA tampil untuk semua status **kecuali** `Completed`/`Cancelled` (dulu hanya `Approved`) |
+| `RequestPart.html` | tombol reminder di **setiap kartu** permintaan (`@click.stop` supaya kartu tidak ikut ter-expand) |
+
+### Tes
+`tests/whatsapp-reminder.test.js` **27** (dari 19): normalisasi nomor, `waLink`/`waShareLink`, resolusi teknisi, teks WO per status, teks part multi-item + record lama tanpa larik, jalur bertarget vs generik, `openWaReminder`/`openWaPartReminder`, dan kontrak UI kedua fragmen. Dibuktikan menggigit: tombol Request Part dilepas → **1 failed**.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2094 tes / 99 berkas**
+- coverage **96,62 / 88,93 / 97,04 / 97,82** (exit **0**) · build **0** · precache **66/66**
+- E2E **19 passed (1,5 m)** · live **mtc-asset-v83** (`assets/app-D6e-AxQw.js`: `openWaPartReminder` + `wa.me/?text=`; fragmen: tombol WO & Request Part)
+
+### Catatan desain
+- Tanpa nomor tersimpan pun fitur tetap jalan — ini yang membuat pengisian `Users/<uid>/phone` jadi **opsional**, bukan syarat. Kalau nomor ada, WhatsApp langsung membuka chat orangnya; kalau tidak, operator memilih sendiri.
+- Pesan WO ikut status supaya tidak salah baca: mengirim "Work Order disetujui" untuk WO yang masih `Pending` akan menyesatkan teknisi.
+
+---
+
 ## 💬 S45d · Reminder WhatsApp untuk WO yang di-approve (2026-10-26)
 
 **Live sw v81 → v82** (`192c968`).
