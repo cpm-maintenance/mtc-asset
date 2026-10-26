@@ -1,3 +1,25 @@
+## 🏷️ S42c · Kartu tag: lokasi saja, status aset dibuang (2026-10-26)
+
+**Live sw v72 → v73** (`cf8da97`).
+
+| Sebelum | Sesudah |
+|---|---|
+| baris meta `Area E2E · Operational` (lokasi + status) | `Area E2E` saja; baris disembunyikan kalau lokasi kosong |
+
+Alasan: label aset menempel di unit — statusnya berubah (Active / In Maintenance / Decommissioned) sementara stiker tidak, jadi status di stiker selalu cepat kedaluwarsa. Lokasi ikut tercetak karena membantu teknisi menemukan unit.
+
+Dikunci `tests/qr-asset-tag.test.js` (+1): kartu **tidak boleh** memakai `selectedEquip?.Status`.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2041 tes / 96 berkas**
+- coverage **96,64 / 88,96 / 96,99 / 97,79** (exit **0**) · build **0** · precache **66/66**
+- E2E **15 passed (50,2 s)** · live **mtc-asset-v73**
+
+### Rekomendasi kata (dipilih, belum diubah)
+`SCAN ME` + `for more information` dipertahankan: netral, terbaca di stiker 40 mm, dan tidak menjanjikan fitur yang belum ada. Alternatif kalau tujuan berubah: `SCAN FOR DETAILS / asset history & work orders`, `SCAN TO IDENTIFY / maintenance asset registry`, `SCAN & REPORT / log a fault in seconds`. Hindari `SCAN FOR ME` — artinya "pindai untuk saya", bukan "pindai untuk info".
+
+---
+
 ## 🏷️ S42b · Kartu tag: buang "work order", penjelas bahasa Inggris (2026-10-26)
 
 **Live sw v71 → v72** (`c214b31`).
