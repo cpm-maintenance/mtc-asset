@@ -1,3 +1,29 @@
+## 🏷️ S44 · Save PNG mengunduh kartu utuh (2026-10-26)
+
+**Live sw v77 → v78** (`e4f2519`).
+
+Sebelumnya `downloadQR()` menyimpan **QR telanjang** (640×640 dengan badge). Sekarang menyimpan **kartu tag utuh** — sama dengan yang tercetak — lewat `html2canvas` (sudah ikut bersama `jspdf`, diimpor dinamis sehingga tidak menambah payload boot):
+
+| Aspek | Sebelum | Sesudah |
+|---|---|---|
+| Isi berkas | QR saja | kartu: header, QR, `SCAN ME` + `FOR DETAILED INFORMATION`, kode, nama, lokasi |
+| Nama berkas | `QR_<ID>.png` | `TAG_<ID>.png` |
+| Ukuran | 640×640 | **1002×1227** (`scale: 3`, latar putih) |
+| Gagal render | — | fallback ke `QR_<ID>.png`, tombol tidak pernah mati |
+
+`triggerDownload()` diekstrak supaya jalur kartu dan jalur fallback memakai kode yang sama.
+
+### Tes
+- `tests/ui-qr.test.js` (+2, satu diganti): kartu ada → `html2canvas` dipanggil, berkas `TAG_EQ-7.png` berisi hasil render; `html2canvas` menolak → tetap mengunduh `QR_EQ-9.png` tanpa melempar; tanpa kartu → fallback.
+- `e2e/qr-asset-tag.spec.js` (+1): klik **Save PNG** menangkap unduhan sungguhan, membaca header PNG + lebar/tinggi dari chunk IHDR, dan menuntut `width > 600` serta `height > width` (bukti kartu, bukan QR).
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2049 tes / 96 berkas**
+- coverage **96,62 / 88,97 / 96,93 / 97,81** (exit **0**) · build **0** · precache **66/66**
+- E2E **17 passed (52,7 s)** · live **mtc-asset-v78**
+
+---
+
 ## 🏷️ S43 · Print Tag: hanya kartu yang keluar di kertas (2026-10-26)
 
 **Live sw v76 → v77** (`7e1b173`).
