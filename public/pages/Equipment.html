@@ -243,13 +243,22 @@
                 </div>
               </div>
 
-              <!-- Status Badge -->
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border"
-                :class="equipStatusTac(e.Status)">
-                <span class="h-1.5 w-1.5 rounded-full"
-                  :class="e.Status === 'Active' ? 'bg-tac-status-operational' : (e.Status === 'In Maintenance' ? 'bg-tac-status-repair animate-ping' : 'bg-tac-status-emergency')"></span>
-                <span x-text="(e.Status || 'Active').toUpperCase()"></span>
-              </span>
+              <!-- Aksi baris + status: kartu tag dibuka tanpa meninggalkan daftar -->
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" @click.stop="openEquipQR(e.EquipmentID)"
+                  aria-label="Buka kartu tag QR" title="Buka kartu tag QR"
+                  class="grid h-7 w-7 place-items-center rounded border border-tac-border-subtle bg-tac-surface-recessed hover:bg-tac-surface-elevated text-tac-sync-cyan transition-colors active:scale-95">
+                  <span class="material-symbols-outlined text-[16px]">qr_code_scanner</span>
+                </button>
+
+                <!-- Status Badge -->
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border"
+                  :class="equipStatusTac(e.Status)">
+                  <span class="h-1.5 w-1.5 rounded-full"
+                    :class="e.Status === 'Active' ? 'bg-tac-status-operational' : (e.Status === 'In Maintenance' ? 'bg-tac-status-repair animate-ping' : 'bg-tac-status-emergency')"></span>
+                  <span x-text="(e.Status || 'Active').toUpperCase()"></span>
+                </span>
+              </div>
             </div>
 
             <!-- Asset Name -->

@@ -156,3 +156,64 @@ test('Save PNG mengunduh kartu utuh, bukan QR telanjang', async ({ page }) => {
 
     if (process.env.QR_PNG_OUT) copyFileSync(file, process.env.QR_PNG_OUT);
 });
+
+test('tombol QR di kartu Equipment membuka tag tanpa mampir ke detail', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+
+    await seedEmulator();
+    await page.goto('/');
+    await page.fill('#login-id', E2E_USER.email);
+    await page.fill('#login-key', E2E_USER.password);
+    await page.click('button[type="submit"]');
+    await expect(page.locator('#login-id')).toBeHidden({ timeout: 20_000 });
+
+    await expect
+        .poll(() => page.evaluate(() => (globalThis.app?.equipment || []).length), { timeout: 25_000 })
+        .toBeGreaterThan(0);
+
+    await page.evaluate(() => {
+        globalThis.app.currentPage = 'equip';
+    });
+
+    const rowQr = page.getByRole('button', { name: 'Buka kartu tag QR' }).first();
+    await expect(rowQr).toBeVisible({ timeout: 20_000 });
+
+    // Target sentuh diukur di DOM, bukan disimpulkan dari kelas CSS.
+    const box = await rowQr.boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.round(box.width)).toBeGreaterThanOrEqual(24);
+    expect(Math.round(box.height)).toBeGreaterThanOrEqual(24);
+
+    await rowQr.click();
+
+    const tag = page.locator('[data-testid="asset-tag"]');
+    await expect(tag).toBeVisible({ timeout: 15_000 });
+    await expect
+        .poll(
+            () =>
+                page.evaluate(
+                    () => document.querySelector('[data-testid="asset-tag"] img')?.naturalWidth || 0
+                ),
+            { timeout: 10_000 }
+        )
+        .toBeGreaterThan(0);
+
+    // Klik tombol tidak menavigasi, dan kartu memakai aset yang benar —
+    // nama/lokasi datang dari `selectedEquip`, bukan dari id QR saja.
+    const state = await page.evaluate(() => {
+        const card = document.querySelector('[data-testid="asset-tag"]');
+        return {
+            page: globalThis.app.currentPage,
+            id: globalThis.app.selectedEquip?.EquipmentID || '',
+            cardText: (card?.textContent || '').toUpperCase(),
+        };
+    });
+    expect(state.page).toBe('equip');
+    expect(state.id).not.toBe('');
+    expect(state.cardText).toContain(state.id.toUpperCase());
+    expect(state.cardText).toContain('POMPA E2E');
+
+    // Error scope Alpine baru = bug, bukan salah tulis.
+    expect(errors.filter((e) => e.includes('Alpine Expression Error'))).toEqual([]);
+});

@@ -201,6 +201,19 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         this.showScanner = false;
     },
 
+    /**
+     * Buka kartu tag dari **daftar** Equipment (satu klik, tanpa mampir ke
+     * detail). `generateQR(id)` hanya memakai id sebagai payload QR — kartu tag
+     * membaca `selectedEquip` untuk ID/nama/lokasi, jadi state itu diisi dulu;
+     * tanpa itu stiker tercetak tanpa nama unit.
+     * @param {string} id
+     */
+    async openEquipQR(id) {
+        const found = (this.equipment || []).find((e) => e.EquipmentID === id);
+        if (found) this.selectedEquip = found;
+        return this.generateQR(id);
+    },
+
     async generateQR(id) {
         this.isLoading = true;
         try {

@@ -111,7 +111,6 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
 
     // ── primitif tipografi ──────────────────────────────────────────────────
     const ink = () => doc.setTextColor(...C.ink);
-    const slate = () => doc.setTextColor(...C.slate);
 
     function hairline(x1, x2, yTop, color = C.line, width = 0.2) {
         doc.setDrawColor(...color);
