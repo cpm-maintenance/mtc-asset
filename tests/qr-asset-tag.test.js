@@ -30,7 +30,7 @@ describe('modal Asset Tag', () => {
 
     it('memuat SCAN ME + penjelas bahasa Inggris', () => {
         expect(modal).toMatch(/>\s*Scan Me\s*</i);
-        expect(modal).toContain('for more information');
+        expect(modal).toContain('for detail information');
     });
 
     it('tidak lagi memuat kata "work order" di kartu tag', () => {
@@ -56,7 +56,7 @@ describe('modal Asset Tag', () => {
         // Kelas `uppercase` wajib ada di baris yang isinya bisa huruf kecil:
         // penjelas, ID, nama aset, dan lokasi.
         for (const needle of [
-            'uppercase leading-tight tracking-[0.08em] text-[rgb(var(--tag-muted))]">for more information',
+            'uppercase leading-tight tracking-[0.08em] text-[rgb(var(--tag-muted))]">for detail information',
             'uppercase tracking-[0.18em] text-[rgb(var(--tag-ink))]',
             'uppercase leading-tight tracking-[0.02em] text-[rgb(var(--tag-ink))]',
         ]) {
