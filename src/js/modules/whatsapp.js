@@ -11,7 +11,7 @@
  * pengguna). `assignedTo` pada data legacy bisa berupa uid, nama, atau larik
  * keduanya — resolusi mencoba uid dulu, lalu nama, lalu email.
  */
-import { waLink } from '../utils.js';
+import { waLink, waShareLink } from '../utils.js';
 /** @typedef {import('../appstate').AppState} AppState */
 
 const APP_URL = 'https://mtc-asset.web.app';
@@ -65,15 +65,17 @@ export function resolveTechnician(users, assignedTo) {
 }
 
 /**
- * Teks reminder. Pendek dengan sengaja: dibaca di layar HP teknisi, bukan
- * dokumen — satu blok, tanpa tabel.
+ * Teks reminder Work Order. Pendek dengan sengaja: dibaca di layar HP, bukan
+ * dokumen. Kata kerja mengikuti status — sebelum approved pesannya berbunyi
+ * "menunggu persetujuan", bukan "disetujui".
  *
  * @param {any} wo
  * @returns {string}
  */
-export function reminderText(wo) {
+export function woReminderText(wo) {
     const w = wo || {};
-    const lines = ['*MTC ASSET — Work Order disetujui*', ''];
+    const approved = String(w.Status || '') === 'Approved';
+    const lines = [`*MTC ASSET — Work Order ${approved ? 'disetujui' : 'menunggu persetujuan'}*`, ''];
     if (w.woNumber) lines.push(`WO: ${w.woNumber}`);
     const aset = [w.externalEquipName || w.equipName || '', w.EquipmentID ? `(${w.EquipmentID})` : '']
         .filter(Boolean)
@@ -88,38 +90,106 @@ export function reminderText(wo) {
 }
 
 /**
- * Siapkan tautan reminder untuk satu WO.
+ * Teks reminder permintaan part. Semua baris item ikut, karena bagian part
+ * perlu tahu jumlah per item — bukan hanya totalnya.
  *
+ * @param {any} req
+ * @returns {string}
+ */
+export function partReminderText(req) {
+    const r = req || {};
+    const lines = ['*MTC ASSET — Permintaan part*', ''];
+    if (r.id) lines.push(`No: ${r.id}`);
+    const items = Array.isArray(r.items) && r.items.length
+        ? r.items
+        : [{ itemName: r.itemName, quantity: r.quantity, unit: r.unit, partId: r.partId }];
+    for (const it of items) {
+        if (!it) continue;
+        const qty = [it.quantity, it.unit].filter(Boolean).join(' ');
+        const name = it.itemName || it.partId || '';
+        if (!qty && !name) continue;
+        lines.push(`- ${[qty, name].filter(Boolean).join(' x ')}${it.partId && it.partId !== name ? ` (${it.partId})` : ''}`);
+    }
+    if (r.priority) lines.push(`Prioritas: ${r.priority}`);
+    if (r.woNumber) lines.push(`Untuk WO: ${r.woNumber}`);
+    if (r.status) lines.push(`Status: ${r.status}`);
+    if (r.notes) lines.push(`Catatan: ${String(r.notes).slice(0, 140)}`);
+    lines.push('', `Buka aplikasi: ${APP_URL}`);
+    return lines.join('\n');
+}
+
+/**
+ * Tautan siap pakai: ke nomor penerima bila nomornya diketahui, kalau tidak
+ * tautan **tanpa nomor** supaya operator bisa meneruskan sendiri.
+ *
+ * @param {any[]} users
+ * @param {any} person uid / nama / email / larik
+ * @param {string} text
+ * @returns {{ url: string, name: string, phone: string, targeted: boolean, text: string }}
+ */
+function reminderFor(users, person, text) {
+    const tech = resolveTechnician(users, person);
+    if (tech) {
+        return { url: waLink(tech.phone, text) || waShareLink(text), name: tech.name, phone: tech.phone, targeted: true, text };
+    }
+    return { url: waShareLink(text), name: '', phone: '', targeted: false, text };
+}
+
+/**
  * @param {any} wo
  * @param {any[]} users
- * @returns {{ url: string, name: string, phone: string, text: string } | null}
+ * @returns {{ url: string, name: string, phone: string, targeted: boolean, text: string }}
  */
-export function buildApprovedReminder(wo, users) {
-    const tech = resolveTechnician(users, wo && wo.assignedTo);
-    if (!tech) return null;
-    const text = reminderText(wo);
-    const url = waLink(tech.phone, text);
-    return url ? { url, name: tech.name, phone: tech.phone, text } : null;
+export function buildWoReminder(wo, users) {
+    return reminderFor(users, wo && wo.assignedTo, woReminderText(wo));
+}
+
+/**
+ * @param {any} req
+ * @param {any[]} users
+ * @returns {{ url: string, name: string, phone: string, targeted: boolean, text: string }}
+ */
+export function buildPartReminder(req, users) {
+    const person = req && (req.requestedBy || req.createdBy || req.technician || req.assignedTo);
+    return reminderFor(users, person, partReminderText(req));
 }
 
 export const whatsappModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     /**
-     * Buka WhatsApp dengan pesan reminder untuk satu WO.
+     * Buka WhatsApp dengan pesan reminder Work Order.
      *
      * `window.open` dipanggil langsung dari klik (tidak setelah `await`) supaya
-     * tidak diblokir popup blocker.
+     * tidak diblokir popup blocker. Tanpa nomor penerima, WhatsApp membuka
+     * pemilih kontak — operator meneruskan sendiri.
      *
      * @param {any} wo
-     * @returns {string|null} URL yang dibuka, atau `null` bila nomor tidak tersedia
+     * @returns {string} URL yang dibuka
      */
     openWaReminder(wo) {
-        const reminder = buildApprovedReminder(wo, this.allUsers || []);
-        if (!reminder) {
-            this.showNotification('Nomor WhatsApp teknisi belum ada di profil pengguna', 'error');
-            return null;
-        }
+        const reminder = buildWoReminder(wo, this.allUsers || []);
         window.open(reminder.url, '_blank', 'noopener');
-        this.showNotification(`Reminder WhatsApp siap dikirim ke ${reminder.name}`);
+        this.showNotification(
+            reminder.targeted
+                ? `Reminder WhatsApp untuk ${reminder.name}`
+                : 'Tautan WhatsApp siap — teruskan ke teknisi'
+        );
+        return reminder.url;
+    },
+
+    /**
+     * Sama untuk permintaan part (`Requisitions`).
+     *
+     * @param {any} req
+     * @returns {string} URL yang dibuka
+     */
+    openWaPartReminder(req) {
+        const reminder = buildPartReminder(req, this.allUsers || []);
+        window.open(reminder.url, '_blank', 'noopener');
+        this.showNotification(
+            reminder.targeted
+                ? `Reminder WhatsApp untuk ${reminder.name}`
+                : 'Tautan WhatsApp siap — teruskan ke bagian part'
+        );
         return reminder.url;
     },
 });

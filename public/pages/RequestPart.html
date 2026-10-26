@@ -235,8 +235,14 @@
               <span class="material-symbols-outlined text-[14px] text-tac-primary">calendar_month</span>
               <span x-text="req.requestDate"></span>
             </span>
+            <!-- Reminder WhatsApp: tautan wa.me, bisa diteruskan sendiri -->
+            <button type="button" @click.stop="openWaPartReminder(req)"
+              aria-label="Kirim reminder WhatsApp permintaan part" title="Kirim reminder WhatsApp permintaan part"
+              class="w-7 h-7 rounded bg-tac-surface-container-high text-tac-status-operational hover:bg-tac-status-operational/20 transition-colors flex items-center justify-center ml-auto">
+              <span class="material-symbols-outlined text-[16px]">notifications</span>
+            </button>
             <!-- Edit/Delete: hanya admin/supervisor (lihat rules Requisitions) -->
-            <div x-show="isAdminOrSupervisor" class="flex items-center gap-1 ml-auto" @click.stop>
+            <div x-show="isAdminOrSupervisor" class="flex items-center gap-1 ml-1" @click.stop>
               <button @click="openRequisitionModal(req)"
                 class="w-7 h-7 rounded bg-tac-surface-container-high text-tac-sync-cyan hover:bg-tac-sync-cyan/20 transition-colors flex items-center justify-center"
                 title="Edit">

@@ -868,7 +868,7 @@
                 <span>START</span>
               </button>
               <!-- Reminder WhatsApp: tautan wa.me, nomor dari Users/<uid>/phone -->
-              <button type="button" x-show="woSelected.Status === 'Approved'"
+              <button type="button" x-show="woSelected.Status !== 'Completed' && woSelected.Status !== 'Cancelled'"
                 @click="openWaReminder(woSelected)"
                 aria-label="Kirim reminder WhatsApp" title="Kirim reminder WhatsApp ke teknisi"
                 class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-status-operational font-label-mono-sm text-label-mono-sm font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all active:scale-95">

@@ -198,6 +198,18 @@ export function waLink(phone, text) {
 }
 
 /**
+ * Tautan WhatsApp **tanpa nomor tujuan** — WhatsApp membuka pemilih kontak,
+ * jadi operator bisa meneruskan sendiri ke siapa pun. Dipakai saat nomor
+ * penerima belum ada di profil pengguna.
+ *
+ * @param {string} text
+ * @returns {string} `https://wa.me/?text=…`
+ */
+export function waShareLink(text) {
+  return `https://wa.me/?text=${encodeURIComponent(String(text ?? ''))}`;
+}
+
+/**
  * Validasi URL. URL bersifat opsional, jadi nilai kosong dianggap valid.
  *
  * @param {string} url - URL yang divalidasi.

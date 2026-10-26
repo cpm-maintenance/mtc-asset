@@ -12,16 +12,19 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { waPhoneDigits, waLink } from '../src/js/utils.js';
+import { waPhoneDigits, waLink, waShareLink } from '../src/js/utils.js';
 import {
     resolveTechnician,
-    reminderText,
-    buildApprovedReminder,
+    woReminderText,
+    partReminderText,
+    buildWoReminder,
+    buildPartReminder,
     whatsappModule,
 } from '../src/js/modules/whatsapp.js';
 
 const workOrders = readFileSync(resolve(process.cwd(), 'public/pages/WorkOrders.html'), 'utf8');
 const shell = readFileSync(resolve(process.cwd(), 'public/pages/app-shell.html'), 'utf8');
+const parts = readFileSync(resolve(process.cwd(), 'public/pages/RequestPart.html'), 'utf8');
 const auth = readFileSync(resolve(process.cwd(), 'src/js/modules/auth.js'), 'utf8');
 
 const USERS = [
@@ -71,6 +74,10 @@ describe('waLink', () => {
     it('null kalau nomor tidak sah', () => {
         expect(waLink('123', 'x')).toBeNull();
     });
+
+    it('waShareLink: tautan tanpa nomor untuk diteruskan sendiri', () => {
+        expect(waShareLink('Halo & rekan')).toBe('https://wa.me/?text=Halo%20%26%20rekan');
+    });
 });
 
 describe('resolveTechnician', () => {
@@ -97,9 +104,9 @@ describe('resolveTechnician', () => {
     });
 });
 
-describe('reminderText', () => {
+describe('woReminderText', () => {
     it('memuat identitas WO, aset, prioritas, tenggat, dan tautan aplikasi', () => {
-        const text = reminderText(WO);
+        const text = woReminderText({ ...WO, Status: 'Approved' });
         expect(text).toContain('*MTC ASSET — Work Order disetujui*');
         expect(text).toContain('WO: MTC-005');
         expect(text).toContain('Aset: Feeding Pump PU12 (5060-PU-12)');
@@ -108,33 +115,84 @@ describe('reminderText', () => {
         expect(text).toContain('Buka aplikasi: https://mtc-asset.web.app');
     });
 
+    it('sebelum approved kata kerjanya "menunggu persetujuan"', () => {
+        expect(woReminderText({ ...WO, Status: 'Pending' })).toContain('menunggu persetujuan');
+        expect(woReminderText({ ...WO, Status: 'Draft' })).not.toContain('disetujui');
+    });
+
     it('deskripsi dipotong 160 karakter supaya pesan tetap satu blok', () => {
-        const text = reminderText({ Deskripsi: 'x'.repeat(400) });
+        const text = woReminderText({ Deskripsi: 'x'.repeat(400) });
         expect(text).toContain('Pekerjaan: ' + 'x'.repeat(160));
         expect(text).not.toContain('x'.repeat(161));
     });
 
     it('tidak melempar untuk WO kosong', () => {
-        expect(() => reminderText(null)).not.toThrow();
-        expect(reminderText({})).toContain('MTC ASSET');
+        expect(() => woReminderText(null)).not.toThrow();
+        expect(woReminderText({})).toContain('MTC ASSET');
     });
 });
 
-describe('buildApprovedReminder', () => {
-    it('menghasilkan URL siap buka + nama teknisi', () => {
-        const r = buildApprovedReminder(WO, USERS);
-        expect(r).not.toBeNull();
+describe('partReminderText', () => {
+    const REQ = {
+        id: 'REQ_1',
+        items: [
+            { itemName: 'Bearing SKF 6205', quantity: 2, unit: 'pcs', partId: 'P-001' },
+            { itemName: 'Seal kit', quantity: 1, unit: 'set' },
+        ],
+        priority: 'high',
+        woNumber: 'MTC-005',
+        status: 'pending',
+        notes: 'Mendesak',
+    };
+
+    it('menuliskan setiap item dengan qty + satuan', () => {
+        const text = partReminderText(REQ);
+        expect(text).toContain('*MTC ASSET — Permintaan part*');
+        expect(text).toContain('No: REQ_1');
+        expect(text).toContain('- 2 pcs x Bearing SKF 6205 (P-001)');
+        expect(text).toContain('- 1 set x Seal kit');
+        expect(text).toContain('Untuk WO: MTC-005');
+        expect(text).toContain('Catatan: Mendesak');
+    });
+
+    it('record lama tanpa larik items tetap terbaca', () => {
+        const text = partReminderText({ itemName: 'V-Belt', quantity: 3, unit: 'pcs' });
+        expect(text).toContain('- 3 pcs x V-Belt');
+    });
+});
+
+describe('buildWoReminder / buildPartReminder', () => {
+    it('nomor teknisi diketahui: tautan menuju nomor itu', () => {
+        const r = buildWoReminder(WO, USERS);
+        expect(r.targeted).toBe(true);
         expect(r.name).toBe('Yuli');
         expect(r.url.startsWith('https://wa.me/6281234567890?text=')).toBe(true);
         expect(decodeURIComponent(r.url.split('?text=')[1])).toContain('MTC-005');
     });
 
-    it('null saat teknisi tidak punya nomor', () => {
-        expect(buildApprovedReminder({ ...WO, assignedTo: 'Gunawan' }, USERS)).toBeNull();
+    it('nomor tidak diketahui: tautan tanpa nomor supaya bisa diteruskan sendiri', () => {
+        const r = buildWoReminder({ ...WO, assignedTo: 'Gunawan' }, USERS);
+        expect(r.targeted).toBe(false);
+        expect(r.name).toBe('');
+        expect(r.url.startsWith('https://wa.me/?text=')).toBe(true);
+        expect(decodeURIComponent(r.url.split('?text=')[1])).toContain('MTC-005');
+    });
+
+    it('permintaan part: penerima dari requestedBy', () => {
+        const r = buildPartReminder({ id: 'REQ_1', items: [{ itemName: 'Seal kit', quantity: 1 }], requestedBy: 'yuli' }, USERS);
+        expect(r.targeted).toBe(true);
+        expect(r.name).toBe('Yuli');
+        expect(decodeURIComponent(r.url.split('?text=')[1])).toContain('Seal kit');
+    });
+
+    it('permintaan part tanpa penerima: tautan generik', () => {
+        const r = buildPartReminder({ id: 'REQ_2', itemName: 'V-Belt', quantity: 2 }, USERS);
+        expect(r.targeted).toBe(false);
+        expect(r.url.startsWith('https://wa.me/?text=')).toBe(true);
     });
 });
 
-describe('openWaReminder', () => {
+describe('openWaReminder / openWaPartReminder', () => {
     function makeCtx(overrides = {}) {
         return {
             allUsers: USERS,
@@ -143,7 +201,7 @@ describe('openWaReminder', () => {
         };
     }
 
-    it('membuka WhatsApp di tab baru dan memberi notifikasi', () => {
+    it('WO: membuka tab baru dan menyebut penerimanya', () => {
         const open = vi.spyOn(window, 'open').mockImplementation(() => null);
         const ctx = makeCtx();
 
@@ -152,29 +210,44 @@ describe('openWaReminder', () => {
         expect(open).toHaveBeenCalledTimes(1);
         expect(open.mock.calls[0][0]).toBe(url);
         expect(open.mock.calls[0][1]).toBe('_blank');
-        expect(ctx.showNotification).toHaveBeenCalledWith('Reminder WhatsApp siap dikirim ke Yuli');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Reminder WhatsApp untuk Yuli');
     });
 
-    it('nomor tidak tersedia: tidak membuka tab, memberi error yang jelas', () => {
+    it('WO tanpa nomor: tetap membuka tautan, pesannya "teruskan sendiri"', () => {
         const open = vi.spyOn(window, 'open').mockImplementation(() => null);
         const ctx = makeCtx();
 
         const url = whatsappModule.openWaReminder.call(ctx, { ...WO, assignedTo: 'Gunawan' });
 
-        expect(url).toBeNull();
-        expect(open).not.toHaveBeenCalled();
-        expect(ctx.showNotification).toHaveBeenCalledWith(
-            'Nomor WhatsApp teknisi belum ada di profil pengguna',
-            'error'
-        );
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Tautan WhatsApp siap — teruskan ke teknisi');
+    });
+
+    it('permintaan part: membuka tautan dan memberi notifikasi', () => {
+        const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+        const ctx = makeCtx();
+
+        const url = whatsappModule.openWaPartReminder.call(ctx, { id: 'REQ_3', itemName: 'Seal', quantity: 1 });
+
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+        expect(ctx.showNotification).toHaveBeenCalledWith('Tautan WhatsApp siap — teruskan ke bagian part');
     });
 });
 
 describe('kontrak UI', () => {
-    it('tombol REMINDER WA ada di inspector dan memanggil openWaReminder', () => {
+    it('tombol reminder WA ada di inspector WO dan tampil sebelum approved', () => {
         expect(workOrders).toMatch(/@click="openWaReminder\(woSelected\)"/);
         expect(workOrders).toContain('aria-label="Kirim reminder WhatsApp"');
-        expect(workOrders).toMatch(/x-show="woSelected\.Status === 'Approved'"/);
+        // Bukan hanya saat Approved: yang diminta justru tautan sebelum approval.
+        expect(workOrders).toContain("woSelected.Status !== 'Completed' && woSelected.Status !== 'Cancelled'");
+        expect(workOrders).not.toMatch(/x-show="woSelected\.Status === 'Approved'"\s*\n\s*@click="openWaReminder/);
+    });
+
+    it('tombol reminder WA ada di setiap kartu permintaan part', () => {
+        expect(parts).toMatch(/@click\.stop="openWaPartReminder\(req\)"/);
+        expect(parts).toContain('aria-label="Kirim reminder WhatsApp permintaan part"');
     });
 
     it('input nomor WhatsApp ada di kedua modal pengguna dengan label statis', () => {
