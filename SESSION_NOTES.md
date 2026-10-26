@@ -1,3 +1,38 @@
+## 🏷️ S39i · Datalist saran teknisi + tenggat default +7 hari (2026-10-25)
+
+**Live sw v65 → v66** (`2822bfb`).
+
+### Yang dipasang
+| Butir | Bentuk |
+|---|---|
+| Saran teknisi | `<input list="technician-suggestions">` + `<datalist>` dari getter `technicianSuggestions`; **field tetap kosong**, operator memilih |
+| Tenggat default | `DEFAULT_DUE_DATE()` = hari ini + 7, dipakai `DEFAULT_LOG_FORM()` **dan** `openLogModal()` |
+
+Sumber saran: riwayat `assignedTo` di `logs` yang sudah dimuat — **bukan** node `Users`, karena `.read` Users hanya untuk admin/supervisor sehingga daftar akan kosong bagi operator biasa. Nilai berbentuk uid Firebase disaring (`/^[A-Za-z0-9]{20,}$/`), array legacy (`['Yuli','Gunawan']`) diratakan, hasil di-dedupe, diurutkan, dibatasi 20.
+
+Kenapa teknisi tidak diisi otomatis: planner sering menugaskan orang lain; WO yang tercatat atas nama pembuat tidak terlihat salah sampai kartunya dibuka.
+
+### Instrumen
+- `playwright.config.js`: port dari **`E2E_PORT`** (default 3000). Sebelumnya suite memblokir alur karena harus mematikan dev server di 3000 dulu (`taskkill` butuh persetujuan dan sempat timeout 5 menit). Sekarang `E2E_PORT=3100 … npx playwright test` jalan berdampingan dengan dev server.
+
+### Tes
+- `tests/log-form-prefill.test.js` (7): `DEFAULT_DUE_DATE` = hari ini+7, `DEFAULT_LOG_FORM` memakai itu dan `assignedTo` tetap kosong, saran teknisi dedupe/urut/ratakan array/saring uid/batas 20/kosong tanpa log.
+- `tests/log-form-layout.test.js` (+1): input teknisi punya `list="technician-suggestions"`, **tanpa** `value=`, dan datalist memakai `x-for="name in technicianSuggestions"`.
+- `e2e/log-modal-layout.spec.js`: `techValue === ''`, `techList === 'technician-suggestions'`, `dueValue === hari ini+7`.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **2011 tes / 93 berkas**
+- coverage **97,17 / 88,92 / 97,23 / 98,39** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **12 passed (42,5 s)** di port 3100
+- live: `sw.js` = **mtc-asset-v66**; fragmen live memuat `technician-suggestions`
+
+### Catatan
+- `taskkill` untuk membebaskan port 3000 diblokir sistem (tanpa persetujuan) — itu sebabnya `E2E_PORT` dibuat, bukan sekadar tambalan sesi ini.
+- Datalist hanya berisi nama yang pernah dipakai di WO; daftar pengguna yang belum pernah ditugaskan tidak muncul (batasan `.read` Users).
+
 ## 🧭 S39h · Form WO sesuai mockup desktop (2026-10-25)
 
 **Live sw v64 → v65** (`ebd1d2a`). Implementasi lima butir usulan desain.
