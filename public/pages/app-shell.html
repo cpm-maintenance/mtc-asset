@@ -1881,7 +1881,7 @@
             x-text="selectedEquip?.EquipmentID || '—'"></p>
           <p class="mt-1 text-sm font-bold leading-tight text-[rgb(var(--tag-ink))]" x-text="selectedEquip?.Nama || '—'"></p>
           <p class="mt-1.5 text-[10px] text-[rgb(var(--tag-muted))]"
-            x-text="[selectedEquip?.Lokasi, selectedEquip?.Status].filter(Boolean).join(' · ')"></p>
+            x-show="selectedEquip?.Lokasi" x-text="selectedEquip?.Lokasi"></p>
         </div>
       </div>
 

@@ -42,10 +42,14 @@ describe('modal Asset Tag', () => {
         expect(modal).toContain('alt="Asset QR code"');
     });
 
-    it('menampilkan identitas aset: ID, nama, lokasi/status', () => {
+    it('menampilkan identitas aset: ID, nama, lokasi', () => {
         expect(modal).toContain('selectedEquip?.EquipmentID');
         expect(modal).toContain('selectedEquip?.Nama');
         expect(modal).toContain('selectedEquip?.Lokasi');
+    });
+
+    it('tidak menampilkan status aset (Active/Operational) di kartu', () => {
+        expect(modal).not.toContain('selectedEquip?.Status');
     });
 
     it('punya bingkai sudut (4 penanda) dan garis emas atas', () => {
