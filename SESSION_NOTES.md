@@ -1,3 +1,40 @@
+## 🏷️ S45 · Tombol QR per kartu aset — tag satu klik dari daftar (2026-10-26)
+
+**Live sw v78 → v79** (`80d1f3e`).
+
+### Probe dulu (tanpa menyentuh `src`)
+Premis brief ("baris tabel punya slot aksi") **tidak berlaku**: `Equipment.html` bukan tabel — `<table>` **0**, `<th>` **0**, dan kartu aset adalah `<article @click="goToDetail(...)">` dengan **0 `<button>`** di dalamnya. Jadi hari itu satu label butuh **2 klik** (kartu → detail → tombol QR di `EquipmentDetail.html:20`). Slot aksi harus dibuat, bukan dipakai.
+
+### Perbaikan
+| Bagian | Bentuk |
+|---|---|
+| `ui.js` | `openEquipQR(id)` — `selectedEquip = equipment.find(...)` **dulu**, baru `generateQR(id)` |
+| `Equipment.html` | tombol `qr_code_scanner` di header kartu, `@click.stop`, `aria-label="Buka kartu tag QR"` statis, target **28×28 px** (`h-7 w-7`) |
+| `wo-pdf-template.js` | buang helper `slate()` mati — satu-satunya warning eslint di repo |
+
+**Kenapa urutan state penting**: `generateQR(id)` hanya memakai id sebagai payload QR (`buildAssetTagImage(id)`); kartu tag membaca `selectedEquip` untuk ID/nama/lokasi. Tanpa pengisian dulu, stiker tercetak tanpa nama unit — dan `@click.stop` wajib, kalau tidak klik label ikut membuka detail.
+
+### Tes
+- `tests/equip-qr-row.test.js` (**8**, berkas baru): markup kartu (tombol tunggal + `.stop`, aria-label statis, ikon di subset, target ≥24 px diukur dari kelas) + perilaku `openEquipQR` (urutan `selectedEquip` → `generateQR`, id hantu tidak merusak state, `equipment: null` tidak melempar). Dibuktikan menggigit: `.stop` dilepas → **2 failed**.
+- `e2e/qr-asset-tag.spec.js` (**+1**): klik tombol baris → kartu tag tampil, `naturalWidth > 0`, `currentPage` tetap `equip`, teks kartu memuat ID + `POMPA E2E`.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2057 tes / 97 berkas**
+- coverage **96,63 / 88,97 / 97,01 / 97,81** (exit **0**) · build **0** · precache **66/66**
+- E2E **18 passed (1,2 m)** · live **mtc-asset-v79** (fragmen live: `openEquipQR` + `Buka kartu tag QR`; `assets/app-DJnndB4t.js`: `openEquipQR`)
+
+### Jebakan baru (mahal — 4 run E2E hangus)
+`E2E_PREVIEW=1` hanya menjalankan `vite preview` atas **dist-e2e yang sudah ada** — ia **tidak** membangun ulang. Dua akibat, keduanya tampak seperti bug kode:
+1. Fragmen lama tersaji → tombol baru "tidak ada" padahal sudah di `public/`.
+2. `npm run build:e2e` **tanpa env emulator** membangun app yang menunjuk Firebase produksi/demo → login gagal `auth/invalid-credential` (seed tetap sukses, jadi terlihat seperti masalah kredensial).
+
+Bangun ulang selalu dengan blok env yang sama seperti `.github/workflows/test.yml` (`VITE_USE_EMULATORS=1` + `VITE_FIREBASE_*` demo), baru jalankan `E2E_PREVIEW=1 CI=1 E2E_PORT=3100 … --workers=1`.
+
+### Sisa
+- Mode **tree** (`showEquipTree`) belum punya aksi QR: tiap unit di sana sudah berupa `<button @click="goToDetail">`, jadi menambah tombol di dalamnya = `<button>` bersarang (HTML tidak sah). Butuh konversi ke `div role="button"` + tombol QR di dalamnya — belum dikerjakan.
+
+---
+
 ## 🏷️ S44 · Save PNG mengunduh kartu utuh (2026-10-26)
 
 **Live sw v77 → v78** (`e4f2519`).
