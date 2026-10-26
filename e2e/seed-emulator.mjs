@@ -19,7 +19,7 @@ function nsFromEnv() {
   }
   return 'mtc-asset-default-rtdb';
 }
-const NS = process.env.E2E_RTDB_NS || nsFromEnv();
+export const NS = process.env.E2E_RTDB_NS || nsFromEnv();
 
 export const E2E_USER = {
   email: process.env.E2E_EMAIL || 'e2e@mtc.local',

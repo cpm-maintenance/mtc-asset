@@ -600,7 +600,7 @@
                     <div class="flex flex-wrap items-center gap-space-md mt-2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">
                       <span class="flex items-center gap-1">
                         <span class="material-symbols-outlined text-[14px] text-tac-on-surface">person</span>
-                        <span>Tech: </span><strong class="text-tac-on-surface ml-0.5" x-text="log.assignedTo || 'UNASSIGNED'"></strong>
+                        <span>Tech: </span><strong class="text-tac-on-surface ml-0.5" x-text="formatAssignee(log.assignedTo)"></strong>
                       </span>
                       <span class="flex items-center gap-1" x-show="woParts(log).length > 0">
                         <span class="material-symbols-outlined text-[14px] text-tac-secondary">inventory_2</span>
@@ -844,7 +844,7 @@
                 <div class="w-7 h-7 rounded-full bg-tac-primary flex items-center justify-center font-bold text-tac-on-primary font-label-mono-sm"
                   x-text="String([].concat(woSelected.assignedTo || '??')[0] || '??').slice(0, 2).toUpperCase()"></div>
                 <div class="flex flex-col">
-                  <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-semibold" x-text="woSelected.assignedTo || 'UNASSIGNED'"></span>
+                  <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-semibold" x-text="formatAssignee(woSelected.assignedTo)"></span>
                   <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby"
                     x-text="'Diminta oleh: ' + (woSelected.requestedBy || '-')"></span>
                 </div>

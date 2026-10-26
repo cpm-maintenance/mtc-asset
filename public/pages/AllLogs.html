@@ -245,7 +245,7 @@
               </span>
               <span x-show="log.assignedTo" class="flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">engineering</span>
-                <span x-text="log.assignedTo"></span>
+                <span x-text="formatAssignee(log.assignedTo)"></span>
               </span>
               <span x-show="log.Downtime" class="flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">hourglass_bottom</span>

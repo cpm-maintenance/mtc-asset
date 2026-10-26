@@ -4,7 +4,7 @@ import { logger } from '../logger.js';
 /**
  * History log management module
  */
-import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs } from '../utils.js';
+import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, formatAssignee as formatAssigneeText } from '../utils.js';
 import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 import { askConfirm } from './confirm-dialog.js';
@@ -22,6 +22,9 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     user: null,
     selectedEquip: null,
     logForm: DEFAULT_LOG_FORM(),
+    // Seksi "Department Request" pada modal log. Selalu tertutup saat entri
+    // baru, dibuka otomatis saat edit record yang memang punya data permintaan.
+    logDeptOpen: false,
     
     // NOTE: logs tidak didefinisikan di sini!
     // Semua akses ke logs harus melalui this.logs yang berasal dari dataModule
@@ -97,6 +100,20 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         }
         this.logFormErrors = errors;
         return Object.keys(errors).length === 0;
+    },
+
+    /**
+     * Nama teknisi siap tampil untuk template (`x-text`), dipakai All Logs,
+     * Planning Board, dan Work Orders. Larik multi-teknisi jadi
+     * `'Yuli, Gunawan, Maruf M'`; kosong jadi `'UNASSIGNED'`.
+     *
+     * Alias impor `formatAssigneeText` dipakai supaya nama metode ini tidak
+     * menimpa impor (pitfall `validateLogForm`).
+     * @param {unknown} value
+     * @returns {string}
+     */
+    formatAssignee(value) {
+        return formatAssigneeText(value);
     },
 
     openLogModal(isEdit = false, data = null, fromDetail = false) {
@@ -207,6 +224,11 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 externalEquipName: data.externalEquipName || ''
             };
 
+            // Buka seksi Department Request bila record ini memang punya data
+            // permintaan — tanpa flag ini empat field terisi tapi tak terlihat
+            // karena <details> selalu tertutup.
+            this.logDeptOpen = !!(this.logForm.requestedBy || this.logForm.approvedBy);
+
             // ════════════════════════════════════════════
             // DIAGNOSTIC: Check logForm after assignment
             // ════════════════════════════════════════════
@@ -220,6 +242,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // ════════════════════════════════════════════
 
         } else {
+            this.logDeptOpen = false;
             // Generate WO number: MTC-001 format
             const existingWOs = this.logs.filter(l => l.woNumber && l.woNumber.startsWith('MTC-')).map(l => l.woNumber);
             let woNum = 'MTC-001';

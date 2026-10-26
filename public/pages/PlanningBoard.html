@@ -239,7 +239,7 @@
                   <div class="flex flex-wrap items-center gap-2 font-label-mono-sm text-label-mono-sm text-tac-status-standby">
                     <span x-show="wo.assignedTo" class="flex items-center gap-1 max-w-[9rem]">
                       <span class="material-symbols-outlined text-[13px]">person</span>
-                      <span class="truncate" x-text="wo.assignedTo"></span>
+                      <span class="truncate" x-text="formatAssignee(wo.assignedTo)"></span>
                     </span>
                     <span x-show="wo.EquipmentID && wo.EquipmentID !== 'EXTERNAL'" class="flex items-center gap-1 max-w-[9rem]">
                       <span class="material-symbols-outlined text-[13px]">precision_manufacturing</span>
@@ -388,7 +388,7 @@
             </div>
             <div class="bg-tac-surface-recessed rounded p-3 shadow-inner">
               <p class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">ASSIGNED TO</p>
-              <p class="font-body-sm text-body-sm text-tac-on-surface font-bold truncate" x-text="planningDetailWO.assignedTo || 'UNASSIGNED'"></p>
+              <p class="font-body-sm text-body-sm text-tac-on-surface font-bold truncate" x-text="formatAssignee(planningDetailWO.assignedTo)"></p>
             </div>
             <div class="bg-tac-surface-recessed rounded p-3 shadow-inner">
               <p class="font-label-mono-sm text-label-mono-sm uppercase text-tac-status-standby">DATE</p>

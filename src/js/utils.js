@@ -431,12 +431,33 @@ export function parseJsonSafe(str, fallback = []) {
 }
 
 /**
- * Cek apakah sebuah tanggal sudah lewat (sebelum hari ini, dibandingkan pada awal hari).
- *
- * @param {string} dateStr - Tanggal yang diperiksa.
- * @returns {boolean} `true` bila tanggal sebelum hari ini.
- */
-export function isOverdue(dateStr) {
+ /**
+  * Nama teknisi untuk ditampilkan: larik (multi-teknisi dari RTDB) dirangkai
+  * dengan koma + spasi, string dibiarkan apa adanya, kosong jadi `UNASSIGNED`.
+  *
+  * Tanpa ini `x-text="wo.assignedTo"` merender larik lewat `String(array)`
+  * sehingga tampil `Yuli,Gunawan,Maruf M` — tanpa spasi, terbaca satu nama.
+  * @param {unknown} value
+  * @returns {string}
+  */
+ export function formatAssignee(value) {
+   if (Array.isArray(value)) {
+     const names = value.map((v) => String(v ?? '').trim()).filter(Boolean);
+     return names.length ? names.join(', ') : 'UNASSIGNED';
+   }
+   if (typeof value === 'string') {
+     return value.trim() || 'UNASSIGNED';
+   }
+   return 'UNASSIGNED';
+ }
+
+ /**
+  * Cek apakah sebuah tanggal sudah lewat (sebelum hari ini, dibandingkan pada awal hari).
+  *
+  * @param {string} dateStr - Tanggal yang diperiksa.
+  * @returns {boolean} `true` bila tanggal sebelum hari ini.
+  */
+ export function isOverdue(dateStr) {
   if (!dateStr) return false;
   const d = new Date(formatDate(dateStr));
   const today = new Date();

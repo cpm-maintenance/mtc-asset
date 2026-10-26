@@ -139,6 +139,8 @@ export interface AppState {
   kpiFilter?: string;
   kpiFilterDate?: any;
   logForm?: any;
+  /** Seksi Department Request pada modal log terbuka? (auto-open saat edit) */
+  logDeptOpen?: boolean;
   /** Pesan validasi per field pada form log (diisi validateLogForm). */
   logFormErrors?: Record<string, string>;
   loginForm: Record<string, any>;

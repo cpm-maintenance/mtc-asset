@@ -1587,7 +1587,8 @@
         </div>
 
         <!-- Department Request Section (opsional, terlipat) -->
-        <details class="mt-6 pt-6 border-t border-tac-gold-bright/20">
+        <details class="mt-6 pt-6 border-t border-tac-gold-bright/20" :open="logDeptOpen"
+          @toggle="logDeptOpen = $event.target.open">
           <summary class="flex items-center gap-3 cursor-pointer list-none">
             <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-0">🏢 Department Request</h4>
             <span class="ml-auto font-label-mono-sm text-label-mono-sm text-tac-sync-cyan border border-tac-sync-cyan/40 rounded px-2 py-0.5 uppercase">Opsional · 4 field</span>
