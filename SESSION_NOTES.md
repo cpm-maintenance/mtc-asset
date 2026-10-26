@@ -1,3 +1,40 @@
+## 🏷️ S40 · Nama multi-teknisi + seksi Department Request yang tak pernah terbuka (2026-10-26)
+
+**Live sw v66 → v67** (`55d8cac`).
+
+### Probe dulu (tanpa menyentuh src)
+| Cacat | Diukur di browser (emulator, `E2E_PORT=3100`) |
+|---|---|
+| Nama multi-teknisi mentah | sel All Logs benar-benar tampil `Yuli,Gunawan,Maruf M` — `String(['Yuli','Gunawan','Maruf M'])`, tanpa spasi |
+| Department Request selalu tertutup | `details.open === false` sementara keempat field berisi: `Safety` / `Budi Santoso` / `2026-10-18` / `Ir. Fahmi` |
+
+### Yang diperbaiki
+| Butir | Bentuk |
+|---|---|
+| `formatAssignee()` | `src/js/utils.js`: larik → `'Yuli, Gunawan, Maruf M'` (entri kosong dibuang), string di-trim apa adanya, kosong → `'UNASSIGNED'` |
+| Metode scope | `logsModule.formatAssignee()` membungkus helper; impor di-alias `formatAssigneeText` supaya nama metode tidak menimpa impor (pitfall `validateLogForm`) |
+| Lima binding | `AllLogs.html` (1), `PlanningBoard.html` (2: kartu + panel detail), `WorkOrders.html` (2: baris log + header WO). Inisial avatar `slice(0,2)` **tidak** disentuh — itu potongan, bukan tampilan penuh |
+| `logDeptOpen` | state di `logsModule` + `:open="logDeptOpen"` / `@toggle="logDeptOpen = $event.target.open"` pada `<details>` Department Request |
+| Isi flag | edit: `!!(requestedBy || approvedBy)`; entri baru: selalu `false` |
+
+### Tes
+- `tests/assignee-format.test.js` (7): lima kasus helper + kontrak fragmen — tidak ada lagi `x-text` mentah ke `.assignedTo` dan tiap lokasi memanggil `formatAssignee()`.
+- `tests/log-form-dept-section.test.js` (6): default tertutup, edit berdata → terbuka, edit tanpa data → tertutup, entri baru menutup lagi, plus kontrak `<details>` (`:open` + `@toggle`).
+- `e2e/log-dept-and-assignee.spec.js` (2): All Logs merender `Yuli, Gunawan, Maruf M`; modal edit → `details.open === true` + empat nilai field.
+- `e2e/seed-emulator.mjs`: `NS` kini di-`export` supaya spec bisa menulis record tambahan ke namespace yang sama (namespace salah = data kosong tanpa error).
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **2024 tes / 95 berkas**
+- coverage **97,16 / 89,06 / 97,16 / 98,38** (exit **0**)
+- ratchet `branches` **87 → 88**; dibuktikan menggigit dengan `89.5` → `ERROR: Coverage for branches (89.06%) does not meet global threshold (89.5%)` (exit 1), lalu diturunkan ke **88**
+- build **0** · `verify:precache` **66/66**
+- E2E **14 passed (47,6 s)** di port 3100
+- `npm run test:rules` tidak dijalankan ulang: tidak ada perubahan `database.rules.json`
+
+---
+
 ## 🏷️ S39i · Datalist saran teknisi + tenggat default +7 hari (2026-10-25)
 
 **Live sw v65 → v66** (`2822bfb`).
