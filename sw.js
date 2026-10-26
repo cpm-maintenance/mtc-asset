@@ -3,7 +3,7 @@
 
 // Nama cache menyertakan brand + versi rilis. Naikkan angka versi saat rilis
 // besar supaya cache lama dibuang bersih di handler 'activate'.
-const CACHE_NAME = 'mtc-asset-v79';
+const CACHE_NAME = 'mtc-asset-v80';
 
 // Halaman fallback terakhir saat navigasi offline dan app shell pun tidak ada
 // di cache. Wajib SELF-CONTAINED (tanpa CDN) — kalau tidak, halaman ini sendiri

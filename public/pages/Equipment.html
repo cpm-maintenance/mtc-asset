@@ -350,12 +350,21 @@
               </div>
               <div class="flex flex-wrap gap-2">
                 <template x-for="e in items" :key="e.EquipmentID">
-                  <button type="button" @click="goToDetail(e.EquipmentID)"
-                    class="px-space-md py-1.5 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm font-semibold transition-all flex items-center gap-2 group">
-                    <span class="w-1.5 h-1.5 rounded-full" :class="equipMarkerTac(e)"></span>
-                    <span x-text="e.Nama"></span>
-                    <span class="text-tac-status-standby group-hover:text-tac-primary font-normal" x-text="'[' + e.EquipmentID + ']'"></span>
-                  </button>
+                  <!-- Chip unit: dua tombol bersaudara, bukan bersarang — HTML
+                       tidak mengizinkan <button> di dalam <button>. -->
+                  <div class="inline-flex items-center rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated transition-all overflow-hidden group">
+                    <button type="button" @click="goToDetail(e.EquipmentID)"
+                      class="px-space-md py-1.5 text-tac-on-surface font-label-mono-sm text-label-mono-sm font-semibold flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="equipMarkerTac(e)"></span>
+                      <span x-text="e.Nama"></span>
+                      <span class="text-tac-status-standby group-hover:text-tac-primary font-normal" x-text="'[' + e.EquipmentID + ']'"></span>
+                    </button>
+                    <button type="button" @click.stop="openEquipQR(e.EquipmentID)"
+                      aria-label="Buka kartu tag QR" title="Buka kartu tag QR"
+                      class="grid h-6 w-6 shrink-0 place-items-center border-l border-tac-border-subtle text-tac-sync-cyan hover:bg-tac-surface-elevated transition-colors active:scale-95">
+                      <span class="material-symbols-outlined text-[14px]">qr_code_scanner</span>
+                    </button>
+                  </div>
                 </template>
               </div>
             </div>

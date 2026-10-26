@@ -75,6 +75,57 @@ describe('Equipment — aksi QR per kartu', () => {
     });
 });
 
+describe('Equipment — aksi QR di mode tree', () => {
+    // Chip unit di mode hierarki dulu satu `<button>` utuh. Menyisipkan tombol
+    // QR di dalamnya berarti `<button>` bersarang — HTML tidak sah, browser
+    // memecah DOM-nya, dan Alpine kehilangan target. Jadi chip dipecah menjadi
+    // dua tombol **bersaudara** di dalam satu wadah.
+    function treeChip() {
+        const start = equip.indexOf('x-for="e in items"');
+        expect(start).toBeGreaterThan(-1);
+        const end = equip.indexOf('</template>', start);
+        expect(end).toBeGreaterThan(start);
+        return equip.slice(start, end);
+    }
+
+    // Komentar markup menyebut `<button>` sebagai teks, jadi dibuang dulu —
+    // hitungan tombol harus dari elemen, bukan dari prosa komentar.
+    const chip = treeChip().replace(/<!--[\s\S]*?-->/g, '');
+
+    it('tidak ada <button> bersarang di chip unit', () => {
+        let depth = 0;
+        let maxDepth = 0;
+        for (const m of chip.matchAll(/<button\b|<\/button>/g)) {
+            if (m[0] === '</button>') depth -= 1;
+            else {
+                depth += 1;
+                maxDepth = Math.max(maxDepth, depth);
+            }
+        }
+        expect(depth, 'jumlah <button> dan </button> harus seimbang').toBe(0);
+        expect(maxDepth).toBe(1);
+        expect((chip.match(/<button\b/g) || []).length).toBe(2);
+    });
+
+    it('chip memuat tombol QR ber-aria-label statis dan ber-.stop', () => {
+        expect(chip).toMatch(/@click\.stop="openEquipQR\(e\.EquipmentID\)"/);
+        expect(chip).toContain('aria-label="Buka kartu tag QR"');
+        expect(chip).toContain('>qr_code_scanner<');
+        // Tombol navigasi tetap ada dan tetap memakai goToDetail.
+        expect(chip).toContain('@click="goToDetail(e.EquipmentID)"');
+    });
+
+    it('target sentuh tombol QR tree ≥ 24×24 px', () => {
+        const tag = (chip.match(/<button\b[^>]*openEquipQR[^>]*>/s) || [''])[0];
+        const h = /h-(\d+)/.exec(tag);
+        const w = /w-(\d+)/.exec(tag);
+        expect(h, 'tombol QR tree harus punya tinggi eksplisit').not.toBeNull();
+        expect(w, 'tombol QR tree harus punya lebar eksplisit').not.toBeNull();
+        expect(Number(h[1]) * 4).toBeGreaterThanOrEqual(24);
+        expect(Number(w[1]) * 4).toBeGreaterThanOrEqual(24);
+    });
+});
+
 describe('openEquipQR', () => {
     const equipment = [
         { EquipmentID: 'EQ-1', Nama: 'Pompa', Lokasi: 'Area A' },

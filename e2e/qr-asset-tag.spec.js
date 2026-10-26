@@ -176,7 +176,7 @@ test('tombol QR di kartu Equipment membuka tag tanpa mampir ke detail', async ({
         globalThis.app.currentPage = 'equip';
     });
 
-    const rowQr = page.getByRole('button', { name: 'Buka kartu tag QR' }).first();
+    const rowQr = page.locator('button.h-7[aria-label="Buka kartu tag QR"]').first();
     await expect(rowQr).toBeVisible({ timeout: 20_000 });
 
     // Target sentuh diukur di DOM, bukan disimpulkan dari kelas CSS.
@@ -213,6 +213,41 @@ test('tombol QR di kartu Equipment membuka tag tanpa mampir ke detail', async ({
     expect(state.id).not.toBe('');
     expect(state.cardText).toContain(state.id.toUpperCase());
     expect(state.cardText).toContain('POMPA E2E');
+
+    // Mode tree: chip unit dipecah jadi dua tombol **bersaudara** (bukan
+    // bersarang), jadi tombol QR juga hidup di hierarki.
+    await page.evaluate(() => {
+        globalThis.app.showQRPreviewModal = false;
+        globalThis.app.showEquipTree = true;
+    });
+
+    const treeQr = page.locator('button.h-6[aria-label="Buka kartu tag QR"]').first();
+    await expect(treeQr).toBeVisible({ timeout: 15_000 });
+    const treeBox = await treeQr.boundingBox();
+    expect(treeBox).not.toBeNull();
+    expect(Math.round(treeBox.width)).toBeGreaterThanOrEqual(24);
+    expect(Math.round(treeBox.height)).toBeGreaterThanOrEqual(24);
+
+    await treeQr.click();
+    await expect(tag).toBeVisible({ timeout: 15_000 });
+    await expect
+        .poll(
+            () =>
+                page.evaluate(
+                    () => document.querySelector('[data-testid="asset-tag"] img')?.naturalWidth || 0
+                ),
+            { timeout: 10_000 }
+        )
+        .toBeGreaterThan(0);
+
+    const treeState = await page.evaluate(() => ({
+        page: globalThis.app.currentPage,
+        tree: globalThis.app.showEquipTree,
+        id: globalThis.app.selectedEquip?.EquipmentID || '',
+    }));
+    expect(treeState.page).toBe('equip');
+    expect(treeState.tree).toBe(true);
+    expect(treeState.id).not.toBe('');
 
     // Error scope Alpine baru = bug, bukan salah tulis.
     expect(errors.filter((e) => e.includes('Alpine Expression Error'))).toEqual([]);
