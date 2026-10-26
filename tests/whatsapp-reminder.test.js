@@ -250,6 +250,16 @@ describe('kontrak UI', () => {
         expect(parts).toContain('aria-label="Kirim reminder WhatsApp permintaan part"');
     });
 
+    it('tombol memakai ikon WhatsApp inline, bukan ligatur notifications', () => {
+        for (const frag of [workOrders, parts]) {
+            expect(frag).toContain('data-wa-icon');
+            expect(frag).toMatch(/data-wa-icon[^>]*fill="currentColor"/);
+            // Ikon brand tidak ada di subset Material Symbols; kalau ligatur
+            // dipakai lagi, yang tampil adalah teks "notifications".
+            expect(frag).not.toMatch(/openWa(Part)?Reminder[\s\S]{0,600}?>notifications</);
+        }
+    });
+
     it('input nomor WhatsApp ada di kedua modal pengguna dengan label statis', () => {
         expect(shell).toContain('x-model="newUserForm.phone"');
         expect(shell).toContain('x-model="editUserForm.phone"');
