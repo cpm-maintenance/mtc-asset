@@ -1,3 +1,18 @@
+## 🏷️ S42e · Teks jadi FOR DETAIL INFORMATION (2026-10-26)
+
+**Live sw v74 → v75** (`96541cc`). Satu baris: penjelas kartu `for more information` → `for detail information` (dirender kapital: `FOR DETAIL INFORMATION`).
+
+Dikunci `tests/qr-asset-tag.test.js` (2 asersi ikut diperbarui, termasuk pemeriksaan `uppercase`).
+
+Catatan bahasa: bentuk baku Inggris adalah `DETAILED`; `DETAIL` dipakai sesuai permintaan. Kalau nanti ingin dirapikan, satu baris di `app-shell.html`.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2042 tes / 96 berkas**
+- coverage **96,64 / 88,96 / 96,99 / 97,79** (exit **0**) · build **0** · precache **66/66**
+- E2E **15 passed (44,1 s)** · live **mtc-asset-v75**
+
+---
+
 ## 🏷️ S42d · Kartu tag: semua teks huruf kapital (2026-10-26)
 
 **Live sw v73 → v74** (`4d5211b`).
