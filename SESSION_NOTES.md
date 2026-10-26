@@ -1,3 +1,44 @@
+## 🏷️ S41 · Template PDF Work Order — desain ulang premium (2026-10-26)
+
+**Live sw v67 → v68** (`9d9ca07`).
+
+### Yang diganti (bukan ditambal)
+| Area | Sebelum | Sesudah |
+|---|---|---|
+| Kop | blok gelap 40 mm, 3 lapis teks bertumpuk | monogram MTC outline emas + nama perusahaan + judul kanan; nomor WO jadi "stub" bergaris emas |
+| Pita meta | badge prioritas/status menempel di bawah kop, tanggal terpisah di kanan | satu baris 4 sel: ISSUED · DUE · PRIORITY · STATUS, pemisah hairline, tone berupa titik + teks (tetap terbaca saat dicetak hitam-putih) |
+| Judul seksi | bar gelap 8 mm per seksi (4×) | kotak emas 2,2 mm + label berspasi + hairline — hemat ±24 mm, tanpa blok abu-abu |
+| Baris data | label & nilai berdesakan (pitch 8 mm) | konstanta `ROW = 11` (label→label) dan `GAP = 8` (antar seksi) — menyamakan keduanya membuat label baris kedua menabrak nilai baris pertama |
+| Deskripsi | dipotong **maksimum 4 baris** | teks penuh, dibungkus, rail emas di kiri, 9,2 pt / 4,5 mm |
+| Parts | `slice(0, 5)` dan kolom Description selalu `-` | semua baris, nomor part monospace, nama part kalau ada, zebra, baris **TOTAL ITEMS** dengan garis emas, header tabel diulang di halaman lanjutan |
+| Biaya | kotak kuning muda (terbaca seperti peringatan) | pita `paper` + rail emas; TOTAL COST 13 pt sebagai jangkar visual |
+| Tanda tangan | dipaku `yPos = pageHeight - 55` → isi panjang menabraknya; kotak abu | tiga kolom, garis 0,5 pt, ruang tanda 13 mm, mengalir setelah isi (didorong ke bawah hanya kalau ada ruang) |
+| Footer | satu baris, tanpa nomor halaman | dua kolom + `Page x of y` di **setiap** halaman (`setPage` + `getNumberOfPages`) |
+
+WO contoh (6 parts + biaya + deskripsi panjang) muat **1 halaman**; 40 parts memecah ke halaman lanjutan dengan header tabel diulang.
+
+### Instrumen baru
+- `scripts/render-wo-pdf.mjs` — render contoh WO ke `WorkOrder_<no>.pdf` tanpa membuka app, supaya iterasi desain tidak perlu emulator. Dipakai bersama `uv run --with pypdfium2` untuk raster halaman + `vision_analyze`.
+
+### Jebakan yang ditemukan
+- **Modul PDF harus tetap daun.** Sempat `import { formatAssignee } from '../utils.js'`; `utils.js` mengimpor `../constants` tanpa ekstensi, sehingga `node scripts/render-wo-pdf.mjs` gagal `ERR_MODULE_NOT_FOUND` walau Vite baik-baik saja. Helper disalin lokal (`formatAssignees`) dengan komentar bahwa perilakunya sama.
+- **Verifikasi tumpang tindih jangan pakai mata.** `vision_analyze` pada crop yang diperkecil dua kali melaporkan "label menabrak nilai"; bukti sebenarnya dari `pdfplumber`: 235 kata, **0** kotak kata bertumpuk. Mata pada gambar ter-skalasi bukan bukti.
+- `write_file` menolak menimpa berkas yang terakhir dibaca dengan paginasi; tulis ke scratch lalu `cp` — jangan mengulang `patch` di berkas yang sama berkali-kali.
+
+### Tes
+- `tests/wo-pdf-template.test.js` ditulis ulang (29 tes): mock `jsPDF` diperluas (`roundedRect`, `circle`, `setCharSpace`, `setLineWidth`, `getTextWidth`, `getNumberOfPages`, `setPage`), asersi mengikuti kontrak baru — semua baris parts dirender, `TOTAL ITEMS`, `MAN HOURS`, `Page 1 of 2`, deskripsi tidak dipotong, WO wajar muat 1 halaman, 40 parts memaksa `addPage`.
+
+### Gerbang
+- tsc **0**
+- eslint **0 error / 0 warning**
+- **2029 tes / 95 berkas**
+- coverage **97,09 / 88,94 / 97,20 / 98,33** (exit **0**)
+- build **0** · `verify:precache` **66/66**
+- E2E **14 passed (56,0 s)** di port 3100
+- live: `sw.js` = **mtc-asset-v68**; chunk live `assets/app-B2Xbf3aU.js` memuat `MAINTENANCE REQUEST FORM` dan `TOTAL ITEMS`
+
+---
+
 ## 🏷️ S40 · Nama multi-teknisi + seksi Department Request yang tak pernah terbuka (2026-10-26)
 
 **Live sw v66 → v67** (`55d8cac`).
