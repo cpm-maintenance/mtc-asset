@@ -158,7 +158,14 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         }
     },
 
-    setupFirebaseListeners() {
+    /**
+     * @param {{ fromCache?: boolean }} [options] `fromCache: false` dipakai saat
+     *   **Muat ulang data** — refresh berarti "ambil dari server", bukan "baca
+     *   ulang IndexedDB". Memuat cache di sini menghidupkan kembali WO yang
+     *   sudah dihapus (bug lapangan S45c).
+     */
+    setupFirebaseListeners(options = {}) {
+        const { fromCache = true } = options;
         if (!this.isLoggedIn) return;
 
         // 🔥 Cleanup old listeners before re-attaching (prevent listener leak)
@@ -176,8 +183,9 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         // Check for pending Work Orders on login
         this.checkPendingWorkOrders();
 
-        // Load from IndexedDB first for instant UI
-        this.loadFromIndexedDB();
+        // Load from IndexedDB first for instant UI. Saat refresh manual, cache
+        // dilewati: state di memori sudah lebih baru daripada cache.
+        if (fromCache) this.loadFromIndexedDB();
 
         // Safety timeout: if Firebase never responds (permission error, etc), 
         // force isLoading=false after 10s so the UI is not stuck forever
@@ -213,6 +221,11 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 } catch (/** @type {any} */ e) { console.warn('Cache Save Failed:', e); }
             }, 250);
         };
+
+        // Dipakai jalur hapus: record yang baru dihapus harus langsung hilang
+        // dari cache, kalau tidak `loadFromIndexedDB()` menghidupkannya lagi
+        // pada boot/refresh berikutnya.
+        this._cacheWriter = saveCache;
 
         // Listen for online/offline to sync pending operations
         window.addEventListener('online', () => this.syncPendingOperations());
@@ -316,7 +329,10 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 try {
                     const data = snap?.val?.();
                     const ids = new Set(Object.keys(data || {}));
-                    if (data && ids.size > 0 && ids.size < 500 && Array.isArray(this.logs)) {
+                    // Server kosong (`data` null) juga harus memangkas cache —
+                    // tanpa itu semua WO dari IndexedDB hidup lagi. Kegagalan
+                    // baca tidak sampai ke sini: ditangani callback error onValue.
+                    if (ids.size < 500 && Array.isArray(this.logs)) {
                         const pruned = this.logs.filter(l => l && l.LogID && ids.has(l.LogID));
                         if (pruned.length !== this.logs.length) {
                             this.logs = pruned;
@@ -718,6 +734,9 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     // tanpa baris ini WO yang dihapus tetap tampil di menu.
                     this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l.LogID !== id);
                     this._woSeenIds?.delete(id);
+                    // Cache ikut dipangkas: kalau tidak, `loadFromIndexedDB()`
+                    // menghidupkan WO ini lagi pada boot/refresh berikutnya.
+                    this._cacheWriter?.('logs', this.logs);
                 } else if (node === 'Performance') {
                     this.performanceData = this.performanceData.filter(p => p.id !== id);
                 }
@@ -846,6 +865,9 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 // Lihat catatan di jalur offline: activeWorkOrders ikut dibersihkan.
                 this.activeWorkOrders = (this.activeWorkOrders || []).filter(l => l.LogID !== id);
                 this._woSeenIds?.delete(id);
+                // Cache ikut dipangkas supaya record ini tidak hidup lagi dari
+                // IndexedDB saat boot maupun saat "Muat ulang data".
+                this._cacheWriter?.('logs', this.logs);
             } else if (node === 'Performance') {
                 this.performanceData = this.performanceData.filter(p => p.id !== id);
             }

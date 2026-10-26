@@ -1556,7 +1556,10 @@ export function app() {
             this.showNotification("Syncing data...", "info");
             try {
                 if (this.setupFirebaseListeners && typeof this.setupFirebaseListeners === 'function') {
-                    this.setupFirebaseListeners();
+                    // `fromCache: false`: refresh menarik dari server. Memuat
+                    // IndexedDB di sini menghidupkan kembali record yang sudah
+                    // dihapus (bug lapangan: WO balik setelah "Muat ulang data").
+                    this.setupFirebaseListeners({ fromCache: false });
                 }
                 setTimeout(() => {
                     this.isLoading = false;

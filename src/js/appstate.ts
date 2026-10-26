@@ -324,6 +324,8 @@ export interface AppState {
   _partLookupRef?: any;
   _reqSeenIds?: any;
   _woSeenIds?: any;
+  /** Penulis cache IndexedDB (dipasang `setupFirebaseListeners`); dipakai jalur hapus. */
+  _cacheWriter?: any;
   basePath?: any;
   cache?: any;
   darkMode?: any;
