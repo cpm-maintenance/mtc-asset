@@ -28,9 +28,13 @@ function qrModal() {
 describe('modal Asset Tag', () => {
     const modal = qrModal();
 
-    it('memuat kata SCAN ME + penjelasnya', () => {
+    it('memuat SCAN ME + penjelas bahasa Inggris', () => {
         expect(modal).toMatch(/>\s*Scan Me\s*</i);
-        expect(modal).toContain('untuk membuka riwayat');
+        expect(modal).toContain('for more information');
+    });
+
+    it('tidak lagi memuat kata "work order" di kartu tag', () => {
+        expect(modal.toLowerCase()).not.toContain('work order');
     });
 
     it('memakai gambar QR dari state dan memberi alt', () => {
