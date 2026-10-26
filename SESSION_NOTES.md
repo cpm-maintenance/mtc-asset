@@ -1,3 +1,43 @@
+## 💬 S45d · Reminder WhatsApp untuk WO yang di-approve (2026-10-26)
+
+**Live sw v81 → v82** (`192c968`).
+
+### Keputusan kanal (dari pertanyaan ke Manuel)
+| Pilihan | Alasan ditolak/dipilih |
+|---|---|
+| **`wa.me` deep link** | **dipilih** — nol server, nol token, nol biaya. Pengiriman tetap di tangan operator (tidak ada pesan terkirim diam-diam) |
+| WhatsApp Cloud API (Meta) | butuh `WA_TOKEN` + `WA_PHONE_ID` + template disetujui; server Vercel sudah ada (`/api/fcm-push`) tapi kredensial belum |
+| Gateway pihak ketiga (Fonnte/Wablas/Twilio) | butuh token + biaya per pesan |
+
+Nomor tujuan: `Users/<uid>/phone` — diisi admin sekali di kelola pengguna.
+
+### Perubahan
+| Berkas | Bentuk |
+|---|---|
+| `utils.js` | `waPhoneDigits()` normalisasi `08xx`/`+62xx`/`62xx`/`8xx` → `62…`; `waLink()` → `https://wa.me/<digit>?text=<encoded>` |
+| `modules/whatsapp.js` (baru) | `resolveTechnician()` cocokkan `assignedTo` (uid → nama → email, termasuk larik legacy) ke `Users[].phone`; `reminderText()` pesan ringkas; `openWaReminder()` buka tab + notifikasi, atau error jelas bila nomor kosong |
+| `WorkOrders.html` | tombol **REMINDER WA** di inspector, tampil saat `Status === 'Approved'` |
+| `app-shell.html` + `auth.js` | input **No. WhatsApp** di modal buat & edit pengguna → `Users/<uid>/phone`; `createUser()` menerima `phone`; `loadAllUsers()` boleh dibaca supervisor |
+
+### Tes
+- `tests/whatsapp-reminder.test.js` (**19**, baru): normalisasi nomor (4 bentuk ketikan), `waLink` encoding, resolusi teknisi (uid/nama/email/larik/`null`), teks pesan (termasuk potong 160 karakter), `openWaReminder` membuka tab & menolak dengan pesan jelas, plus kontrak UI (tombol, dua input, penyimpanan). Dibuktikan menggigit: tombol dilepas → **1 failed**.
+- `tests/auth-module.test.js` disesuaikan ke kontrak form baru (`phone: ''`, `createUser` 4 argumen) — 5 tes lama gagal lalu hijau.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning** · **2086 tes / 99 berkas**
+- coverage **96,62 / 88,97 / 97,03 / 97,81** (exit **0**) · build **0** · precache **66/66**
+- E2E **19 passed (1,2 m)** · live **mtc-asset-v82** (`assets/app-C2s1jq1Q.js`: `openWaReminder` + `wa.me`; fragmen: tombol & input nomor)
+
+### Jebakan
+1. **`loadAllUsers()` hanya jalan untuk admin** — supervisor (role yang biasa meng-approve) tidak akan punya `allUsers`, jadi nomor teknisi tidak pernah ketemu. Guard jadi `isAdminOrSupervisor ?? isAdmin` (fallback menjaga konteks unit test yang tidak memasang getter). Halaman kelola pengguna tetap admin-only lewat gate UI.
+2. **Tidak ada ligatur WhatsApp di subset ikon** (`chat`/`forum`/`sms`/`send` semuanya absen). Menambah glyph berarti regenerasi font subset; tombol memakai `notifications` yang sudah ada + label teks `REMINDER WA`.
+
+### Sisa
+- Nomor WA tiap teknisi harus **diisi admin sekali** di kelola pengguna. Tanpa itu tombol tampil tapi memberi notifikasi `Nomor WhatsApp teknisi belum ada di profil pengguna`.
+- Kalau nanti mau otomatis (tanpa klik), jalur yang sudah tersedia: tambah `api/wa-reminder.js` di Vercel memakai WhatsApp Cloud API.
+
+---
+
 ## 🐞 S45c · WO yang dihapus kembali setelah "Muat ulang data" (2026-10-26)
 
 **Live sw v80 → v81** (`ff6d93f`). Bug lapangan dari Manuel.
