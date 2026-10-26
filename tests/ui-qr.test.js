@@ -196,3 +196,53 @@ describe('QR — handleScanResult / submitManualScan (S-5 scanner wiring)', () =
     expect(ctx.showNotification).not.toHaveBeenCalled();
   });
 });
+
+describe('QR — printTag (cetak hanya kartu)', () => {
+  const DATA = 'data:image/png;base64,QR';
+
+  function mountCard() {
+    document.body.innerHTML = `
+      <div data-testid="asset-tag" :class="x" x-show="open">
+        <img :src="qrCodeDataUrl" src="${DATA}" alt="Asset QR code">
+        <p x-text="selectedEquip?.Nama">POMPA</p>
+      </div>`;
+    return document.querySelector('[data-testid="asset-tag"]');
+  }
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    window.print = vi.fn();
+  });
+
+  it('tanpa kartu: langsung mencetak, tanpa #print-root', () => {
+    uiModule.printTag.call(makeCtx());
+    expect(window.print).toHaveBeenCalled();
+    expect(document.getElementById('print-root')).toBeNull();
+  });
+
+  it('mengkloning kartu ke #print-root dan membuang binding Alpine', () => {
+    mountCard();
+    uiModule.printTag.call(makeCtx());
+
+    const root = document.getElementById('print-root');
+    expect(root).not.toBeNull();
+    const clone = root.querySelector('[data-testid="asset-tag"]');
+    expect(clone).not.toBeNull();
+    // Binding Alpine tidak boleh ikut: klon tidak punya scope.
+    expect(clone.hasAttribute(':class')).toBe(false);
+    expect(clone.hasAttribute('x-show')).toBe(false);
+    expect(clone.querySelector('img').hasAttribute(':src')).toBe(false);
+    // …tapi gambarnya harus tetap punya src.
+    expect(clone.querySelector('img').getAttribute('src')).toBe(DATA);
+    expect(window.print).toHaveBeenCalled();
+  });
+
+  it('afterprint membersihkan #print-root', () => {
+    mountCard();
+    uiModule.printTag.call(makeCtx());
+    expect(document.getElementById('print-root')).not.toBeNull();
+
+    window.dispatchEvent(new Event('afterprint'));
+    expect(document.getElementById('print-root')).toBeNull();
+  });
+});

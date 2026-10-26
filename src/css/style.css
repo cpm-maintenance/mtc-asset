@@ -593,3 +593,45 @@ select option {
   background-color: rgb(255 255 255);
   color: rgb(var(--tag-ink));
 }
+
+/* ── Cetak: hanya kartu asset tag yang keluar di kertas ────────────────────
+   `window.print()` biasa mencetak seluruh aplikasi (overlay gelap, tombol,
+   sidebar). `printTag()` mengkloning kartu ke `#print-root` di akhir `body`,
+   dan di sini semua anak body lain disembunyikan dengan `display: none` —
+   deterministik, tanpa bergantung pada pewarisan `visibility`. */
+#print-root {
+  display: none;
+}
+
+@media print {
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  #print-root .asset-tag {
+    width: 78mm;
+    box-shadow: none !important;
+    border-radius: 4mm !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+}

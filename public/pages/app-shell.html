@@ -1861,7 +1861,7 @@
           </div>
 
           <div class="relative mx-auto h-48 w-48 p-3">
-            <img :src="qrCodeDataUrl" loading="lazy" class="h-full w-full object-contain" alt="Asset QR code">
+            <img :src="qrCodeDataUrl" class="h-full w-full object-contain" alt="Asset QR code">
             <span class="pointer-events-none absolute left-0 top-0 h-4 w-4 rounded-tl border-l-2 border-t-2 border-[rgb(var(--tag-gold))]"></span>
             <span class="pointer-events-none absolute right-0 top-0 h-4 w-4 rounded-tr border-r-2 border-t-2 border-[rgb(var(--tag-gold))]"></span>
             <span class="pointer-events-none absolute bottom-0 left-0 h-4 w-4 rounded-bl border-b-2 border-l-2 border-[rgb(var(--tag-gold))]"></span>
@@ -1890,7 +1890,7 @@
           class="flex items-center justify-center gap-2 rounded-xl bg-tac-gold-bright py-3 text-[10px] font-black uppercase tracking-widest text-tac-on-surface-inverse shadow-lg transition-all hover:brightness-110 active:scale-95">
           <span class="material-symbols-outlined text-[16px]">download</span> Save PNG
         </button>
-        <button @click="window.print()"
+        <button @click="printTag()"
           class="flex items-center justify-center gap-2 rounded-xl border border-tac-gold-bright/30 py-3 text-[10px] font-black uppercase tracking-widest text-tac-gold-bright transition-all hover:border-tac-gold-bright">
           <span class="material-symbols-outlined text-[16px]">description</span> Print Tag
         </button>

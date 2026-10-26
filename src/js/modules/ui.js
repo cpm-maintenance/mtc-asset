@@ -96,6 +96,23 @@ async function buildAssetTagImage(text) {
     }
 }
 
+/**
+ * Hapus atribut Alpine (`x-*`, `:prop`, `@event`) dari sebuah subtree.
+ * Dipakai saat mengkloning kartu tag untuk dicetak: klon tidak punya scope
+ * Alpine, jadi binding yang tersisa akan dievaluasi dan gagal.
+ * @param {Element} node
+ */
+function stripAlpineBindings(node) {
+    if (node.nodeType !== 1) return;
+    for (const attr of [...node.attributes]) {
+        const name = attr.name;
+        if (name.startsWith(':') || name.startsWith('@') || name.startsWith('x-')) {
+            node.removeAttribute(name);
+        }
+    }
+    for (const child of [...node.children]) stripAlpineBindings(child);
+}
+
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
     manualScanId: '',
@@ -183,6 +200,42 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         } finally {
             this.isLoading = false;
         }
+    },
+
+    /**
+     * Cetak **hanya** kartu tag. `window.print()` biasa mencetak seluruh
+     * aplikasi (overlay gelap, tombol, sidebar) karena kartu hidup di dalam
+     * modal. Kartu dikloning ke `#print-root` di akhir `body`, lalu CSS cetak
+     * menyembunyikan semua anak body lain — deterministik, tanpa perang
+     * specificity dengan `visibility`.
+     */
+    printTag() {
+        const card = document.querySelector('[data-testid="asset-tag"]');
+        if (!card) {
+            window.print();
+            return;
+        }
+        document.getElementById('print-root')?.remove();
+        const root = document.createElement('div');
+        root.id = 'print-root';
+        const clone = /** @type {Element} */ (card.cloneNode(true));
+        // Klon harus **statis**. Kalau atribut Alpine ikut terbawa, `initTree`
+        // mengevaluasi `:src` di luar scope, gagal, lalu menghapus atributnya —
+        // hasilnya QR rusak di kertas. Buang semua binding, lalu salin `src`
+        // dari elemen hidup (yang sudah ter-decode).
+        stripAlpineBindings(clone);
+        const liveImgs = card.querySelectorAll('img');
+        const cloneImgs = clone.querySelectorAll('img');
+        liveImgs.forEach((img, i) => {
+            const target = cloneImgs[i];
+            if (target && img.currentSrc) target.setAttribute('src', img.currentSrc);
+        });
+        root.appendChild(clone);
+        document.body.appendChild(root);
+        window.addEventListener('afterprint', () => root.remove(), { once: true });
+        window.print();
+        // Jaring pengaman: sebagian WebView tidak memicu `afterprint`.
+        setTimeout(() => document.getElementById('print-root')?.remove(), 30_000);
     },
 
     downloadQR() {

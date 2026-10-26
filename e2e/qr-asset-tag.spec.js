@@ -4,15 +4,17 @@ import { writeFileSync } from 'node:fs';
 import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
 
 /**
- * Asset tag QR (S42): modal menampilkan kartu tag — QR + kata SCAN ME +
- * identitas aset — dan gambarnya benar-benar ter-render (bukan kotak kosong).
+ * Asset tag QR (S42): kartu tag di modal + hasil cetaknya.
  *
- * Screenshot kartu disimpan ke `QR_SHOT` (default `test-results/qr-tag.png`)
- * supaya hasil desain bisa ditinjau tanpa membuka app.
+ *  · `QR_SHOT`  — potret kartu (pratinjau desain)
+ *  · `QR_IMG`   — PNG QR mentah 640×640 untuk didekode di luar browser
+ *  · `QR_PRINT` — potret media `print`: harus HANYA kartu tag, tanpa overlay
+ *                 gelap, judul modal, atau tombol.
  */
 const SHOT = process.env.QR_SHOT || 'test-results/qr-tag.png';
+const PRINT = process.env.QR_PRINT || 'test-results/qr-tag-print.png';
 
-test('modal QR menampilkan kartu tag dengan SCAN ME', async ({ page }) => {
+async function loginAndOpenTag(page) {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
 
@@ -35,6 +37,23 @@ test('modal QR menampilkan kartu tag dengan SCAN ME', async ({ page }) => {
 
     const tag = page.locator('[data-testid="asset-tag"]');
     await expect(tag).toBeVisible({ timeout: 15_000 });
+    // QR harus sudah ter-decode sebelum dipotret/dicetak; kalau tidak, hasilnya
+    // gambar rusak dan tes tetap hijau tanpa membuktikan apa pun.
+    await expect
+        .poll(
+            () =>
+                page.evaluate(() => {
+                    const img = document.querySelector('[data-testid="asset-tag"] img');
+                    return img ? img.naturalWidth : 0;
+                }),
+            { timeout: 10_000 }
+        )
+        .toBeGreaterThan(0);
+    return { tag, errors };
+}
+
+test('modal QR menampilkan kartu tag dengan SCAN ME', async ({ page }) => {
+    const { tag, errors } = await loginAndOpenTag(page);
     await expect(tag.getByText('Scan Me', { exact: false })).toBeVisible();
 
     // Gambar QR harus benar-benar termuat (naturalWidth > 0), bukan src kosong.
@@ -58,4 +77,59 @@ test('modal QR menampilkan kartu tag dengan SCAN ME', async ({ page }) => {
         writeFileSync(imgPath, Buffer.from(dataUrl.split(',')[1] || '', 'base64'));
     }
     expect(errors).toEqual([]);
+});
+
+test('cetak hanya mengeluarkan kartu tag, bukan seluruh aplikasi', async ({ page }) => {
+    await loginAndOpenTag(page);
+
+    // `window.print()` di headless bisa memblokir; yang diuji di sini adalah
+    // isolasi DOM-nya, bukan dialog cetak browser.
+    const isolation = await page.evaluate(() => {
+        window.print = () => {};
+        globalThis.app.printTag();
+        const root = document.getElementById('print-root');
+        return {
+            rootExists: !!root,
+            clonedCard: !!root?.querySelector('[data-testid="asset-tag"]'),
+            clonedQr: !!root?.querySelector('img[alt="Asset QR code"]'),
+        };
+    });
+    expect(isolation).toEqual({ rootExists: true, clonedCard: true, clonedQr: true });
+
+    await page.emulateMedia({ media: 'print' });
+
+    const printed = await page.evaluate(() => {
+        const root = document.getElementById('print-root');
+        const card = root.querySelector('[data-testid="asset-tag"]');
+        const others = [...document.body.children].filter((el) => el.id !== 'print-root');
+        return {
+            rootDisplay: getComputedStyle(root).display,
+            cardWidth: Math.round(card.getBoundingClientRect().width),
+            cardVisibility: getComputedStyle(card).visibility,
+            // Semua anak body lain harus hilang dari hasil cetak.
+            hiddenOthers: others.every((el) => getComputedStyle(el).display === 'none'),
+            otherCount: others.length,
+            clonedQrLoaded: (root.querySelector('img')?.naturalWidth || 0) > 0,
+        };
+    });
+
+    expect(printed.rootDisplay).toBe('block');
+    expect(printed.hiddenOthers).toBe(true);
+    expect(printed.otherCount).toBeGreaterThan(0);
+    expect(printed.cardVisibility).toBe('visible');
+    // Dekode PNG data-URL butuh satu tick; poll, jangan asersi sekali.
+    await expect
+        .poll(
+            () =>
+                page.evaluate(
+                    () => document.querySelector('#print-root img')?.naturalWidth || 0
+                ),
+            { timeout: 10_000 }
+        )
+        .toBeGreaterThan(0);
+    // 78 mm ≈ 295 px @96dpi — bukan selebar layar.
+    expect(printed.cardWidth).toBeGreaterThan(240);
+    expect(printed.cardWidth).toBeLessThan(340);
+
+    await page.screenshot({ path: PRINT });
 });

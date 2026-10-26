@@ -80,7 +80,9 @@ describe('modal Asset Tag', () => {
     it('tombol tutup, simpan, dan cetak tetap ada', () => {
         expect(modal).toContain('aria-label="Close QR preview"');
         expect(modal).toContain('@click="downloadQR()"');
-        expect(modal).toContain('window.print()');
+        // Cetak lewat printTag(): kartu dikloning ke #print-root supaya hanya
+        // label yang keluar di kertas, bukan seluruh aplikasi.
+        expect(modal).toContain('@click="printTag()"');
     });
 });
 
@@ -102,5 +104,25 @@ describe('pembuatan QR', () => {
     it('label cetak bulk memuat SCAN ME dan bingkai tag', () => {
         expect(ui).toContain("doc.text('SCAN ME'");
         expect(ui).toContain('doc.roundedRect(x0, y0, tagW, tagH, 3, 3');
+    });
+});
+
+describe('cetak label', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/css/style.css'), 'utf8');
+
+    it('printTag mengkloning kartu ke #print-root lalu mencetak', () => {
+        expect(ui).toContain('printTag()');
+        expect(ui).toContain("root.id = 'print-root'");
+        expect(ui).toContain("card.cloneNode(true)");
+        expect(ui).toContain("addEventListener('afterprint'");
+        // Klon harus statis: binding Alpine dibuang, src disalin dari elemen hidup.
+        expect(ui).toContain('stripAlpineBindings(clone)');
+        expect(ui).toContain("target.setAttribute('src', img.currentSrc)");
+    });
+
+    it('CSS cetak menyembunyikan semua anak body kecuali #print-root', () => {
+        expect(css).toContain('#print-root');
+        expect(css).toMatch(/body > \*:not\(#print-root\) \{\s*display: none !important;/);
+        expect(css).toMatch(/@media print[\s\S]*#print-root \.asset-tag \{\s*width: 78mm;/);
     });
 });
