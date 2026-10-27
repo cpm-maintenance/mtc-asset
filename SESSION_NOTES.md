@@ -1,3 +1,33 @@
+## 🕒 S45i · Kalender & status PM pakai hari lokal — helper pindah ke `utils.js` (2026-10-27)
+
+**Rilis sw v85 → v86.** `src/**` berubah → 66 berkas diunduh ulang di perangkat operator.
+
+### Cacat
+Sisa kelas S45h, kali ini di `src/js/modules/pm-schedule.js`: hari kalender diturunkan lewat `toISOString()` (**UTC**) padahal dibandingkan dengan tanggal ber-semantik **lokal** (`pm.date`, `pmForm.date`, `completionDate`). Dua dampak berbeda:
+- **Salah sepanjang hari** — grid kalender: `dateStr` sel & `isToday`, sehingga event PM tampil di **sel sehari setelahnya**.
+- **Salah pada 00:00–08:00 WIB** — `isPMOverdue`, `isPMDueSoon`, urutan `pmUpcomingList`, hitungan `pmGetStats` (overdue / dueThisMonth), default tanggal form PM baru, `completionDate`, kunci dedupe `generateNextPM`, dan Gantt PM.
+
+### Perbaikan
+- Helper `localDateStr(date = new Date())` dipindah ke `src/js/utils.js` supaya satu definisi dipakai lintas modul; `src/js/app.js` kini mengimpornya (definisi lokal S45h dihapus).
+- 14 situs hari-kalender di `pm-schedule.js` memakai helper itu.
+- **5 situs timestamp dibiarkan UTC** (`createdAt`, `updatedAt`, `now`) — itu memang timestamp, bukan hari kalender.
+
+### TDD
+- RED dulu: 5 tes baru gagal dengan sebab tepat (grid `expected '2026-09-26' to be '2026-09-27'`, `isToday expected '2026-10-17' to be '2026-10-18'`, event di sel salah, `isOverdue` false, `isPMDueSoon` false).
+- Helper tes `iso()` di `tests/pm-schedule-module.test.js` ikut dijadikan berbasis tanggal **lokal** — itu membongkar situs UTC tambahan lewat tes lama yang selama ini "sepakat" dengan bug-nya.
+- GREEN, lalu dijalankan di empat zona waktu: WIB, UTC, `Pacific/Kiritimati` (UTC+14), `America/Los_Angeles` (UTC−7) → **107/107 masing-masing**. LA yang paling membuktikan: di sana tanggal UTC ≠ tanggal lokal, dan sebelum perbaikan berkas ini merah 5 tes.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- **2102 tes / 99 berkas hijau** (S45h: 2097) · rc 0
+- coverage **96,62 / 88,93 / 97,05 / 97,82** (rc 0; ambang 96/88/96/97 tidak diturunkan)
+- build **0** · precache **69 entries / 3261,84 KiB** → **66/66 OK**
+
+### Sisa pekerjaan
+Situs `toISOString()` sebagai "hari ini" di `src/js/app.js`: `:869`, `:1267`, `:1739`, `:2157`, `:85`/`:86`, `:1188`/`:1189`, `:1354` → kartu `t_c7952690` (masih terbuka).
+
+---
+
 ## 🧭 S45h · Bar Gantt kembali ke kolom yang benar — `dateStr` pakai tanggal lokal (2026-10-27)
 
 **Live sw v84 → v85.** `src/**` berubah, jadi `CACHE_NAME` naik: 66 berkas diunduh ulang di perangkat operator.

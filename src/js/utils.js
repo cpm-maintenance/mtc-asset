@@ -113,6 +113,17 @@ export function isValidInteger(value, min = 0, max = null) {
 }
 
 /**
+ * Tanggal ISO (YYYY-MM-DD) menurut waktu LOKAL. `toISOString()` memberi tanggal
+ * UTC — di WIB (UTC+8) itu menggeser satu hari, sehingga perbandingan dengan
+ * tanggal ber-semantik lokal (input operator, `pm.date`, `Tanggal` WO) meleset.
+ * @param {Date} [date]
+ * @returns {string}
+ */
+export function localDateStr(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
  * Validasi format tanggal (`YYYY-MM-DD`) dan rentang wajar (2020 s/d hari ini).
  *
  * @param {string} dateStr - String tanggal.

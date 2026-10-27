@@ -10,8 +10,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { pmScheduleModule } from '../src/js/modules/pm-schedule.js';
 
 const TODAY = new Date('2026-10-18T00:00:00Z');
-const iso = (offsetDays = 0) =>
-    new Date(TODAY.getTime() + offsetDays * 86400000).toISOString().slice(0, 10);
+/** Tanggal LOKAL dari sebuah Date — `toISOString()` memberi tanggal UTC. */
+const isoLocal = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const iso = (offsetDays = 0) => isoLocal(new Date(TODAY.getTime() + offsetDays * 86400000));
 
 function makeCtx(overrides = {}) {
     const ctx = Object.create(pmScheduleModule);
@@ -897,5 +899,58 @@ describe('pmScheduleModule.logPMFromSchedule', () => {
         ctx.logPMFromSchedule({ pmId: 'PM-2', equipmentId: 'EQ2', taskName: 'Inspeksi' });
         expect(ctx.logForm.desc).toBe('Inspeksi');
         expect(ctx.logForm.tech).toBe('Maintenance Team');
+    });
+});
+
+describe('PM Schedule — hari lokal, bukan UTC (S45i)', () => {
+    // 18 Okt 2026 pukul 01:00 waktu lokal: di WIB (UTC+8) tanggal UTC masih
+    // 17 Okt, jadi setiap pergeseran UTC/lokal langsung terlihat.
+    const EARLY = new Date(2026, 9, 18, 1, 0, 0);
+    const localISO = isoLocal;
+
+    it('dateStr tiap sel kalender memakai tanggal lokal', () => {
+        vi.setSystemTime(EARLY);
+        const days = makeCtx({ pmMonthOffset: 0 }).pmGetCalendarDays();
+        expect(days.length).toBeGreaterThan(27);
+        for (const d of days) expect(d.dateStr).toBe(localISO(d.date));
+    });
+
+    it('isToday menandai sel hari ini menurut waktu lokal', () => {
+        vi.setSystemTime(EARLY);
+        const days = makeCtx({ pmMonthOffset: 0 }).pmGetCalendarDays();
+        const flagged = days.filter((d) => d.isToday);
+        expect(flagged).toHaveLength(1);
+        expect(flagged[0].dateStr).toBe(localISO(EARLY));
+    });
+
+    it('event PM tampil di sel tanggal lokalnya sendiri', () => {
+        vi.setSystemTime(EARLY);
+        const key = localISO(EARLY);
+        const ctx = makeCtx({
+            pmMonthOffset: 0,
+            pmList: [{ pmId: '1', taskName: 'Ganti Oli', equipmentId: 'EQ1', date: key, status: 'pending' }],
+        });
+        const cell = ctx.pmGetCalendarDays().find((d) => d.dateStr === key);
+        expect(cell).toBeDefined();
+        expect(cell.events).toHaveLength(1);
+        expect(cell.isToday).toBe(true);
+    });
+
+    it('isOverdue memakai hari lokal saat UTC masih hari sebelumnya', () => {
+        vi.setSystemTime(EARLY);
+        const yesterday = localISO(new Date(2026, 9, 17));
+        const ctx = makeCtx({
+            pmList: [{ pmId: '1', taskName: 'A', equipmentId: 'EQ1', date: yesterday, status: 'pending' }],
+        });
+        expect(ctx.pmGetCalendarEvents()[yesterday][0].isOverdue).toBe(true);
+    });
+
+    it('pmIsDueSoon memakai hari lokal untuk batas tiga hari', () => {
+        vi.setSystemTime(EARLY);
+        const inThreeDays = localISO(new Date(2026, 9, 21));
+        const ctx = makeCtx({
+            pmList: [{ pmId: '1', taskName: 'A', equipmentId: 'EQ1', date: inThreeDays, status: 'pending' }],
+        });
+        expect(ctx.isPMDueSoon(ctx.pmList[0])).toBe(true);
     });
 });

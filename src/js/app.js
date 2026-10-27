@@ -19,16 +19,7 @@ import { errorHandlerModule } from './error-handler.js';
 import { bootstrapModule } from './bootstrap.js';
 import { whatsappModule } from './modules/whatsapp.js';
 import { DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_PERF_FORM } from './constants';
-import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
-
-/**
- * Tanggal ISO (YYYY-MM-DD) menurut waktu LOKAL. `toISOString()` menggeser satu
- * hari di WIB (UTC+8), sehingga kolom kalender jatuh di tanggal yang salah.
- * @param {Date} d
- * @returns {string}
- */
-const localDateStr = (d) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor, localDateStr } from './utils.js';
 
 /** @typedef {import("./appstate").AppState} AppState */
 /**

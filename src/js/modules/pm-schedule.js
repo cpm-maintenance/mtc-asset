@@ -1,5 +1,6 @@
 // @ts-check
 /** @typedef {import('../appstate').AppState} AppState */
+import { localDateStr } from '../utils.js';
 /**
  * pm-schedule.js — PM Schedule Module (Standalone Data Structure)
  * 
@@ -74,7 +75,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
             if (!days) continue;
             const nextDate = new Date(pm.date || Date.now());
             nextDate.setDate(nextDate.getDate() + days);
-            const nextDateStr = nextDate.toISOString().split('T')[0];
+            const nextDateStr = localDateStr(nextDate);
             const key = `${pm.taskName}|${pm.equipmentId}|${nextDateStr}`;
             if (!nextDates.has(key)) {
               await this.generateNextPM(pm);
@@ -114,7 +115,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     } else {
       this.pmForm = DEFAULT_PM_FORM();
       // Pre-fill today
-      this.pmForm.date = new Date().toISOString().split('T')[0];
+      this.pmForm.date = localDateStr();
     }
     this.showPMModal = true;
   },
@@ -204,9 +205,10 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   async completePM(pmId, note = '') {
     try {
       const now = new Date().toISOString();
+      const completionDate = localDateStr();
       await window.update(window.ref(window.db, `PM_Schedule/${pmId}`), {
         status: 'completed',
-        completionDate: now.split('T')[0],
+        completionDate,
         completionNote: note || '',
         updatedAt: now,
       });
@@ -214,7 +216,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
       const idx = this.pmList.findIndex(p => p.pmId === pmId);
       if (idx >= 0) {
         this.pmList[idx].status = 'completed';
-        this.pmList[idx].completionDate = now.split('T')[0];
+        this.pmList[idx].completionDate = completionDate;
         this.pmList[idx].completionNote = note || '';
         this.pmList[idx].updatedAt = now;
       }
@@ -246,7 +248,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
 
     const nextDate = new Date();
     nextDate.setDate(nextDate.getDate() + days);
-    const nextDateStr = nextDate.toISOString().split('T')[0];
+    const nextDateStr = localDateStr(nextDate);
 
     // For hours-based PM, annotate the target meter reading (nextHM threshold)
     let targetHM = null;
@@ -331,7 +333,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     this.pmLoading = true;
     try {
       const now = new Date().toISOString();
-      const today = now.split('T')[0];
+      const today = localDateStr();
       const promises = ids.map(pmId => {
         const pm = this.pmList.find(p => p.pmId === pmId);
         if (!pm || pm.status === 'completed') return;
@@ -405,7 +407,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     }
 
     // Sort: overdue first, then by date
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     return [...list].sort((/** @type {any} */ a, /** @type {any} */ b) => {
       const aOverdue = a.status === 'pending' && a.date < today ? 1 : 0;
       const bOverdue = b.status === 'pending' && b.date < today ? 1 : 0;
@@ -417,7 +419,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   // --- DASHBOARD HELPERS ---
   /** Pending tasks sorted: overdue first, then by date */
   get pmUpcomingList() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     return (this.pmList || [])
       .filter((/** @type {any} */ p) => p.status === 'pending')
       .sort((/** @type {any} */ a, /** @type {any} */ b) => {
@@ -469,14 +471,14 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     if (pm.basis === 'hours' && pm.targetHM > 0) {
       return this.pmCurrentHM(pm.equipmentId) >= pm.targetHM;
     }
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     return pm.date < today;
   },
   isPMDueSoon(pm) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     const threeDays = new Date();
     threeDays.setDate(threeDays.getDate() + 3);
-    return pm.status === 'pending' && pm.date >= today && pm.date <= threeDays.toISOString().split('T')[0];
+    return pm.status === 'pending' && pm.date >= today && pm.date <= localDateStr(threeDays);
   },
 
   // --- COMPUTED HELPERS (regular methods, not getters - keeps Alpine reactivity) ---
@@ -489,10 +491,10 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   /** Build calendar events from pmList */
   pmGetCalendarEvents() {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = localDateStr(today);
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);
-    const nextWeekStr = nextWeek.toISOString().split('T')[0];
+    const nextWeekStr = localDateStr(nextWeek);
 
     const eventsByDate = /** @type {Record<string, any[]>} */ ({});
     const list = this.pmFilterEquip
@@ -529,7 +531,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   /** Build calendar grid days */
   pmGetCalendarDays() {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = localDateStr(today);
     const offset = this.pmMonthOffset || 0;
     const year = today.getFullYear();
     const month = today.getMonth() + offset;
@@ -547,7 +549,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     for (let i = 0; i < rows * 7; i++) {
       const dayNum = i - startPad + 1;
       const date = new Date(year, month, dayNum);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = localDateStr(date);
       const isOtherMonth = date.getMonth() !== month;
 
       days.push({
@@ -566,12 +568,12 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   /** PM Statistics */
   pmGetStats() {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = localDateStr(today);
     const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    const endMonthStr = endMonth.toISOString().split('T')[0];
+    const endMonthStr = localDateStr(endMonth);
     const end30 = new Date(today);
     end30.setDate(today.getDate() + 30);
-    const end30Str = end30.toISOString().split('T')[0];
+    const end30Str = localDateStr(end30);
 
     const list = this.pmList || [];
     let overdue = 0, dueThisMonth = 0, upcoming = 0, completed = 0;
@@ -614,10 +616,10 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     endDate.setDate(0);
 
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = localDateStr(today);
 
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = localDateStr(d);
       days.push({
         date: d.getDate(),
         dateStr,
@@ -637,10 +639,10 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     const dayWidth = 20;
     const firstDateStr = days[0]?.dateStr || '';
     const lastDateStr = days[days.length - 1]?.dateStr || '';
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = localDateStr();
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStr = nextWeek.toISOString().split('T')[0];
+    const nextWeekStr = localDateStr(nextWeek);
 
     const daysSinceEpoch = (/** @type {string} */ dateStr) => Math.floor(new Date(dateStr).getTime() / 86400000);
     const day0 = daysSinceEpoch(firstDateStr);
