@@ -23,6 +23,9 @@ Sisa kelas S45h, kali ini di `src/js/modules/pm-schedule.js`: hari kalender ditu
 - coverage **96,62 / 88,93 / 97,05 / 97,82** (rc 0; ambang 96/88/96/97 tidak diturunkan)
 - build **0** · precache **69 entries / 3261,84 KiB** → **66/66 OK**
 
+### Deploy
+`npx firebase deploy --only hosting` → **rc 0**, `Deploy complete!`. Verifikasi publik: `https://mtc-asset.web.app/sw.js` → **`mtc-asset-v86`**; bundel live `assets/app-bFTqw4jp.js` memuat helper tanggal lokal, dan jumlah `toISOString()` di bundel turun dari **75** (v85) ke **56** (v86).
+
 ### Sisa pekerjaan
 Situs `toISOString()` sebagai "hari ini" di `src/js/app.js`: `:869`, `:1267`, `:1739`, `:2157`, `:85`/`:86`, `:1188`/`:1189`, `:1354` → kartu `t_c7952690` (masih terbuka).
 
