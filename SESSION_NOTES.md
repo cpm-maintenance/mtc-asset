@@ -18,7 +18,10 @@ Payload QR hanya ID telanjang (`EQ-E2E-001`). Kamera ponsel tidak bisa membukany
 ### Gerbang
 - tsc **0** · eslint **0** · **2137 tes / 103 berkas** · coverage **96,6 / 88,92 / 97,07 / 97,79** (ambang tidak diturunkan) · build **0** · precache **66/66**.
 - `npm run test:e2e:ci` (jalur CI, `--workers=1`): **21 passed · 0 skipped**, 1,3 m.
-- Belum di-push/deploy.
+### Deploy
+- push `0a9f435..58159c7` → `origin/main` (3 commit: `2aaa86c` e2e:ci, `ffc9752` tautan QR, `58159c7` catatan)
+- `npx firebase deploy --only hosting` → rc 0 (4 berkas baru) · live `https://mtc-asset.web.app/sw.js` → **`mtc-asset-v90`**
+- Bundel live `assets/app-DzRLGkhQ.js` memuat `?equip=` → kode tautan benar-benar terkirim. Host di stiker mengikuti origin app yang mencetak, jadi stiker produksi menunjuk ke `https://mtc-asset.web.app/?equip=<ID>`.
 
 ### Flake mode paralel (bukan dari perubahan ini)
 `npm run test:e2e` (dev server, worker paralel) bisa merah: `delete-wo-reload.spec.js` memegang kunci emulator > 30 s sehingga `beforeAll` `delete-wo.spec.js` habis waktu. Dibuktikan **tidak** disebabkan spec baru: dengan `--grep-invert "Tautan aset dari stiker QR"` spec destruktif itu tetap merah (1 failed). Kuncinya dipegang lebih lama karena dev server dingin (transform on-demand ~22 s) + dua spec destruktif paralel. Jalur yang hijau: `npm run test:e2e:ci` (satu worker) — sama seperti CI.
