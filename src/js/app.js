@@ -21,6 +21,15 @@ import { whatsappModule } from './modules/whatsapp.js';
 import { DEFAULT_EQUIP_FORM, DEFAULT_PART_FORM, DEFAULT_PERF_FORM } from './constants';
 import { isLowStock, calculatePartLifetime, getLifetimeColor, getLifetimeBgColor } from './utils.js';
 
+/**
+ * Tanggal ISO (YYYY-MM-DD) menurut waktu LOKAL. `toISOString()` menggeser satu
+ * hari di WIB (UTC+8), sehingga kolom kalender jatuh di tanggal yang salah.
+ * @param {Date} d
+ * @returns {string}
+ */
+const localDateStr = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 /** @typedef {import("./appstate").AppState} AppState */
 /**
  * Object spread memanggil getter, sehingga setiap getter yang dideklarasikan di dalam
@@ -2231,12 +2240,13 @@ export function app() {
             const now = new Date();
             const start = new Date(now.getFullYear(), now.getMonth() + this.planningGanttScroll - 1, 1);
             const end = new Date(start.getFullYear(), start.getMonth() + 2, 0); // 2 months range
+            const todayStr = localDateStr(now);
             for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 86400000)) {
-                const dateStr = d.toISOString().split('T')[0];
+                const dateStr = localDateStr(d);
                 days.push({
                     dateStr, date: d.getDate(), dayName: d.toLocaleDateString('en-US', { weekday:'narrow' }),
                     label: d.toLocaleDateString('en-US', { month:'short', day:'numeric' }),
-                    isToday: dateStr === new Date().toISOString().split('T')[0],
+                    isToday: dateStr === todayStr,
                     isWeekend: d.getDay() === 0 || d.getDay() === 6
                 });
             }

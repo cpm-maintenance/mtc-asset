@@ -233,11 +233,36 @@ describe('Planning Board — kalender & bar Gantt', () => {
   it('planningGanttDays mencakup hari ini dan menandai akhir pekan', () => {
     const a = makeApp();
     const days = a.planningGanttDays;
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    // Tanggal LOKAL — `toISOString()` memberi tanggal UTC dan bisa beda satu hari.
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     expect(days.length).toBeGreaterThan(50);
     expect(days.filter((d) => d.isToday)).toHaveLength(1);
     expect(days.find((d) => d.dateStr === today).isToday).toBe(true);
     expect(days.some((d) => d.isWeekend)).toBe(true);
+  });
+
+  it('planningGanttDays menulis dateStr menurut tanggal lokal, bukan UTC', () => {
+    const a = makeApp();
+    for (const d of a.planningGanttDays) {
+      // `date` adalah tanggal lokal kolom ini. Kalau `dateStr` diambil lewat
+      // `toISOString()` (UTC), angka harinya meleset satu di WIB.
+      const [y, m, dd] = d.dateStr.split('-');
+      expect(Number(dd)).toBe(d.date);
+      expect(Number(m)).toBeGreaterThanOrEqual(1);
+      expect(Number(m)).toBeLessThanOrEqual(12);
+      expect(Number(y)).toBeGreaterThan(2000);
+    }
+  });
+
+  it('planningGanttDays menandai isToday pada kolom tanggal lokal hari ini', () => {
+    const a = makeApp();
+    const now = new Date();
+    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const flagged = a.planningGanttDays.filter((d) => d.isToday);
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].dateStr).toBe(localToday);
+    expect(flagged[0].date).toBe(now.getDate());
   });
 
   it('planningGanttBar mengembalikan null tanpa Tanggal/dueDate', () => {

@@ -1,3 +1,38 @@
+## 🧭 S45h · Bar Gantt kembali ke kolom yang benar — `dateStr` pakai tanggal lokal (2026-10-27)
+
+**Live sw v84 → v85.** `src/**` berubah, jadi `CACHE_NAME` naik: 66 berkas diunduh ulang di perangkat operator.
+
+### Cacat
+`planningGanttDays` (`src/js/app.js:2229`) mengisi `dateStr` dengan `d.toISOString().split('T')[0]` — itu **UTC**, sedangkan kolom kalender dibangun dari tanggal **lokal**. Di WIB (UTC+8) tengah malam lokal = 16:00Z hari sebelumnya, jadi **setiap kolom `dateStr`-nya mendahului satu hari** dari labelnya. Terukur di env jsdom: `days[0].label = "Sep 1"` tapi `days[0].dateStr = "2026-08-31"`.
+
+### Dampak ke operator
+1. Bar Gantt meleset **satu kolom ke kanan** dari tanggal WO.
+2. WO dengan `Tanggal` di hari terakhir jendela (`'2026-10-31'`) tidak ada di `days` → `planningGanttBar` balik `null`, bar **hilang**.
+3. `isToday` menandai kolom **besok**, bukan hari ini.
+
+### Perbaikan
+- Helper file-scope `localDateStr(d)` (`src/js/app.js:25`), ber-JSDoc `@param {Date}` supaya `tsc --noEmit` tetap 0.
+- `planningGanttDays`: `dateStr = localDateStr(d)` (`:2235`), `todayStr = localDateStr(now)` dihitung sekali di luar loop, `isToday: dateStr === todayStr` (`:2239`).
+- `sw.js`: `CACHE_NAME` **v85**.
+
+### TDD (red dulu, sebabnya tepat)
+- RED: *dateStr menurut tanggal lokal* → `expected 31 to be 1`.
+- RED: *isToday pada kolom tanggal lokal* → `expected 28 to be 27`.
+- GREEN sesudah fix.
+- Tes lama *"planningGanttDays mencakup hari ini"* ikut dikoreksi: `today` dihitung dari `toISOString()` (UTC) — selama ini ia **sepakat** dengan bug-nya, itu sebabnya cacat ini tidak pernah tertangkap.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- **2097 tes / 99 berkas hijau** (S45g: 2095) · rc 0 · 52,8 s
+- coverage **96,62 / 88,93 / 97,05 / 97,82** (rc 0; ambang 96/88/96/97 tidak diturunkan)
+- build **0** (3,84 s) · precache **69 entries / 3262,38 KiB** → **66/66 OK** · live **v85**
+- Berkas tes yang tersentuh: **37/37** di empat zona waktu — default WIB, `Pacific/Kiritimati` (UTC+14), `America/Los_Angeles` (UTC−7), `Pacific/Midway` (UTC−11)
+
+### Sisa kelas cacat yang sama — BELUM diperbaiki (kartu `t_c7952690`)
+`toISOString()` juga dipakai sebagai "hari ini" lalu dibandingkan dengan tanggal ber-semantik lokal di `src/js/app.js:869`, `:1267` (`dashAlerts` — overdue PM), `:1739` (`pmStatusTac` — badge OVERDUE), `:2157` (`planningKpi`), `:85`/`:86` & `:1188`/`:1189` (rentang tanggal dashboard), `:1354` (ETA). Bedanya: situs-situs itu hanya salah **00:00–08:00 WIB**, sedangkan kolom Gantt salah sepanjang hari. Adopsi `localDateStr()` di situ mengubah perilaku beberapa fitur sekaligus → kartu + tes sendiri, tidak diselundupkan ke rilis ini.
+
+---
+
 ## 🧪 S45g · Tes bar Gantt dilepas dari jam — bom kalender ditutup (2026-10-27)
 
 **Tanpa perubahan rilis** — hanya `tests/**`; `CACHE_NAME` tetap **v84**, operator tidak mengunduh ulang apa pun.
