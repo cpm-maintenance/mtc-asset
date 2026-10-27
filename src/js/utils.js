@@ -124,6 +124,47 @@ export function localDateStr(date = new Date()) {
 }
 
 /**
+ * Tautan aset untuk stiker QR: `<origin>/?equip=<ID>`.
+ *
+ * Sebelum ini payload QR hanya ID telanjang — kamera ponsel tidak bisa membukanya,
+ * jadi teks "FOR DETAILED INFORMATION" di stiker tidak pernah benar. Origin
+ * diambil dari app yang mencetak stiker (produksi → `mtc-asset.web.app`), bukan
+ * dipaku di kode: stiker dari preview channel menunjuk ke host itu.
+ *
+ * @param {string} id - Equipment ID.
+ * @param {string} [origin] - Default origin halaman.
+ * @returns {string}
+ */
+export function equipTagLink(id, origin = globalThis.location?.origin || '') {
+    return `${origin}/?equip=${encodeURIComponent(String(id ?? '').trim())}`;
+}
+
+/**
+ * Kebalikannya: Equipment ID dari isi QR, tautan, atau entri manual.
+ *
+ * Menerima tiga bentuk — ID telanjang (stiker lama & entri manual), `?equip=`,
+ * dan `#equip=` — dan menormalkan huruf besar seperti pembaca lama. Tautan tanpa
+ * `equip` mengembalikan string kosong, bukan seluruh URL sebagai ID.
+ *
+ * @param {string} text
+ * @returns {string} ID huruf besar, atau '' bila tidak ada ID di dalamnya.
+ */
+export function equipIdFromLink(text) {
+    const raw = String(text ?? '').trim();
+    if (!raw) return '';
+    const isLink = /^https?:\/\//i.test(raw) || raw.startsWith('/') || raw.includes('?');
+    if (!isLink) return raw.toUpperCase();
+    try {
+        const url = new URL(raw, 'https://mtc-asset.web.app/');
+        const fromHash = new URLSearchParams(url.hash.replace(/^#/, '')).get('equip');
+        const id = url.searchParams.get('equip') || fromHash;
+        return id ? id.trim().toUpperCase() : '';
+    } catch {
+        return '';
+    }
+}
+
+/**
  * Validasi format tanggal (`YYYY-MM-DD`) dan rentang wajar (2020 s/d hari ini).
  *
  * @param {string} dateStr - String tanggal.

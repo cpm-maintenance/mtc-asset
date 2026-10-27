@@ -66,7 +66,7 @@ describe('QR — generateQR / downloadQR', () => {
   it('generateQR menghasilkan data URL dan membuka modal preview', async () => {
     const ctx = makeCtx();
     await uiModule.generateQR.call(ctx, 'EQ-123');
-    expect(ctx.qrCodeDataUrl).toContain('MOCK:EQ-123');
+    expect(ctx.qrCodeDataUrl).toContain('equip=EQ-123');
     expect(ctx.showQRPreviewModal).toBe(true);
     expect(ctx.isLoading).toBe(false);
   });

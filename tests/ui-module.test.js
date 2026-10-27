@@ -321,7 +321,7 @@ describe('ui — generateQR (jalur gagal)', () => {
   it('encoder sukses menyimpan data URL ke state', async () => {
     const ctx = makeCtx();
     await uiModule.generateQR.call(ctx, 'EQ-7');
-    expect(ctx.qrCodeDataUrl).toBe('data:image/png;base64,MOCK:EQ-7');
+    expect(ctx.qrCodeDataUrl).toContain('equip=EQ-7');
     expect(ctx.showQRPreviewModal).toBe(true);
     expect(ctx.isLoading).toBe(false);
   });

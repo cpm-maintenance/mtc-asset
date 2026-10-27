@@ -8,6 +8,7 @@ import { logger } from '../logger.js';
 import { CONSTANTS } from '../constants';
 import { uiCore, readThemeMode } from './ui-core.js';
 import { askConfirm } from './confirm-dialog.js';
+import { equipTagLink, equipIdFromLink } from '../utils.js';
 
 // Cloudinary unsigned uploads. An unsigned preset is *designed* to be used from the
 // browser, so there is no API secret anywhere in the client — nothing to leak, nothing
@@ -125,6 +126,22 @@ function triggerDownload(dataUrl, filename) {
     link.click();
 }
 
+/**
+ * Buang `?equip=` dari address bar setelah tautan aset terpakai, supaya reload
+ * tidak melompat balik ke unit yang sama. Gagal senyap: sebagian WebView/jsdom
+ * tidak mengizinkan `history` ditulis.
+ */
+function clearEquipDeepLink() {
+    try {
+        const url = new URL(globalThis.location.href);
+        if (!url.searchParams.has('equip')) return;
+        url.searchParams.delete('equip');
+        globalThis.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+        /* tanpa location/history: abaikan */
+    }
+}
+
 export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // QR scanner: nilai input "Manual ID Entry" (fallback tanpa kamera)
     manualScanId: '',
@@ -166,7 +183,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
      * @param {string} decodedText - Isi QR / ID yang diketik operator.
      */
     handleScanResult(decodedText) {
-        const cleanId = String(decodedText || '').trim().toUpperCase();
+        const cleanId = equipIdFromLink(decodedText);
         this.stopScanner();
         if (!cleanId) return;
         const e = (this.equipment || []).find(x => String(x.EquipmentID).toUpperCase() === cleanId);
@@ -217,7 +234,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     async generateQR(id) {
         this.isLoading = true;
         try {
-            this.qrCodeDataUrl = await buildAssetTagImage(id);
+            this.qrCodeDataUrl = await buildAssetTagImage(equipTagLink(id));
             this.showQRPreviewModal = true;
         } catch (err) {
             console.error('QR Generation Error:', err);
@@ -225,6 +242,40 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         } finally {
             this.isLoading = false;
         }
+    },
+
+    /**
+     * Titik masuk tautan aset (`?equip=<ID>`) — ini yang dibuka kamera ponsel
+     * setelah operator memindai stiker.
+     *
+     * Daftar aset datang dari listener RTDB, jadi unitnya **belum ada** saat gate
+     * login dibuka: menunggu sekali baca akan selalu berakhir "not found". Karena
+     * itu unitnya ditunggu sampai muncul, lalu jalur hasilnya memakai titik masuk
+     * yang sama dengan scanner optik (`handleScanResult`). Tautannya dibersihkan
+     * dari address bar sesudah terpakai supaya reload tidak melompat balik ke
+     * unit yang sama.
+     *
+     * @param {{href?: string, timeoutMs?: number, intervalMs?: number}} [opts]
+     * @returns {Promise<string>} ID yang dibuka, atau '' bila tidak ada tautan/unit.
+     */
+    async applyEquipDeepLink({
+        href = globalThis.location?.href || '',
+        timeoutMs = 15_000,
+        intervalMs = 250,
+    } = {}) {
+        const id = equipIdFromLink(href);
+        if (!id) return '';
+        const found = () =>
+            (this.equipment || []).some((e) => String(e.EquipmentID).toUpperCase() === id);
+        const deadline = Date.now() + timeoutMs;
+        while (!found() && Date.now() <= deadline) {
+            await new Promise((r) => setTimeout(r, intervalMs));
+        }
+        // Satu jalur hasil untuk keduanya: unit ada → dibuka, belum ada → notifikasi error.
+        this.handleScanResult(id);
+        if (!found()) return '';
+        clearEquipDeepLink();
+        return id;
     },
 
     /**
@@ -312,7 +363,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
                 const id = eq.EquipmentID || '-1';
                 // Label cetak selalu huruf kapital, sama seperti kartu di modal.
                 const name = String(eq.Nama || id).toUpperCase().substring(0, 24);
-                const qr = await QRCode.toDataURL(id, { width: 240, margin: 1, color: { dark: '#0B0F1A', light: '#FFFFFF' } });
+                const qr = await QRCode.toDataURL(equipTagLink(id), { width: 240, margin: 1, color: { dark: '#0B0F1A', light: '#FFFFFF' } });
 
                 const col = idx % cols, row = Math.floor(idx / cols) % rows;
                 const x0 = col * cellW + 7;

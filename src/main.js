@@ -440,6 +440,9 @@ window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
     loginScreen.isLoggedIn = true;
     loginScreen.user = user;
     loginScreen.isLoading = false;
+    // Tautan stiker QR (`?equip=<ID>`) hanya berguna setelah gate terbuka: unit
+    // dibuka lewat `currentPage`, yang baru ada saat shell sudah ter-render.
+    void instance.applyEquipDeepLink?.();
   } catch (err) {
     logger.warn('[auth] boot pasca-login gagal:', err);
     loginScreen.isLoading = false;
