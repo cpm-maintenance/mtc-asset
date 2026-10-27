@@ -82,8 +82,8 @@ export function app() {
         appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev',
 
         // Dashboard date range filter
-        dashboardDateFrom: new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0],
-        dashboardDateTo: new Date().toISOString().split('T')[0],
+        dashboardDateFrom: localDateStr(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+        dashboardDateTo: localDateStr(),
         
         // Audit trail
         auditLogs: [],
@@ -866,7 +866,7 @@ export function app() {
                 const pr = partMap.get(p.id);
                 if (pr) partsValue += q * (Number(pr.Harga) || 0);
             }));
-            const today = new Date().toISOString().split('T')[0];
+            const today = localDateStr();
             const result = {
                 total: logs.length,
                 open: open.length,
@@ -1185,8 +1185,8 @@ export function app() {
                 this.dashboardDateFrom = '';
                 this.dashboardDateTo = '';
             } else {
-                this.dashboardDateFrom = new Date(Date.now() - days*24*60*60*1000).toISOString().split('T')[0];
-                this.dashboardDateTo = new Date().toISOString().split('T')[0];
+                this.dashboardDateFrom = localDateStr(new Date(Date.now() - days * 24 * 60 * 60 * 1000));
+                this.dashboardDateTo = localDateStr();
             }
             this.applyDashboardFilter();
         },
@@ -1264,7 +1264,7 @@ export function app() {
 
         // Dashboard alert zone (P1)
         get dashAlerts() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = localDateStr();
             const overduePM = (this.pmList || []).filter(pm => pm.status === 'pending' && pm.date && pm.date < today).length;
             const agingWO = (this.logs || []).filter(l => {
                 if (!(l.Status === 'Pending' || l.Status === 'Draft')) return false;
@@ -1351,7 +1351,7 @@ export function app() {
                         if (usagePerDay > 0) {
                             const remaining = lifetimeHours - usage;
                             const daysLeft = Math.max(0, remaining / usagePerDay);
-                            eta = new Date(Date.now() + daysLeft * 86400000).toISOString().split('T')[0];
+                            eta = localDateStr(new Date(Date.now() + daysLeft * 86400000));
                             confidence = Math.min(95, Math.round(70 + ratio * 0.25));
                         }
                     }
@@ -1736,7 +1736,7 @@ export function app() {
                 // Tactical Slate Helpers for PM Schedule
                 pmStatusTac(pm) {
                     if (!pm) return { label: 'UNKNOWN', badge: 'bg-tac-surface-recessed text-tac-on-surface-variant border-tac-border-subtle', marker: 'bg-tac-status-standby', icon: 'help' };
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = localDateStr();
                     if (pm.status === 'pending' && pm.date < today) {
                         return { label: 'OVERDUE', badge: 'bg-tac-status-emergency/15 text-tac-status-emergency border-tac-status-emergency/40', marker: 'bg-tac-status-emergency', icon: 'warning' };
                     }
@@ -2154,7 +2154,7 @@ export function app() {
         // ── Tactical Slate — Planning Board telemetry & helper ──────────────
         get planningKpi() {
             const wos = (this.planningWOs || []).filter(Boolean);
-            const today = new Date().toISOString().split('T')[0];
+            const today = localDateStr();
             const open = wos.filter((/** @type {any} */ w) => w.Status === 'Pending' || w.Status === 'Draft').length;
             const approved = wos.filter((/** @type {any} */ w) => w.Status === 'Approved').length;
             const inProgress = wos.filter((/** @type {any} */ w) => w.Status === 'In Progress').length;

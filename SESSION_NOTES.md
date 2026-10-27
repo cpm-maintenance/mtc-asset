@@ -1,3 +1,34 @@
+## 🌅 S45j · Seluruh `app.js` pakai hari lokal — kelas UTC ditutup (2026-10-27)
+
+**Rilis sw v86 → v87.** `src/**` berubah → 66 berkas diunduh ulang di perangkat operator.
+
+### Cacat
+Sisa terakhir kelas S45h/S45i: `src/js/app.js` masih mengambil "hari ini" lewat `toISOString()` (**UTC**) lalu membandingkannya dengan tanggal ber-semantik **lokal**. Dampaknya senyap dan jatuh tepat di **00:00–08:00 WIB** — jendela shift pagi:
+
+- badge **OVERDUE** di kartu PM (`pmStatusTac`),
+- hitungan **overdue PM** di zona alert dashboard (`dashAlerts`),
+- **overdue WO** di KPI deck dashboard (`woKpi`) dan di Planning Board (`planningKpi`),
+- rentang tanggal dashboard (default state + `setDashboardPreset`),
+- **ETA** lifetime spare part.
+
+### Perbaikan
+Tujuh situs diganti ke `localDateStr()` — helper yang sama dari `src/js/utils.js`. `src/js/app.js` kini **nol** `toISOString()` (berkas ini memang tidak menyimpan timestamp).
+
+### TDD
+- RED dulu di `tests/app-local-day.test.js` (berkas baru, 6 tes) dengan jam **01:00 waktu lokal**: `dashAlerts.overduePM` `+0 → 1`, `pmStatusTac` `'PENDING' → 'OVERDUE'`, `planningKpi.overdue` `+0 → 1`, `woKpi.overdue` `+0 → 1`, `setDashboardPreset` dan default rentang menunjuk **kemarin** alih-alih hari ini.
+- GREEN sesudah fix, lalu hijau di empat zona waktu (WIB, UTC, `Pacific/Kiritimati` UTC+14, `America/Los_Angeles` UTC−7) — **6/6 masing-masing**.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- **2108 tes / 100 berkas hijau** (S45i: 2102) · rc 0
+- coverage **96,62 / 88,93 / 97,05 / 97,82** (rc 0; ambang 96/88/96/97 tidak diturunkan)
+- build **0** · precache **69 entries / 3261,56 KiB** → **66/66 OK** · **sw v87**
+
+### Status kelas cacat ini
+Tuntas di tiga modul: `app.js` (kolom Gantt + tujuh situs "hari ini"), `pm-schedule.js` (14 situs hari-kalender). Yang tersisa dan memang benar UTC hanyalah timestamp (`createdAt`, `updatedAt`).
+
+---
+
 ## 🕒 S45i · Kalender & status PM pakai hari lokal — helper pindah ke `utils.js` (2026-10-27)
 
 **Rilis sw v85 → v86.** `src/**` berubah → 66 berkas diunduh ulang di perangkat operator.
