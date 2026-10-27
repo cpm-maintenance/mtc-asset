@@ -423,8 +423,43 @@ export const requisitionModule = /** @type {Partial<AppState> & ThisType<AppStat
         this.showNotification(`✅ ${success} approved${errors ? ', ' + errors + ' failed' : ''}`);
     },
 
-    async deleteRequisition(reqId) {
-        if (!(await askConfirm('Permintaan ini dihapus permanen dari database.', { title: 'Hapus permintaan', confirmLabel: 'Hapus', tone: 'danger' }))) return;
+    // --- Multi-select: hapus massal request ---
+    get reqAllVisibleSelected() {
+        const rows = this.reqGetFilteredList() || [];
+        return rows.length > 0 && rows.every((/** @type {any} */ x) => (this.reqSelectedIds || []).includes(x.id));
+    },
+    toggleSelectAllRequisitions() {
+        const rows = this.reqGetFilteredList() || [];
+        if (!Array.isArray(this.reqSelectedIds)) this.reqSelectedIds = [];
+        const all = rows.length > 0 && rows.every((/** @type {any} */ x) => this.reqSelectedIds.includes(x.id));
+        this.reqSelectedIds = all ? [] : rows.map((/** @type {any} */ x) => x.id);
+    },
+    async bulkDeleteRequisitions() {
+        const ids = [...new Set(this.reqSelectedIds || [])];
+        if (!ids.length) {
+            this.showNotification('Tidak ada permintaan yang dipilih', 'info');
+            return 0;
+        }
+        if (!(await askConfirm(`${ids.length} permintaan terpilih akan dihapus permanen. Lanjutkan?`))) return 0;
+
+        let removed = 0;
+        let failed = 0;
+        for (const id of ids) {
+            try {
+                await this.deleteRequisition(id, { skipConfirm: true });
+                removed++;
+            } catch (/** @type {any} */ e) {
+                console.error(`[Requisition] bulk delete gagal ${id}:`, e.message);
+                failed++;
+            }
+        }
+        this.reqSelectedIds = [];
+        this.showNotification(`🗑️ ${removed} permintaan dihapus${failed ? `, ${failed} gagal` : ''}`);
+        return removed;
+    },
+
+    async deleteRequisition(reqId, opts = {}) {
+        if (!opts.skipConfirm && !(await askConfirm('Permintaan ini dihapus permanen dari database.', { title: 'Hapus permintaan', confirmLabel: 'Hapus', tone: 'danger' }))) return;
         try {
             await window.remove(window.ref(window.db, `Requisitions/${reqId}`));
             this.requisitions = this.requisitions.filter(r => r.id !== reqId);

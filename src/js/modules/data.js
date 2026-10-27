@@ -8,6 +8,7 @@ import { withRetry, isNetworkError } from '../utils.js';
 import { idbManager, CAN_USE_IDB } from './indexeddb.js';
 import { sendBrowserNotification } from './notification.js';
 import { sendPushViaProxy } from './push-client.js';
+import { askConfirm } from './confirm-dialog.js';
 
 // Clean URL from encoding issues (e.g., &#x2F; -> /, %2F -> /)
 function cleanFirebaseUrl(/** @type {any} */ url) {
@@ -715,8 +716,40 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         this.showNotification("All pending operations synced!", "success");
     },
 
-    async deleteItem(node, id) {
-        const confirmed = await this.confirmDelete(node, id);
+    /**
+     * Hapus banyak item dengan SATU konfirmasi.
+     * Tetap lewat `deleteItem` supaya aturan hapus (offline queue, pemangkasan
+     * cache, pembaruan state lokal) identik dengan hapus satu per satu.
+     *
+     * @param {string} node
+     * @param {any[]} ids
+     * @param {string} label
+     */
+    async bulkDeleteItems(node, ids, label = 'item') {
+        const list = [...new Set((ids || []).filter(Boolean))];
+        if (!list.length) {
+            this.showNotification('Tidak ada item yang dipilih', 'info');
+            return 0;
+        }
+        if (!(await askConfirm(`${list.length} ${label} terpilih akan dihapus permanen. Lanjutkan?`))) return 0;
+
+        let removed = 0;
+        let failed = 0;
+        for (const id of list) {
+            try {
+                await this.deleteItem(node, id, { skipConfirm: true });
+                removed++;
+            } catch (/** @type {any} */ e) {
+                console.error(`[BulkDelete] ${node}/${id} gagal:`, e.message);
+                failed++;
+            }
+        }
+        this.showNotification(`🗑️ ${removed} ${label} dihapus${failed ? `, ${failed} gagal` : ''}`);
+        return removed;
+    },
+
+    async deleteItem(node, id, opts = {}) {
+        const confirmed = opts.skipConfirm ? true : await this.confirmDelete(node, id);
         if (!confirmed) return;
         
         // If offline, queue the operation

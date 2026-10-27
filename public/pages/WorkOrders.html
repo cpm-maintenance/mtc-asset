@@ -289,6 +289,16 @@
         <input aria-label="Urutkan menurut skor" type="checkbox" x-model="sortByScore" class="accent-tac-primary-container w-4 h-4">
         <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">SORT BY PRIORITY SCORE</span>
       </label>
+      <button type="button" @click="toggleSelectAllWOs()"
+        class="font-label-mono-sm text-label-mono-sm text-tac-status-standby hover:text-tac-primary uppercase">
+        <span x-text="woAllVisibleSelected ? 'BATAL PILIH' : 'PILIH SEMUA'"></span>
+      </button>
+      <button type="button" x-show="isAdminOrSupervisor && woSelectedIds.length > 0" x-cloak
+        @click="bulkDeleteWOs()"
+        class="flex items-center gap-1.5 px-space-sm py-1.5 rounded border border-tac-status-emergency/50 text-tac-status-emergency font-label-mono-sm text-label-mono-sm uppercase hover:bg-tac-status-emergency/15 transition-colors">
+        <span class="material-symbols-outlined text-[16px]">close</span>
+        <span x-text="'HAPUS (' + woSelectedIds.length + ')'"></span>
+      </button>
       <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase ml-auto"
         x-text="woVisible.length + ' / ' + woFiltered.length + ' RECORDS'"></span>
     </div>
@@ -562,7 +572,9 @@
                 <!-- Header: nomor WO + prioritas + sektor | umur + tanggal -->
                 <div class="flex flex-wrap items-center justify-between gap-space-xs">
                   <div class="flex items-center gap-space-sm flex-wrap">
-                    <span class="font-label-mono-lg text-label-mono-lg text-tac-primary font-bold"
+                                        <input type="checkbox" x-model="woSelectedIds" :value="log.LogID" aria-label="Pilih work order"
+                      class="h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+<span class="font-label-mono-lg text-label-mono-lg text-tac-primary font-bold"
                       x-text="'WO #' + (log.woNumber || log.LogID)"></span>
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold"
                       :class="woPriorityTac(log.woPriority)">

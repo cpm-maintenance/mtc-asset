@@ -194,6 +194,19 @@
         class="font-label-mono-sm text-label-mono-sm text-tac-primary hover:underline">
         RESET FILTER
       </button>
+
+      <div class="flex items-center gap-space-sm">
+        <button type="button" @click="toggleSelectAllParts()"
+          class="font-label-mono-sm text-label-mono-sm text-tac-status-standby hover:text-tac-primary uppercase">
+          <span x-text="partAllVisibleSelected ? 'BATAL PILIH' : 'PILIH SEMUA'"></span>
+        </button>
+        <button type="button" x-show="isAdminOrSupervisor && partSelectedIds.length > 0" x-cloak
+          @click="bulkDeleteParts()"
+          class="flex items-center gap-1.5 px-space-sm py-1.5 rounded border border-tac-status-emergency/50 text-tac-status-emergency font-label-mono-sm text-label-mono-sm uppercase hover:bg-tac-status-emergency/15 transition-colors">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+          <span x-text="'HAPUS (' + partSelectedIds.length + ')'"></span>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -203,7 +216,11 @@
       <table class="w-full text-left border-collapse font-body-sm text-body-sm">
         <thead>
           <tr class="bg-tac-surface-container border-b border-tac-border-subtle font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider">
-            <th class="px-space-md py-3">PART NUMBER / ID</th>
+                        <th class="w-10 px-space-md py-3">
+              <input type="checkbox" :checked="partAllVisibleSelected" @click="toggleSelectAllParts()"
+                aria-label="Pilih semua part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+            </th>
+<th class="px-space-md py-3">PART NUMBER / ID</th>
             <th class="px-space-md py-3">NAMA PART &amp; SPESIFIKASI</th>
             <th class="px-space-md py-3">STORAGE ZONE</th>
             <th class="px-space-md py-3">STATUS CADANGAN</th>
@@ -215,7 +232,10 @@
           <template x-for="p in filteredAllParts" :key="p.PartID">
             <tr class="hover:bg-tac-surface-elevated/70 transition-colors group">
               <!-- Part Number & ID -->
-              <td class="px-space-md py-3.5">
+                            <td class="pl-space-md pr-0 py-3.5 align-top">
+                <input type="checkbox" x-model="partSelectedIds" :value="p.PartID" aria-label="Pilih part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+              </td>
+<td class="px-space-md py-3.5">
                 <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary group-hover:text-tac-gold-bright transition-colors"
                   x-text="p.PartNumber || p.PartID"></p>
                 <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby mt-0.5"
@@ -295,7 +315,8 @@
         <div class="pl-2 flex flex-col gap-space-sm">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="p.PartNumber || p.PartID"></p>
+                            <input type="checkbox" x-model="partSelectedIds" :value="p.PartID" aria-label="Pilih part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+<p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="p.PartNumber || p.PartID"></p>
               <h2 class="font-body-md text-body-md font-semibold text-tac-on-surface truncate" x-text="p.NamaPart" :title="p.NamaPart"></h2>
             </div>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border shrink-0"

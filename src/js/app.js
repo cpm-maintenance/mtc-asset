@@ -801,6 +801,30 @@ export function app() {
          * Tanpa ini, 200 WO = ±13.800 node DOM dan ±8 s di CPU mobile 4×.
          * Pola sama seperti `filteredAllLogs` + `allLogsLimit` di All Logs.
          */
+        // --- Multi-select: Work Orders (pilih banyak, hapus massal) ---
+        /** @param {string} id */
+        toggleWOSelect(id) {
+            if (!Array.isArray(this.woSelectedIds)) this.woSelectedIds = [];
+            const i = this.woSelectedIds.indexOf(id);
+            if (i >= 0) this.woSelectedIds.splice(i, 1);
+            else this.woSelectedIds.push(id);
+        },
+        get woAllVisibleSelected() {
+            const rows = this.woVisible || [];
+            return rows.length > 0 && rows.every((/** @type {any} */ r) => (this.woSelectedIds || []).includes(r.LogID));
+        },
+        toggleSelectAllWOs() {
+            const rows = this.woVisible || [];
+            if (!Array.isArray(this.woSelectedIds)) this.woSelectedIds = [];
+            const all = rows.length > 0 && rows.every((/** @type {any} */ r) => this.woSelectedIds.includes(r.LogID));
+            this.woSelectedIds = all ? [] : rows.map((/** @type {any} */ r) => r.LogID);
+        },
+        async bulkDeleteWOs() {
+            await this.bulkDeleteItems('HistoryLog', this.woSelectedIds || [], 'work order');
+            this.woSelectedIds = [];
+        },
+
+        woSelectedIds: [],
         get woVisible() {
             return this.woFiltered.slice(0, this.woLimit || 30);
         },
@@ -1756,6 +1780,30 @@ export function app() {
                     return { label: 'MED', badge: 'bg-tac-status-repair/15 text-tac-status-repair border-tac-status-repair/40' };
                 },
 
+                // --- Multi-select: Spare Parts (pilih banyak, hapus massal) ---
+                /** @param {string} id */
+                togglePartSelect(id) {
+                    if (!Array.isArray(this.partSelectedIds)) this.partSelectedIds = [];
+                    const i = this.partSelectedIds.indexOf(id);
+                    if (i >= 0) this.partSelectedIds.splice(i, 1);
+                    else this.partSelectedIds.push(id);
+                },
+                get partAllVisibleSelected() {
+                    const rows = this.filteredAllParts || [];
+                    return rows.length > 0 && rows.every((/** @type {any} */ p) => (this.partSelectedIds || []).includes(p.PartID));
+                },
+                toggleSelectAllParts() {
+                    const rows = this.filteredAllParts || [];
+                    if (!Array.isArray(this.partSelectedIds)) this.partSelectedIds = [];
+                    const all = rows.length > 0 && rows.every((/** @type {any} */ p) => this.partSelectedIds.includes(p.PartID));
+                    this.partSelectedIds = all ? [] : rows.map((/** @type {any} */ p) => p.PartID);
+                },
+                async bulkDeleteParts() {
+                    await this.bulkDeleteItems('SpareParts', this.partSelectedIds || [], 'part');
+                    this.partSelectedIds = [];
+                },
+
+                partSelectedIds: [],
                 get filteredAllParts() {
                     if (!this.allParts || !Array.isArray(this.allParts)) {
                         return [];

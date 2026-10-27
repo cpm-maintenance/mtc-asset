@@ -359,34 +359,16 @@ describe('notification.js — checkAllNotifications: perilaku umum', () => {
         expect(() => checkAllNotifications()).not.toThrow();
     });
 
-    it('menjalankan auto-reorder hanya untuk admin/supervisor', () => {
-        const autoReorderLowStock = vi.fn(async () => {});
-        resetApp({ autoReorderLowStock, isAdminOrSupervisor: true });
+  it('tidak auto-create request dari checkAllNotifications (semua role)', async () => {
+    const autoReorderLowStock = vi.fn(async () => {});
 
-        checkAllNotifications();
-
-        expect(autoReorderLowStock).toHaveBeenCalledTimes(1);
-    });
-
-    it('tidak menjalankan auto-reorder untuk role biasa', () => {
-        const autoReorderLowStock = vi.fn(async () => {});
-        resetApp({ autoReorderLowStock, isAdminOrSupervisor: false });
-
-        checkAllNotifications();
-
-        expect(autoReorderLowStock).not.toHaveBeenCalled();
-    });
-
-    it('tidak melempar bila auto-reorder menolak', async () => {
-        const autoReorderLowStock = vi.fn(async () => {
-            throw new Error('offline');
-        });
-        resetApp({ autoReorderLowStock, isAdminOrSupervisor: true });
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        checkAllNotifications();
-        await vi.waitFor(() => expect(warn).toHaveBeenCalled());
-    });
+    for (const isAdminOrSupervisor of [true, false]) {
+      resetApp({ autoReorderLowStock, isAdminOrSupervisor });
+      checkAllNotifications();
+      await Promise.resolve();
+      expect(autoReorderLowStock).not.toHaveBeenCalled();
+    }
+  });
 
     it('menandai notifikasi in-app dengan ikon + warna', () => {
         resetApp({ allParts: [{ PartID: 'P1', NamaPart: 'A', Stok: 0 }] });
@@ -456,37 +438,25 @@ describe('notification — guard state kosong & ServiceWorker absen', () => {
         expect(window.app.notifications.length).toBe(countAfterFirst);
     });
 
-    it('auto-reorder hanya jalan untuk admin/supervisor', () => {
-        const autoReorder = vi.fn(async () => {});
+  it('auto-reorder tidak pernah jalan otomatis, walau admin/supervisor', async () => {
+    const autoReorder = vi.fn(async () => {});
+    window.app = {
+      notifications: [],
+      allParts: [],
+      logs: [],
+      pmList: [],
+      performanceData: [],
+      autoReorderLowStock: autoReorder,
+      isAdminOrSupervisor: false,
+    };
 
-        window.app = { notifications: [], allParts: [], logs: [], pmList: [], performanceData: [], autoReorderLowStock: autoReorder, isAdminOrSupervisor: false };
-        checkAllNotifications();
-        expect(autoReorder).not.toHaveBeenCalled();
+    checkAllNotifications();
+    window.app.isAdminOrSupervisor = true;
+    checkAllNotifications();
+    await Promise.resolve();
 
-        window.app.isAdminOrSupervisor = true;
-        checkAllNotifications();
-        expect(autoReorder).toHaveBeenCalledTimes(1);
-    });
-
-    it('auto-reorder yang gagal tidak menjatuhkan checkAllNotifications', async () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        window.app = {
-            notifications: [],
-            allParts: [],
-            logs: [],
-            pmList: [],
-            performanceData: [],
-            autoReorderLowStock: vi.fn(async () => { throw new Error('offline'); }),
-            isAdminOrSupervisor: true,
-        };
-
-        expect(() => checkAllNotifications()).not.toThrow();
-        await Promise.resolve();
-        await Promise.resolve();
-
-        expect(warn).toHaveBeenCalledWith('[Notif] Auto-reorder:', 'offline');
-        warn.mockRestore();
-    });
+    expect(autoReorder).not.toHaveBeenCalled();
+  });
 });
 
 describe('sendBrowserNotification — izin & ServiceWorker', () => {

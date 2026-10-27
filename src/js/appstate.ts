@@ -220,6 +220,7 @@ export interface AppState {
   pmLoading?: boolean;
   pmMonthOffset?: number;
   pmSelectedIds: any[];
+  woSelectedIds: any[];
   pmShowDetail?: boolean;
   pmView?: string;
   qrCodeDataUrl?: string;
@@ -233,6 +234,7 @@ export interface AppState {
   reqNotes?: string;
   reqPriority?: string;
   reqSelectedIds: any[];
+  partSelectedIds: any[];
   reqShowDetail?: boolean;
   reqWoId?: string;
   reqWoNumber?: string;
@@ -364,6 +366,15 @@ export interface AppState {
   approveRequisition: (...args: any[]) => any;
   approveWO: (...args: any[]) => any;
   autoReorderLowStock: (...args: any[]) => any;
+  bulkDeleteItems: (...args: any[]) => any;
+  toggleWOSelect: (...args: any[]) => any;
+  toggleSelectAllWOs: (...args: any[]) => any;
+  bulkDeleteWOs: (...args: any[]) => any;
+  togglePartSelect: (...args: any[]) => any;
+  toggleSelectAllParts: (...args: any[]) => any;
+  bulkDeleteParts: (...args: any[]) => any;
+  toggleSelectAllRequisitions: (...args: any[]) => any;
+  bulkDeleteRequisitions: (...args: any[]) => any;
   get backlogAging(): any;
   backlogScore: (...args: any[]) => any;
   backlogScoreColor: (...args: any[]) => any;
@@ -447,6 +458,7 @@ export interface AppState {
   get filteredAllLogs(): any;
   get filteredAllLogsAll(): any;
   get filteredAllParts(): any;
+  get partAllVisibleSelected(): boolean;
   get filteredAudit(): any;
   /** Halaman Audit Trail (Tactical Slate). */
   get auditKpi(): any;
@@ -710,6 +722,7 @@ export interface AppState {
   woSectorOf: (...args: any[]) => any;
   get woSectorOptions(): any;
   get woFiltered(): any;
+  get woAllVisibleSelected(): boolean;
   get woKanbanColumns(): any;
   get woSelected(): any;
   get woNextInQueue(): any;

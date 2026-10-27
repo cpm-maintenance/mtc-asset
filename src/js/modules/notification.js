@@ -259,10 +259,6 @@ export function checkAllNotifications() {
   checkWarrantyExpiry();
   checkLowStockParts();
 
-  // C2: Auto-reorder spare low stock (fire-and-forget, admin/supervisor only)
-  if (window.app?.autoReorderLowStock && window.app?.isAdminOrSupervisor) {
-    window.app.autoReorderLowStock().catch(e => console.warn('[Notif] Auto-reorder:', e.message));
-  }
 }
 
 function checkLowStockParts() {

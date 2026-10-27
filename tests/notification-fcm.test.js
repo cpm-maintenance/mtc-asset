@@ -167,38 +167,15 @@ describe('notification.js: setupForegroundListener', () => {
   });
 });
 
-describe('notification.js: checkAllNotifications — auto-reorder', () => {
-  it('admin/supervisor: autoReorderLowStock dipanggil', () => {
+describe('notification.js: checkAllNotifications — tanpa auto-reorder', () => {
+  it('tidak memanggil autoReorderLowStock walau admin/supervisor', () => {
     const autoReorder = vi.fn().mockResolvedValue(undefined);
     window.app = { notifications: [], autoReorderLowStock: autoReorder, isAdminOrSupervisor: true };
-    resetNotifBlocker();
-
-    checkAllNotifications();
-
-    expect(autoReorder).toHaveBeenCalledTimes(1);
-  });
-
-  it('bukan admin: autoReorderLowStock tidak dipanggil', () => {
-    const autoReorder = vi.fn().mockResolvedValue(undefined);
-    window.app = { notifications: [], autoReorderLowStock: autoReorder, isAdminOrSupervisor: false };
     resetNotifBlocker();
 
     checkAllNotifications();
 
     expect(autoReorder).not.toHaveBeenCalled();
-  });
-
-  it('autoReorder menolak: ditangkap, tidak jadi unhandled rejection', async () => {
-    const autoReorder = vi.fn().mockRejectedValue(new Error('RTDB down'));
-    window.app = { notifications: [], autoReorderLowStock: autoReorder, isAdminOrSupervisor: true };
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    resetNotifBlocker();
-
-    checkAllNotifications();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(warn).toHaveBeenCalledWith('[Notif] Auto-reorder:', 'RTDB down');
   });
 });
 
