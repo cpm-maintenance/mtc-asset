@@ -1,3 +1,61 @@
+## 🔗 S45o · Stiker QR menunjuk ke tautan asetnya (2026-10-27)
+
+**Rilis sw v89 → v90** (`src/**` + `sw.js` berubah).
+
+### Masalah
+Payload QR hanya ID telanjang (`EQ-E2E-001`). Kamera ponsel tidak bisa membukanya, jadi teks `FOR DETAILED INFORMATION` di stiker tidak pernah benar — satu-satunya cara memakainya adalah membuka app dulu, lalu memindai dari dalam app.
+
+### Perbaikan
+- **Payload jadi tautan** `<origin>/?equip=<ID>` (`equipTagLink()` di `utils.js`). Origin diambil dari app yang mencetak stiker, bukan dipaku: stiker dari preview channel menunjuk ke host itu, stiker produksi ke `mtc-asset.web.app`. Dipakai **dua** jalur cetak — modal (`generateQR`) dan lembar A4 (`downloadAllQRs`).
+- **App membuka unitnya sendiri** saat tautan itu dibuka: `applyEquipDeepLink()` (ui.js) dipanggil `main.js` **setelah gate login terbuka** (unit dibuka lewat `currentPage`, yang baru ada saat shell ter-render). Daftar aset datang dari listener RTDB, jadi unitnya **ditunggu** sampai muncul (15 s) — sekali baca selalu berakhir "not found". Hasilnya lewat titik masuk yang sama dengan scanner optik (`handleScanResult`), lalu `?equip=` dibersihkan dari address bar supaya reload tidak melompat balik.
+- **Stiker lama tetap terbaca**: `equipIdFromLink()` menerima tiga bentuk — ID telanjang (stiker yang sudah tertempel & entri manual), `?equip=`, dan `#equip=`. Tautan tanpa `equip` → '' (ditolak), bukan diperlakukan sebagai ID.
+
+### TDD & bukti
+- `tests/equip-deep-link.test.js` (baru, 15 tes) merah dulu; 3 asersi payload lama (`tests/ui-qr.test.js:69`, `tests/ui-module.test.js:324`) diperbarui ke kontrak baru.
+- `e2e/equip-deep-link.spec.js` (baru, 2 tes): `/?equip=<ID>` → login → `app.selectedEquip.EquipmentID` = unit itu dan `currentPage = 'detail'`, parameter hilang dari URL; ID yang tidak ada → notifikasi + tetap di dashboard.
+- **QR sungguhan didekode** (`cv2.QRCodeDetector`): PNG kartu dari app (`test-results/deep-qr.png`, 640 px) → `http://localhost:3000/?equip=EQ-E2E-001`; QR label cetak 240 px dengan origin produksi → `https://mtc-asset.web.app/?equip=EQ-E2E-001`. Harga muatannya: **versi 5, 37×37 modul** (dulu versi 1, 21×21) — tetap terbaca di kedua ukuran.
+
+### Gerbang
+- tsc **0** · eslint **0** · **2137 tes / 103 berkas** · coverage **96,6 / 88,92 / 97,07 / 97,79** (ambang tidak diturunkan) · build **0** · precache **66/66**.
+- `npm run test:e2e:ci` (jalur CI, `--workers=1`): **21 passed · 0 skipped**, 1,3 m.
+- Belum di-push/deploy.
+
+### Flake mode paralel (bukan dari perubahan ini)
+`npm run test:e2e` (dev server, worker paralel) bisa merah: `delete-wo-reload.spec.js` memegang kunci emulator > 30 s sehingga `beforeAll` `delete-wo.spec.js` habis waktu. Dibuktikan **tidak** disebabkan spec baru: dengan `--grep-invert "Tautan aset dari stiker QR"` spec destruktif itu tetap merah (1 failed). Kuncinya dipegang lebih lama karena dev server dingin (transform on-demand ~22 s) + dua spec destruktif paralel. Jalur yang hijau: `npm run test:e2e:ci` (satu worker) — sama seperti CI.
+
+---
+
+## 🧪 S45n · Satu perintah lokal yang meniru CI untuk E2E (2026-10-27)
+
+**Tanpa perubahan rilis** — hanya `package.json`, `e2e/**`, `tests/**`, `playwright.config.js` (komentar). `src/**` & `public/**` tidak tersentuh → `sw.js` tetap **v89**.
+
+### Masalah
+CI menjalankan **seluruh** suite (`19` tes) dengan `E2E_PREVIEW=1` di atas `dist-e2e` yang dibangun ber-env emulator. Di lokal `npm run test:e2e` memakai `npm run dev` tanpa env itu, jadi 3 tes `e2e/css-critical-path.spec.js` **selalu skip** — jalur CSS kritis (yang menentukan FCP layar login) tidak pernah diuji di mesin ini.
+
+### Perbaikan
+- **`e2e/run-ci.mjs`** (baru) — dua langkah, satu perintah: `npx vite build --outDir dist-e2e` dengan blok env yang **sama persis** dengan step "Build (E2E, emulator)" di CI, lalu `npx playwright test --workers=1` dengan `E2E_PREVIEW=1`. Env diset di proses anak, jadi tidak ada env yang diketik tangan dan tidak butuh `cross-env`.
+- **`package.json`**: `"test:e2e:ci": "node e2e/run-ci.mjs"`.
+- **`e2e/run-ci.mjs` mengunci `E2E_RTDB_NS=mtc-asset-default-rtdb`** — `e2e/seed-emulator.mjs` menurunkan namespace dari `.env` lokal; `.env` yang menunjuk instance lain akan menggeser seed menjauh dari namespace build sehingga app membaca kosong tanpa satu pun error.
+- `e2e/css-critical-path.spec.js`: komentar yang menyesatkan ("build produksi") dikoreksi — preview itu `dist-e2e` ber-`VITE_USE_EMULATORS=1` (emulator, **bukan** Firebase produksi); pesan skip menunjuk `npm run test:e2e:ci`. `playwright.config.js`: komentar jalur `E2E_PREVIEW` diperjelas.
+
+### TDD
+`tests/e2e-ci-parity.test.js` (baru, 4 tes) — merah dulu karena `e2e/run-ci.mjs` belum ada. Yang dikunci: env build lokal **sama** dengan step CI (diparse dari `.github/workflows/test.yml`, jadi env tak bisa bergeser sendiri-sendiri), `E2E_PREVIEW=1` + `--workers=1` ditiru, `databaseURL` host = namespace emulator (bukan `projectId`, sama dengan default seed), dan jalur pengembangan (`playwright test` polos + skip gate) tidak dirusak.
+
+### Bukti
+- **`npm run test:e2e:ci` → exit 0**, **19 passed · 0 skipped** — dua kali berturut-turut (1,1 m lalu 57,7 s).
+- Ketiga tes critical-CSS benar-benar jalan (`ok 3/4/5`), bukan skip.
+- `dist-e2e/index.html` memuat `style[data-critical-css]` (1) dan bundel `dist-e2e/assets/firebase-core-*.js` memuat `mtc-asset-default-rtdb` → build preview memang ber-env emulator.
+- **`npm run test:e2e` tetap seperti sekarang: exit 0, 16 passed · 3 skipped** (59,0 s).
+- Gerbang lain: tsc **0** · eslint **0/0** · coverage **102 berkas / 2122 tes** · **96,62 / 88,93 / 97,05 / 97,83** · build **0** · precache **66/66** · **sw v89** (tidak naik).
+
+### Flake yang tercatat apa adanya
+Jalankan `npm run test:e2e` **pertama** setelah `package.json` berubah **merah** (2 failed): `delete-wo.spec.js:55` poll 20 s untuk `app.logs` habis waktu, dan `delete-wo-reload.spec.js:21` `beforeAll` 30 s kehabisan waktu menunggu kunci emulator yang masih dipegang spec pertama. Sebabnya bukan kode: menambah script di `package.json` membatalkan cache dependency Vite, jadi dev server melakukan re-optimize dingin (pernah terukur 22,3 s) sementara dua spec destruktif berjalan paralel. Jalankan ulang langsung hijau. **Jangan** naikkan batas tes untuk ini.
+
+### Sisa
+- `npm run test:rules` dan `npx playwright test` manual tetap jalur lama; `test:e2e:ci` sengaja `--workers=1` (sama seperti CI) sehingga ~1 menit.
+
+---
+
 ## 📊 S45m · RUM FCP diperbaiki + rules E2E disamakan dengan produksi (2026-10-27)
 
 **Rilis sw v88 → v89** (`src/**` berubah).
