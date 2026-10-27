@@ -1106,15 +1106,15 @@
     <div x-cloak
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all"
       x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-2xl p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[2.5rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20">
-      <div class="flex justify-between items-center mb-6 md:mb-10">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-2xl max-h-[calc(100dvh-2rem)] flex flex-col p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[2.5rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20">
+      <div class="flex justify-between items-center mb-6 md:mb-10 shrink-0">
         <h3 class="text-xl md:text-2xl font-black text-tac-on-surface flex items-center gap-3 md:gap-4 uppercase tracking-tighter">
           <span class="material-symbols-outlined text-[16px] text-tac-gold-bright">monitoring</span>
           <span x-text="isEditingEquip ? 'Reconfigure Asset' : 'Initialize Asset'"></span>
         </h3>
         <button @click="showEquipModal = false" aria-label="Close" class="tac-btn-ghost"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
-      <form @submit.prevent="submitEquipment()" class="form-grid">
+      <form @submit.prevent="submitEquipment()" class="form-grid flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div>
           <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-3 block">Asset Identifier</label>
           <input aria-label="ID asset" type="text" x-model="equipForm.id" required placeholder="NEXUS-XXX" :readonly="isEditingEquip"
@@ -1195,7 +1195,7 @@
           </div>
         </div>
         <button type="submit"
-          class="md:col-span-2 bg-tac-primary-container font-black tracking-[0.3em] p-6 rounded-2xl shadow-[0_0_20px_rgba(0,242,255,0.3)] mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container"
+          class="md:col-span-2 bg-tac-primary-container font-black tracking-[0.3em] p-6 rounded-2xl shadow-[0_0_20px_rgba(0,242,255,0.3)] sticky bottom-0 z-10 mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container"
           x-text="isEditingEquip ? 'Update Neural Configuration' : 'Authorize Deployment'"></button>
       </form>
     </div>
@@ -1206,14 +1206,14 @@
   <template x-if="showPartModal">
     <div x-cloak
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-lg p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-tac-gold-bright/20">
-      <div class="flex justify-between items-center mb-6 md:mb-10">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-lg max-h-[calc(100dvh-2rem)] flex flex-col p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-tac-gold-bright/20">
+      <div class="flex justify-between items-center mb-6 md:mb-10 shrink-0">
         <h3 class="text-xl md:text-2xl font-black text-tac-on-surface flex items-center gap-3 md:gap-4 uppercase tracking-tighter"><span class="material-symbols-outlined text-[16px] text-tac-gold-bright">inventory</span> <span
             x-text="isEditingPart ? 'Sync Component' : 'Register Component'"></span></h3>
         <button @click="showPartModal = false" aria-label="Close part form"
           class="text-tac-status-standby hover:text-tac-gold-bright w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-tac-surface-card/60 border border-tac-border-tactical flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
-      <form @submit.prevent="submitSparePart()" class="space-y-6">
+      <form @submit.prevent="submitSparePart()" class="space-y-6 flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div class="form-grid">
           <div>
             <label class="text-[9px] text-tac-gold-bright/40 uppercase font-black tracking-[0.2em] ml-1 mb-2 block">Part Identifier</label>
@@ -1313,7 +1313,7 @@
           </div>
         </div>
         <button type="submit"
-          class="w-full bg-tac-primary-container font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl mt-4 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container text-xs"
+          class="w-full bg-tac-primary-container font-black tracking-[0.2em] p-5 rounded-2xl shadow-xl mt-4 sticky bottom-0 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container text-xs"
           x-text="isEditingPart ? 'Update Inventory Matrix' : 'Commit to Database'"></button>
       </form>
     </div>
@@ -1325,8 +1325,8 @@
   <template x-if="showPerformanceModal">
   <div x-cloak
     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-tac-gold-bright/20 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-6 md:mb-8 border-b border-tac-border-subtle pb-6">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl max-h-[calc(100dvh-2rem)] flex flex-col p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-tac-gold-bright/20 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6 md:mb-8 shrink-0 border-b border-tac-border-subtle pb-6">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-tac-primary-container flex items-center justify-center shadow-lg">
              <span class="material-symbols-outlined text-tac-on-primary-container text-xl">show_chart</span>
@@ -1339,7 +1339,7 @@
         <button @click="showPerformanceModal = false" aria-label="Close performance form"
           class="text-tac-status-standby hover:text-tac-gold-bright w-10 h-10 rounded-xl bg-tac-surface-card/60 border border-tac-border-tactical flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
-      <form @submit.prevent="submitPerformance()" class="space-y-6">
+      <form @submit.prevent="submitPerformance()" class="space-y-6 flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <!-- Section: Basic Info -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="md:col-span-1">
@@ -1468,7 +1468,7 @@
         </div>
 
         <button type="submit"
-          class="w-full bg-tac-primary-container font-black tracking-[0.3em] p-6 rounded-2xl shadow-xl mt-6 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container"
+          class="w-full bg-tac-primary-container font-black tracking-[0.3em] p-6 rounded-2xl shadow-xl mt-6 sticky bottom-0 z-10 hover:scale-[1.02] active:scale-95 transition-all uppercase text-tac-on-primary-container"
           x-text="isEditingPerformance ? 'Apply Corrections' : 'Commit to Neural Base'"></button>
       </form>
     </div>
@@ -1479,8 +1479,8 @@
   <template x-if="showLogModal">
   <div x-cloak
     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20 shadow-2xl">
-      <div class="flex justify-between items-center mb-6 md:mb-8 border-b border-tac-border-subtle pb-6">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl max-h-[calc(100dvh-2rem)] flex flex-col p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] max-h-[90vh] overflow-y-auto border-tac-gold-bright/20 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 md:mb-8 shrink-0 border-b border-tac-border-subtle pb-6">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-tac-primary-container flex items-center justify-center shadow-lg">
              <span class="material-symbols-outlined text-tac-on-primary-container text-xl">fact_check</span>
@@ -1493,7 +1493,7 @@
         <button @click="showLogModal = false" aria-label="Close log form"
           class="text-tac-status-standby hover:text-tac-gold-bright w-10 h-10 rounded-xl bg-tac-surface-card/60 border border-tac-border-tactical flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[16px]">close</span></button>
       </div>
-      <form @submit.prevent="submitLog()" class="space-y-6">
+      <form @submit.prevent="submitLog()" class="space-y-6 flex-1 min-h-0 overflow-y-auto overscroll-contain">
 
         <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3 text-tac-gold-bright">🗂️ Asset &amp; Activity</h4>
         <div x-show="!isLogDetailView || isEditingLog" class="form-grid form-grid--two" x-cloak>
@@ -1850,7 +1850,7 @@
     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all">
     <div x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
       x-transition:enter-end="opacity-100 scale-100"
-      class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-sm rounded-3xl p-4 sm:p-6 border-tac-gold-bright/20">
+      class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl p-4 sm:p-6 border-tac-gold-bright/20">
 
       <div class="flex justify-between items-center mb-3 sm:mb-4 px-1">
         <div>

@@ -225,7 +225,7 @@
 
               <!-- Part Name -->
               <td class="px-space-md py-3.5">
-                <p class="font-headline-md text-headline-md font-semibold text-tac-on-surface truncate max-w-sm"
+                <p class="font-body-md text-body-md font-semibold text-tac-on-surface truncate max-w-md"
                   x-text="p.NamaPart" :title="p.NamaPart"></p>
                 <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase"
                   x-show="p.NamaSingkat" x-text="p.NamaSingkat"></span>
@@ -296,7 +296,7 @@
           <div class="flex items-start justify-between gap-2">
             <div>
               <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="p.PartNumber || p.PartID"></p>
-              <h2 class="font-headline-md text-headline-md font-semibold text-tac-on-surface truncate" x-text="p.NamaPart" :title="p.NamaPart"></h2>
+              <h2 class="font-body-md text-body-md font-semibold text-tac-on-surface truncate" x-text="p.NamaPart" :title="p.NamaPart"></h2>
             </div>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold border shrink-0"
               :class="partStatusTac(p)">
