@@ -260,13 +260,14 @@ describe('Planning Board — kalender & bar Gantt', () => {
   });
 
   it('planningGanttBar melebarkan bar sesuai rentang Tanggal→dueDate', () => {
-    const a = makeApp();
-    const days = a.planningGanttDays;
-    const today = new Date().toISOString().split('T')[0];
-    const idx = days.findIndex((d) => d.dateStr === today);
-    const end = days[idx + 4].dateStr;
-    const bar = a.planningGanttBar({ Tanggal: today, dueDate: end });
-    expect(bar).toEqual({ left: idx * 20, width: 5 * 20 });
+      const a = makeApp();
+      const days = a.planningGanttDays;
+      // Jangkar indeks tetap, bukan "hari ini": jendela Gantt berakhir di bulan
+      // berjalan, jadi `idx + 4` dari hari ini lewat batas pada ~4 hari terakhir
+      // tiap bulan (bom kalender S45g).
+      const idx = 10;
+      const bar = a.planningGanttBar({ Tanggal: days[idx].dateStr, dueDate: days[idx + 4].dateStr });
+      expect(bar).toEqual({ left: idx * 20, width: 5 * 20 });
   });
 
   it('planningGanttBar memakai dueDate sebagai awal bila Tanggal kosong', () => {

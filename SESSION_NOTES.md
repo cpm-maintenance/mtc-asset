@@ -1,3 +1,32 @@
+## 🧪 S45g · Tes bar Gantt dilepas dari jam — bom kalender ditutup (2026-10-27)
+
+**Tanpa perubahan rilis** — hanya `tests/**`; `CACHE_NAME` tetap **v84**, operator tidak mengunduh ulang apa pun.
+
+`tests/app-planning.test.js` → *"planningGanttBar melebarkan bar sesuai rentang Tanggal→dueDate"* merah hari ini: `TypeError: Cannot read properties of undefined (reading 'dateStr')`.
+
+### Sebab (terukur, bukan dugaan)
+Jendela `planningGanttDays` (`src/js/app.js:2229`, `planningGanttScroll: 0`) = **1 bulan lalu s/d hari terakhir bulan berjalan** → `len = 61`. Tes menghitung `idx` dari "hari ini" lalu membaca `days[idx + 4]`; begitu `idx ≥ 57` pembacaan itu lewat batas. Probe di env jsdom: `first = 2026-08-31`, `last = 2026-10-30`, `today = 2026-10-27`, `idx = 57`, `len = 61`.
+
+→ **Merah di ~4 hari terakhir setiap bulan.** Tanggal 26 Okt `idx = 56` → masih hijau; itu sebabnya S45f lolos gerbang kemarin. Bukan flake.
+
+### Perbaikan
+Jangkar indeks tetap `idx = 10`; tanggal uji diambil dari `days[]` sendiri. Badan tes tidak lagi menyentuh `new Date()`.
+
+### Gerbang (dijalankan 27 Okt 2026)
+- tsc **0** · eslint **0 error / 0 warning**
+- **2095 tes / 99 berkas hijau, rc 0** (sebelum perbaikan: `1 failed | 2094 passed`)
+- coverage **96,62 / 88,93 / 97,04 / 97,82** (rc **0**; ambang ratchet 96/88/96/97 **tidak** diturunkan)
+- build **0** · precache **66/66** — `sw.js` tidak disentuh, sehingga berkas pra-cache tidak berubah
+- Berkas yang diperbaiki: **35/35** di tiga zona waktu — default (WIB), `Pacific/Kiritimati` (UTC+14), `Pacific/Midway` (UTC−11)
+
+### Cacat nyata yang ketemu saat mendiagnosis — BELUM diperbaiki (kartu terpisah)
+`dateStr` di `src/js/app.js:2235` dan pembanding `isToday` di `:2239` memakai `toISOString()` (**UTC**), sedangkan kolom grid dibangun dari tanggal **lokal**. Di WIB setiap kolom `dateStr`-nya **mendahului satu hari** dari labelnya (label `Sep 1` ↔ `dateStr` `2026-08-31`). Akibatnya bar Gantt meleset satu kolom ke kanan, dan WO dengan `Tanggal` di hari terakhir jendela (`'2026-10-31'`) tidak ketemu → `planningGanttBar` balik `null` (bar hilang). Perbaikan menyentuh produksi → wajib naik `CACHE_NAME` ke v85.
+
+### Catatan E2E (di luar S45g)
+`npm run test:e2e` merah dan **tidak stabil**: full suite run #1 `15 passed / 3 skipped / 1 failed`, run #2 `2 failed`; tapi `delete-wo-reload.spec.js` sendirian hijau 2×, dan pasangan `delete-wo.spec.js` + `delete-wo-reload.spec.js` merah di `delete-wo.spec.js:26`. Dua spec itu saling mengontaminasi (state RTDB emulator + `waitForTimeout(3000)`), bukan regresi S45f — `git diff 0d9216e^ 0d9216e -- e2e` kosong. Kartu terpisah.
+
+---
+
 ## 🎨 S45f · Ikon WhatsApp untuk tombol reminder (2026-10-26)
 
 **Live sw v83 → v84** (`0d9216e`).
