@@ -28,6 +28,9 @@
 - build **0** (3,84 s) · precache **69 entries / 3262,38 KiB** → **66/66 OK** · live **v85**
 - Berkas tes yang tersentuh: **37/37** di empat zona waktu — default WIB, `Pacific/Kiritimati` (UTC+14), `America/Los_Angeles` (UTC−7), `Pacific/Midway` (UTC−11)
 
+### Deploy
+`npx firebase deploy --only hosting` → **rc 0**, `Deploy complete!` (release `mtc-asset`). Diverifikasi dari sisi publik: `https://mtc-asset.web.app/sw.js` → `mtc-asset-v85`, dan helper lokalnya benar-benar ikut terkirim di bundel `assets/app-DkdXdRmE.js` (`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,'0')}-...`).
+
 ### Sisa kelas cacat yang sama — BELUM diperbaiki (kartu `t_c7952690`)
 `toISOString()` juga dipakai sebagai "hari ini" lalu dibandingkan dengan tanggal ber-semantik lokal di `src/js/app.js:869`, `:1267` (`dashAlerts` — overdue PM), `:1739` (`pmStatusTac` — badge OVERDUE), `:2157` (`planningKpi`), `:85`/`:86` & `:1188`/`:1189` (rentang tanggal dashboard), `:1354` (ETA). Bedanya: situs-situs itu hanya salah **00:00–08:00 WIB**, sedangkan kolom Gantt salah sepanjang hari. Adopsi `localDateStr()` di situ mengubah perilaku beberapa fitur sekaligus → kartu + tes sendiri, tidak diselundupkan ke rilis ini.
 
