@@ -1,3 +1,33 @@
+## 🌀 S45l · Brand mark baru: pusaran emas (2026-10-27)
+
+**Rilis sw v87 → v88.** `public/**` berubah → 66 berkas diunduh ulang di perangkat operator.
+
+### Sumber & cara
+Mark baru (dua pita emas bersilang membentuk pusaran) datang sebagai **PNG 81×54 RGBA** — jadi sumbernya kecil, dan ini batas mutu yang perlu dicatat (lihat di bawah). Seluruh aset digenerate dari satu sumber lewat skrip baru **`scripts/build-brand-icons.mjs`**: `node scripts/build-brand-icons.mjs <sumber.png>`. Karena satu perintah, mengganti sumber nanti (kalau ada PNG ≥512 px atau SVG) tidak perlu menyentuh HTML/manifest lagi.
+
+### Yang berubah
+- **10 berkas ikon** ditulis ulang: `logo.png` (192), `logo.webp` (192), `icons/favicon-196.png`, `icons/apple-icon-180.png`, `icons/manifest-icon-192.maskable.png`, `icons/manifest-icon-512.maskable.png`, `icons/mstile-icon-128|270|558|558-270.png`.
+- **`public/manifest.json`** diperbaiki: sebelumnya `logo.png` yang **benar-benar 180 px** diklaim `192x192` **dan** `512x512` `any maskable`. Sekarang: maskable 192 & 512 dari berkas maskable sungguhan, `logo.png` 192 `any`, `favicon-196` `any`.
+- **`index.html`**: tambah `<link rel="apple-touch-icon" href="/icons/apple-icon-180.png">` (iOS sebelumnya tidak punya ikon).
+- Mark 60% pada kanvas untuk maskable (aman di dalam lingkaran 80% Android), 70% untuk mstile, latar `#05070a` sesuai `background_color` manifest.
+
+### Bukti pengukuran
+- Safe zone maskable: mark tidak tersentuh lingkaran mask (diperiksa pada raster 512 dengan lingkaran 80%).
+- Bobot: `logo.png` **7,5 KB** (kontrak `login-image-weight` < 8 KB ✓), `logo.webp` **6,2 KB** (< PNG ✓), maskable 512 **16,7 KB** (dari 45 KB), mstile 558 **22,7 KB** (dari 52 KB), favicon 196 8,0 KB, apple 180 5,7 KB.
+- Gradien: 150 warna pada area mark, rata-rata beda piksel tetangga **1,48/255** → dither bekerja, tidak ada pita warna keras.
+- Favicon: terbaca di 48 dan 32 px; **16 px tidak terbaca** (detail notch melebur). Itu akibat sumber 81×54 — bukan setelan generate.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- **2108 tes / 100 berkas hijau** · rc 0
+- coverage **96,62 / 88,93 / 97,05 / 97,82** (tidak diturunkan)
+- build **0** · precache **69 entries / 3261,62 KiB** → **66/66 OK** · **sw v88**
+
+### Kalau sumber lebih besar tersedia
+`node scripts/build-brand-icons.mjs <png-512-atau-svg>` — semua berkas di atas ditimpa, manifest & HTML tidak perlu diubah. Termasuk kalau mau favicon khusus ukuran kecil (mark yang disederhanakan), karena mark sekarang detail notch-nya hilang di bawah 24 px.
+
+---
+
 ## 🧷 S45k · Spec E2E hapus-WO tidak lagi saling mengintip (2026-10-27)
 
 **Tanpa perubahan rilis** — hanya `e2e/**`; `sw.js` tetap **v87** dan tidak ada deploy (berkas e2e tidak ikut dikirim ke hosting).
