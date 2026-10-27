@@ -59,7 +59,7 @@ describe('Audit Trail — telemetri Tactical Slate', () => {
     expect(k.deletes).toBe(1);
     expect(k.approvals).toBe(2);
     expect(k.shown).toBe(6);
-  });
+  }, 20_000);
 
   it('auditKpi memakai filteredAudit untuk kolom "tampil sekarang"', async () => {
     const a = await makeApp();

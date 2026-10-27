@@ -1,6 +1,11 @@
 {
   "rules": {
     ".read": true,
-    ".write": true
+    ".write": true,
+    "Equipment": { ".indexOn": ["NextPMDate"] },
+    "SpareParts": { ".indexOn": ["isLowStock"] },
+    "HistoryLog": { ".indexOn": ["EquipmentID", "Status"] },
+    "PM_Schedule": { ".indexOn": ["equipmentId", "status"] },
+    "Requisitions": { ".indexOn": ["status", "itemType"] }
   }
 }

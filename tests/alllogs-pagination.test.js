@@ -46,7 +46,7 @@ describe('All Logs pagination (P3-3)', () => {
     const a = await makeApp();
     a.logs = [...makeLogs(75), { LogID: 'EXT', EquipmentID: 'EXTERNAL' }];
     expect(a.filteredAllLogsAll).toHaveLength(75);
-  });
+  }, 20_000);
 
   it('filteredAllLogs membatasi render ke allLogsLimit', async () => {
     const a = await makeApp();

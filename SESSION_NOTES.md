@@ -1,3 +1,41 @@
+## 📊 S45m · RUM FCP diperbaiki + rules E2E disamakan dengan produksi (2026-10-27)
+
+**Rilis sw v88 → v89** (`src/**` berubah).
+
+### Latar
+Console **produksi** (halaman login) menyisakan satu warning:
+
+```text
+The entry type 'first-contentful-paint' does not exist or isn't supported.
+```
+
+Sumbernya `src/main.js` yang memanggil `observer.observe({ type: 'first-contentful-paint' })` — itu **bukan** entry type yang sah untuk `observe()` (yang sah `paint`, lalu difilter `name`-nya). Akibatnya bukan cuma warning: `vitals.fcp` **tidak pernah terisi**, jadi angka FCP yang dikirim ke Sentry selalu kosong.
+
+### Perbaikan
+- Modul baru **`src/js/rum.js`**: `entryToVitals(entry, vitals)`, `observeVitals(vitals, Ctor)`, `VITALS_OBSERVE_TYPES`. Observer hanya dipasang untuk tipe yang ada di `PerformanceObserver.supportedEntryTypes`; FCP diambil dari entry `paint` bernama `first-contentful-paint`.
+- `src/main.js` cukup memanggil `observeVitals(vitals)` — blok inline 19 baris dihapus.
+
+### TDD
+- RED: `tests/rum-vitals.test.js` (baru, 10 tes) gagal karena modulnya belum ada → lalu hijau.
+- Yang dikunci tes: tidak pernah `observe({type:'first-contentful-paint'})`; tipe tak didukung dilewati (mis. Firefox tanpa `layout-shift`); `layout-shift` ber-`hadRecentInput` diabaikan; LCP hanya yang pertama; `event` → inp terbesar; callback tetap memetakan entry ke vitals.
+- Bukti di **bundel produksi** (`dist/assets/main-*.js`; minifier memakai backtick, jadi grep kutip-ganda meleset):
+  `da=[\`largest-contentful-paint\`,\`layout-shift\`,\`paint\`,\`event\`]`, `for(let e of da) n.has(e)&&r.observe({type:e,buffered:!0})`, dan `e.entryType===\`paint\`&&e.name===\`first-contentful-paint\`&&(t.fcp=e.startTime)`.
+
+### Rules E2E disamakan dengan produksi
+`e2e/database.e2e.rules.json` **nol** `.indexOn`, jadi setiap jalankan lokal/E2E menuliskan `@firebase/database: FIREBASE WARNING: Using an unspecified index...` dan query-nya difilter di klien — beda dari produksi yang sudah punya index. Ditambahkan: `Equipment/NextPMDate`, `SpareParts/isLowStock`, `HistoryLog/EquipmentID+Status`, `PM_Schedule/equipmentId+status`, `Requisitions/status+itemType`; `.read`/`.write` tetap permisif.
+
+**Bukti:** probe console lokal (login + tur 7 halaman) — sebelum **11 baris** (1 warning Firebase), sesudah **10 baris, semuanya `[debug]`**.
+
+### Flake yang ikut ketemu
+`npm run test:coverage` pernah merah bukan karena asersi: `Test timed out in 5000ms` di `tests/alllogs-pagination.test.js:45` dan `tests/h3-tactical-helpers.test.js:41` saat 101 berkas jalan bersamaan (keduanya memanggil `makeApp()` yang mengimpor ulang modul app). Sendirian keduanya lulus. Diberi batas eksplisit `20_000` — pola yang sudah dipakai `tests/critical-css.test.js` (`120_000`). Ambang coverage **tidak** diturunkan.
+
+### Gerbang
+- tsc **0** · eslint **0 error / 0 warning**
+- coverage **2× berturut-turut hijau**: **2118 tes / 101 berkas** · **96,62 / 88,93 / 97,05 / 97,83** (baris 97,82 → 97,83)
+- build **0** · precache **66/66** · E2E **16 passed / 3 skipped** (rc 0) · **sw v89**
+
+---
+
 ## 🌀 S45l · Brand mark baru: pusaran emas (2026-10-27)
 
 **Rilis sw v87 → v88.** `public/**` berubah → 66 berkas diunduh ulang di perangkat operator.

@@ -7,6 +7,7 @@ import './css/tactical-icons.css';
 import Alpine from 'alpinejs';
 import { componentLoader } from './js/utils/component-loader.js';
 import { logger } from './js/logger.js';
+import { observeVitals } from './js/rum.js';
 import { installConfirmDialog } from './js/modules/confirm-dialog.js';
 
 // Dialog konfirmasi in-app dipasang sebelum Alpine boot: `askConfirm()` di
@@ -90,24 +91,10 @@ if (SENTRY_DSN && import.meta.env.PROD) {
 if (import.meta.env.PROD && window.Sentry?.captureMessage) {
   try {
     const vitals = { lcp: 0, fid: 0, cls: 0, inp: 0, ttfb: 0 };
-    const observer = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        const name = entry.name || entry.entryType;
-        if (name === 'first-contentful-paint') vitals.fcp = entry.startTime;
-        if (!vitals.lcp && entry.entryType === 'largest-contentful-paint') vitals.lcp = entry.startTime;
-        if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) vitals.cls += entry.value;
-        if (entry.entryType === 'event' && entry.processingEnd) {
-          const delay = entry.processingEnd - entry.startTime;
-          vitals.inp = Math.max(vitals.inp || 0, delay);
-        }
-      }
-    });
-    observer.observe({ type: 'largest-contentful-paint', buffered: true });
-    observer.observe({ type: 'layout-shift', buffered: true });
-    observer.observe({ type: 'first-contentful-paint', buffered: true });
-    if (PerformanceObserver.supportedEntryTypes?.includes('event')) {
-      observer.observe({ type: 'event', buffered: true });
-    }
+    // Pemetaan entry → angka dan pemasangan observer ada di `js/rum.js`: hanya
+    // entry type yang didukung browser yang dipasang (`first-contentful-paint`
+    // bukan entry type sah — yang sah `paint`, lalu difilter namanya).
+    observeVitals(vitals);
     // Report after page load settles
     window.addEventListener('load', () => {
       setTimeout(() => {
