@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
+import { acquireEmulatorLock } from './emulator-lock.mjs';
 
 /**
  * Regresi S38e: supervisor harus bisa menghapus Work Order dari UI.
@@ -9,7 +10,19 @@ import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
  * `HistoryLog/$logId`, tetapi tombol hapus di fragmen memakai
  * `x-show="isAdmin"` — jadi supervisor tidak pernah melihat tombolnya walau
  * `deleteItem()` berhasil bila dipanggil langsung.
+ *
+ * Spec ini **mengubah** data emulator, jadi ia mengambil kunci bersama
+ * `delete-wo-reload.spec.js` (lihat `emulator-lock.mjs`).
  */
+let releaseLock;
+
+test.beforeAll(async () => {
+    releaseLock = await acquireEmulatorLock('rtdb-mutating');
+});
+
+test.afterAll(async () => {
+    releaseLock?.();
+});
 const DB = 'http://127.0.0.1:9000';
 const NS = 'mtc-asset-default-rtdb';
 
@@ -27,11 +40,13 @@ test.describe('Hapus WO oleh supervisor (emulator)', () => {
         const errors = [];
         page.on('pageerror', (e) => errors.push(String(e)));
 
-        const seeded = await seedEmulator();
+        // Fixture sendiri: spec ini menghapus WO-nya, dan spec lain yang jalan
+        // paralel tidak boleh memakai baris yang sama.
+        const seeded = await seedEmulator({ suffix: '-del' });
         await setRole(seeded.uid, 'supervisor');
 
         await page.goto('/');
-        await page.fill('#login-id', E2E_USER.email);
+        await page.fill('#login-id', seeded.email);
         await page.fill('#login-key', E2E_USER.password);
         await page.click('button[type="submit"]');
         await expect(page.locator('#login-id')).toBeHidden({ timeout: 20_000 });
@@ -42,43 +57,60 @@ test.describe('Hapus WO oleh supervisor (emulator)', () => {
         expect(await page.evaluate(() => globalThis.app.userRole)).toBe('supervisor');
         expect(await page.evaluate(() => globalThis.app.isAdmin)).toBe(false);
 
-        // Buka halaman Work Orders, lalu cari tombol hapus milik baris WO.
+        // Buka halaman Work Orders, lalu cari tombol hapus milik BARIS WO uji.
+        //
+        // RTDB emulator dipakai bersama spec lain yang jalan paralel, jadi
+        // daftar baris bisa memuat WO mereka juga. Selektor "tombol deleteItem
+        // pertama" pernah mengambil baris milik spec lain: modalnya terbuka,
+        // notifikasi "Record successfully deleted" muncul, tapi baris uji kita
+        // masih ada di server.
         await page.evaluate(() => {
             globalThis.app.currentPage = 'wo';
         });
-        await expect
-            .poll(
-                () =>
-                    page.evaluate(() =>
-                        [...document.querySelectorAll('button')].filter(
-                            (n) => (n.getAttribute('@click') || '').includes("deleteItem('HistoryLog'")
-                        ).length
-                    ),
-                { timeout: 15_000 }
-            )
-            .toBeGreaterThan(0);
 
-        const visible = await page.evaluate(() =>
-            [...document.querySelectorAll('button')]
-                .filter((n) => (n.getAttribute('@click') || '').includes("deleteItem('HistoryLog'"))
-                .some((n) => n.offsetParent !== null)
-        );
-        expect(visible, 'supervisor harus melihat tombol hapus WO').toBe(true);
+        const ownRowDeleteBtn = (id) =>
+            page.evaluate((woId) => {
+                const isDeleteBtn = (n) => (n.getAttribute('@click') || '').includes("deleteItem('HistoryLog'");
+                for (const btn of [...document.querySelectorAll('button')].filter(isDeleteBtn)) {
+                    if (btn.offsetParent === null) continue;
+                    let el = btn.parentElement;
+                    for (let i = 0; i < 8 && el; i++, el = el.parentElement) {
+                        if ((el.textContent || '').includes(woId)) return true;
+                    }
+                }
+                return false;
+            }, id);
 
-        // Klik tombol itu → modal konfirmasi → Delete.
-        await page.evaluate(() => {
-            const btn = [...document.querySelectorAll('button')].find(
-                (n) =>
-                    (n.getAttribute('@click') || '').includes("deleteItem('HistoryLog'") && n.offsetParent !== null
-            );
+        await expect.poll(() => ownRowDeleteBtn(seeded.woId), { timeout: 15_000 }).toBe(true);
+
+        // Klik tombol baris itu, lalu tombol konfirmasi di modal — dikenali dari
+        // callback-nya, bukan dari teks tombol yang bisa berubah.
+        await page.evaluate((woId) => {
+            const isDeleteBtn = (n) => (n.getAttribute('@click') || '').includes("deleteItem('HistoryLog'");
+            const btn = [...document.querySelectorAll('button')]
+                .filter(isDeleteBtn)
+                .find((n) => {
+                    if (n.offsetParent === null) return false;
+                    let el = n.parentElement;
+                    for (let i = 0; i < 8 && el; i++, el = el.parentElement) {
+                        if ((el.textContent || '').includes(woId)) return true;
+                    }
+                    return false;
+                });
             btn.click();
-        });
+        }, seeded.woId);
         await expect.poll(() => page.evaluate(() => globalThis.app.showDeleteConfirm), { timeout: 10_000 }).toBe(true);
 
-        await page.locator('button:has-text("Delete")').first().click();
+        await page.evaluate(() => {
+            const confirm = [...document.querySelectorAll('button')].find((n) => {
+                const c = n.getAttribute('@click') || '';
+                return c.includes('deleteConfirmCallback') && c.includes('confirm');
+            });
+            confirm.click();
+        });
 
         await expect
-            .poll(() => page.evaluate(() => (globalThis.app.logs || []).some((l) => l.LogID === 'WO-E2E-001')), {
+            .poll(() => page.evaluate((id) => (globalThis.app.logs || []).some((l) => l.LogID === id), seeded.woId), {
                 timeout: 20_000,
             })
             .toBe(false);

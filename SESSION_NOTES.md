@@ -1,3 +1,30 @@
+## 🧷 S45k · Spec E2E hapus-WO tidak lagi saling mengintip (2026-10-27)
+
+**Tanpa perubahan rilis** — hanya `e2e/**`; `sw.js` tetap **v87** dan tidak ada deploy (berkas e2e tidak ikut dikirim ke hosting).
+
+### Gejala
+`npm run test:e2e` merah dan tidak konsisten: full suite run #1 `15 passed · 3 skipped · 1 failed`, run #2 `2 failed`; tapi `delete-wo-reload.spec.js` sendirian hijau 2×.
+
+### Akar masalah (berbukti, bukan dugaan)
+1. **Fixture global dipakai bersama.** `seedEmulator()` selalu menulis satu record yang sama (`HistoryLog/WO-E2E-001`, `Equipment/EQ-E2E-001`, dan user `e2e@mtc.local`) — sementara `fullyParallel: true` menjalankan berkas spec di worker paralel. Worker A menghapus baris itu, worker B memanggil seed dan **menghidupkannya kembali** di tengah asersi A.
+2. Setelah fixture dipisah, terungkap lapisan kedua: selektor *"tombol `deleteItem` pertama"* bisa mengambil **baris WO milik spec lain** yang sedang ada di daftar. Bukti dari instrumentasi di halaman: notifikasi `Record successfully deleted` muncul, tetapi `serverHas: true` dan baris uji kita masih ada — yang terhapus baris orang lain.
+3. Uji hipotesis kontensi: pair dijalankan **serial** (`--workers=1`) → **3/3 hijau**; paralel → **1/4 hijau**. Kontensi terbukti.
+
+### Perbaikan
+- `e2e/seed-emulator.mjs`: `seedEmulator({ suffix })` memberi tiap spec **fixture sendiri** — WO, Equipment, dan **user** (rekaman user menyimpan `role`, jadi tidak boleh dibagi).
+- `e2e/delete-wo.spec.js`: tombol hapus diklik **di baris WO kita** (menelusuri ancestor yang memuat id-nya); tombol konfirmasi dicari lewat `deleteConfirmCallback` di `@click`, bukan teks "Delete".
+- `e2e/emulator-lock.mjs` (**berkas baru**): kunci berbasis berkas antar-worker; diambil di `beforeAll` kedua spec destruktif, dilepas di `afterAll`, dengan TTL basi 120 s supaya worker yang mati tidak memblokir.
+
+### Verifikasi
+- Pair paralel (default worker): **4/4 hijau**.
+- Suite penuh: **2× hijau** — `16 passed · 3 skipped`, rc 0 (51,4 s dan 60 s).
+- Gerbang: tsc **0** · eslint **0** · **2108 tes / 100 berkas** · coverage **96,62 / 88,93 / 97,05 / 97,82** · build **0** · precache **66/66**.
+
+### Catatan kejujuran angka
+Tiga bacaan `skipped` adalah `css-critical-path.spec.js` yang hanya jalan dengan `E2E_PREVIEW=1`. Mode itu **tidak kompatibel** dengan spec emulator: build preview bicara ke Firebase produksi, sehingga menjalankan seluruh suite dengan `E2E_PREVIEW=1` merah di langkah login. Klaim *"E2E 19 passed"* di catatan S45f tidak sahih; angka yang benar di mode emulator adalah **16 passed + 3 skipped**.
+
+---
+
 ## 🌅 S45j · Seluruh `app.js` pakai hari lokal — kelas UTC ditutup (2026-10-27)
 
 **Rilis sw v86 → v87.** `src/**` berubah → 66 berkas diunduh ulang di perangkat operator.

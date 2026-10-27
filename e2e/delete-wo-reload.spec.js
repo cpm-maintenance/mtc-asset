@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
+import { acquireEmulatorLock } from './emulator-lock.mjs';
 
 /**
  * Bug lapangan (S45c): WO dihapus → tombol **Muat ulang data** → WO kembali.
@@ -11,16 +12,33 @@ import { seedEmulator, E2E_USER } from './seed-emulator.mjs';
  *
  * Tes ini meniru langkah operator persis: hapus → tunggu hilang → refresh →
  * tuntut tetap hilang.
+ *
+ * Spec ini **mengubah** data emulator, jadi ia mengambil kunci bersama
+ * `delete-wo.spec.js` (lihat `emulator-lock.mjs`).
  */
-const WO_ID = 'WO-E2E-001';
+let releaseLock;
+
+test.beforeAll(async () => {
+    releaseLock = await acquireEmulatorLock('rtdb-mutating');
+});
+
+test.afterAll(async () => {
+    releaseLock?.();
+});
+
+const WO_SUFFIX = '-reload';
 
 test('WO yang dihapus tidak kembali setelah "Muat ulang data"', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
 
-    await seedEmulator();
+    // Fixture sendiri: spec ini menghapus WO-nya, jadi spec lain yang jalan
+    // paralel tidak boleh memakai baris yang sama (kalau tidak, seed-nya
+    // "menghidupkan" kembali baris ini di tengah asersi).
+    const seeded = await seedEmulator({ suffix: WO_SUFFIX });
+    const WO_ID = seeded.woId;
     await page.goto('/');
-    await page.fill('#login-id', E2E_USER.email);
+    await page.fill('#login-id', seeded.email);
     await page.fill('#login-key', E2E_USER.password);
     await page.click('button[type="submit"]');
     await expect(page.locator('#login-id')).toBeHidden({ timeout: 20_000 });

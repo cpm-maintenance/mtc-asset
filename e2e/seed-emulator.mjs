@@ -65,8 +65,8 @@ async function waitForAuth(timeoutMs = 30_000) {
 }
 
 /** Buat user uji; kalau sudah ada (run kedua), login saja. */
-async function ensureUser() {
-  const payload = { email: E2E_USER.email, password: E2E_USER.password, returnSecureToken: true };
+async function ensureUser(email) {
+  const payload = { email, password: E2E_USER.password, returnSecureToken: true };
   try {
     return await post(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, payload);
   } catch (err) {
@@ -75,26 +75,36 @@ async function ensureUser() {
   }
 }
 
-/** Buat user uji + data minimal yang dibutuhkan alur login → WO → PDF. */
-export async function seedEmulator() {
+/** Buat user uji + data minimal yang dibutuhkan alur login → WO → PDF.
+ *
+ * `suffix` memberi spec-nya **fixture sendiri** (`...-del`, `...-reload`).
+ * Tanpa itu, dua spec yang berjalan paralel akan menulis/menghapus baris yang
+ * sama: spec A menghapus `WO-E2E-001`, spec B memanggil seed dan baris itu
+ * hidup lagi di tengah asersi A. */
+export async function seedEmulator({ suffix = '' } = {}) {
+  const woId = WO_ID + suffix;
+  const eqId = EQ_ID + suffix;
+  // User-nya juga per-spec: rekamannya menyimpan `role`, dan spec yang mengubah
+  // role (mis. supervisor) tidak boleh menabrak spec lain yang sedang login.
+  const email = suffix ? E2E_USER.email.replace('@', `${suffix}@`) : E2E_USER.email;
   // Cetak namespace: kalau seed dan build memakai namespace berbeda, aplikasi
   // membaca data kosong tanpa error apa pun (gejala: poll `window.app.logs`
   // selalu 0). Satu baris ini membuat penyebabnya terlihat di log CI.
   console.log(`[seed] RTDB namespace = ${NS}`);
   await waitForAuth();
-  const signUp = await ensureUser();
+  const signUp = await ensureUser(email);
 
   const uid = signUp.localId;
   await put(`Users/${uid}`, {
-    email: E2E_USER.email,
+    email,
     role: 'admin',
     uid,
     createdAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
   });
 
-  await put(`Equipment/${EQ_ID}`, {
-    EquipmentID: EQ_ID,
+  await put(`Equipment/${eqId}`, {
+    EquipmentID: eqId,
     Nama: 'Pompa E2E',
     Lokasi: 'Area E2E',
     Kategori: 'Pump',
@@ -102,10 +112,10 @@ export async function seedEmulator() {
     FotoURL: '',
   });
 
-  await put(`HistoryLog/${WO_ID}`, {
-    LogID: WO_ID,
-    woNumber: WO_ID,
-    EquipmentID: EQ_ID,
+  await put(`HistoryLog/${woId}`, {
+    LogID: woId,
+    woNumber: woId,
+    EquipmentID: eqId,
     externalEquipName: '',
     Jenis: 'Corrective',
     Deskripsi: 'Perbaikan seal pompa (data uji E2E)',
@@ -130,5 +140,5 @@ export async function seedEmulator() {
     PhotoURLs: [],
   });
 
-  return { uid, woId: WO_ID, email: E2E_USER.email };
+  return { uid, woId, eqId, email, password: E2E_USER.password };
 }
