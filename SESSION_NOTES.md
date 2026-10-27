@@ -34,6 +34,13 @@ Sumbernya `src/main.js` yang memanggil `observer.observe({ type: 'first-contentf
 - coverage **2× berturut-turut hijau**: **2118 tes / 101 berkas** · **96,62 / 88,93 / 97,05 / 97,83** (baris 97,82 → 97,83)
 - build **0** · precache **66/66** · E2E **16 passed / 3 skipped** (rc 0) · **sw v89**
 
+### Deploy
+- push `cabfc25..f2aaff1` → `origin/main`
+- `npx firebase deploy --only hosting` → rc 0 (3 berkas baru) · live `https://mtc-asset.web.app/sw.js` → **`mtc-asset-v89`**
+- Bundel live `assets/main-6nwyBp5J.js` (55.062 B) diverifikasi: array `[\`largest-contentful-paint\`,\`layout-shift\`,\`paint\`,\`event\`]`, loop `observe({type:e,buffered:!0})`, dan `\`paint\`&&e.name===\`first-contentful-paint\`` ada; `observe({type:'first-contentful-paint'})` **tidak ada**
+- Console halaman login produksi sesudah rilis: **0 pesan** (sebelumnya 1 warning FCP)
+- Rules produksi **tidak** berubah — yang disamakan hanya cermin E2E-nya, jadi tidak ada deploy database
+
 ---
 
 ## 🌀 S45l · Brand mark baru: pusaran emas (2026-10-27)
