@@ -46,12 +46,14 @@ export default defineConfig({
             // Dua jalur, dua tujuan:
             //  · default (lokal)  → `npm run dev`: transform on-demand, cepat dipakai
             //    sambil mengembangkan tes. Menghormati VITE_USE_EMULATORS=1.
-            //  · E2E_PREVIEW=1 (CI) → `vite preview` atas **dist-e2e**, yaitu build
-            //    terpisah yang dibangun dengan VITE_USE_EMULATORS=1 (lihat script
-            //    `build:e2e` + step CI-nya). Static, deterministik, dan tidak
-            //    menabrak timeout seperti dev server dingin di runner.
+            //  · E2E_PREVIEW=1 (CI, dan `npm run test:e2e:ci` lokal) → `vite preview`
+            //    atas **dist-e2e**, yaitu build terpisah yang dibangun dengan
+            //    VITE_USE_EMULATORS=1 (engine: `e2e/run-ci.mjs` + script
+            //    `build:e2e`). Static, deterministik, dan tidak menabrak timeout
+            //    seperti dev server dingin di runner. Aplikasinya bicara ke Firebase
+            //    Emulator, bukan ke RTDB produksi.
             //    `vite preview` atas `dist` biasa TIDAK bisa dipakai: dist itu
-            //    dibangun dengan env demo, jadi login tidak pernah ke emulator.
+            //    dibangun dengan env asli (.env), jadi login tidak pernah ke emulator.
             // `stdout/stderr: 'pipe'` supaya kalau server mati, log Playwright
             // memuat pesan aslinya, bukan cuma "webServer was not able to start".
             command: process.env.E2E_PREVIEW

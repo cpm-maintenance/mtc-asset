@@ -13,11 +13,14 @@ import { test, expect } from '@playwright/test';
  * memanggil `__loadFullCss()` saat boot, FCP kembali 2,5 s tanpa satu pun tes
  * merah — itu lubang yang ditutup di sini.
  *
- * Butuh build produksi (`E2E_PREVIEW=1`, dipakai CI): di `npm run dev` plugin
- * build tidak jalan, jadi tidak ada `style[data-critical-css]` untuk diperiksa.
+ * Butuh build ber-`E2E_PREVIEW=1` (`npm run test:e2e:ci`, sama dengan CI): di
+ * `npm run dev` plugin build tidak jalan, jadi tidak ada `style[data-critical-css]`
+ * untuk diperiksa. Preview itu `vite preview` atas `dist-e2e` yang dibangun
+ * `VITE_USE_EMULATORS=1` — aplikasinya bicara ke Firebase Emulator, **bukan** ke
+ * Firebase produksi.
  */
 test.describe('Jalur CSS layar login (S33ab)', () => {
-    test.skip(!process.env.E2E_PREVIEW, 'jalankan dengan E2E_PREVIEW=1 (build produksi)');
+    test.skip(!process.env.E2E_PREVIEW, 'jalankan `npm run test:e2e:ci` (build dist-e2e + preview)');
 
     /** @param {import('@playwright/test').Page} page */
     function trackCss(page) {
