@@ -83,7 +83,7 @@
           <span class="text-tac-status-operational font-bold"
                 x-text="equipment.filter(e => e.Status === 'Active' || e.Status === 'Running').length + ' / ' + equipment.length + ' Operational'"></span>
         </div>
-        <div class="flex items-center gap-1 text-[10px] font-label-mono-sm overflow-x-auto pb-1">
+        <div class="flex items-center gap-1 text-[10px] font-label-mono-sm overflow-x-auto pb-1 flex-wrap min-w-0">
           <span class="px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface-variant"
                 x-text="'Repair: ' + equipment.filter(e => e.Status === 'Repair' || e.Status === 'Maintenance').length"></span>
           <span class="px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-on-surface-variant"

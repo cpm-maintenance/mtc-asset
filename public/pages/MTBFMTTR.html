@@ -108,11 +108,11 @@
   <!-- ═══ 3. UNIT SELECTOR ═════════════════════════════════════════════════ -->
   <section aria-label="Pilih equipment" class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col gap-space-sm">
     <div class="flex flex-wrap items-center justify-between gap-space-sm">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 min-w-0">
         <span class="material-symbols-outlined text-tac-primary text-[18px]">precision_manufacturing</span>
         <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">UNIT ANALISIS:</span>
         <select aria-label="Filter equipment MTBF" x-model="mtbfFilterEquip" @change="renderMTBFMTTRChart()"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1.5 rounded border border-tac-border-subtle outline-none min-w-[16rem] field-compact">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1.5 rounded border border-tac-border-subtle outline-none min-w-0 sm:min-w-[16rem] field-compact min-w-0 max-w-full">
           <option value="">-- PILIH EQUIPMENT --</option>
           <template x-for="eq in equipment" :key="eq.EquipmentID">
             <option :value="eq.EquipmentID" x-text="eq.EquipmentID + ' - ' + (eq.Nama || '')"></option>

@@ -19,7 +19,7 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-space-sm">
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 min-w-0">
         <span class="material-symbols-outlined text-tac-primary text-[16px]">factory</span>
         <select aria-label="Filter plant" x-model="plantFilter"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
@@ -29,7 +29,7 @@
         </select>
       </div>
 
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 min-w-0 flex-wrap">
         <span class="material-symbols-outlined text-tac-primary text-[16px]">group_work</span>
         <select aria-label="Filter departemen" x-model="deptFilter"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
@@ -41,7 +41,7 @@
         </select>
       </div>
 
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 min-w-0 flex-wrap">
         <span class="material-symbols-outlined text-tac-primary text-[16px]">event</span>
         <input type="date" x-model="kpiDateFrom" aria-label="Tanggal mulai"
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
@@ -160,7 +160,7 @@
       </button>
     </div>
 
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto min-w-0">
       <table class="w-full text-left">
         <thead class="bg-tac-surface-container-low">
           <tr class="border-b border-tac-border-subtle">

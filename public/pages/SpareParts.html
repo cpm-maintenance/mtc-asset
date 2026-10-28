@@ -17,7 +17,7 @@
     </div>
 
     <!-- Action Bar -->
-    <div class="flex items-center gap-space-sm flex-wrap">
+    <div class="flex items-center gap-space-sm flex-wrap min-w-0">
       <button type="button" @click="downloadTemplate('parts')"
         class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
         title="Download CSV Template">
@@ -149,13 +149,13 @@
 
     <!-- Tactical Filter Pill Matrix -->
     <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle">
-      <div class="flex items-center gap-space-sm flex-wrap">
+      <div class="flex items-center gap-space-sm flex-wrap min-w-0">
 
         <!-- Asset Node Linked Filter -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">LINKED ASSET:</span>
           <select aria-label="Filter equipment spare part" x-model="partFilterEquip"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-xs field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-full sm:max-w-xs field-compact min-w-0 w-full flex-1">
             <option value="">SEMUA ASSET (GLOBAL)</option>
             <template x-for="e in equipment" :key="e.EquipmentID">
               <option :value="e.EquipmentID" x-text="e.EquipmentID + ' — ' + e.Nama"></option>

@@ -635,3 +635,49 @@ select option {
     margin: 10mm;
   }
 }
+
+/* ── P2 — tap target minimal 44px (audit mobile 2026-10, emulasi 390x844) ──────
+   Ikon header/nav (28x28), tombol ikon di kartu, checkbox bulk-select (24x24)
+   dan input tanggal (32px) terlalu kecil untuk jempol. Blok ini hanya aktif pada
+   pointer kasar, jadi layout desktop tidak berubah. Lebar ikon header ikut
+   dinaikkan karena ikon-ikon itu berdempetan (mis-tap). */
+@media (pointer: coarse) {
+  header button,
+  header a,
+  nav button,
+  nav a {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* tombol di dalam konten: ikon maupun aksi teks (Approve/Reject) terlalu
+     pendek untuk jempol. Tinggi saja — lebar dibiarkan supaya baris tidak melebar. */
+  main button {
+    min-height: 44px;
+  }
+
+  main button.material-symbols-outlined,
+  main button:has(> .material-symbols-outlined) {
+    min-width: 44px;
+  }
+
+  /* checkbox bulk-select: label yang bisa diketuk, bukan kotak 24px-nya */
+  label:has(> input[type='checkbox']) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  input[type='checkbox'] {
+    min-width: 22px;
+    min-height: 22px;
+  }
+
+  input[type='date'],
+  input[type='time'],
+  select {
+    min-height: 44px;
+  }
+}

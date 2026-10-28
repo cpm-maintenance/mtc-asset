@@ -465,9 +465,9 @@
   <!-- 📱 MAIN INTERFACE -->
   <main x-show="isLoggedIn" x-cloak 
     :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
-    class="pb-16 lg:pb-10 transition-all duration-500 bg-tac-surface min-h-screen">
+    class="pb-[calc(4.5rem_+_env(safe-area-inset-bottom))] lg:pb-10 transition-all duration-500 bg-tac-surface min-h-screen">
     <!-- ⚡ HEADER / STATUS BAR — gaya design system Stitch -->
-    <header class="sticky top-0 z-40 h-16 flex items-center justify-between gap-space-md px-space-md lg:px-gutter-desktop bg-tac-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
+    <header class="sticky top-0 z-40 h-16 flex items-center justify-between gap-space-md px-space-md lg:px-gutter-desktop bg-tac-surface-base/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]"      style="padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right))">
 
       <!-- KIRI: brand + chip status -->
       <div class="flex items-center gap-space-md min-w-0">
@@ -741,14 +741,14 @@
 
     <!-- 🧠 U-3: ANALYTICS HUB — segmented sub-tabs (menggantikan 5 entri menu terpisah) -->
     <template x-if="isAnalyticsPage">
-      <div class="mb-4 flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-tac-surface-recessed border border-tac-border-subtle w-full sm:w-auto sm:inline-flex"
+      <div class="mb-4 flex overflow-x-auto items-center gap-1.5 p-1 rounded-2xl bg-tac-surface-recessed border border-tac-border-subtle w-full sm:w-auto sm:inline-flex min-w-0"
         role="tablist" aria-label="Analytics views">
         <template x-for="tab in availableAnalyticsTabs" :key="tab.id">
           <button type="button" role="tab"
             :aria-selected="currentPage === tab.id ? 'true' : 'false'"
             @click="setAnalyticsTab(tab.id)"
             :class="currentPage === tab.id ? 'bg-tac-primary-container text-tac-on-primary-container font-black' : 'text-tac-on-surface-variant hover:text-tac-on-surface'"
-            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-tac-gold-bright/60">
+            class="shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-tac-gold-bright/60">
             <span class="material-symbols-outlined icon-18" aria-hidden="true" x-text="tab.ms"></span>
             <span x-text="tab.short"></span>
           </button>

@@ -385,7 +385,7 @@
   <!-- ════════════════════════════════════════════ -->
   <div x-show="!pmLoading && pmView === 'calendar'">
     <!-- Month Navigation -->
-    <div class="flex items-center gap-space-sm mb-4">
+    <div class="flex items-center gap-space-sm mb-4 flex-wrap min-w-0">
       <button type="button" @click="pmMonthOffset--" class="p-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface border border-tac-border-subtle shadow-sm transition-all active:scale-95">
         <span class="material-symbols-outlined text-[16px]">chevron_left</span>
       </button>
@@ -398,7 +398,7 @@
       </button>
     </div>
 
-    <div class="bg-tac-surface-card rounded-lg border border-tac-border-subtle shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] overflow-x-auto">
+    <div class="bg-tac-surface-card rounded-lg border border-tac-border-subtle shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] overflow-x-auto min-w-0">
       <div class="min-w-[560px] lg:min-w-0">
       <!-- Day Headers -->
       <div class="grid grid-cols-7 border-b border-tac-border-subtle bg-tac-surface-recessed">

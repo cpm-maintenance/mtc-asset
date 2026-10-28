@@ -57,7 +57,7 @@
   <!-- ═══ 2. BREADCRUMB + CONTROL SUB-BAR ═══════════════════════════════ -->
   <div class="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-sm">
     <div class="flex flex-col">
-      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby tracking-widest uppercase flex-wrap">
+      <div class="flex items-center gap-space-xs font-label-mono-sm text-label-mono-sm text-tac-status-standby tracking-widest uppercase flex-wrap min-w-0">
         <span class="text-tac-primary font-semibold">MTC-ASSET</span>
         <span>//</span>
         <span>MAINTENANCE</span>
@@ -75,12 +75,12 @@
     <!-- Global Work Order Action Matrix -->
     <div class="flex items-center gap-space-sm flex-wrap">
       <button type="button" @click="exportData('logs', 'csv')"
-        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 w-full sm:w-auto">
         <span class="material-symbols-outlined text-[16px] text-tac-primary">download</span>
         <span>EXPORT AUDIT CSV</span>
       </button>
       <button type="button" x-show="isAdminOrSupervisor" @click="openLogModal(false)"
-        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95">
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-primary-container text-tac-on-primary-container font-label-mono-md text-label-mono-md font-bold shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:bg-tac-gold-bright transition-all active:scale-95 w-full sm:w-auto">
         <span class="material-symbols-outlined text-[18px]">add_circle</span>
         <span>+ CREATE NEW WO</span>
       </button>
@@ -220,7 +220,7 @@
 
     <!-- Status tabs + sektor/prioritas + rentang tanggal -->
     <div class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-space-sm pt-1">
-      <div class="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0" role="group" aria-label="Filter status">
+      <div class="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0 min-w-0 w-full xl:w-auto" role="group" aria-label="Filter status">
         <button type="button" aria-label="Semua status" :aria-pressed="filterWOStatus === '' ? 'true' : 'false'" @click="filterWOStatus = ''"
           class="px-space-sm py-1 rounded min-h-6 min-w-6 font-label-mono-sm text-label-mono-sm transition-colors"
           :class="filterWOStatus === '' ? 'bg-tac-surface-container-highest text-tac-on-surface font-semibold' : 'text-tac-status-standby hover:text-tac-on-surface hover:bg-tac-surface-container'"
@@ -972,7 +972,7 @@
   </div>
 
   <!-- ═══ 9. FLOATING MOBILE QUICK ACTION PILL ══════════════════════════ -->
-  <div class="fixed bottom-12 right-6 lg:hidden z-40" x-show="isAdminOrSupervisor">
+  <div class="fixed bottom-[calc(4rem_+_env(safe-area-inset-bottom))] lg:bottom-12 right-6 lg:hidden z-40" x-show="isAdminOrSupervisor">
     <button type="button" @click="openLogModal(false)"
       class="flex items-center gap-2 px-space-lg py-3 rounded-full bg-tac-primary-container text-tac-on-primary-container font-headline-md shadow-[0_4px_24px_rgba(245,158,11,0.5)] active:scale-95 transition-all">
       <span class="material-symbols-outlined text-[20px]">add</span>
