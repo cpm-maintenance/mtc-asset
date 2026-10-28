@@ -217,8 +217,8 @@
         <thead>
           <tr class="bg-tac-surface-container border-b border-tac-border-subtle font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase tracking-wider">
                         <th class="w-10 px-space-md py-3">
-              <input type="checkbox" :checked="partAllVisibleSelected" @click="toggleSelectAllParts()"
-                aria-label="Pilih semua part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+              <label><input type="checkbox" :checked="partAllVisibleSelected" @click="toggleSelectAllParts()"
+                aria-label="Pilih semua part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer"></label>
             </th>
 <th class="px-space-md py-3">PART NUMBER / ID</th>
             <th class="px-space-md py-3">NAMA PART &amp; SPESIFIKASI</th>
@@ -233,7 +233,7 @@
             <tr class="hover:bg-tac-surface-elevated/70 transition-colors group">
               <!-- Part Number & ID -->
                             <td class="pl-space-md pr-0 py-3.5 align-top">
-                <input type="checkbox" x-model="partSelectedIds" :value="p.PartID" aria-label="Pilih part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+                <label><input type="checkbox" x-model="partSelectedIds" :value="p.PartID" aria-label="Pilih part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer"></label>
               </td>
 <td class="px-space-md py-3.5">
                 <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary group-hover:text-tac-gold-bright transition-colors"
@@ -315,7 +315,7 @@
         <div class="pl-2 flex flex-col gap-space-sm">
           <div class="flex items-start justify-between gap-2">
             <div>
-                            <input type="checkbox" x-model="partSelectedIds" :value="p.PartID" aria-label="Pilih part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+                            <label><input type="checkbox" x-model="partSelectedIds" :value="p.PartID" aria-label="Pilih part" class="h-4 w-4 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer"></label>
 <p class="font-label-mono-md text-label-mono-md font-bold text-tac-primary" x-text="p.PartNumber || p.PartID"></p>
               <h2 class="font-body-md text-body-md font-semibold text-tac-on-surface truncate" x-text="p.NamaPart" :title="p.NamaPart"></h2>
             </div>

@@ -1243,8 +1243,8 @@
           <div class="bg-tac-surface-card/60 border border-tac-border-tactical p-4 rounded-2xl max-h-48 overflow-y-auto border-tac-gold-bright/10 space-y-2">
             <template x-for="e in equipment" :key="e.EquipmentID">
               <label class="flex items-center gap-3 p-2 hover:bg-tac-gold-bright/5 rounded-xl cursor-pointer transition-colors group">
-                <input aria-label="Equipment terkait" type="checkbox" :value="e.EquipmentID" x-model="partForm.equipIds" 
-                  class="w-4 h-4 rounded border-tac-gold-bright/20 bg-black text-tac-gold-bright focus:ring-tac-gold-bright/50">
+                <label><input aria-label="Equipment terkait" type="checkbox" :value="e.EquipmentID" x-model="partForm.equipIds" 
+                  class="w-4 h-4 rounded border-tac-gold-bright/20 bg-black text-tac-gold-bright focus:ring-tac-gold-bright/50"></label>
                 <div class="flex-1 min-w-0">
                   <p class="text-[10px] font-black text-tac-on-surface truncate" x-text="e.Nama"></p>
                   <p class="text-[8px] text-tac-gold-bright/60 font-mono" x-text="e.EquipmentID"></p>

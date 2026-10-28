@@ -286,7 +286,7 @@
         CLEAR DATES
       </button>
       <label class="flex items-center gap-2 cursor-pointer select-none px-2 py-1 rounded bg-tac-surface-recessed">
-        <input aria-label="Urutkan menurut skor" type="checkbox" x-model="sortByScore" class="accent-tac-primary-container w-4 h-4">
+        <label><input aria-label="Urutkan menurut skor" type="checkbox" x-model="sortByScore" class="accent-tac-primary-container w-4 h-4"></label>
         <span class="font-label-mono-sm text-label-mono-sm uppercase text-tac-on-surface-variant">SORT BY PRIORITY SCORE</span>
       </label>
       <button type="button" @click="toggleSelectAllWOs()"
@@ -572,8 +572,8 @@
                 <!-- Header: nomor WO + prioritas + sektor | umur + tanggal -->
                 <div class="flex flex-wrap items-center justify-between gap-space-xs">
                   <div class="flex items-center gap-space-sm flex-wrap">
-                                        <input type="checkbox" x-model="woSelectedIds" :value="log.LogID" aria-label="Pilih work order"
-                      class="h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+                                        <label><input type="checkbox" x-model="woSelectedIds" :value="log.LogID" aria-label="Pilih work order"
+                      class="h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer"></label>
 <span class="font-label-mono-lg text-label-mono-lg text-tac-primary font-bold"
                       x-text="'WO #' + (log.woNumber || log.LogID)"></span>
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-label-mono-sm text-label-mono-sm font-bold"
@@ -691,7 +691,7 @@
                       <span>COMPLETE</span>
                     </button>
                     <button type="button" x-show="isAdmin" @click="exportWOToPDF(log.LogID)"
-                      class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-on-surface-variant hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors">PDF</button>
+                      class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-on-surface-variant hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm transition-colors min-w-11">PDF</button>
                     <button type="button" x-show="isAdminOrSupervisor" @click="deleteItem('HistoryLog', log.LogID)"
                       class="px-space-sm py-1 rounded bg-tac-surface-container text-tac-error hover:bg-tac-error-container hover:text-tac-on-error-container font-label-mono-sm text-label-mono-sm transition-colors">DELETE</button>
                   </div>
@@ -716,8 +716,8 @@
                 <button type="button" @click="selectedWODetail = log.LogID"
                   class="text-left bg-tac-surface-card rounded p-2 relative overflow-hidden hover:bg-tac-surface-elevated transition-colors"
                   :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : (woSelectedIds.includes(log.LogID) ? 'ring-1 ring-tac-primary/60' : '')">
-                  <input type="checkbox" @click.stop x-model="woSelectedIds" :value="log.LogID" aria-label="Pilih work order"
-                    class="absolute left-2 top-2 h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+                  <label><input type="checkbox" @click.stop x-model="woSelectedIds" :value="log.LogID" aria-label="Pilih work order"
+                    class="absolute left-2 top-2 h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer"></label>
                   <span class="absolute left-0 top-0 bottom-0 w-1" :class="woMarkerTac(log)"></span>
                   <span class="block pl-2">
                     <span class="font-label-mono-sm text-label-mono-sm text-tac-primary font-bold"
@@ -906,7 +906,7 @@
                 <span>EDIT</span>
               </button>
               <button type="button" x-show="isAdmin" @click="exportWOToPDF(woSelected.LogID)"
-                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-colors">
+                class="py-1.5 px-space-sm rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-sm text-label-mono-sm flex items-center justify-center gap-1 transition-colors min-w-11">
                 <span class="material-symbols-outlined text-[16px] text-tac-primary">picture_as_pdf</span>
                 <span>PDF</span>
               </button>

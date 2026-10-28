@@ -642,22 +642,22 @@ select option {
    pointer kasar, jadi layout desktop tidak berubah. Lebar ikon header ikut
    dinaikkan karena ikon-ikon itu berdempetan (mis-tap). */
 @media (pointer: coarse) {
-  header button,
-  header a,
-  nav button,
-  nav a {
+  header button[class],
+  header a[class],
+  nav button[class],
+  nav a[class] {
     min-width: 44px;
     min-height: 44px;
   }
 
   /* tombol di dalam konten: ikon maupun aksi teks (Approve/Reject) terlalu
      pendek untuk jempol. Tinggi saja — lebar dibiarkan supaya baris tidak melebar. */
-  main button {
+  main button[class] {
     min-height: 44px;
   }
 
-  main button.material-symbols-outlined,
-  main button:has(> .material-symbols-outlined) {
+  main button[class].material-symbols-outlined,
+  main button[class]:has(> .material-symbols-outlined) {
     min-width: 44px;
   }
 
@@ -676,8 +676,10 @@ select option {
   }
 
   input[type='date'],
+  input[type='date'][class],
   input[type='time'],
-  select {
+  input[type='number'][class],
+  select[class] {
     min-height: 44px;
   }
 }

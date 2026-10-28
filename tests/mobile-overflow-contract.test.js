@@ -201,3 +201,27 @@ describe('kontrak P3 — FAB di atas bottom nav', () => {
     }
   });
 });
+
+describe('kontrak P2 lanjutan — checkbox & tombol teks', () => {
+  it('setiap checkbox dibungkus <label> supaya hit area 44px', () => {
+    const files = ['PMSchedule', 'RequestPart', 'SpareParts', 'TechnicianWorkload', 'WorkOrders', 'app-shell'];
+    for (const f of files) {
+      const src = page(f);
+      const tags = [...src.matchAll(/<input\b(?=[^>]*type="checkbox")[^>]*>/g)];
+      expect(tags.length).toBeGreaterThan(0);
+      for (const m of tags) {
+        expect(src.slice(Math.max(0, m.index - 8), m.index)).toContain('<label>');
+      }
+    }
+  });
+
+  it('tombol teks PDF di WorkOrders minimal 44px lebar', () => {
+    const src = page('WorkOrders');
+    const hits = [...src.matchAll(/>PDF</g)];
+    expect(hits.length).toBeGreaterThan(0);
+    for (const m of hits) {
+      const cls = classOfPrevTag(src, '>PDF<', '<button');
+      expect(cls).toContain('min-w-11');
+    }
+  });
+});

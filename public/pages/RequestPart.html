@@ -207,9 +207,9 @@
         <div @click="selectedRequisition = selectedRequisition?.id === req.id ? null : req; if(selectedRequisition?.id === req.id) reqShowDetail = true; else reqShowDetail = false" class="p-3 cursor-pointer hover:bg-tac-surface-elevated/40 transition-colors">
           <div class="flex justify-between items-start gap-2">
             <div class="flex items-center gap-2 min-w-0">
-              <input type="checkbox" @click.stop x-model="reqSelectedIds" :value="req.id"
+              <label><input type="checkbox" @click.stop x-model="reqSelectedIds" :value="req.id"
                 aria-label="Pilih permintaan" title="Pilih permintaan"
-                class="h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
+                class="h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer"></label>
               <div class="w-8 h-8 rounded flex items-center justify-center shrink-0"
                 :class="{
                   'bg-tac-status-repair/20': req.status === 'pending',
