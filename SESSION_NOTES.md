@@ -1,3 +1,34 @@
+## 📝 S47d · Tap target lanjutan: checkbox berlabel + spesifisitas CSS (2026-10-28)
+
+> Rilis **sw v98 → v99** (`public/**` + `src/**` berubah).
+
+### Masalah
+Sisa 25 elemen di bawah 44px dari S47b, dua sebab:
+1. 12 checkbox bulk-select masih telanjang (tanpa `<label>`) — kotak 24x24 tanpa area ketuk.
+2. Aturan `@media (pointer: coarse)` memakai selector elemen (`main button`) sehingga
+   **kalah spesifisitas** dari utilitas Tailwind (`min-h-6` = `min-height: var(--spacing-6)`),
+   jadi chip filter tetap 38–40px walau aturannya ada.
+
+### Perbaikan
+- `public/pages/{PMSchedule,RequestPart,SpareParts,TechnicianWorkload,WorkOrders,app-shell}.html`:
+  setiap `<input type="checkbox">` dibungkus `<label>` → aturan `label:has(> input[type=checkbox])`
+  yang sudah ada memberi hit area 44x44.
+- `src/css/style.css`: semua selector di blok `pointer: coarse` dinaikkan spesifisitasnya
+  dengan `[class]` (`header button[class]`, `nav button[class]`, `main button[class]`,
+  `main button[class]:has(...)`, `select[class]`), plus `input[type='number'][class]`.
+- `WorkOrders.html`: tombol teks `PDF` dapat `min-w-11` (44px) — sebelumnya 41px.
+- Metrik ukur diperbarui: checkbox di dalam label 44x44 tidak lagi dihitung sebagai target kecil.
+
+### TDD & bukti
+- Kontrak mobile +2 tes (setiap checkbox dibungkus `<label>`; tombol `PDF` `min-w-11`) → **17 tes**.
+- Ukur ulang 390x844 (18 view): tap target <44px **298 (audit awal) → 4** sekarang
+  (sisa: 1 chip teks lebar 38px di wo, 3 elemen di request; bukan kontrol kritis).
+- **Uji service worker offline**: produksi `https://mtc-asset.web.app`, SW terdaftar
+  (`scope: /`, `controller: true`), `navigator.onLine=false` + reload → halaman tetap
+  dirender dari cache. Bukti: screenshot `offline.png`.
+- Gerbang: **tsc 0 · eslint 0 · 2214 tes (111 berkas) hijau · coverage 96,47/88,68/97,04/97,72
+  (> ratchet 96/88/96/97) · build 0 · precache 66/66 · sw v99**.
+
 ## 📝 S47a · Audit mobile 390px + P1 overflow horizontal (2026-10-28)
 
 > Rilis **sw v97 → v98** (`public/**` + `src/**` berubah).
