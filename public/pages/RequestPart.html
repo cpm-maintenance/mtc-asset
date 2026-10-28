@@ -371,13 +371,6 @@
                 class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high border border-tac-border-subtle text-tac-on-surface-variant font-label-mono-md text-label-mono-md font-bold hover:bg-tac-surface-elevated transition-all active:scale-95">
                 <span class="material-symbols-outlined text-[16px]">check_circle</span> Close
               </button>
-              <!-- Bulk checkbox -->
-              <div class="flex items-center gap-2 ml-auto" @click.stop>
-                <input aria-label="Pilih item request" type="checkbox" x-model="reqSelectedIds" :value="req.id"
-                  x-show="req.status === 'pending'"
-                  class="w-4 h-4 rounded border border-tac-border-subtle bg-tac-surface-recessed accent-tac-primary cursor-pointer">
-                <span x-show="req.status === 'pending'" class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">PILIH</span>
-              </div>
             </div>
           </div>
         </div>

@@ -715,7 +715,9 @@
               <template x-for="log in col.items" :key="log.LogID">
                 <button type="button" @click="selectedWODetail = log.LogID"
                   class="text-left bg-tac-surface-card rounded p-2 relative overflow-hidden hover:bg-tac-surface-elevated transition-colors"
-                  :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : ''">
+                  :class="log.LogID === selectedWODetail ? 'ring-1 ring-tac-primary-container/60' : (woSelectedIds.includes(log.LogID) ? 'ring-1 ring-tac-primary/60' : '')">
+                  <input type="checkbox" @click.stop x-model="woSelectedIds" :value="log.LogID" aria-label="Pilih work order"
+                    class="absolute left-2 top-2 h-4 w-4 shrink-0 rounded border-tac-border-subtle bg-tac-surface-recessed accent-tac-gold-bright cursor-pointer">
                   <span class="absolute left-0 top-0 bottom-0 w-1" :class="woMarkerTac(log)"></span>
                   <span class="block pl-2">
                     <span class="font-label-mono-sm text-label-mono-sm text-tac-primary font-bold"
@@ -727,6 +729,11 @@
                       <span class="font-label-mono-sm text-label-mono-sm px-1.5 rounded"
                         :class="woPriorityTac(log.woPriority)" x-text="(log.woPriority || 'Normal').toUpperCase()"></span>
                     </span>
+                  </span>
+                  <span class="absolute right-2 top-2 inline-flex items-center gap-1 font-label-mono-sm text-label-mono-sm"
+                    x-show="woSelectedIds.includes(log.LogID)"
+                    :class="woPriorityTac(log.woPriority)">
+                    <span class="material-symbols-outlined text-[10px] text-tac-status-operational">check_circle</span>
                   </span>
                 </button>
               </template>

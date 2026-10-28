@@ -1,4 +1,52 @@
-## 🔗 S45o · Stiker QR menunjuk ke tautan asetnya (2026-10-27)
+## 📝 S46a · Work Orders kanban multi-select checkbox (2026-10-28)
+
+> Rilis **sw v96 → v97** (`public/**` + `src/**` berubah).
+
+### Masalah
+View **Kanban Stack** di Work Orders belum punya checkbox per kartu, sedangkan view **Ledger** sudah ada (`woSelectedIds` + `PILIH SEMUA` + tombol `HAPUS (n)`). Multi-select hapus massal tidak bisa dipakai dari kanban.
+
+### Perbaikan
+- Setiap kartu kanban kini berisi `<input type="checkbox" @click.stop x-model="woSelectedIds" :value="log.LogID">` (top-left), berdasar pola ledger.
+- Kartu dapat *ring* `ring-tac-primary` bila terpilih; badge `check_circle` top-right.
+- `@click.stop` mencegah centang kartu ikut membuka inspector target (`selectedWODetail`).
+- `woSelectedIds` sudah dideklarasikan di literal `app()` (bukan dibuat malas) — catatan S39-kunci, jadi render stabil.
+- Kontrak tes: `tests/app-kanban-multi-select.test.js` (markup kanban + state: `toggleWOSelect`, `woAllVisibleSelected`, `toggleSelectAllWOs`, `bulkDeleteWOs`).
+
+### TDD & bukti
+- `npm run test:run`: **2197 tes / 110 berkas** hijau.
+- Gerbang: **tsc 0 · eslint 0 · 2197 tes hijau · coverage 96,47/88,68/97,04/97,72 (> ratchet 95/84/95/96) · build 0 · precache 66/66 · sw v97**.
+
+## 📝 S46b · Hapus checkbox duplikat di panel detail Request Part (2026-10-28)
+
+### Masalah
+Panel detail (expand) Request Part menampilkan checkbox "PILIH" di bagian bawah, padahal baris/row sudah punya checkbox sendiri di header. Duplikat → karma ganda pada `reqSelectedIds` dan UI bingung menandai.
+
+### Perbaikan
+- Hapus blok `<!-- Bulk checkbox -->` di dalam action bar detail panel (`public/pages/RequestPart.html`).
+- Tetap mempertahankan checkbox di header baris (dengan `@click.stop`).
+- `reqSelectedIds` tetap dideklarasikan di literal `app()` — tidak ada perubahan state.
+
+### TDD & bukti
+- Kontrak `tests/bulk-select-markup.test.js` tetap lulus; `tests/app-kanban-multi-select.test.js` + seluruh suite tersisa hijau.
+- Gerbang: **tsc 0 · eslint 0 · 2197 tes hijau · coverage 96,47/88,68/97,04/97,72 · build 0 · precache 66/66 · sw v97**.
+
+## 📝 S46c · Audit modal QR preview & crop setelah sapu modal (2026-10-28)
+
+### Masalah
+Sesudah "sapu modal" (S39f-form-tidy) perlu dikonfirmasi: modal **QR Preview** dan **Crop Image** sudah bebas `<form>` atau belum.
+
+### Perbaikan
+- Audit menyeluruh via ekstraksi segmen `<template>` di `public/pages/app-shell.html`:
+  - `showQRPreviewModal` — **tidak ada `<form>`**.
+  - `showCropModalOpen` — **tidak ada `<form>`**.
+  - `showScanner` — **tidak ada `<form>`**.
+- Hanya 6 `<form>` sah di app-shell.html, semuanya modal lain: create/edit user, equipment, spare part, performance, log.
+- Tidak ada perubahan markup; hasil audit dicatat sebagai kontrak (keduanya sudah tanpa `<form>` sebelum dan sesudah audit).
+
+### TDD & bukti
+- Gerbang: **tsc 0 · eslint 0 · 2197 tes hijau · coverage 96,47/88,68/97,04/97,72 · build 0 · precache 66/66 · sw v97**.
+
+
 
 **Rilis sw v89 → v90** (`src/**` + `sw.js` berubah).
 
