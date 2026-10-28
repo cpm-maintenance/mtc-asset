@@ -650,14 +650,11 @@ select option {
     min-height: 44px;
   }
 
-  /* tombol di dalam konten: ikon maupun aksi teks (Approve/Reject) terlalu
-     pendek untuk jempol. Tinggi saja — lebar dibiarkan supaya baris tidak melebar. */
+  /* tombol di dalam konten: ikon maupun aksi teks (Approve/Reject) terlalu kecil
+     untuk jempol. Lebar juga dipatok 44px karena beberapa tombol ikon memakai
+     utilitas `w-7` (28px) yang mengalahkan `min-width` bawaan. */
   main button[class] {
     min-height: 44px;
-  }
-
-  main button[class].material-symbols-outlined,
-  main button[class]:has(> .material-symbols-outlined) {
     min-width: 44px;
   }
 

@@ -158,6 +158,8 @@ describe('kontrak tap target (pointer kasar)', () => {
     expect(block).toMatch(/label:has\(> input\[type='checkbox'\]\)/);
     expect(block).toMatch(/input\[type='date'\]/);
     expect((block.match(/min-(width|height): 44px/g) || []).length).toBeGreaterThanOrEqual(4);
+    // tombol di konten wajib 44x44: utilitas `w-7`/`min-w-6` sempat mengalahkan min-width
+    expect(block).toMatch(/main button\[class\] \{[^}]*min-height: 44px;[^}]*min-width: 44px;/);
   });
 });
 
