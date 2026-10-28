@@ -221,7 +221,7 @@ describe('kontrak P2 lanjutan — checkbox & tombol teks', () => {
     const src = page('WorkOrders');
     const hits = [...src.matchAll(/>PDF</g)];
     expect(hits.length).toBeGreaterThan(0);
-    for (const m of hits) {
+    for (let i = 0; i < hits.length; i++) {
       const cls = classOfPrevTag(src, '>PDF<', '<button');
       expect(cls).toContain('min-w-11');
     }
@@ -234,7 +234,7 @@ describe('kontrak layout 360px (Android mid) & landscape', () => {
     const selects = [...src.matchAll(/<select\b[^>]*>/g)];
     expect(selects.length).toBeGreaterThan(0);
     for (const m of selects) {
-      const cls = (m[0].match(/(?<![:\w-])class="([^"]*)"/) || [, ''])[1].split(/\s+/);
+      const cls = (m[0].match(/(?<![:\w-])class="([^"]*)"/) || ['', ''])[1].split(/\s+/);
       expect(cls).toContain('min-w-0');
       expect(cls).toContain('max-w-full');
     }

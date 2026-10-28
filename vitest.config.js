@@ -86,7 +86,7 @@ export default defineConfig({
             // Terukur 96,43 / 86,11 / 96,55 / 97,75 — jangan turunkan.
             thresholds: {
                 statements: 96,
-                branches: 88,
+                branches: 89, // S48: terukur 89,89%; probe 90,5% wajib gagal.
                 functions: 96,
                 lines: 97,
             },

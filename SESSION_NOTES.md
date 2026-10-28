@@ -1,3 +1,20 @@
+## 📝 S48 · Branch coverage 88,68 → 89,89%; ratchet 89 (2026-10-28)
+
+### Perubahan
+- Tambah 19 tes pada data.test.js dan export-module.test.js: payload legacy, dedupe notifikasi, state listener kosong, snapshot cap 500, hapus offline, timestamp konflik, placeholder PDF, koleksi belum dimuat, dan error tanpa pesan.
+- Ratchet menjadi 96/89/96/97. Probe CLI threshold branches=90.5 gagal sesuai harapan: coverage 89.89% tidak memenuhi 90.5% (exit 1).
+- Gerbang pertama menemukan lint lama di mobile-overflow-contract.test.js: binding loop tidak terpakai dan sparse array. Keduanya diperbaiki tanpa mengubah markup UI.
+
+### Bukti
+- typecheck: exit 0.
+- lint: exit 0, 0 error / 0 warning.
+- test:run: 2235 tes / 111 berkas lulus.
+- test:coverage: 96,70 / 89,89 / 97,32 / 97,82; exit 0.
+- data.js branches 84,58 → 94,43%; export.js 86,37 → 95,86%.
+- build: exit 0; verify:precache: 66/66.
+- git diff --quiet -- src public index.html sw.js: exit 0. Kode produksi tidak berubah; sw tetap v101. Tidak ada perubahan UI yang memerlukan pengukuran ulang viewport.
+- Catatan: tes placeholder awal salah mengharapkan LOW untuk stok undefined; Number(undefined) adalah NaN sehingga perbandingan false. Asersi disesuaikan ke perilaku OK yang ada, bukan mengubah kode produksi.
+
 ## 📝 S47f · Audit emulator multi-preset: 360/375/412 + landscape (2026-10-28)
 
 > Rilis **sw v100 → v101** (`public/**` berubah).

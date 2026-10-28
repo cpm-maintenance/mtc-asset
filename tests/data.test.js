@@ -814,6 +814,107 @@ describe('dataModule.setupFirebaseListeners', () => {
 // Remaining pagination / cache / sync branches
 // ---------------------------------------------------------------------------
 
+describe('dataModule — cabang cache dan payload legacy S48', () => {
+    afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
+    it('menolak JSON non-array dan membersihkan entitas URL tanpa mengubah input', () => {
+        const input = {
+            a: { PartsUsed: ' ', events: '1', PhotoURLs: '[null,42,"x&amp;y&unknown;"]' },
+            b: { PartsUsed: '{}', events: 'true' },
+        };
+        expect(safeProcessFirebaseData(input)).toEqual([
+            { PartsUsed: [], events: [], PhotoURLs: ['', '', 'x&y&unknown;'] },
+            { PartsUsed: [], events: [] },
+        ]);
+        expect(input.a.PartsUsed).toBe(' ');
+    });
+
+    it('notifikasi global tidak menduplikasi pesan WO yang sama', async () => {
+        window.get.mockResolvedValue({ val: () => ({ L: { Status: 'Pending', woNumber: 'W', Jenis: 'PM' } }) });
+        window.app = { notifications: [
+            { type: 'Other', message: 'x' },
+            { type: 'Work Order', message: 'old' },
+            { type: 'Work Order', message: '1 Work Order waiting for approval' },
+        ] };
+        await makeCtx().checkPendingWorkOrders();
+        expect(window.app.notifications).toHaveLength(3);
+    });
+
+    it('listener menangani state kosong, event non-WO, dan snapshot cap 500', async () => {
+        vi.useFakeTimers();
+        const removed = {};
+        window.onChildRemoved = vi.fn((ref, cb) => { removed[pathOf(ref)] = cb; return vi.fn(); });
+        const l = captureListeners();
+        const ctx = makeCtx({ logs: undefined, allParts: undefined, performanceData: undefined,
+            activeWorkOrders: undefined, selectedEquip: { EquipmentID: 'missing' } });
+        vi.spyOn(ctx, 'loadFromIndexedDB').mockResolvedValue();
+        vi.spyOn(ctx, 'checkPendingWorkOrders').mockResolvedValue();
+        vi.spyOn(ctx, 'checkPendingOperations').mockResolvedValue();
+        ctx.setupFirebaseListeners({ fromCache: false });
+        ctx.setupFirebaseListeners({ fromCache: false });
+        expect(ctx.loadFromIndexedDB).not.toHaveBeenCalled();
+        l.first('Users/uid-user').cb({ val: () => ({}) });
+        expect(ctx.userRole).toBe('user');
+        l.first('Equipment').cb({ val: () => ({ E: {} }) });
+        expect(ctx.selectedEquip.EquipmentID).toBe('missing');
+        l.child('SpareParts').cb({ key: 'P', val: () => ({}) });
+        expect(ctx.allParts).toEqual([{ PartID: 'P' }]);
+        l.child('Performance').cb({ key: 'A', val: () => ({}) });
+        l.child('Performance').cb({ key: 'B', val: () => ({}) });
+        expect(ctx.performanceData.map(p => p.id)).toEqual(['B', 'A']);
+        await vi.advanceTimersByTimeAsync(1500);
+        for (const [i, Jenis] of ['Inspect', 'Repair', 'Breakdown', 'PM', 'Service'].entries()) {
+            l.child('HistoryLog').cb({ val: () => ({ LogID: `L${i}`, Jenis, Status: 'Pending' }) });
+        }
+        expect(ctx.logs).toHaveLength(5);
+        expect(ctx._woSeenIds.has('L0')).toBe(false);
+        expect(ctx._woSeenIds.has('L4')).toBe(true);
+        expect(ctx.showNotification).toHaveBeenCalledWith(expect.stringContaining('Unknown'), 'info');
+        const before = ctx.logs;
+        l.first('HistoryLog').cb({ val: () => Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`K${i}`, {}])) });
+        expect(ctx.logs).toBe(before);
+        l.first('HistoryLog').cb({ val: () => null });
+        expect(ctx.logs).toEqual([]);
+        for (const node of ['SpareParts', 'Performance', 'HistoryLog']) {
+            removed[node]({});
+        }
+        ctx.allParts = undefined;
+        ctx.performanceData = undefined;
+        ctx.logs = undefined;
+        removed.SpareParts({ key: 'P' });
+        removed.Performance({ key: 'A' });
+        removed.HistoryLog({ val: () => ({ LogID: 'L' }) });
+        expect(ctx.allParts).toEqual([]);
+        expect(ctx.performanceData).toEqual([]);
+        expect(ctx.logs).toEqual([]);
+        expect(ctx.activeWorkOrders).toEqual([]);
+        ctx._cacheWriter('custom', undefined);
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('antrean kosong tidak menulis dan timestamp legacy tetap tersinkron', async () => {
+        const ctx = makeCtx();
+        await ctx.syncPendingOperations();
+        expect(window.set).not.toHaveBeenCalled();
+        idbManager.getPendingOps.mockResolvedValue([
+            { id: 1, type: 'equipment', data: { EquipmentID: 'E', createdAt: '2026-01-01' } },
+            { id: 2, type: 'parts', data: { PartID: 'P' } },
+        ]);
+        window.get.mockResolvedValue({ exists: () => true, val: () => ({}) });
+        await ctx.syncPendingOperations();
+        expect(window.set).toHaveBeenCalledTimes(2);
+        expect(idbManager.removePendingOp).toHaveBeenCalledWith(2);
+    });
+
+    it.each(['SpareParts', 'Performance'])('hapus offline %s membersihkan state tanpa request server', async node => {
+        const ctx = makeCtx({ isOnline: false, allParts: [{ PartID: 'X' }], performanceData: [{ id: 'X' }] });
+        await ctx.deleteItem(node, 'X');
+        expect(node === 'SpareParts' ? ctx.allParts : ctx.performanceData).toEqual([]);
+        expect(window.remove).not.toHaveBeenCalled();
+    });
+});
+
 describe('dataModule listener cleanup', () => {
     it('calls every unsubscribe and swallows its errors', () => {
         const ctx = makeCtx({ _listeners: [vi.fn(), () => { throw new Error('x'); }] });

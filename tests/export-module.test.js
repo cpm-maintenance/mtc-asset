@@ -912,6 +912,95 @@ describe('export.js — exportToPDF', () => {
     });
 });
 
+describe('export.js — fallback ekspor S48', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        jsPDF.doc.getTextWidth.mockReturnValue(10);
+        jsPDF.doc.lastAutoTable.finalY = 100;
+    });
+
+    it.each([false, true])('state kosong ekspor lengkap dengan Alpine=%s', async alpine => {
+        if (alpine) window.Alpine = { raw: x => x };
+        const ctx = makeCtx({ equipment: undefined, logs: undefined, allParts: undefined,
+            performanceData: undefined, pmList: undefined, requisitions: undefined });
+        await ctx.exportExcelFull();
+        expect(xlsx.utils.book_append_sheet.mock.calls.map(c => c[2])).toHaveLength(7);
+        expect(xlsx.utils.aoa_to_sheet.mock.calls[0][0]).toContainEqual(['Total Logs/WO', 0]);
+    });
+
+    it('performance tanpa events tetap diekspor sebagai JSON array kosong', async () => {
+        await makeCtx({ performanceData: [{ id: 'P' }] }).exportExcelFull();
+        expect(xlsx.utils.json_to_sheet.mock.calls[3][0]).toEqual([{ id: 'P', events: '[]' }]);
+    });
+
+    it('Alpine menerima empat koleksi kosong pada CSV dan tiga pada WO', async () => {
+        window.Alpine = { raw: vi.fn(x => x) };
+        const ctx = makeCtx({ equipment: undefined, logs: undefined, allParts: undefined, performanceData: undefined });
+        await ctx.exportData('logs');
+        expect(sheetRows()).toEqual([]);
+        expect(window.Alpine.raw.mock.calls).toEqual([[[]], [[]], [[]], [[]]]);
+        await ctx.exportWOToPDF('missing');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Work order not found', 'error');
+    });
+
+    it('PDF aset menampilkan placeholder untuk field baris legacy yang kosong', async () => {
+        const ctx = makeCtx({
+            logs: [{ EquipmentID: 'E' }], pmList: [{ equipmentId: 'E' }],
+            allParts: [{ EquipmentID: 'E' }],
+        });
+        await ctx.exportToPDF({ EquipmentID: 'E' });
+        const rows = jsPDF.doc.autoTable.mock.calls.map(c => c[0].body);
+        expect(rows).toEqual([
+            [['-', '-', '', '-', '-']],
+            [['-', '', '-']],
+            [['-', '', '0', '0', 'OK']],
+        ]);
+        expect(jsPDF.doc.save).toHaveBeenCalledWith('Asset_E.pdf');
+    });
+
+    it('PDF aset menerima koleksi yang belum dimuat', async () => {
+        await makeCtx({ logs: undefined, pmList: undefined, allParts: undefined }).exportToPDF({ EquipmentID: 'E' });
+        expect(jsPDF.doc.autoTable).not.toHaveBeenCalled();
+        expect(jsPDF.doc.save).toHaveBeenCalledWith('Asset_E.pdf');
+    });
+
+    it('PDF PM menormalkan tanggal, status, tugas dan equipment kosong', async () => {
+        await makeCtx({ equipment: undefined, pmList: [{}, { status: 'completed' }] }).exportPMSchedulePDF();
+        const texts = jsPDF.doc.text.mock.calls.map(c => c[0]);
+        expect(texts).toContain('Pending');
+        expect(texts).toContain('-');
+        expect(jsPDF.doc.save).toHaveBeenCalled();
+    });
+
+    it('PDF PM tanpa state tidak membuat dokumen', async () => {
+        const ctx = makeCtx({ pmList: undefined });
+        await ctx.exportPMSchedulePDF();
+        expect(ctx.showNotification).toHaveBeenCalledWith('No PM tasks to export', 'warning');
+        expect(jsPDF.doc.save).not.toHaveBeenCalled();
+    });
+
+    it.each(['asset', 'pm', 'wo', 'kpi'])('error %s tanpa pesan memakai Unknown error', async kind => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx({ logs: [{ LogID: 'L' }], performanceData: [{}], pmList: [{}] });
+        if (kind === 'wo') generateProfessionalWOPDF.mockRejectedValueOnce({});
+        else jsPDF.ctor.mockImplementationOnce(function () { throw {}; });
+        if (kind === 'asset') await ctx.exportToPDF({ EquipmentID: 'E' });
+        if (kind === 'pm') await ctx.exportPMSchedulePDF();
+        if (kind === 'wo') await ctx.exportWOToPDF('L');
+        if (kind === 'kpi') {
+            document.body.innerHTML = '<table id="perfTable"></table>';
+            await ctx.exportKPIToPDF();
+        }
+        expect(ctx.showNotification).toHaveBeenCalledWith(expect.stringContaining('Unknown error'), 'error');
+    });
+
+    it('tabel KPI tanpa header/body tetap menghasilkan PDF', async () => {
+        document.body.innerHTML = '<table id="perfTable"></table>';
+        await makeCtx({ performanceData: [{}] }).exportKPIToPDF();
+        expect(jsPDF.doc.save).toHaveBeenCalled();
+    });
+});
+
 describe('export.js — exportWOToPDF cabang Alpine & state kosong', () => {
     it('memakai Alpine.raw untuk melepas proxy sebelum generator', async () => {
         window.Alpine = { raw: vi.fn((x) => x) };
