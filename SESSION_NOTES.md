@@ -1,3 +1,28 @@
+## 📝 S47e · Tap target 44px tuntas (0 sisa) (2026-10-28)
+
+> Rilis **sw v99 → v100** (`src/**` berubah).
+
+### Masalah
+Sisa 4 elemen di bawah 44px dari S47d: chip filter `ALL (0)` di Work Orders (lebar 38px)
+dan 3 tombol ikon `w-7` (28px) di Request Part. Sebabnya utilitas lebar Tailwind
+(`min-w-6`, `w-7`) mengalahkan `min-width` dari aturan `main button[class]` — aturan itu
+hanya mematok tinggi.
+
+### Perbaikan
+- `src/css/style.css`: `main button[class]` sekarang mematok **min-height 44px dan
+  min-width 44px**. Aturan khusus ikon (`:has(> .material-symbols-outlined)`) dihapus
+  karena jadi redundan.
+- Kontrak mobile menambah assertion: blok `pointer: coarse` wajib memuat
+  `main button[class]` dengan kedua patokan 44px.
+
+### TDD & bukti
+- Ukur ulang 390x844, 18 view: **tap target <44px = 0** (audit awal 298 → 25 → 4 → 0),
+  overflow dokumen tetap 0 di semua view.
+- Cek visual Request Part: tidak ada tombol tumpang tindih, tidak ada teks terpotong;
+  `AUTO-REORDER ≤ MIN` membungkus ke baris kedua (alur normal).
+- Gerbang: **tsc 0 · eslint 0 · 2214 tes (111 berkas) hijau · coverage 96,47/88,68/97,04/97,72
+  (> ratchet 96/88/96/97) · build 0 · precache 66/66 · sw v100**.
+
 ## 📝 S47d · Tap target lanjutan: checkbox berlabel + spesifisitas CSS (2026-10-28)
 
 > Rilis **sw v98 → v99** (`public/**` + `src/**` berubah).
