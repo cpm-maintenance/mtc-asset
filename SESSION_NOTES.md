@@ -1,3 +1,74 @@
+## 📝 S47a · Audit mobile 390px + P1 overflow horizontal (2026-10-28)
+
+> Rilis **sw v97 → v98** (`public/**` + `src/**` berubah).
+
+### Masalah
+Audit 18 view pada emulasi 390x844 (dpr 3, mobile, touch, UA iOS 17) menemukan 7 halaman
+yang melebarkan dokumen sehingga bisa digeser ke samping: `wo` 130px, `perf` 245px,
+`mtbfmttr` 385px, `history` 136px, `pms` 47px, `enterprise` 60px, `parts` 16px.
+Akar masalah: baris filter `flex` tanpa `min-w-0` (anak dengan lebar intrinsial: select
+beropsi panjang, input tanggal), kontainer `overflow-x-auto` di dalam flex/grid item yang
+tidak bisa menyusut, dan `min-w-[560px]` pada grid kalender.
+
+### Perbaikan
+- `WorkOrders`: baris filter status `min-w-0 w-full xl:w-auto`.
+- `Performance`, `MTBFMTTR`: kelompok filter `min-w-0`; select `min-w-0 max-w-full`;
+  MTBF juga `min-w-[16rem]` → `min-w-0 sm:min-w-[16rem]` (256px memaksa overflow).
+- `HistoryCard`: baris periode `flex-wrap min-w-0`; input tanggal `min-w-0 max-w-[150px]`.
+- `PMSchedule`: kartu kalender `min-w-0`; toolbar kalender `flex-wrap min-w-0`.
+- `EnterpriseDashboard`: pembungkus tabel `min-w-0`; dua baris filter header `min-w-0 flex-wrap`.
+- `SpareParts`: baris `LINKED ASSET` `min-w-0`; select `max-w-full sm:max-w-xs` +
+  `min-w-0 w-full flex-1`; dua baris flex-wrap kartu `min-w-0`.
+- `app-shell`: rail tab Analytics `flex-wrap` → `overflow-x-auto`, tombol tab
+  `shrink-0 whitespace-nowrap` (sebelumnya `flex-1`, label `ENT KPI` pecah dua baris).
+
+### TDD & bukti
+- Kontrak baru `tests/mobile-overflow-contract.test.js` (9 tes): kelas wajib per fragmen.
+- Ukur ulang 390x844: **7 view overflow → 0** (semua 18 view 0).
+- `npm run test:run`: **2206 tes / 111 berkas** hijau; coverage 96,47/88,68/97,04/97,72.
+
+## 📝 S47b · Tap target 44px di perangkat sentuh (2026-10-28)
+
+### Masalah
+Ikon header/nav 28x28, checkbox bulk-select 24x24, input tanggal 32px, tombol aksi kartu
+(Approve/Reject) 24–26px. Total **298 elemen** di bawah 44px pada 18 view.
+
+### Perbaikan
+Satu blok `@media (pointer: coarse)` di `src/css/style.css` (desktop tidak berubah):
+- `header/nav button|a` → 44x44
+- `main button` → tinggi 44 (ikon maupun aksi teks)
+- tombol ikon → lebar 44
+- `label:has(> input[type=checkbox])` → 44x44, checkbox 22x22
+- `input[type=date|time]`, `select` → tinggi 44
+
+### TDD & bukti
+- Assertion CSS ditambahkan ke kontrak mobile.
+- Ukur ulang: **298 → 25** elemen di bawah 44px (sisa: checkbox 24x24, tombol teks `PDF` 41px).
+
+## 📝 S47c · Chrome mobile: FAB, safe-area, tombol full-width (2026-10-28)
+
+### Masalah
+FAB `+ CREATE WO` menumpang 9px di belakang bottom nav 57px; elemen terakhir halaman
+-9px (tertutup nav); tombol aksi Work Orders tidak full-width; header/bottom nav belum
+menghormati `env(safe-area-inset-*)`; baris statistik Dashboard tidak membungkus.
+
+### Perbaikan
+- `app-shell`: `main` `pb-[calc(4.5rem_+_env(safe-area-inset-bottom))]`;
+  `header` `padding-left/right: max(1rem, env(safe-area-inset-...))`.
+- `WorkOrders`: `EXPORT AUDIT CSV` + `CREATE NEW WO` jadi `w-full sm:w-auto` (358px di 390);
+  baris breadcrumb `min-w-0`.
+- FAB `fixed bottom-12` → `bottom-[calc(4rem_+_env(safe-area-inset-bottom))] lg:bottom-12`
+  di `WorkOrders`, `AllLogs`, `Equipment` (celah +7px dari nav).
+- `Dashboard`: baris statistik armada `flex-wrap min-w-0`.
+
+### TDD & bukti
+- Kontrak mobile +5 tes (main padding, header safe-area, tombol full-width, breadcrumb,
+  baris statistik) +1 tes FAB → total **15 tes**.
+- Ukur ulang 390x844: FAB -9px → **+7px**; konten terakhir -9px → **+15px**;
+  tombol aksi 358px; semua 18 view overflow 0.
+- Gerbang: **tsc 0 · eslint 0 · 2212 tes (111 berkas) hijau · coverage 96,47/88,68/97,04/97,72
+  (> ratchet 96/88/96/97) · build 0 · precache 66/66 · sw v98**.
+
 ## 📝 S46a · Work Orders kanban multi-select checkbox (2026-10-28)
 
 > Rilis **sw v96 → v97** (`public/**` + `src/**` berubah).
