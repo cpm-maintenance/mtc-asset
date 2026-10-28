@@ -1,3 +1,35 @@
+## 📝 S47f · Audit emulator multi-preset: 360/375/412 + landscape (2026-10-28)
+
+> Rilis **sw v100 → v101** (`public/**` berubah).
+
+### Masalah
+Audit sebelumnya hanya pada satu preset (390x844). Diulang pada 360x800 (Android mid —
+lebar Android tersempit yang umum) dan 375x667 (iPhone SE), muncul dua kebocoran:
+
+- `equip`: 20px (360) / 5px (375) — baris filter `SEKTOR`/`SORT` berisi select dengan
+  min-content mengikuti opsi terpanjang, tidak bisa menyusut.
+- `pms`: 6px (360) — grid ringkasan 2 kolom; kartu memuat badge + teks yang tidak boleh
+  menyusut (grid item default `min-width: auto`).
+
+### Perbaikan
+- `Equipment.html`: ketiga `<select>` dapat `min-w-0 max-w-full`, tiga pembungkus
+  `flex items-center gap-1` dapat `min-w-0`, dan dua baris
+  `flex items-center gap-space-sm flex-wrap` (SEKTOR/SORT) dapat `min-w-0`.
+- `PMSchedule.html`: grid ringkasan jadi
+  `grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4` + `[&>*]:min-w-0`
+  (1 kolom di 360, tetap 2 kolom di 375/390).
+
+### TDD & bukti
+- Kontrak +2 tes (select Equipment bisa menyusut + barisnya `min-w-0`; grid PMSchedule) → **19 tes**.
+- Sapuan emulator, 18 view per preset:
+  - 360x800: **0 defect** (sebelumnya equip 20px, pms 6px)
+  - 375x667: **0 defect** (sebelumnya equip 5px)
+  - 390x844: **0 defect** (regresi bersih)
+  - 412x915: **0 defect**
+  - Landscape 844x390 spot-check (dash, wo, equip, parts, pms, perf): **0 defect**
+- Gerbang: **tsc 0 · eslint 0 · 2216 tes (111 berkas) hijau · coverage 96,47/88,68/97,04/97,72
+  (> ratchet 96/88/96/97) · build 0 · precache 66/66 · sw v101**.
+
 ## 📝 S47e · Tap target 44px tuntas (0 sisa) (2026-10-28)
 
 > Rilis **sw v99 → v100** (`src/**` berubah).
