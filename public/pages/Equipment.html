@@ -17,7 +17,7 @@
     </div>
 
     <!-- Action Bar -->
-    <div class="flex items-center gap-space-sm flex-wrap">
+    <div class="flex items-center gap-space-sm flex-wrap min-w-0">
       <button type="button" @click="downloadTemplate('equip')"
         class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95"
         title="Download CSV Template">
@@ -168,13 +168,13 @@
 
     <!-- Tactical Filter Pill Matrix -->
     <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle">
-      <div class="flex items-center gap-space-sm flex-wrap">
+      <div class="flex items-center gap-space-sm flex-wrap min-w-0">
 
         <!-- Sektor / Area Filter -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SEKTOR:</span>
           <select aria-label="Filter sektor" x-model="equipSectorFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact min-w-0 max-w-full">
             <option value="">SEMUA AREA</option>
             <template x-for="sec in woSectorOptions" :key="sec">
               <option :value="sec" x-text="sec"></option>
@@ -183,10 +183,10 @@
         </div>
 
         <!-- Status Filter -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STATUS:</span>
           <select aria-label="Filter status equipment" x-model="equipStatusFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact min-w-0 max-w-full">
             <option value="">SEMUA STATUS</option>
             <option value="Active">Active</option>
             <option value="In Maintenance">In Maintenance</option>
@@ -196,10 +196,10 @@
         </div>
 
         <!-- Sorting -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
           <select aria-label="Urutkan equipment" x-model="equipSortBy"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact min-w-0 max-w-full">
             <option value="name">NAMA UNIT (A-Z)</option>
             <option value="critical">KRITIKALITAS (HIGH FIRST)</option>
             <option value="health">HEALTH (LOWEST FIRST)</option>

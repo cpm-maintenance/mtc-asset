@@ -227,3 +227,26 @@ describe('kontrak P2 lanjutan — checkbox & tombol teks', () => {
     }
   });
 });
+
+describe('kontrak layout 360px (Android mid) & landscape', () => {
+  it('Equipment: setiap select bisa menyusut, baris filternya min-w-0', () => {
+    const src = page('Equipment');
+    const selects = [...src.matchAll(/<select\b[^>]*>/g)];
+    expect(selects.length).toBeGreaterThan(0);
+    for (const m of selects) {
+      const cls = (m[0].match(/(?<![:\w-])class="([^"]*)"/) || [, ''])[1].split(/\s+/);
+      expect(cls).toContain('min-w-0');
+      expect(cls).toContain('max-w-full');
+    }
+    const rows = [...src.matchAll(/<div class="([^"]*flex items-center gap-space-sm flex-wrap[^"]*)"/g)].map((m) =>
+      m[1].split(/\s+/)
+    );
+    expect(rows.length).toBeGreaterThan(0);
+    rows.forEach((r) => expect(r).toContain('min-w-0'));
+  });
+
+  it('PMSchedule: grid ringkasan 1 kolom di bawah 380px, kartu boleh menyusut', () => {
+    const src = page('PMSchedule');
+    expect(src).toContain('grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-space-md [&>*]:min-w-0');
+  });
+});
