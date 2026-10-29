@@ -42,6 +42,7 @@ function createHarness() {    const calls = [];
         const fault = faults[op];
         if (fault === 'throw') throw new Error(`boom-${op}`);
         if (fault === 'error') return makeRequest(undefined, new Error(`err-${op}`));
+        if (fault === 'null') return makeRequest(null);
         return makeRequest(result);
     };
 
@@ -411,6 +412,95 @@ describe('indexeddb CRUD', () => {
 
         harness.faults.transaction = 'throw';
         await expect(manager.clear('equipment')).rejects.toThrow('boom-transaction');
+    });
+});
+
+describe('indexeddb cabang gagal yang dapat dijangkau', () => {
+    it.each([
+        ['put', [{ EquipmentID: 'EQ-1' }]],
+        ['putBulk', [[{ EquipmentID: 'EQ-1' }]]],
+        ['delete', ['EQ-1']],
+        ['clear', []],
+    ])('%s berhenti tanpa mengakses store saat transaksi null', async (method, args) => {
+        const { harness, manager } = await loadWithIDB();
+        harness.faults.transaction = 'null';
+        harness.calls.length = 0;
+        await expect(manager[method]('equipment', ...args)).resolves.toBeUndefined();
+        expect(harness.calls).toEqual([['transaction', 'equipment', 'readwrite']]);
+    });
+
+    it.each(['getAll', 'getPendingOps'])('%s memakai array kosong saat hasil request null', async (method) => {
+        const { harness, manager } = await loadWithIDB();
+        harness.faults.getAll = 'null';
+        harness.faults.indexGetAll = 'null';
+        await expect(manager[method]('equipment')).resolves.toEqual([]);
+    });
+
+    it.each([
+        ['getAll', [], 'getAll'],
+        ['get', ['EQ-1'], 'get'],
+        ['put', [{ EquipmentID: 'EQ-1' }], 'put'],
+        ['putBulk', [[{ EquipmentID: 'EQ-1' }]], 'put'],
+        ['delete', ['EQ-1'], 'delete'],
+        ['clear', [], 'clear'],
+        ['getPendingOps', [], 'indexGetAll'],
+    ])('%s meneruskan exception API store sebagai rejection', async (method, args, fault) => {
+        const { harness, manager } = await loadWithIDB();
+        harness.faults[fault] = 'throw';
+        await expect(manager[method]('equipment', ...args)).rejects.toThrow(`boom-${fault}`);
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['addPendingOp', { type: 'wo' }, 'add'],
+        ['removePendingOp', 7, 'delete'],
+    ])('%s menangkap exception store antrean', async (method, arg, fault) => {
+        const { harness, manager } = await loadWithIDB();
+        harness.faults[fault] = 'throw';
+        await expect(manager[method](arg)).resolves.toBeUndefined();
+        expect(console.warn).toHaveBeenCalledWith(`IDB ${method} error:`, expect.objectContaining({ message: `boom-${fault}` }));
+    });
+
+    it.each(['equipment', 'parts', 'logs'])('ensureReady tidak membuka ulang bila store %s masih ada', async (name) => {
+        const { harness, manager } = await loadWithIDB();
+        harness.existing.clear();
+        harness.existing.add(name);
+        await expect(manager.ensureReady()).resolves.toBe(harness.db);
+        expect(harness.calls.filter((c) => c[0] === 'open')).toHaveLength(1);
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it('ensureReady benar-benar membuka ulang dan membuat skema yang hilang', async () => {
+        const { harness, manager } = await loadWithIDB();
+        harness.existing.clear();
+        harness.created.length = 0;
+        await expect(manager.ensureReady()).resolves.toBe(harness.db);
+        expect([...harness.existing]).toEqual(STORES);
+        expect(harness.calls.filter((c) => c[0] === 'open')).toHaveLength(2);
+        expect(harness.created).toHaveLength(8);
+    });
+
+    it('ensureReady meneruskan kegagalan saat membuka ulang', async () => {
+        const { harness, manager } = await loadWithIDB();
+        harness.existing.clear();
+        harness.faults.open = 'error';
+        await expect(manager.ensureReady()).rejects.toThrow('open-fail');
+    });
+
+    it.each(['putBulk', 'clear'])('%s belum settle pada abort tanpa event error (perilaku saat ini)', async (method) => {
+        const { harness, manager } = await loadWithIDB();
+        const tx = { objectStore: () => ({ put: vi.fn(), clear: vi.fn() }), oncomplete: null, onerror: null, onabort: null };
+        vi.spyOn(harness.db, 'transaction').mockReturnValue(tx);
+        let settled = false;
+        const pending = manager[method]('equipment', [{ EquipmentID: 'EQ-1' }]).then(() => { settled = true; });
+        await Promise.resolve();
+        tx.onabort?.();
+        await Promise.resolve();
+        expect(settled).toBe(false);
+        expect(tx.onabort).toBeNull();
+        tx.onerror();
+        await pending;
+        expect(settled).toBe(true);
     });
 });
 

@@ -1,3 +1,22 @@
+## 📝 S49 · IndexedDB tests-only: cabang gagal & abort (2026-10-29)
+
+### Perubahan
+- Tambah 22 tes pada indexeddb-module.test.js (54 tes total): transaksi null pada empat write, hasil request null, exception API store, error antrean offline, reopen skema nyata dan gagal reopen, serta abort tanpa error.
+- Harness kini benar-benar menghasilkan request.result null untuk fault 'null'; sebelumnya nama tes mengklaim fallback tetapi harness mengembalikan array kosong.
+- Tidak mem-mock fungsi manager pada tes baru; hanya API IndexedDB. Ratchet tetap 96/89/96/97; ui.js ditunda sesi berikutnya.
+
+### Bukti sebelum / sesudah
+- Baseline diukur ulang: 2235 tes / 111 berkas, global 96,70/89,89/97,32/97,82.
+- indexeddb.js: statements 88,23 → 92,51%; branches 88,57 → 97,14% (62/70 → 68/70); functions 100%; lines 85,98 → 91,08% (135/157 → 143/157).
+- Sesudah: typecheck 0, lint 0; test:run 2257 tes / 111 berkas; test:coverage 96,80/89,98/97,32/97,95; build 0; verify:precache 66/66. Enam gerbang exit 0.
+- git diff --quiet -- src public index.html sw.js: exit 0. Produksi identik, SW tetap mtc-asset-v101; UI tidak berubah, pengukuran viewport tidak diperlukan.
+
+### Temuan / batas
+- putBulk dan clear tidak memasang onabort: abort tanpa event error meninggalkan promise pending. Tes merekam perilaku sekarang, lalu memicu onerror untuk cleanup; bukan bukti perbaikan produksi.
+- Exception sinkron di executor Promise menjadi rejection, bukan masuk outer catch. Catch CRUD/getPendingOps serta cabang storage non-IDB tidak dipaksa lewat mock Promise atau transform sumber demi coverage.
+- Dua cabang tersisa: storage type selain indexedDB (tidak dipanggil modul), fallback getPendingOpsCount untuk hasil falsy (getPendingOps selalu array bila berhasil).
+- Enam gerbang diulang sebelum commit atas konfirmasi COMMIT DAN PUSH: 2257/111, coverage 96,80/89,98/97,32/97,95, precache 66/66; seluruhnya exit 0. Commit mencakup tes dan SESSION_NOTES.md saja; AGENT_CONTEXT.md tetap lokal/gitignored. Status push/CI diverifikasi setelah commit.
+
 ## 📝 S48 · Branch coverage 88,68 → 89,89%; ratchet 89 (2026-10-28)
 
 ### Perubahan
