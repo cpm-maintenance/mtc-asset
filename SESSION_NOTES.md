@@ -1,3 +1,39 @@
+## 📝 S50 · Fix form input Request Part & Performance di mobile, sw v101 → v102 (2026-10-30)
+
+> Rilis **sw v101 → v102** (`public/**` + `src/**` berubah).
+
+### Masalah
+- Tangkapan layar mobile dari Manuel menunjukkan modal "NEW MULTI-REQUEST" (RequestPart.html) mengalami penyempitan parah pada field Part ID dan Unit (~42-61px), teks terpotong, label "PART ID" terlipat vertikal, dan kontainer item menabrak overflow horizontal.
+- Akar masalah: elemen anak di dalam baris item `.form-grid` memakai kelas Tailwind `col-span-2` dan `col-span-3`. Grid responsif bertipe container-query ini di mobile/container sempit hanya memiliki 1 kolom (`1fr`). Menggunakan `col-span-2/3` pada grid 1-kolom memaksa pembuatan track kolom implisit yang sangat sempit, menjepit kolom lain.
+- Hal serupa ditemukan pada `public/pages/app-shell.html` (modal Performance, field Target PA) dengan kelas `col-span-2 md:col-span-1`.
+- Judul modal `text-headline-md` (18px) di layar mobile sempit memakan ruang horizontal sebelum tombol close.
+- Pada `src/css/style.css`, `.form-grid` belum menetapkan `min-width: 0` pada item anaknya, sehingga konten intrinsik lebar tidak menyusut.
+
+### Perbaikan
+- `public/pages/RequestPart.html`: hapus teks sisa potongan path SVG yang bocor di luar elemen `<svg>` (`-8.24 8.23Zm...`).
+- `src/css/style.css`: tambahkan styling global untuk `:is(select.field-compact, .field-compact select:not([multiple]))` dengan `padding-right: 28px`, `background-position: right 8px center`, dan `min-width: max-content` agar seluruh filter select compact (`STATUS`, `TIPE`, `SEKTOR`, dll.) memiliki ruang pas untuk chevron panah, tidak memotong teks label seperti `"SEMUA STATUS"`, dan border/kotaknya rapi.
+- `src/css/style.css`: kecualikan kontrol `.field-compact` dari aturan pemaksaan font mobile 16px (`input:not(.field-compact), select:not(.field-compact)...`), sehingga dropdown filter kompak di ponsel tetap mempertahankan ukuran font 12px yang proporsional dengan tinggi 32px tanpa terpotong atau kebesaran.
+- `public/pages/RequestPart.html`: ganti seluruh `col-span-2` dan `col-span-3` di baris item request part menjadi `span-2` (utility bawaan `.form-grid > .span-2` yang merentang penuh `1 / -1` di container sempit dan span 2 di container lebar).
+- `public/pages/RequestPart.html`: judul modal dijadikan responsif `text-base sm:text-headline-md` agar pas di layar kecil tanpa mendesak tombol close. Scroller baris item dibatasi tinggi di desktop saja (`sm:max-h-[400px] sm:overflow-y-auto sm:pr-2`).
+- `public/pages/app-shell.html`: bersihkan `col-span-2` pada kontainer Target PA% di modal Performance menjadi `md:col-span-1`.
+- `src/css/style.css`: `.form-grid` kini memakai `grid-template-columns: minmax(0, 1fr)` dan `.form-grid > * { min-width: 0; }` untuk mencegah intrinsic content overflow pada seluruh form.
+- `sw.js`: naik versi `mtc-asset-v101` → `mtc-asset-v102`.
+- `tests/form-controls.test.js`: sesuaikan assertion `grid-template-columns` dengan token `minmax(0, 1fr)`.
+- `tests/mobile-form-layout.test.js` (+3 tes baru): mengunci kontrak markup agar tidak ada lagi pemakaian `col-span-2/3` langsung di baris item RequestPart, memastikan modal Performance tidak menggunakan `col-span-2` sembarangan, dan memastikan aturan `minmax(0, 1fr)` serta `min-width: 0` pada `.form-grid`.
+
+### Bukti sebelum / sesudah
+- Pengukuran audit form mobile (Playwright): 9 form / 45 pengukuran melintasi 5 preset (360x800, 375x667, 390x844, 412x915, landscape 844x390):
+  - RequestPart modal: track kolom di 360px rapi 1 kolom (252px/294px), overflow 0, horizontal leak 0.
+  - Performance form: track kolom 1 kolom rapi di container sempit, overflow 0.
+  - Font input di mobile tetap terkunci 16px (mencegah auto-zoom iOS), dan heading modal proporsional.
+- Gerbang:
+  - tsc: exit 0
+  - eslint: exit 0 (0 error, 0 warning)
+  - test:run: 2262 tes / 112 berkas lulus (sebelumnya 2257/111)
+  - test:coverage: 96,80% statements / 89,98% branches / 97,32% functions / 97,95% lines (> ratchet 96/89/96/97)
+  - build: exit 0 (dist/sw.mjs 2.27 kB)
+  - verify:precache: 66/66 berkas ter-precache sempurna.
+
 ## 📝 S49 · IndexedDB tests-only: cabang gagal & abort (2026-10-29)
 
 ### Perubahan

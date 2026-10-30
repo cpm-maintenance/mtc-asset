@@ -297,6 +297,14 @@ input[type='radio']:disabled {
   border-radius: 6px;
 }
 
+:is(select.field-compact, .field-compact select:not([multiple])) {
+  padding-left: 10px;
+  padding-right: 28px;
+  background-position: right 8px center;
+  width: auto;
+  min-width: max-content;
+}
+
 :is(.field-compact, .field-compact :is(textarea)):is(textarea) {
   height: auto;
   min-height: 56px;
@@ -325,9 +333,10 @@ input[type='radio']:disabled {
       dipakai sebagai cadangan bila `:has()` tidak didukung. ─────────────── */
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
+.form-grid > * { min-width: 0; }
 .form-grid > .span-2 { grid-column: 1 / -1; }
 
 /* Varian 2 kolom maksimum — untuk seksi yang jumlah field-nya kelipatan 2,
@@ -538,7 +547,7 @@ select option {
    MOBILE FONT SIZE ADJUSTMENTS (keep as-is)
    ========================================= */
 @media (max-width: 767px) {
-  input, select, textarea {
+  input:not(.field-compact), select:not(.field-compact), textarea:not(.field-compact) {
     font-size: 16px !important; /* prevent iOS zoom */
   }
 }

@@ -135,7 +135,7 @@ describe('sweep kontrol filter', () => {
 
 describe('grid form responsif', () => {
   it('turun 1 → 2 → 3 kolom mengikuti lebar wadah', () => {
-    expect(css).toMatch(/\.form-grid\s*\{[^}]*grid-template-columns:\s*1fr/);
+    expect(css).toMatch(/\.form-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
     expect(css).toMatch(/@container \(min-width: 400px\)/);
     expect(css).toMatch(/@container \(min-width: 640px\)/);
   });

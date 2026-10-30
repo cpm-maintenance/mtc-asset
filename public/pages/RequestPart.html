@@ -389,7 +389,7 @@
       <div class="flex items-center justify-between border-b border-tac-border-subtle pb-space-sm mb-space-md">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined text-[20px] text-tac-gold-bright">shopping_cart</span>
-          <h3 class="font-headline-md text-headline-md text-tac-on-surface uppercase tracking-tight"
+          <h3 class="font-headline-md text-base sm:text-headline-md text-tac-on-surface uppercase tracking-tight"
             x-text="reqEditMode ? 'Edit Request' : 'New Multi-Request'"></h3>
         </div>
         <button type="button" @click="showReqModal = false" class="p-1 rounded text-tac-on-surface-variant hover:text-tac-on-surface hover:bg-tac-surface-container-high transition-colors">
@@ -402,7 +402,7 @@
 
       <form @submit.prevent="submitRequisition()" class="flex flex-col gap-space-sm">
         <!-- Item Lines -->
-        <div class="flex flex-col gap-space-sm max-h-[400px] overflow-y-auto pr-2">
+        <div class="flex flex-col gap-space-sm sm:max-h-[400px] sm:overflow-y-auto sm:pr-2">
           <template x-for="(item, idx) in reqLineItems" :key="idx">
             <div class="p-4 bg-tac-surface-recessed rounded border border-tac-border-subtle flex flex-col gap-space-sm relative">
               <div class="flex items-center justify-between">
@@ -414,18 +414,18 @@
                 </button>
               </div>
               <div class="form-grid">
-                <div class="col-span-2">
+                <div class="span-2">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Tipe</label>
                   <select aria-label="Jenis item" x-model="item.itemType" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm outline-none focus:border-tac-primary">
                     <option value="part">Spare Part</option>
                     <option value="material">Material</option>
                   </select>
                 </div>
-                <div class="col-span-3">
+                <div class="span-2">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Nama Item *</label>
                   <input aria-label="Nama item" type="text" x-model="item.itemName" required placeholder="e.g. Bearing SKF 6205" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
-                <div class="col-span-2" x-show="item.itemType === 'part'">
+                <div class="span-2" x-show="item.itemType === 'part'">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Part ID</label>
                   <input aria-label="Nomor part" type="text" x-model="item.partId" placeholder="P001" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
@@ -437,7 +437,7 @@
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 block">Unit</label>
                   <input aria-label="Satuan" type="text" x-model="item.unit" placeholder="pcs" class="w-full p-2.5 bg-tac-surface-container-low border border-tac-border-subtle rounded text-tac-on-surface font-body-sm text-body-sm placeholder:text-tac-on-surface-variant outline-none focus:border-tac-primary">
                 </div>
-                <div class="col-span-3">
+                <div class="span-2">
                   <label class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase mb-1 flex items-center gap-1">
                     <span class="material-symbols-outlined text-[14px] text-tac-primary">assignment</span>NO RESV
                   </label>
