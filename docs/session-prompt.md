@@ -8,14 +8,27 @@ remote `origin`, tree bersih). Bagian **Prompt** di bawah untuk disalin ke chat.
 ## Prompt (salin ke chat)
 
 ```
-Lanjut kerja di D:\CODING\MTC-Asset (PWA maintenance). Baca docs/session-prompt.md
-lalu SESSION_NOTES.md (entri terbaru ada di atas; S47a-S47f = audit mobile).
-Kalau menyentuh UI: ukur, jangan asumsikan - emulasi 360x800, 375x667, 390x844,
-412x915 plus landscape 844x390, target overflow 0 dan tap target minimal 44px.
-Rilis lewat CI (push ke main), bukan firebase deploy manual. Setelah push,
-verifikasi produksi pakai cache-buster: sw.js harus naik versi dan fragmen yang
-berubah memuat kelas barunya. Gerbang wajib di turn yang sama: typecheck, lint,
-test:run, test:coverage, build, verify:precache. Ratchet 96/88/96/97 jangan turun.
+Lanjut kerja di D:\CODING\MTC-Asset (PWA maintenance). Baca berurutan:
+1. docs/session-prompt.md
+2. SESSION_NOTES.md — entri terbaru di atas; S51 = perbaikan dropdown select clipping, status tabs overlap, font mobile form/modal, dan guard syntax Alpine.js.
+3. AGENTS.md dan bagian relevan AGENT_CONTEXT.md.
+
+Kondisi terakhir:
+- Branch main; commit 9224c762197f8aea703b6fd155ac1da0f5773099 sudah dipush ke origin/main.
+- CI Test, Build and Deploy, Lighthouse CI sudah success (hijau semua).
+- sw.js aktif di produksi mtc-asset-v103.
+- 2.264 tes / 112 berkas lulus (exit 0).
+- Coverage: Stmt 96,80% / Branch 89,98% / Func 97,32% / Line 97,95%.
+- Ratchet aktif: 96/89/96/97, jangan diturunkan.
+- Target sesi berikutnya: Unit test coverage ui.js / modul berikutnya sesuai roadmap.
+
+Aturan kerja:
+1. Jalankan 6 gerbang verifikasi di turn yang sama sebelum klaim selesai:
+   npm run typecheck && npm run lint && npm run test:run
+   npm run test:coverage && npm run build && npm run verify:precache
+2. sw.js hanya dinaikkan versinya jika menyentuh src/** atau public/**.
+3. Rilis lewat CI (git push origin main) dengan credential helper store.
+4. Lakukan verifikasi live produksi dengan query cache-buster.
 ```
 
 ---
