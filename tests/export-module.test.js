@@ -262,6 +262,14 @@ describe('export.js — downloadTemplate', () => {
         expect(lastDownloadName()).toBe('Template_Performance.csv');
     });
 
+    it('mengunduh template pm schedule', async () => {
+        await makeCtx().downloadTemplate('pms');
+
+        expect(sheetRows()[0].pmId).toBe('PM-001');
+        expect(sheetRows()[0].taskName).toBe('Greasing Bearing & Check V-Belt');
+        expect(lastDownloadName()).toBe('Template_PMSchedule.csv');
+    });
+
     it('mengirim sheet kosong untuk tipe tak dikenal', async () => {
         await makeCtx().downloadTemplate('entah');
 
@@ -488,6 +496,34 @@ describe('export.js — importCSV', () => {
         await vi.waitFor(() => expect(window.set).toHaveBeenCalledTimes(1));
 
         expect(window.set.mock.calls[0][1].PartsUsed).toEqual([]);
+    });
+
+    it('mengimpor data pm schedule dan memperbarui pmList', async () => {
+        xlsx.utils.sheet_to_json.mockReturnValue([
+            {
+                pmId: 'PM-99',
+                taskName: 'Check Liner',
+                equipmentId: 'EQ-1',
+                frequency: 'MONTHLY',
+                basis: 'CALENDAR',
+                intervalHours: '250',
+                status: 'PENDING',
+                priority: 'High',
+            },
+        ]);
+        const ctx = makeCtx({ pmList: [] });
+
+        await ctx.importCSV(fileEvent(), 'pms');
+        await vi.waitFor(() => expect(window.set).toHaveBeenCalledTimes(1));
+
+        const [path, record] = window.set.mock.calls[0];
+        expect(path).toBe('PM_Schedule/PM-99');
+        expect(record.taskName).toBe('Check Liner');
+        expect(record.status).toBe('pending');
+        expect(record.frequency).toBe('monthly');
+        expect(record.intervalHours).toBe(250);
+        expect(ctx.pmList).toHaveLength(1);
+        expect(ctx.pmList[0].pmId).toBe('PM-99');
     });
 
     it('melaporkan kegagalan import dan mengosongkan progress', async () => {

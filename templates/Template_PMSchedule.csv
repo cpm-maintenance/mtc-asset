@@ -1,0 +1,6 @@
+pmId,taskName,equipmentId,description,date,frequency,basis,intervalHours,assignedTo,status,priority,completionDate,completionNote
+PM-CR-001,Greasing Bearing & Jaw Plate Inspection,EQ-CR-001,Greasing bearing grease EP2 dan ukur keausan toggle plate,2026-11-15,monthly,calendar,250,Mechanical Crew,pending,High,,
+PM-CV-001,Conveyor Belt Alignment & Idler Check,EQ-CV-001,Pengecekan kelurusan belt conveyor dan rotasi idler roller,2026-11-20,weekly,calendar,100,Mechanical Crew,pending,Medium,,
+PM-ML-001,Trunnion Bearing Lubrication & Oil Analysis,EQ-ML-001,Pengambilan sampel oli trunnion dan pembersihan filter magnetik,2026-11-25,monthly,calendar,500,Lube Tech,pending,High,,
+PM-PU-001,Gland Packing & Impeller Clearance Adjustment,EQ-PU-001,Pemeriksaan kebocoran gland packing dan setting celah impeller,2026-11-10,weekly,calendar,120,Mechanical Crew,pending,Medium,,
+PM-SC-001,Exciter Drive Oil Replacement & Spring Check,EQ-SC-001,Penggantian oli exciter ISO VG 220 dan cek keretakan pegas,2026-12-01,quarterly,calendar,750,Mechanical Crew,pending,Low,,

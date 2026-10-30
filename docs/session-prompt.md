@@ -10,15 +10,15 @@ remote `origin`, tree bersih). Bagian **Prompt** di bawah untuk disalin ke chat.
 ```
 Lanjut kerja di D:\CODING\MTC-Asset (PWA maintenance). Baca berurutan:
 1. docs/session-prompt.md
-2. SESSION_NOTES.md — entri terbaru di atas; S54 = fix error konsol Equipment (filter domain expired/terblokir i.ibb.co), sw v104 → v105.
+2. SESSION_NOTES.md — entri terbaru di atas; S55 = template CSV & impor lengkap Spare Parts, Equipment, PM Schedule, sw v105 → v106.
 3. AGENTS.md dan bagian relevan AGENT_CONTEXT.md.
 
 Kondisi terakhir:
-- Branch main; commit b4452a1 sudah dipush ke origin/main.
+- Branch main; commit 52f7b5e sudah dipush ke origin/main.
 - CI Test, Build and Deploy, Lighthouse CI sudah success (hijau semua).
-- sw.js aktif di produksi mtc-asset-v105.
-- 2.285 tes / 112 berkas lulus (exit 0).
-- Coverage: Stmt 97,30% / Branch 90,14% / Func 97,53% / Line 98,53%.
+- sw.js aktif di produksi mtc-asset-v106.
+- 2.287 tes / 112 berkas lulus (exit 0).
+- Coverage: Stmt 97,28% / Branch 89,97% / Func 97,46% / Line 98,51%.
 - Ratchet aktif: 96/89/96/97, jangan diturunkan.
 - Target sesi berikutnya: Unit test coverage modul berikutnya sesuai roadmap (whatsapp.js, error-handler.js, dll.).
 

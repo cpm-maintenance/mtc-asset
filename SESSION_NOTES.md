@@ -1,3 +1,35 @@
+## 📝 S55 · Template CSV & Impor Lengkap: Spare Parts, Equipment, dan PM Schedule, sw v105 → v106 (2026-10-30)
+
+> Rilis **sw v105 → v106** (`src/**` + `public/**` berubah).
+
+### Kebutuhan & Desain
+- Manuel meminta template CSV resmi untuk impor data di menu Spare Part, Equipment, dan PM Schedule yang presisi dan kompatibel 100% dengan skema validasi Firebase RTDB (`database.rules.json`) agar tidak terjadi error atau penolakan izin saat diimpor.
+- Pemeriksaan skema aturan RTDB:
+  1. `Equipment`: Wajib `EquipmentID`, `Nama`, `Lokasi` (string). Opsional: `Tipe`, `Status`, `SerialNumber`, `Criticality`, `NextPMDate`, `TglInstalasi`, `Vendor`, `FotoURL`.
+  2. `SpareParts`: Wajib `NamaPart` (string), `Stok` (number >= 0), `MinStock` (number >= 0). Opsional: `PartID`, `NamaSingkat`, `PartNumber`, `EquipmentIDs`, `EquipmentID`, `Lokasi`, `Vendor`, `Harga`, `FotoURL`.
+  3. `PM_Schedule`: Wajib `pmId`, `equipmentId`, `taskName`, `status` (string, regex: `pending|completed|skipped`). Opsional: `description`, `date`, `frequency`, `basis`, `intervalHours`, `assignedTo`, `priority`, `completionDate`, `completionNote`.
+
+### Perbaikan & Penambahan
+- Berkas template CSV fisik dibuat di direktori `templates/`:
+  - `templates/Template_Equipment.csv`: 11 kolom standar industri mineral plant (Crusher, Conveyor, Ball Mill, Slurry Pump, Screen).
+  - `templates/Template_SpareParts.csv`: 12 kolom lengkap dengan part number SKF, Optibelt, Warman, Metso, dan multi-linked equipment IDs.
+  - `templates/Template_PMSchedule.csv`: 13 kolom PM directive dengan frekuensi, basis, intervalHours, dan status `pending` yang lolos aturan RTDB.
+- `src/js/modules/export.js`:
+  - `downloadTemplate(type)`: tambahkan cabang `type === 'pms'` menghasilkan `Template_PMSchedule.csv` dengan baris contoh valid.
+  - `importCSV(event, type)`: tambahkan parsing & penyimpanan ke node RTDB `PM_Schedule/{pmId}`, normalisasi status huruf kecil, intervalHours numerik, serta pembaruan otomatis state reaktif `this.pmList`.
+  - Typecheck JSDoc diperbarui mendukung `'pms'`.
+- `public/pages/PMSchedule.html`:
+  - Tambahkan tombol `TEMPLATE` (`downloadTemplate('pms')`) dan tombol `IMPORT` (`importCSV($event, 'pms')`) di header kontrol tasks.
+- `tests/export-module.test.js`:
+  - Tambah unit test untuk `downloadTemplate('pms')`.
+  - Tambah unit test untuk `importCSV(fileEvent(), 'pms')`.
+- `sw.js`: naik versi `mtc-asset-v105` → `mtc-asset-v106`.
+
+### Hasil & Verifikasi
+- 2.287 tes / 112 berkas lulus (exit 0).
+- Coverage: Stmt 97,28% / Branch 89,97% / Func 97,46% / Line 98,51% (melebihi ratchet 96/89/96/97).
+- Enam gerbang verifikasi repo lulus (seluruhnya exit 0).
+
 ## 📝 S54 · Fix error konsol Equipment: blokir domain expired/terblokir i.ibb.co di cleanUrl, sw v104 → v105 (2026-10-30)
 
 > Rilis **sw v104 → v105** (`src/**` + `public/**` berubah).

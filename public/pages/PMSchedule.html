@@ -47,6 +47,21 @@
         <span class="material-symbols-outlined text-[16px] text-tac-primary">refresh</span>
       </button>
 
+      <!-- Template CSV Button -->
+      <button type="button" @click="downloadTemplate('pms')" title="Download CSV Template PM Schedule"
+        class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[16px] text-tac-primary">description</span>
+        <span class="hidden sm:inline">TEMPLATE</span>
+      </button>
+
+      <!-- Import CSV / Excel Button -->
+      <label class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 cursor-pointer"
+        title="Import PM Schedule CSV/Excel">
+        <span class="material-symbols-outlined text-[16px] text-tac-secondary">cloud_done</span>
+        <span class="hidden sm:inline">IMPORT</span>
+        <input aria-label="Impor berkas" type="file" @change="importCSV($event, 'pms')" class="hidden" accept=".csv, .xlsx">
+      </label>
+
       <!-- Export PDF Button -->
       <button type="button" @click="exportPMSchedulePDF()" :disabled="!pmList || pmList.length === 0"
         class="flex items-center gap-1.5 px-space-md py-2 rounded bg-tac-surface-container-high hover:bg-tac-surface-elevated text-tac-on-surface font-label-mono-md text-label-mono-md shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">

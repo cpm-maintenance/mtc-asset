@@ -1,0 +1,6 @@
+PartID,NamaPart,NamaSingkat,PartNumber,EquipmentIDs,EquipmentID,Stok,MinStock,Lokasi,Vendor,Harga,FotoURL
+P-BRG-22222,Spherical Roller Bearing 22222 EK/C3,BRG 22222 EK,SKF-22222-EK-C3,"EQ-CR-001, EQ-ML-001",EQ-CR-001,8,2,Warehouse Rak A-02,SKF Indonesia,4850000,
+P-BLT-SPC4000,V-Belt Wedge SPC 4000 Narrow,V-Belt SPC 4000,OPT-SPC-4000,EQ-CR-001,EQ-CR-001,16,4,Warehouse Rak B-05,Optibelt,650000,
+P-IMP-W108,Slurry Pump Impeller High Chrome A05,Impeller W10/8,WR-A05-108,EQ-PU-001,EQ-PU-001,4,1,Warehouse Rak C-01,Weir Minerals,18500000,
+P-LIN-BM32,Rubber Mill Liner Lifter Bar L=1200,Liner Bar 1200,MET-LB-1200,EQ-ML-001,EQ-ML-001,24,6,Yard Area Liner,Metso Outotec,3200000,
+P-SCR-PLY800,Screen Mesh Polyurethane 12mm x 12mm,Mesh Poly 12mm,TX-PU-616,EQ-SC-001,EQ-SC-001,12,3,Warehouse Rak D-03,Terex,2100000,

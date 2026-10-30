@@ -193,8 +193,8 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
 
 /**
  * Unduh file template CSV untuk tipe data tertentu.
- *
- * @param {('equip'|'parts'|'logs'|'perf')} type - Jenis template.
+ * 
+ * @param {('equip'|'parts'|'logs'|'perf'|'pms')} type - Jenis template.
  * @returns {Promise<void>} Memicu unduhan `.csv`.
  */
     async downloadTemplate(type) {
@@ -229,6 +229,14 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
                 paPlan: 90, category: "Mechanical", rca: "None", remarks: "", events: "[]" 
             }];
             file = "Template_Performance";
+        } else if (type === 'pms') {
+            data = [{ 
+                pmId: "PM-001", taskName: "Greasing Bearing & Check V-Belt", equipmentId: "EQ-001", 
+                description: "Pelumasan grease EP2 pada bearing utama dan cek ketegangan v-belt", 
+                date: "2026-11-15", frequency: "monthly", basis: "calendar", intervalHours: 250, 
+                assignedTo: "Maintenance Team", status: "pending", priority: "Medium" 
+            }];
+            file = "Template_PMSchedule";
         }
         const ws = XLSX.utils.json_to_sheet(data);
         const csv = XLSX.utils.sheet_to_csv(ws);
@@ -638,7 +646,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
  * Impor data dari file CSV/Excel yang dipilih user, lalu tulis ke RTDB per node.
  *
  * @param {Event} event - Event `change` dari `<input type="file">`.
- * @param {('perf'|'equip'|'parts'|'logs')} type - Jenis data yang diimpor.
+ * @param {('perf'|'equip'|'parts'|'logs'|'pms')} type - Jenis data yang diimpor.
  * @returns {Promise<void>} Memperbarui `this.importProgress` dan notifikasi.
  */
     async importCSV(event, type) {
@@ -660,7 +668,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
 
                 for (let i = 0; i < total; i++) {
                     const row = data[i];
-                    const id = row.EquipmentID || row.PartID || row.LogID || row.id || row.ID || (type.toUpperCase() + "-" + Date.now());
+                    const id = row.EquipmentID || row.PartID || row.LogID || row.pmId || row.PMID || row.id || row.ID || (type.toUpperCase() + "-" + Date.now());
                     
                     let dataToSave = /** @type {Record<string, any>} */ ({});
                     if (type === 'perf') {
@@ -713,10 +721,39 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
                             PhotoURLs: row.PhotoURLs ? (typeof row.PhotoURLs === 'string' ? tryParseJSON(row.PhotoURLs, []) : row.PhotoURLs) : [],
                             rca: row.rca || 'PM'
                         };
+                    } else if (type === 'pms') {
+                        const rawStatus = String(row.status || row.Status || 'pending').toLowerCase().trim();
+                        const status = ['pending', 'completed', 'skipped'].includes(rawStatus) ? rawStatus : 'pending';
+                        dataToSave = {
+                            pmId: String(id),
+                            taskName: String(row.taskName || row.TaskName || row.NamaTask || 'PM Task'),
+                            equipmentId: String(row.equipmentId || row.EquipmentID || ''),
+                            description: String(row.description || row.Description || row.Deskripsi || ''),
+                            date: String(row.date || row.Date || row.Tanggal || new Date().toISOString().split('T')[0]),
+                            frequency: String(row.frequency || row.Frequency || 'monthly').toLowerCase(),
+                            basis: String(row.basis || row.Basis || 'calendar').toLowerCase(),
+                            intervalHours: parseFloat(row.intervalHours || row.IntervalHours || 0) || 0,
+                            assignedTo: String(row.assignedTo || row.AssignedTo || row.Technician || 'Maintenance Team'),
+                            status,
+                            priority: String(row.priority || row.Priority || 'Medium'),
+                            completionDate: String(row.completionDate || row.CompletionDate || ''),
+                            completionNote: String(row.completionNote || row.CompletionNote || ''),
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            createdBy: this.user?.uid || 'import'
+                        };
                     }
                     
-                    const node = type === 'perf' ? 'Performance' : type === 'equip' ? 'Equipment' : type === 'parts' ? 'SpareParts' : 'HistoryLog';
+                    const node = type === 'perf' ? 'Performance' : type === 'equip' ? 'Equipment' : type === 'parts' ? 'SpareParts' : type === 'pms' ? 'PM_Schedule' : 'HistoryLog';
                     await window.set(window.ref(window.db, `${node}/${id}`), dataToSave);
+                    if (type === 'pms' && Array.isArray(this.pmList)) {
+                        const existingIdx = this.pmList.findIndex((p) => p.pmId === id);
+                        if (existingIdx > -1) {
+                            this.pmList[existingIdx] = dataToSave;
+                        } else {
+                            this.pmList.unshift(dataToSave);
+                        }
+                    }
                     count++;
                     this.importProgress = Math.round(((i + 1) / total) * 100);
                 }

@@ -1,0 +1,6 @@
+EquipmentID,Nama,Tipe,Status,Lokasi,SerialNumber,Criticality,NextPMDate,TglInstalasi,Vendor,FotoURL
+EQ-CR-001,Primary Jaw Crusher CJ412,Crusher,Active,Crushing Plant,SN-CJ412-2023,High,2026-11-15,2023-03-10,Sandvik,
+EQ-CV-001,Overland Conveyor 01 (Belt 1200mm),Conveyor,Active,Crushing Plant,SN-CV1200-01,Medium,2026-11-20,2023-04-12,Continental,
+EQ-ML-001,Ball Mill Grinding Circuit 01,Mill,Active,Milling Plant,SN-BM3245-001,High,2026-11-25,2023-01-15,Outotec,
+EQ-PU-001,Slurry Pump Warman 10/8,Pump,Active,Flotation Plant,SN-W108-8821,Medium,2026-11-10,2023-05-20,Weir Minerals,
+EQ-SC-001,Vibrating Screen Double Deck 6x16,Screen,Active,Screening Station,SN-VS616-102,Low,2026-12-01,2023-06-01,Terex,
