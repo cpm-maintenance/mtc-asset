@@ -208,8 +208,8 @@
       <div class="hidden md:grid md:grid-cols-[36px_minmax(0,3.2fr)_minmax(0,1.8fr)_minmax(0,2fr)_auto] gap-3 p-3 bg-tac-surface-recessed border-b border-tac-border-subtle font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby items-center">
         <div class="flex items-center justify-center">
           <label><input aria-label="Pilih baris" type="checkbox" @click="pmToggleSelectAll()"
-            :checked="pmGetFilteredList().filter(p=></label>p.status==='pending').length > 0 && pmGetFilteredList().filter(p=>p.status==='pending').every(p => pmSelectedIds.includes(p.pmId))"
-            class="accent-tac-primary w-3.5 h-3.5 cursor-pointer">
+            :checked="pmGetFilteredList().filter(p => p.status==='pending').length > 0 && pmGetFilteredList().filter(p => p.status==='pending').every(p => pmSelectedIds.includes(p.pmId))"
+            class="accent-tac-primary w-3.5 h-3.5 cursor-pointer"></label>
         </div>
         <div class="flex items-center gap-2">
           <span>TASK DIRECTIVE</span>

@@ -46,3 +46,19 @@ it('Mobile font controls tidak memaksa 16px pada field compact', () => {
   expect(css).toMatch(/:is\(input, select, textarea\)\s*\{\s*font-size:\s*14px;/);
   expect(css).toMatch(/select\.field-compact[^}]*font-size:\s*12px !important;/);
 });
+
+it('seluruh binding direktif Alpine tidak memuat tag penutup HTML nyasar seperti </label>', () => {
+  const dir = 'public/pages';
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.html'));
+  for (const file of files) {
+    const content = fs.readFileSync(`${dir}/${file}`, 'utf8');
+    const broken = content.match(/(:[a-zA-Z0-9_\-.]+|@[a-zA-Z0-9_\-.]+|x-[a-zA-Z0-9_\-.]+)\s*=\s*"[^"]*<\/[a-zA-Z]+>[^"]*"/g);
+    expect(broken || [], `Tag HTML nyasar di dalam atribut Alpine pada ${file}`).toEqual([]);
+  }
+});
+
+it('PMSchedule header select-all checkbox tidak memuat tag HTML di dalam ekspresi :checked', () => {
+  const src = fs.readFileSync('public/pages/PMSchedule.html', 'utf8');
+  expect(src).not.toMatch(/:checked="[^"]*<\/label>[^"]*"/);
+  expect(src).toMatch(/:checked="pmGetFilteredList\(\)\.filter\(p => p\.status==='pending'\)/);
+});

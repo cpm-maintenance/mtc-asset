@@ -1,3 +1,26 @@
+## 📝 S53 · Fix syntax error Alpine di PMSchedule (tag </label> nyasar), sw v103 → v104 (2026-10-30)
+
+> Rilis **sw v103 → v104** (`public/**` berubah).
+
+### Masalah
+- Saat membuka menu PM Schedule di browser, muncul `Alpine Expression Error: Unexpected token "<"`.
+- Akar masalah: Di `public/pages/PMSchedule.html` pada checkbox header select-all baris 210–212, tag penutup `</label>` secara tidak sengaja terselip di dalam atribut ekspresi JavaScript `:checked`:
+  `:checked="pmGetFilteredList().filter(p=></label>p.status==='pending')..."`
+- Hal ini menyebabkan parser/evaluator Alpine menganggap `</label>` sebagai token JavaScript dan melempar `SyntaxError: Unexpected token "<"`.
+
+### Perbaikan
+- `public/pages/PMSchedule.html`: buang `</label>` dari dalam ekspresi `:checked` dan tutup tag `<label>` di luar elemen `<input>`.
+- `sw.js`: naik versi `mtc-asset-v103` → `mtc-asset-v104`.
+- `tests/mobile-form-layout.test.js`:
+  - Tambah tes kontrak pemindaian seluruh file HTML di `public/pages/` untuk memastikan tidak ada lagi tag penutup HTML nyasar di dalam atribut Alpine (`:[attr]`, `@[event]`, `x-[dir]`).
+  - Tambah tes kontrak spesifik untuk ekspresi `:checked` pada header select-all PMSchedule.
+
+### Hasil & Verifikasi
+- Dev server / MCP Chrome DevTools: navigasi ke menu PM Schedule (`currentPage = 'pms'`) bebas dari error (0 error).
+- 2.284 tes / 112 berkas lulus (exit 0).
+- Coverage: Stmt 97,30% / Branch 90,14% / Func 97,53% / Line 98,53%.
+- Enam gerbang verifikasi repo lulus (seluruhnya exit 0).
+
 ## 📝 S52 · Peningkatan Unit Test Coverage ui.js & ui-core.js (2026-10-30)
 
 > Tests-only: +18 unit test (2.264 → 2.282 passed / 112 berkas); sw tetap **mtc-asset-v103** (tanpa perubahan rilis; `src/**` dan `public/**` identik).

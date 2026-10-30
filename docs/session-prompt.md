@@ -10,14 +10,14 @@ remote `origin`, tree bersih). Bagian **Prompt** di bawah untuk disalin ke chat.
 ```
 Lanjut kerja di D:\CODING\MTC-Asset (PWA maintenance). Baca berurutan:
 1. docs/session-prompt.md
-2. SESSION_NOTES.md — entri terbaru di atas; S52 = peningkatan coverage unit test ui.js & ui-core.js (+18 tes, branch menembus 90%).
+2. SESSION_NOTES.md — entri terbaru di atas; S53 = fix syntax error Alpine di PMSchedule (tag </label> nyasar), sw v103 → v104.
 3. AGENTS.md dan bagian relevan AGENT_CONTEXT.md.
 
 Kondisi terakhir:
-- Branch main; commit 97c4bb8 sudah dipush ke origin/main.
+- Branch main; commit 7bf1f68 sudah dipush ke origin/main.
 - CI Test, Build and Deploy, Lighthouse CI sudah success (hijau semua).
-- sw.js aktif di produksi mtc-asset-v103.
-- 2.282 tes / 112 berkas lulus (exit 0).
+- sw.js aktif di produksi mtc-asset-v104.
+- 2.284 tes / 112 berkas lulus (exit 0).
 - Coverage: Stmt 97,30% / Branch 90,14% / Func 97,53% / Line 98,53%.
 - Ratchet aktif: 96/89/96/97, jangan diturunkan.
 - Target sesi berikutnya: Unit test coverage modul berikutnya sesuai roadmap (whatsapp.js, error-handler.js, dll.).
