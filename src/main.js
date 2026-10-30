@@ -195,10 +195,15 @@ Alpine.directive('page', (el, { expression }, { evaluateLater, effect }) => {
       if (pageName) {
         try {
           const html = await componentLoader.loadPage(pageName);
-          el.innerHTML = html;
-          // CRITICAL: Tell Alpine to process the new DOM nodes
-          // Without this, x-show, x-for, x-model, etc won't work
-          Alpine.initTree(el);
+          // If the page already has content or failed to return valid HTML, guard it
+          if (typeof html === 'string' && html.trim().startsWith('<') && !html.includes('Error loading page:')) {
+            el.innerHTML = html;
+            // CRITICAL: Tell Alpine to process the new DOM nodes
+            // Without this, x-show, x-for, x-model, etc won't work
+            Alpine.initTree(el);
+          } else {
+            el.innerHTML = html;
+          }
         } catch (error) {
           console.error(`Failed to load page ${pageName}:`, error);
           el.innerHTML = `<div class="text-red-500 p-4">Error loading page: ${pageName}</div>`;

@@ -298,11 +298,12 @@ input[type='radio']:disabled {
 }
 
 :is(select.field-compact, .field-compact select:not([multiple])) {
-  padding-left: 10px;
-  padding-right: 28px;
-  background-position: right 8px center;
+  padding-left: 8px;
+  padding-right: 24px;
+  background-position: right 6px center;
   width: auto;
-  min-width: max-content;
+  min-width: 0;
+  max-width: 100%;
 }
 
 :is(.field-compact, .field-compact :is(textarea)):is(textarea) {
@@ -543,12 +544,25 @@ select option {
   }
 }
 
-/* =========================================
-   MOBILE FONT SIZE ADJUSTMENTS (keep as-is)
-   ========================================= */
+/* ── Mobile Form Controls & Modals (<= 767px) ─────────────────────────── */
 @media (max-width: 767px) {
-  input:not(.field-compact), select:not(.field-compact), textarea:not(.field-compact) {
-    font-size: 16px !important; /* prevent iOS zoom */
+  /* Di layar kecil modal & form, 14px tetap tajam & tidak membesar berlebihan.
+     Cegah teks di dalam opsi / dropdown select menabrak batas layar */
+  :is(input, select, textarea) {
+    font-size: 14px;
+  }
+
+  /* Form & modal select: berikan ruang padding kanan agar teks opsi tidak menabrak chevron */
+  select:not([multiple]) {
+    padding-right: 32px;
+    max-width: 100%;
+  }
+
+  /* Field compact tetap 12px tajam */
+  :is(input.field-compact, .field-compact input,
+      select.field-compact, .field-compact select,
+      textarea.field-compact, .field-compact textarea) {
+    font-size: 12px !important;
   }
 }
 
@@ -661,10 +675,16 @@ select option {
 
   /* tombol di dalam konten: ikon maupun aksi teks (Approve/Reject) terlalu kecil
      untuk jempol. Lebar juga dipatok 44px karena beberapa tombol ikon memakai
-     utilitas `w-7` (28px) yang mengalahkan `min-width` bawaan. */
-  main button[class] {
+     utilitas `w-7` (28px) yang mengalahkan `min-width` bawaan.
+     Pengecualian: chip status filter di dalam scroller horizontal tidak dipatok
+     min-width 44px agar label teks panjang tidak terpotong atau saling tindih. */
+  main button[class]:not([role="group"] button) {
     min-height: 44px;
     min-width: 44px;
+  }
+
+  main [role="group"] button[class] {
+    min-height: 44px;
   }
 
   /* checkbox bulk-select: label yang bisa diketuk, bukan kotak 24px-nya */

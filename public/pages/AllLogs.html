@@ -144,10 +144,10 @@
         </div>
 
         <!-- Jenis -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0 flex-wrap">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">JENIS:</span>
           <select aria-label="Filter jenis log" x-model="allLogsJenisFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact min-w-0 max-w-full">
             <option value="">SEMUA JENIS</option>
             <template x-for="j in logJenisOptions" :key="'jenis-' + j">
               <option :value="j" x-text="j"></option>

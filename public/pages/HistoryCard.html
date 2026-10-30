@@ -77,10 +77,10 @@
           class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary field-compact min-w-0 max-w-[150px]">
       </div>
 
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 min-w-0 flex-wrap">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">JENIS:</span>
         <select x-model="historyFilterType" aria-label="Filter jenis pekerjaan"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact min-w-0 max-w-full">
           <option value="">SEMUA JENIS</option>
           <option value="PM">PM</option>
           <option value="Repair">Repair</option>
@@ -92,10 +92,10 @@
         </select>
       </div>
 
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 min-w-0 flex-wrap">
         <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant uppercase">STATUS:</span>
         <select x-model="historyFilterStatus" aria-label="Filter status pekerjaan"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none focus:border-tac-primary cursor-pointer field-compact min-w-0 max-w-full">
           <option value="">SEMUA STATUS</option>
           <option value="Pending">Pending</option>
           <option value="In Progress">In Progress</option>

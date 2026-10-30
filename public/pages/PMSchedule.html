@@ -151,10 +151,10 @@
       </div>
 
       <!-- Dropdown Selects -->
-      <div class="flex flex-wrap items-center gap-space-xs">
+      <div class="flex flex-wrap items-center gap-space-xs min-w-0">
         <!-- Equipment Selector -->
         <select aria-label="Filter equipment PM" x-model="pmFilterEquip"
-          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none max-w-[200px] field-compact">
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-3 py-2 rounded border border-tac-border-subtle outline-none max-w-full sm:max-w-[200px] field-compact min-w-0">
           <option value="">ALL EQUIPMENT</option>
           <template x-for="e in equipment" :key="e.EquipmentID">
             <option :value="e.EquipmentID" x-text="(e.Nama || e.EquipmentID)"></option>
@@ -717,7 +717,7 @@
               <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Current Machine HM</p>
               <p class="font-label-mono-md text-label-mono-md text-tac-on-surface font-bold mt-0.5"><span x-text="pmCurrentHM(selectedPM.equipmentId).toLocaleString()"></span> hrs</p>
             </div>
-            <div class="bg-tac-surface-recessed p-2.5 rounded border border-tac-border-subtle col-span-2" x-show="selectedPM.completionDate">
+            <div class="bg-tac-surface-recessed p-2.5 rounded border border-tac-border-subtle col-span-2 sm:col-span-2" x-show="selectedPM.completionDate">
               <p class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Completed Timestamp</p>
               <p class="font-label-mono-md text-label-mono-md text-tac-status-operational font-bold mt-0.5" x-text="selectedPM.completionDate"></p>
             </div>

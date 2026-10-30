@@ -1,3 +1,29 @@
+## 📝 S51 · Fix mobile dropdown kotak, font, tab overlap, dan guard syntax Alpine, sw v102 → v103 (2026-10-30)
+
+> Rilis **sw v102 → v103** (`public/**` + `src/**` berubah).
+
+### Masalah
+- Tangkapan layar mobile dari Manuel menunjukkan:
+  1. Tab filter status WorkOrders (`ALL (0)`, `PENDING (0)`, `APPROVED (0)`, dll.) bertumpuk dan saling menindih parah karena pemaksaan `min-width: 44px` dari aturan pointer coarse tanpa `whitespace-nowrap shrink-0`.
+  2. Dropdown select dan filter di berbagai menu (`WorkOrders.html`, `Equipment.html`, `SpareParts.html`, `PMSchedule.html`, `HistoryCard.html`) terpotong teksnya (seperti `ALL SECTORS (FLEET-WI`, `SEMUA ARE`, `ALL PRIORI`), kotak terdesak, atau pembungkus flex anak tidak memiliki `flex-wrap` / `min-w-0 max-w-full`.
+  3. Kotak select dan input form/modal di layar kecil mobile memiliki ukuran font terlalu besar (16px) yang merusak proporsi modal dan memotong teks pilihan opsi.
+  4. Error `Uncaught SyntaxError: expected expression, got '<'` pada Alpine.js evaluator saat navigasi: terjadi karena fragmen template HTML memuat entitas HTML literal `&gt;` di dalam atribut binding JavaScript `x-text` (`woKpi.aging + ' Aging &gt;3d'`), serta tidak adanya guard pada direktif `x-page` sebelum memanggil `Alpine.initTree()`.
+
+### Perbaikan
+- `src/main.js`: guard direktif `x-page` agar memvalidasi string template HTML yang dimuat sebelum memanggil `Alpine.initTree(el)`.
+- `public/pages/WorkOrders.html`: ganti entitas `&gt;` di dalam binding `x-text` menjadi operator string biasa `>` (`Aging >3d`).
+- `src/css/style.css`:
+  - Pada pointer coarse (`@media (pointer: coarse)`), kecualikan tombol chip status scroller horizontal (`main button[class]:not([role="group"] button)`) dari pemaksaan `min-width: 44px`, dan tambahkan `min-height: 44px` yang aman bagi jempol.
+  - Pada dropdown select compact (`:is(select.field-compact, .field-compact select:not([multiple]))`), sesuaikan padding dan ukuran adaptif `padding-left: 8px; padding-right: 24px; background-position: right 6px center; min-width: 0; max-width: 100%;`.
+  - Pada kontrol form & modal mobile (`@media (max-width: 767px)`), setel ukuran font kontrol umum menjadi `14px` yang tajam & proporsional, berikan `padding-right: 32px` dan `max-width: 100%` pada select, serta pertahankan `12px !important` pada kontrol `.field-compact`.
+- `public/pages/WorkOrders.html`: tambahkan `whitespace-nowrap shrink-0` pada setiap tombol tab status filter (`ALL`, `PENDING`, `APPROVED`, `IN PROGRESS`, `COMPLETED`, `CANCELLED`), serta pasang `min-w-0 max-w-full` pada wrapper dan select sektor.
+- `public/pages/Equipment.html`: pasang `min-w-0 flex-wrap` pada wrapper baris filter `SEKTOR`, `STATUS`, dan `SORT`.
+- `public/pages/SpareParts.html`: pasang `min-w-0 flex-wrap` dan `min-w-0 max-w-full` pada filter `LINKED ASSET`, `STOCK STATUS`, dan `SORT`.
+- `public/pages/PMSchedule.html`: pasang `min-w-0 max-w-full sm:max-w-[200px]` pada select equipment dan ubah kontainer dropdown filter menjadi `min-w-0`.
+- `public/pages/HistoryCard.html`: pasang `min-w-0 flex-wrap` dan `min-w-0 max-w-full` pada filter `PERIODE`, `JENIS`, dan `STATUS`.
+- `sw.js`: naik versi `mtc-asset-v102` → `mtc-asset-v103`.
+- `tests/mobile-overflow-contract.test.js` & `tests/mobile-form-layout.test.js`: perbarui dan tambahkan tes kontrak untuk status filter buttons, styling mobile font, dan pengecekan selektor CSS.
+
 ## 📝 S50 · Fix form input Request Part & Performance di mobile, sw v101 → v102 (2026-10-30)
 
 > Rilis **sw v101 → v102** (`public/**` + `src/**` berubah).

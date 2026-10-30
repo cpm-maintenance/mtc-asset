@@ -149,13 +149,10 @@
 
     <!-- Tactical Filter Pill Matrix -->
     <div class="flex flex-wrap items-center justify-between gap-space-sm pt-2 border-t border-tac-border-subtle">
-      <div class="flex items-center gap-space-sm flex-wrap min-w-0">
-
-        <!-- Asset Node Linked Filter -->
-        <div class="flex items-center gap-1 min-w-0">
-          <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">LINKED ASSET:</span>
-          <select aria-label="Filter equipment spare part" x-model="partFilterEquip"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-full sm:max-w-xs field-compact min-w-0 w-full flex-1">
+      <div class="flex items-center gap-1 min-w-0 flex-wrap">
+        <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">LINKED ASSET:</span>
+        <select aria-label="Filter equipment spare part" x-model="partFilterEquip"
+          class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none max-w-full sm:max-w-xs field-compact min-w-0 w-full flex-1">
             <option value="">SEMUA ASSET (GLOBAL)</option>
             <template x-for="e in equipment" :key="e.EquipmentID">
               <option :value="e.EquipmentID" x-text="e.EquipmentID + ' — ' + e.Nama"></option>
@@ -164,10 +161,10 @@
         </div>
 
         <!-- Stock Status Filter -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0 flex-wrap">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">STOCK STATUS:</span>
           <select aria-label="Filter status stok" x-model="partStatusFilter"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact min-w-0 max-w-full">
             <option value="">SEMUA KONDISI</option>
             <option value="low">LOW STOCK (&le; MIN)</option>
             <option value="zero">OUT OF STOCK (0)</option>
@@ -176,10 +173,10 @@
         </div>
 
         <!-- Sorting -->
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1 min-w-0 flex-wrap">
           <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">SORT:</span>
           <select aria-label="Urutkan spare part" x-model="partSortBy"
-            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact">
+            class="bg-tac-surface-recessed text-tac-on-surface font-label-mono-sm text-label-mono-sm px-2 py-1 rounded border border-tac-border-subtle outline-none field-compact min-w-0 max-w-full">
             <option value="name">NAMA PART (A-Z)</option>
             <option value="stock_asc">STOK TERENDAH DULU</option>
             <option value="stock_desc">STOK TERTINGGI DULU</option>
