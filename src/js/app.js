@@ -1544,6 +1544,8 @@ export function app() {
                 });
                 decoded = decodeURIComponent(decoded);
                 if (!/^(https?:\/\/|data:image\/|blob:)/.test(decoded) || /[[\]{}<>]/.test(decoded)) return '';
+                // Abaikan domain eksternal lama yang diblokir ISP / SSL expired (mis. i.ibb.co)
+                if (/\b(?:i\.)?ibb\.co\//i.test(decoded)) return '';
                 return decoded;
             } catch {
                 return '';

@@ -219,6 +219,11 @@ describe('cleanUrl', () => {
     expect(s.cleanUrl('https://cdn.example.com/{a}.jpg')).toBe('');
   });
 
+  it('menolak domain gambar eksternal yang diblokir ISP / SSL expired (ibb.co)', () => {
+    expect(s.cleanUrl('https://i.ibb.co/4nQrhQYH/eq-2330-ML-002.jpg')).toBe('');
+    expect(s.cleanUrl('https://ibb.co/some-image.png')).toBe('');
+  });
+
   it('mengembalikan string kosong saat percent-decoding gagal', () => {
     expect(s.cleanUrl('https://cdn.example.com/%E0%A4%A')).toBe('');
   });

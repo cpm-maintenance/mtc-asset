@@ -48,9 +48,14 @@
     class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col lg:flex-row gap-space-md">
 
     <!-- Foto aset -->
-    <div class="w-40 h-40 shrink-0 bg-tac-surface-recessed rounded-lg border border-tac-border-subtle p-1 overflow-hidden">
-      <img :src="selectedEquip?.FotoURL ? cleanUrl(selectedEquip.FotoURL) : 'https://via.placeholder.com/150?text=No+Data'" loading="lazy" decoding="async"
-        class="w-full h-full object-cover rounded">
+    <div class="w-40 h-40 shrink-0 bg-tac-surface-recessed rounded-lg border border-tac-border-subtle p-1 overflow-hidden flex items-center justify-center">
+      <template x-if="cleanUrl(selectedEquip?.FotoURL)">
+        <img :src="cleanUrl(selectedEquip.FotoURL)" loading="lazy" decoding="async"
+          class="w-full h-full object-cover rounded" onerror="this.style.display='none'">
+      </template>
+      <template x-if="!cleanUrl(selectedEquip?.FotoURL)">
+        <span class="material-symbols-outlined text-tac-status-standby/40 text-5xl select-none" aria-hidden="true">precision_manufacturing</span>
+      </template>
     </div>
 
     <!-- Info aset -->

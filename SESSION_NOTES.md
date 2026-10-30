@@ -1,3 +1,28 @@
+## 📝 S54 · Fix error konsol Equipment: blokir domain expired/terblokir i.ibb.co di cleanUrl, sw v104 → v105 (2026-10-30)
+
+> Rilis **sw v104 → v105** (`src/**` + `public/**` berubah).
+
+### Masalah
+- Saat membuka menu Equipment di browser, konsol memunculkan 7 error network:
+  `i.ibb.co/... net::ERR_CERT_AUTHORITY_INVALID`
+- Investigasi akar masalah:
+  1. Data `FotoURL` pada master aset di Firebase RTDB merujuk ke domain legacy `https://i.ibb.co/...`.
+  2. Probe curl membuktikan sertifikat SSL `i.ibb.co` telah kedaluwarsa (`SEC_E_CERT_EXPIRED`) dan di jaringan Indonesia (Telkomsel) domain ini diblokir / dialihkan oleh InternetBaik (`https://internetbaik.telkomsel.com/block?orig_url=http://i.ibb.co`).
+  3. Ketika browser memuat kartu aset di `Equipment.html` dan `EquipmentDetail.html`, browser mencoba mengunduh URL tersebut dan memicu error `ERR_CERT_AUTHORITY_INVALID` pada level koneksi TLS.
+
+### Perbaikan
+- `src/js/app.js`: fungsi `cleanUrl(url)` diperketat dengan menyaring dan mengembalikan string kosong `''` jika URL merujuk ke domain `ibb.co` (`/(?:i\.)?ibb\.co\//i`).
+- `public/pages/Equipment.html`: ubah guard foto preview menjadi `<template x-if="cleanUrl(e.FotoURL)">` agar elemen `<img>` tidak dibuat sama sekali bila URL diblokir / tidak valid.
+- `public/pages/EquipmentDetail.html`: gunakan `<template x-if="cleanUrl(selectedEquip?.FotoURL)">` dan fallback in-app icon Material Symbols `precision_manufacturing` saat tidak ada foto (menghilangkan ketergantungan pada CDN eksternal `via.placeholder.com`).
+- `tests/app-dashboard-data.test.js`: tambah unit test untuk memastikan `cleanUrl` menolak domain `ibb.co`.
+- `sw.js`: naik versi `mtc-asset-v104` → `mtc-asset-v105`.
+
+### Hasil & Verifikasi
+- Dev server / MCP Chrome DevTools: navigasi ke menu Equipment (`currentPage = 'equip'`) bebas dari error network (0 error).
+- 2.285 tes / 112 berkas lulus (exit 0).
+- Coverage: Stmt 97,30% / Branch 90,14% / Func 97,53% / Line 98,53%.
+- Enam gerbang verifikasi repo lulus (seluruhnya exit 0).
+
 ## 📝 S53 · Fix syntax error Alpine di PMSchedule (tag </label> nyasar), sw v103 → v104 (2026-10-30)
 
 > Rilis **sw v103 → v104** (`public/**` berubah).

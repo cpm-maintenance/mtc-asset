@@ -230,7 +230,7 @@
             <div class="flex items-center justify-between gap-space-xs">
               <div class="flex items-center gap-space-sm min-w-0">
                 <!-- Foto preview kalau ada -->
-                <template x-if="e.FotoURL && e.FotoURL.length > 0">
+                <template x-if="cleanUrl(e.FotoURL)">
                   <div class="w-10 h-10 rounded border border-tac-border-subtle bg-tac-surface-recessed overflow-hidden shrink-0">
                     <img :src="cleanUrl(e.FotoURL)" class="w-full h-full object-cover" loading="lazy" decoding="async" onerror="this.style.display='none'">
                   </div>
