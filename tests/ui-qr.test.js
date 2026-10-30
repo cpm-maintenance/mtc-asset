@@ -71,6 +71,109 @@ describe('QR — generateQR / downloadQR', () => {
     expect(ctx.isLoading).toBe(false);
   });
 
+  it('generateQR dengan canvas 2d context aktif menambahkan badge MTC', async () => {
+    class FakeImage {
+      set src(v) {
+        this._src = v;
+        queueMicrotask(() => {
+          if (this.onload) this.onload();
+        });
+      }
+      get src() {
+        return this._src;
+      }
+    }
+    const origImage = globalThis.Image;
+    globalThis.Image = /** @type {any} */ (FakeImage);
+
+    const mockCtx = {
+      drawImage: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      moveTo: vi.fn(),
+      arcTo: vi.fn(),
+      closePath: vi.fn(),
+      stroke: vi.fn(),
+      fillText: vi.fn(),
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 0,
+      font: '',
+      textAlign: '',
+      textBaseline: '',
+    };
+    const getContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockCtx);
+    const toDataURLSpy = vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,WITH_BADGE');
+
+    const ctx = makeCtx();
+    await uiModule.generateQR.call(ctx, 'EQ-123');
+
+    expect(mockCtx.drawImage).toHaveBeenCalled();
+    expect(mockCtx.fillText).toHaveBeenCalledWith('MTC', 320, 322);
+    expect(ctx.qrCodeDataUrl).toBe('data:image/png;base64,WITH_BADGE');
+
+    getContextSpy.mockRestore();
+    toDataURLSpy.mockRestore();
+    globalThis.Image = origImage;
+  });
+
+  it('generateQR jatuh ke QR polos jika Image onerror terpanggil', async () => {
+    class FailImage {
+      set src(v) {
+        this._src = v;
+        queueMicrotask(() => {
+          if (this.onerror) this.onerror(new Error('img fail'));
+        });
+      }
+      get src() {
+        return this._src;
+      }
+    }
+    const origImage = globalThis.Image;
+    globalThis.Image = /** @type {any} */ (FailImage);
+
+    const mockCtx = { drawImage: vi.fn() };
+    const getContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockCtx);
+
+    const ctx = makeCtx();
+    await uiModule.generateQR.call(ctx, 'EQ-123');
+    expect(ctx.qrCodeDataUrl).toContain('equip=EQ-123');
+
+    getContextSpy.mockRestore();
+    globalThis.Image = origImage;
+  });
+
+  it('generateQR jatuh ke QR polos jika operasi canvas melempar error', async () => {
+    class FakeImage {
+      set src(v) {
+        this._src = v;
+        queueMicrotask(() => {
+          if (this.onload) this.onload();
+        });
+      }
+      get src() {
+        return this._src;
+      }
+    }
+    const origImage = globalThis.Image;
+    globalThis.Image = /** @type {any} */ (FakeImage);
+
+    const mockCtx = {
+      drawImage: vi.fn(() => {
+        throw new Error('canvas crash');
+      }),
+    };
+    const getContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockCtx);
+
+    const ctx = makeCtx();
+    await uiModule.generateQR.call(ctx, 'EQ-123');
+    expect(ctx.qrCodeDataUrl).toContain('equip=EQ-123');
+
+    getContextSpy.mockRestore();
+    globalThis.Image = origImage;
+  });
+
   it('downloadQR tidak error jika belum ada QR', () => {
     const ctx = makeCtx({ qrCodeDataUrl: '' });
     expect(() => uiModule.downloadQR.call(ctx)).not.toThrow();
@@ -181,6 +284,19 @@ describe('QR — downloadAllQRs (bulk PDF)', () => {
     expect(ctx.isLoading).toBe(false);
     spy.mockRestore();
   });
+
+  it('downloadAllQRs menangani equipment null dan error tanpa pesan message', async () => {
+    const ctxNull = makeCtx({ equipment: null });
+    await uiModule.downloadAllQRs.call(ctxNull);
+    expect(ctxNull.showNotification).toHaveBeenCalledWith('No equipment to export', 'error');
+
+    const QRCode = (await import('qrcode')).default;
+    const spy = vi.spyOn(QRCode, 'toDataURL').mockRejectedValueOnce({});
+    const ctx = makeCtx({ equipment: [{ EquipmentID: '', Nama: '' }] });
+    await uiModule.downloadAllQRs.call(ctx);
+    expect(ctx.showNotification).toHaveBeenCalledWith('Failed to export QR PDF: Unknown error', 'error');
+    spy.mockRestore();
+  });
 });
 
 describe('QR — handleScanResult / submitManualScan (S-5 scanner wiring)', () => {
@@ -236,10 +352,22 @@ describe('QR — handleScanResult / submitManualScan (S-5 scanner wiring)', () =
 
   it('submitManualScan tidak melakukan apa pun saat input kosong', () => {
     const ctx = scannerCtx([{ EquipmentID: 'EX-002' }]);
-    ctx.manualScanId = '  ';
+    ctx.manualScanId = '   ';
     uiModule.submitManualScan.call(ctx);
     expect(ctx.stopScanner).not.toHaveBeenCalled();
     expect(ctx.showNotification).not.toHaveBeenCalled();
+  });
+
+  it('handleScanResult dan submitManualScan menangani input / state null', () => {
+    const ctxNoEquip = scannerCtx(null);
+    ctxNoEquip.equipment = null;
+    uiModule.handleScanResult.call(ctxNoEquip, 'EX-999');
+    expect(ctxNoEquip.showNotification).toHaveBeenCalledWith('QR Scanned: EX-999 (Not found in database)', 'error');
+
+    const ctxNullManual = scannerCtx([{ EquipmentID: 'EX-001' }]);
+    ctxNullManual.manualScanId = null;
+    uiModule.submitManualScan.call(ctxNullManual);
+    expect(ctxNullManual.stopScanner).not.toHaveBeenCalled();
   });
 });
 
@@ -290,5 +418,34 @@ describe('QR — printTag (cetak hanya kartu)', () => {
 
     window.dispatchEvent(new Event('afterprint'));
     expect(document.getElementById('print-root')).toBeNull();
+  });
+
+  it('printTag menyalin currentSrc dari gambar hidup jika tersedia', () => {
+    document.body.innerHTML = `
+      <div data-testid="asset-tag">
+        <img src="data:image/png;base64,OLD">
+      </div>`;
+    const liveImg = document.querySelector('img');
+    Object.defineProperty(liveImg, 'currentSrc', {
+      value: 'data:image/png;base64,CURRENT_RESOLVED',
+      configurable: true,
+    });
+
+    uiModule.printTag.call(makeCtx());
+    const root = document.getElementById('print-root');
+    expect(root).not.toBeNull();
+    const cloneImg = root.querySelector('img');
+    expect(cloneImg.getAttribute('src')).toBe('data:image/png;base64,CURRENT_RESOLVED');
+  });
+
+  it('printTag membersihkan #print-root melalui safety timeout 30 detik bila afterprint tidak terpanggil', () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<div data-testid="asset-tag"><p>TAG</p></div>`;
+    uiModule.printTag.call(makeCtx());
+    expect(document.getElementById('print-root')).not.toBeNull();
+
+    vi.advanceTimersByTime(30000);
+    expect(document.getElementById('print-root')).toBeNull();
+    vi.useRealTimers();
   });
 });

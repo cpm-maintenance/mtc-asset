@@ -142,4 +142,58 @@ describe('applyEquipDeepLink — titik masuk tautan stiker', () => {
         expect(ctx.currentPage).toBeUndefined(); // tidak memindahkan halaman sendiri
         await sleep(1);
     });
+
+    it('membersihkan ?equip= dari address bar setelah unit ditemukan', async () => {
+        window.history.pushState({}, '', '/?equip=EX-001');
+        const replaceSpy = vi.spyOn(window.history, 'replaceState');
+        const ctx = makeCtx({
+            equipment: [{ EquipmentID: 'EX-001', Nama: 'Pompa E2E' }],
+        });
+        const res = await uiModule.applyEquipDeepLink.call(ctx, {
+            href: window.location.href,
+            timeoutMs: 50,
+            intervalMs: 5,
+        });
+        expect(res).toBe('EX-001');
+        expect(replaceSpy).toHaveBeenCalled();
+        expect(window.location.search).not.toContain('equip=EX-001');
+        replaceSpy.mockRestore();
+    });
+
+    it('clearEquipDeepLink menangani exception bila history.replaceState melempar', async () => {
+        window.history.pushState({}, '', '/?equip=EX-001');
+        const replaceSpy = vi.spyOn(window.history, 'replaceState').mockImplementation(() => {
+            throw new Error('history sandboxed');
+        });
+        const ctx = makeCtx({
+            equipment: [{ EquipmentID: 'EX-001', Nama: 'Pompa E2E' }],
+        });
+        await expect(
+            uiModule.applyEquipDeepLink.call(ctx, {
+                href: window.location.href,
+                timeoutMs: 50,
+                intervalMs: 5,
+            })
+        ).resolves.toBe('EX-001');
+        replaceSpy.mockRestore();
+    });
+
+    it('applyEquipDeepLink dengan parameter default memakai globalThis.location.href', async () => {
+        window.history.pushState({}, '', '/?equip=EX-001');
+        const ctx = makeCtx({
+            equipment: [{ EquipmentID: 'EX-001', Nama: 'Pompa E2E' }],
+        });
+        const res = await uiModule.applyEquipDeepLink.call(ctx);
+        expect(res).toBe('EX-001');
+    });
+
+    it('applyEquipDeepLink menangani equipment null/undefined saat polling', async () => {
+        const ctx = makeCtx({ equipment: null });
+        const res = await uiModule.applyEquipDeepLink.call(ctx, {
+            href: 'https://mtc-asset.web.app/?equip=EX-999',
+            timeoutMs: 20,
+            intervalMs: 5,
+        });
+        expect(res).toBe('');
+    });
 });

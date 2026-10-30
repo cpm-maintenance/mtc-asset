@@ -1,3 +1,56 @@
+## 📝 S52 · Peningkatan Unit Test Coverage ui.js & ui-core.js (2026-10-30)
+
+> Tests-only: +18 unit test (2.264 → 2.282 passed / 112 berkas); sw tetap **mtc-asset-v103** (tanpa perubahan rilis; `src/**` dan `public/**` identik).
+
+### Sasaran & Masalah
+- Melanjutkan peningkatan cakupan unit test pada modul `src/js/modules/ui.js` dan `src/js/modules/ui-core.js`.
+- Pada baseline S51, `ui.js` berada di 86,94% statements / 88,61% branches / 93,75% functions / 86,59% lines. Terdapat 37 baris belum tersentuh tes:
+  1. `buildAssetTagImage(text)` (baris 55–96): pemanggilan `canvas.getContext("2d")` di jsdom menghasilkan null secara default, sehingga eksekusi pembuatan elemen Image, penarikan plat badge, gambar halo quiet zone, ring emas, dan penulisan teks "MTC" terlewati (kembali ke plain QR).
+  2. `clearEquipDeepLink()` (baris 138–139): pembersihan parameter `?equip=` dari address bar via `history.replaceState` belum tersimulasi di URL yang sama.
+  3. `downloadAllQRs()`: cabang guard saat `equipment` bernilai null, data equipment tanpa `EquipmentID` atau `Nama`, serta error tanpa properti `.message`.
+  4. `handleScanResult()` & `submitManualScan()`: penanganan input / state null.
+  5. `printTag()`: penyalinan atribut `currentSrc` dari elemen img hidup ke elemen klon serta safety timeout 30 detik untuk pembersihan `#print-root`.
+  6. `readThemeMode()` di `ui-core.js`: migrasi legacy `darkMode` ("true"/"false"), penanganan tema tersimpan, fallback null, dan try/catch saat `localStorage.getItem` melempar exception (sandboxed/private mode).
+  7. `uiCore.showNotification()`: cabang saat notifikasi dihapus dari larik sebelum timer 400ms selesai (`idx === -1`).
+  8. `compressImage()`: kasus citra square (`w === h`).
+
+### Perbaikan & Penambahan Tes
+- `tests/ui-qr.test.js`:
+  - Tambah tes `generateQR` dengan mock canvas 2D context (`drawImage`, `beginPath`, `arc`, `fill`, `arcTo`, `fillText`, `toDataURL`) dan stub `Image` untuk menguji penggambaran badge MTC secara lengkap.
+  - Tambah tes fallback ke plain QR saat `Image.onerror` terpicu.
+  - Tambah tes fallback ke plain QR saat operasi canvas melempar error.
+  - Tambah tes `downloadAllQRs` menangani `equipment` null dan error tanpa `.message`.
+  - Tambah tes `handleScanResult` dan `submitManualScan` dengan input/state null.
+  - Tambah tes `printTag` dengan `currentSrc` terdefinisi dan safety timeout 30 detik pembersihan `#print-root`.
+- `tests/equip-deep-link.test.js`:
+  - Tambah tes `applyEquipDeepLink` memanggil `clearEquipDeepLink` dan memverifikasi `replaceState` membersihkan `?equip=` dari address bar.
+  - Tambah tes `clearEquipDeepLink` menangani `SecurityError` / sandbox exception jika `history.replaceState` melempar.
+  - Tambah tes `applyEquipDeepLink` dengan parameter default dan equipment null.
+- `tests/ui-module.test.js`:
+  - Tambah suite tes `readThemeMode` mencakup semua cabang: tema tersimpan, migrasi `darkMode: "true"`, migrasi `darkMode: "false"`, default "night", dan exception storage.
+  - Tambah tes `showNotification` untuk timer inner 400ms saat notifikasi sudah dibuang sebelum `splice`.
+  - Tambah tes `compressImage` untuk citra bentuk square (`w === h`).
+
+### Hasil & Verifikasi
+- Unit test suite: **2.282 passed / 112 berkas** (+18 tes baru, 0 failed).
+- Cakupan `ui.js`:
+  - Statements: 86,94% → **99,04%**
+  - Branches: 88,61% → **95,93%**
+  - Functions: 93,75% → **100%**
+  - Lines: 86,59% → **99,27%**
+- Cakupan `ui-core.js`:
+  - Statements: 100%
+  - Branches: 90,90% → **100%**
+  - Functions: 100%
+  - Lines: 100%
+- Cakupan Global:
+  - Statements: 96,80% → **97,30%** (7.402 / 7.607)
+  - Branches: 89,98% → **90,14%** (6.301 / 6.990) — **menembus 90%**!
+  - Functions: 97,32% → **97,53%** (1.385 / 1.420)
+  - Lines: 97,95% → **98,53%** (6.033 / 6.123)
+- Enam gerbang verifikasi repo lulus (seluruhnya exit 0).
+- `git diff --quiet -- src public index.html sw.js`: exit 0 (produksi identik, sw tetap `mtc-asset-v103`).
+
 ## 📝 S51 · Fix mobile dropdown kotak, font, tab overlap, dan guard syntax Alpine, sw v102 → v103 (2026-10-30)
 
 > Rilis **sw v102 → v103** (`public/**` + `src/**` berubah).

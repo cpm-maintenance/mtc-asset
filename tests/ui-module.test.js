@@ -49,7 +49,7 @@ vi.mock('../src/js/logger.js', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { uiModule } from '../src/js/modules/ui.js';
+import { uiModule, readThemeMode } from '../src/js/modules/ui.js';
 
 const REAL_LOCATION = window.location;
 
@@ -134,6 +134,39 @@ describe('ui — setTheme / applyTheme', () => {
   });
 });
 
+describe('ui — readThemeMode', () => {
+  it('mengembalikan themeMode yang tersimpan di localStorage', () => {
+    localStorage.setItem('themeMode', 'navy');
+    expect(readThemeMode()).toBe('navy');
+  });
+
+  it('migrasi darkMode=true menjadi themeMode=night dan hapus darkMode', () => {
+    localStorage.setItem('darkMode', 'true');
+    expect(readThemeMode()).toBe('night');
+    expect(localStorage.getItem('themeMode')).toBe('night');
+    expect(localStorage.getItem('darkMode')).toBeNull();
+  });
+
+  it('migrasi darkMode=false menjadi themeMode=light dan hapus darkMode', () => {
+    localStorage.setItem('darkMode', 'false');
+    expect(readThemeMode()).toBe('light');
+    expect(localStorage.getItem('themeMode')).toBe('light');
+    expect(localStorage.getItem('darkMode')).toBeNull();
+  });
+
+  it('default ke night bila tidak ada key yang tersimpan', () => {
+    expect(readThemeMode()).toBe('night');
+  });
+
+  it('jatuh ke night bila localStorage.getItem melempar exception', () => {
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Access denied');
+    });
+    expect(readThemeMode()).toBe('night');
+    spy.mockRestore();
+  });
+});
+
 // ─────────────────────────────────────────────────────── notifikasi
 describe('ui — showNotification', () => {
   it('mendorong notifikasi dengan konfigurasi per tipe', () => {
@@ -207,6 +240,15 @@ describe('ui — showNotification', () => {
     ctx.notifications.length = 0;
     vi.advanceTimersByTime(100);
     expect(ctx.notifications).toHaveLength(0);
+  });
+
+  it('auto-remove inner 400ms timeout menangani notifikasi yang sudah dibuang sebelum splice', () => {
+    vi.useFakeTimers();
+    const ctx = makeCtx();
+    uiModule.showNotification.call(ctx, 'late-vanish', 'info', 100);
+    vi.advanceTimersByTime(100); // outer timer fires, n.exiting set to true
+    ctx.notifications.length = 0; // removed before inner 400ms fires
+    expect(() => vi.advanceTimersByTime(400)).not.toThrow();
   });
 });
 
@@ -467,6 +509,14 @@ describe('ui — compressImage', () => {
     const { drawImage } = stubCanvas();
     await uiModule.compressImage.call(makeCtx(), { size: 10 });
     expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 200, 400);
+  });
+
+  it('square di bawah batas dibiarkan apa adanya', async () => {
+    stubFileReader();
+    stubImage({ w: 300, h: 300 });
+    const { drawImage } = stubCanvas();
+    await uiModule.compressImage.call(makeCtx(), { size: 10 });
+    expect(drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 300, 300);
   });
 
   it('gambar gagal dimuat → null', async () => {
