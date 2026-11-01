@@ -91,6 +91,31 @@ describe('observeVitals — hanya memasang entry type yang didukung', () => {
         expect(vitals.fcp).toBe(777);
     });
 
+    it('entry null tidak mengubah vitals', () => {
+      const v = newVitals();
+      expect(entryToVitals(null, v)).toBe(v);
+      expect(v).toEqual(newVitals());
+    });
+
+    it('layout-shift tanpa value dihitung 0', () => {
+      const v = newVitals();
+      entryToVitals({ entryType: 'layout-shift', hadRecentInput: false }, v);
+      expect(v.cls).toBe(0);
+    });
+
+    it('browser tanpa supportedEntryTypes tidak memasang observer apa pun', () => {
+      class TanpaTipe {
+        constructor(cb) {
+          this.cb = cb;
+          this.observed = [];
+        }
+        observe(opts) {
+          this.observed.push(opts.type);
+        }
+      }
+      expect(observeVitals(newVitals(), TanpaTipe).observed).toEqual([]);
+    });
+
     it('daftar tipe yang dipasang stabil (tidak ada tipe duplikat)', () => {
         expect(new Set(VITALS_OBSERVE_TYPES).size).toBe(VITALS_OBSERVE_TYPES.length);
         expect(VITALS_OBSERVE_TYPES).not.toContain('first-contentful-paint');

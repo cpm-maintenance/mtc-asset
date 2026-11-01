@@ -98,12 +98,21 @@ Mendokumentasikan key mati justru mengundang developer baru mengisinya tanpa efe
 
 ---
 
-## T5 — Coverage cabang (Opsional)
+## T5 — Coverage cabang
 
-- [ ] `logger.js` func 40% / branch 50% (baris 33-35)
-- [ ] `rum.js` branch 88.88% (baris 27, 35, 50)
+**Hasil:** kedua berkas kini **100% stmt / branch / func / line**.
 
-**Celah:** `logger.js` rendah karena hanya dipakai jalur error; `rum.js` fallback `PerformanceObserver` tak teruji.
+- [x] `logger.js` 40%/50% → 100%/100% — `tests/logger.test.js` (4 kasus) menguji
+      keempat level dengan `vi.stubEnv('DEV', ...)` + `vi.resetModules()`, jadi
+      kedua sisi ternary benar-benar dieksekusi: prefix `[debug]`/`[info]` di DEV,
+      dan no-op total di produksi.
+- [x] `rum.js` 88.88% → 100% — 3 kasus baru: entry `null` (baris 27),
+      `layout-shift` tanpa `value` (baris 35, `|| 0`), dan browser tanpa
+      `supportedEntryTypes` (baris 50, fallback `|| []`).
+
+`logger.js` adalah gerbang kebocoran log produksi — no-op-nya bukan hiasan,
+esbuild membuang branch DEV dari bundle. Karena itu ia diuji langsung, bukan
+lewat jalur error modul lain.
 
 ---
 
