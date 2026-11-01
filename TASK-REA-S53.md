@@ -1,0 +1,94 @@
+# TASK — Remediasi Analisa REA (S53)
+
+> Baseline: commit `6af949d` (main). Gate hijau: tsc 0, eslint 0, 2292 test, coverage 97.27/90.01/98.50, build OK, precache 66/66.
+> Sumber: `ANALISA-REA-DEEP-2026-11-01.md`.
+
+---
+
+## T1 — `fetch` tanpa timeout (Medium)
+
+**Bukti:** `grep AbortController|AbortSignal src/` → 0 file. 6 `fetch` tanpa `signal`.
+
+- [ ] Buat `fetchWithTimeout(url, opts, ms = 15000)` di `src/js/utils.js` — `AbortController` + `setTimeout` + `finally clearTimeout`
+- [ ] Pakai di [ai.js:508](file:///d:/CODING/MTC-Asset/src/js/modules/ai.js#L508) OpenAI
+- [ ] Pakai di [ai.js:533](file:///d:/CODING/MTC-Asset/src/js/modules/ai.js#L533) Anthropic
+- [ ] Pakai di [ai.js:558](file:///d:/CODING/MTC-Asset/src/js/modules/ai.js#L558) OpenRouter
+- [ ] Pakai di [push-client.js:24](file:///d:/CODING/MTC-Asset/src/js/modules/push-client.js#L24)
+- [ ] Pakai di [ui.js:514](file:///d:/CODING/MTC-Asset/src/js/modules/ui.js#L514) Cloudinary
+- [ ] Pakai di [component-loader.js:55](file:///d:/CODING/MTC-Asset/src/js/utils/component-loader.js#L55)
+- [ ] Test: abort memicu error yang tertangkap (bukan menggantung)
+- [ ] Test: `isLoading` kembali `false` saat timeout
+
+**Terima:** AI/upload/template gagal cepat dengan pesan jelas, bukan beku.
+**Batal jika:** semua endpoint sudah dijamin punya timeout di lapisan lain (belum ada bukti).
+
+---
+
+## T2 — `XLSX.read()` file user tanpa batas (Medium-High)
+
+**Bukti:** `xlsx` punya GHSA-4r6h-8v6p-xvw6 (prototype pollution) + GHSA-5pgg-2g8v-p4x9 (ReDoS), **no fix**. [export.js:661](file:///d:/CODING/MTC-Asset/src/js/modules/export.js#L661) membaca file unggahan user.
+
+- [ ] Tolak file > 5 MB sebelum `FileReader`
+- [ ] Batasi jumlah baris (mis. 5000) setelah `sheet_to_json`
+- [ ] Tampilkan notifikasi spesifik saat ditolak
+- [ ] Test: file kebesaran ditolak, tidak memanggil `XLSX.read`
+- [ ] Test: baris melebihi batas dipotong + notifikasi
+
+**Terima:** jalur ReDoS tertutup tanpa mengganti library.
+**Lanjutan (opsional):** parser CSV sendiri untuk impor — `templates/*.csv` sudah CSV.
+
+---
+
+## T3 — `npm audit fix` (Info)
+
+**Bukti:** 24 vuln (13 moderate, 10 high, 1 critical). Yang benar-benar terekspos hanya `xlsx`. `websocket-driver`/`uuid` transitif `firebase-tools`; `firebase-admin` server-only (`api/fcm-push.js`).
+
+- [ ] `npm audit fix` (tanpa `--force`)
+- [ ] Verifikasi gate penuh setelahnya
+- [ ] Cek `api/fcm-push.js` masih jalan
+- [ ] Catat sisa vuln di `NOTE` bila ada yang tak terhindarkan
+
+**Jangan:** `npm audit fix --force` — bisa turunkan/ganti mayor.
+**Jangan:** upgrade `xlsx` — tidak ada versi fix.
+
+---
+
+## T4 — `.env` drift (Info)
+
+**Bukti:** `VITE_PUSH_PROXY_URL` dipakai [push-client.js:24](file:///d:/CODING/MTC-Asset/src/js/modules/push-client.js#L24) tapi **tidak ada** di `.env`. `VITE_ONESIGNAL_APP_ID` ada di `.env` tapi tidak terdokumentasi.
+
+- [ ] Tambah `VITE_PUSH_PROXY_URL` ke `.env` lokal
+- [ ] Tambah `VITE_ONESIGNAL_APP_ID` ke `.env.example`
+- [ ] Pastikan `.env*` tetap di `.gitignore`
+
+---
+
+## T5 — Coverage cabang (Opsional)
+
+- [ ] `logger.js` func 40% / branch 50% (baris 33-35)
+- [ ] `rum.js` branch 88.88% (baris 27, 35, 50)
+
+**Celah:** `logger.js` rendah karena hanya dipakai jalur error; `rum.js` fallback `PerformanceObserver` tak teruji.
+
+---
+
+## Verifikasi Wajib Tiap Task
+
+```bash
+npx tsc --noEmit && npx eslint . && npx vitest run --coverage
+npx vite build && node scripts/verify-precache.mjs
+```
+
+`sw.js` **wajib** naik versi jika `src/**` atau `public/**` berubah.
+
+---
+
+## Yang TIDAK Dikerjakan
+
+| Item | Alasan |
+|---|---|
+| Pecah `app.js` | REA: 0 duplikasi method vs modul. Ia composition root, bukan monolit. |
+| Kejar 26 "unknown" REA | Batas budget tool, bukan cacat kode. |
+| Naikkan `xlsx` | Tidak ada versi fix. |
+| Ganti `html5-qrcode`/`jspdf` | Tidak ada CVE terbuka. |
+| Tambah interface/abstraksi | Tidak ada modul dengan satu implementasi tiruan. |
