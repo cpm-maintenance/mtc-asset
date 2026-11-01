@@ -8,6 +8,8 @@
  *   await loader.loadPage('Dashboard');
  */
 
+import { fetchWithTimeout } from '../utils.js';
+
 export class ComponentLoader {
   /** @type {Map<string, string>} */
   cache;
@@ -52,7 +54,7 @@ export class ComponentLoader {
     }
 
     // Fetch from server
-    const response = await fetch(`${this.basePath}/${pageName}.html`);
+    const response = await fetchWithTimeout(`${this.basePath}/${pageName}.html`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

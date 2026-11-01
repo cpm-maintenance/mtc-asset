@@ -30,7 +30,7 @@ describe('ComponentLoader.fetchTemplate', () => {
         const loader = new ComponentLoader();
 
         await expect(loader.fetchTemplate('Dashboard')).resolves.toBe('<div>halaman</div>');
-        expect(fetch).toHaveBeenCalledWith('/pages/Dashboard.html');
+        expect(/** @type {any} */ (fetch).mock.calls[0][0]).toBe('/pages/Dashboard.html');
         expect(loader.getCacheStatus()).toEqual({ size: 1, pages: ['Dashboard'] });
     });
 

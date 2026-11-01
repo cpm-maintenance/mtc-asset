@@ -634,6 +634,32 @@ export async function withRetry(fn, options = {}) {
 }
 
 /**
+ * `fetch` dengan batas waktu.`AbortController` membatalkan request yang menggantung
+ * supaya UI tidak menunggu selamanya. Error yang dilempar memuat kata "timeout"
+ * agar `isNetworkError()` ikut mengenalinya.
+ *
+ * @param {string | URL} url
+ * @param {RequestInit} [opts={}]
+ * @param {number} [ms=15000]
+ * @returns {Promise<Response>}
+ * @throws {Error} Bila request gagal atau melewati batas waktu.
+ */
+export async function fetchWithTimeout(url, opts = {}, ms = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } catch (error) {
+    if (/** @type {any} */ (error).name === 'AbortError') {
+      throw new Error(`Request timeout setelah ${ms} ms: ${url}`, { cause: error });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Deteksi error yang berkaitan dengan masalah jaringan.
  *
  * @param {unknown} error - Objek error.

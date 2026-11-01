@@ -8,7 +8,7 @@ import { logger } from '../logger.js';
 import { CONSTANTS } from '../constants';
 import { uiCore, readThemeMode } from './ui-core.js';
 import { askConfirm } from './confirm-dialog.js';
-import { equipTagLink, equipIdFromLink } from '../utils.js';
+import { equipTagLink, equipIdFromLink, fetchWithTimeout } from '../utils.js';
 
 // Cloudinary unsigned uploads. An unsigned preset is *designed* to be used from the
 // browser, so there is no API secret anywhere in the client — nothing to leak, nothing
@@ -511,7 +511,7 @@ export const uiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
             // No public_id on purpose: the preset already sets the Asset folder and
             // auto-generates an unguessable ID. Sending our own risks doubling the
             // folder prefix (mtc-asset/mtc-asset/...) and can collide on re-uploads.
-            const r = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: form });
+            const r = await fetchWithTimeout(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: form });
             const j = await r.json();
             if (!r.ok) {
                 console.warn('[Cloudinary] upload failed:', j?.error?.message || `HTTP ${r.status}`);

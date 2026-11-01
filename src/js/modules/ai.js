@@ -1,5 +1,6 @@
 // @ts-check
 import { logger } from '../logger.js';
+import { fetchWithTimeout } from '../utils.js';
 /** @typedef {import('../appstate').AppState} AppState */
 /**
  * AI Module for KPI Analysis and PPT Generation
@@ -505,7 +506,7 @@ Please provide:
 
     async callOpenAI(prompt) {
         const model = this.apiModel || 'gpt-4o-mini';
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -530,7 +531,7 @@ Please provide:
 
     async callClaude(prompt) {
         const model = this.apiModel || 'claude-3-haiku-20240307';
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -555,7 +556,7 @@ Please provide:
 
     async callOpenRouter(prompt) {
         const model = this.apiModel || 'openai/gpt-4o-mini';
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

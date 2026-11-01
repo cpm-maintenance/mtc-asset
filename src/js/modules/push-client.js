@@ -9,6 +9,8 @@
  * SDK OneSignal sudah dibuang (kode mati, tree-shaken). FCM adalah jalur push
  * yang benar-benar aktif — lihat src/js/modules/notification.js.
  */
+import { fetchWithTimeout } from '../utils.js';
+
 const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset.vercel.app/api/fcm-push';
 
 /**
@@ -21,7 +23,7 @@ const PUSH_PROXY_URL = import.meta.env.VITE_PUSH_PROXY_URL || 'https://mtc-asset
  */
 export async function sendPushViaProxy(title, body, data = {}) {
   try {
-    await fetch(PUSH_PROXY_URL, {
+    await fetchWithTimeout(PUSH_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction, computeBDFromLogs } from '../src/js/utils.js';
+import { describe, it, expect, vi } from 'vitest';
+import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction, computeBDFromLogs, fetchWithTimeout } from '../src/js/utils.js';
 import { kpiEngineModule } from '../src/js/modules/kpi-engine.js';
 import { performanceModule } from '../src/js/modules/performance.js';
 
@@ -809,4 +809,71 @@ describe('validatePerformanceForm — HM', () => {
             'HM (Running Hours) must be a positive number'
         );
     });
+});
+
+describe('fetchWithTimeout', () => {
+  /** fetch tiruan yang menolak begitu signal di-abort. */
+  function abortableFetch() {
+    return vi.fn((_url, opts) => new Promise((_res, rej) => {
+      opts.signal.addEventListener('abort', () => {
+        const e = new Error('aborted');
+        e.name = 'AbortError';
+        rej(e);
+      });
+    }));
+  }
+
+  it('membatalkan request menggantung, melempar error berisi "timeout"', async () => {
+    vi.useFakeTimers();
+    const fetchMock = abortableFetch();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const p = fetchWithTimeout('https://api.test/lambat', {}, 50);
+    const assertion = expect(p).rejects.toThrow(/timeout setelah 50 ms/);
+    await vi.advanceTimersByTimeAsync(60);
+    await assertion;
+
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('meneruskan signal + opsi, dan membatalkan timer saat sukses', async () => {
+    vi.useFakeTimers();
+    const response = { ok: true, status: 200 };
+    const fetchMock = vi.fn(async () => response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchWithTimeout('https://api.test/ok', { method: 'POST' }, 5000)).resolves.toBe(response);
+
+    const init = fetchMock.mock.calls[0][1];
+    expect(init.method).toBe('POST');
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    // timer dibersihkan: lewati batas, signal tetap hidup
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(init.signal.aborted).toBe(false);
+
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('meneruskan error non-abort apa adanya', async () => {
+    const boom = new Error('network down');
+    vi.stubGlobal('fetch', vi.fn(async () => { throw boom; }));
+    await expect(fetchWithTimeout('https://api.test/x')).rejects.toBe(boom);
+    vi.unstubAllGlobals();
+  });
+
+  it('batas waktu default 15000 ms', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', abortableFetch());
+
+    const p = fetchWithTimeout('https://api.test/default');
+    const assertion = expect(p).rejects.toThrow(/timeout setelah 15000 ms/);
+    await vi.advanceTimersByTimeAsync(15001);
+    await assertion;
+
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
 });

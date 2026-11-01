@@ -526,6 +526,21 @@ describe('ai.js — analyzeKPI', () => {
         expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
+    it('isAnalyzing kembali false saat request timeout', async () => {
+        sessionStorage.setItem('ai_api_key', 'sk-test');
+        const abortErr = new Error('aborted');
+        abortErr.name = 'AbortError';
+        vi.stubGlobal('fetch', vi.fn(async () => { throw abortErr; }));
+
+        const ctx = makeCtx({ apiKey: 'sk-test' });
+        const out = await ctx.analyzeKPI();
+
+        expect(out).toBeNull();
+        // normalize fetchWithTimeout: pesan memuat "timeout", bukan "AbortError"
+        expect(ctx.showNotification).toHaveBeenCalledWith('All API keys failed', 'error');
+        expect(ctx.isAnalyzing).toBe(false);
+    });
+
     it('melaporkan "All API keys failed" saat semua percobaan gagal', async () => {
         sessionStorage.setItem('ai_api_key', 'sk-test');
         vi.stubGlobal('fetch', vi.fn(async () => failJson({ error: { message: 'boom' } }, 500)));
