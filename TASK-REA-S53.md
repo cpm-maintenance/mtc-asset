@@ -72,11 +72,29 @@ Catatan: `@firebase/rules-unit-testing@6.0.0` minta `firebase@^13`, terpasang `1
 
 ## T4 — `.env` drift (Info)
 
-**Bukti:** `VITE_PUSH_PROXY_URL` dipakai [push-client.js:24](file:///d:/CODING/MTC-Asset/src/js/modules/push-client.js#L24) tapi **tidak ada** di `.env`. `VITE_ONESIGNAL_APP_ID` ada di `.env` tapi tidak terdokumentasi.
+**Bukti:** `VITE_PUSH_PROXY_URL` dipakai [push-client.js:14](file:///d:/CODING/MTC-Asset/src/js/modules/push-client.js#L14) tapi **tidak ada** di `.env`. `VITE_ONESIGNAL_APP_ID` ada di `.env` tapi tidak terdokumentasi.
 
-- [ ] Tambah `VITE_PUSH_PROXY_URL` ke `.env` lokal
-- [ ] Tambah `VITE_ONESIGNAL_APP_ID` ke `.env.example`
-- [ ] Pastikan `.env*` tetap di `.gitignore`
+- [x] Tambah `VITE_PUSH_PROXY_URL` ke `.env` lokal (nilai = default produksi)
+- [x] Buang `VITE_ONESIGNAL_APP_ID` dari `.env` — *bukan* didokumentasikan
+- [x] Dokumentasikan `VITE_USE_EMULATORS` di `.env.example` (dipakai `data-layer.js` + `firebase-core.js`, sebelumnya tidak tercatat)
+- [x] Pastikan `.env*` tetap di `.gitignore`
+- [x] Kunci dengan tes dua arah: `tests/env-contract.test.js`
+
+**Koreksi rencana:** butir semula "Tambah `VITE_ONESIGNAL_APP_ID` ke `.env.example`" **dibatalkan**. Modulnya sudah tidak ada:
+- `src/js/modules/onesignal.js` → **tidak ada** (`dir` = File Not Found)
+- `VITE_ONESIGNAL_APP_ID` → **0** kemunculan di `src/**` (pindai `import.meta.env.*` atas seluruh `src/**`)
+- Komentar `push-client.js:9-10` menyatakan SDK OneSignal sudah dibuang, FCM jalur aktif
+
+Mendokumentasikan key mati justru mengundang developer baru mengisinya tanpa efek. Yang dilakukan: hapus dari `.env` lokal (gitignored).
+
+**Hasil:** `.env` 11 key (OneSignal hilang, `VITE_PUSH_PROXY_URL` masuk). `.env.example` 12 key (+ `VITE_USE_EMULATORS`). `git check-ignore` → `.env` dan `.env.local` IGNORED, `.env.example` satu-satunya yang dilacak.
+
+**Tes baru** `tests/env-contract.test.js` (5 kasus, dua arah):
+1. setiap `VITE_*` di `src/**` wajib ada di `.env.example`
+2. setiap `VITE_*` di `.env.example` wajib dipakai `src/**` (cegah key mati)
+3. tidak ada sisa key OneSignal di keduanya
+4. `VITE_PUSH_PROXY_URL` terdokumentasi
+5. `VITE_USE_EMULATORS` terdokumentasi
 
 ---
 
