@@ -1,7 +1,8 @@
-// Polyfill localStorage for Node.js 26+ vitest environments
-if (typeof globalThis.localStorage === "undefined" || typeof globalThis.localStorage.getItem !== "function") {
+// Polyfill localStorage + sessionStorage for Node.js vitest environments.
+// `sessionStorage` dipakai ai.js untuk API key (tidak boleh di localStorage).
+const makeStorage = () => {
   const storage = new Map();
-  const mock = {
+  return {
     getItem: (k) => storage.get(k) ?? null,
     setItem: (k, v) => storage.set(k, String(v)),
     removeItem: (k) => storage.delete(k),
@@ -9,9 +10,15 @@ if (typeof globalThis.localStorage === "undefined" || typeof globalThis.localSto
     get length() { return storage.size; },
     key: (i) => Array.from(storage.keys())[i] ?? null
   };
-  try {
-    Object.defineProperty(globalThis, "localStorage", { value: mock, configurable: true, writable: true });
-  } catch {
-    globalThis.localStorage = mock;
+};
+
+for (const name of ["localStorage", "sessionStorage"]) {
+  if (typeof globalThis[name] === "undefined" || typeof globalThis[name].getItem !== "function") {
+    const mock = makeStorage();
+    try {
+      Object.defineProperty(globalThis, name, { value: mock, configurable: true, writable: true });
+    } catch {
+      globalThis[name] = mock;
+    }
   }
 }

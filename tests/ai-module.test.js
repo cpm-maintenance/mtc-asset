@@ -81,6 +81,7 @@ const KPI = {
 
 beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     delete window.app;
     delete window.appState;
     vi.stubGlobal('fetch', vi.fn());
@@ -220,7 +221,7 @@ describe('ai.js — getKPIContext', () => {
 
 describe('ai.js — API key management', () => {
     it('init memuat konfigurasi dari localStorage', async () => {
-        localStorage.setItem('ai_api_key', 'sk-init');
+        sessionStorage.setItem('ai_api_key', 'sk-init');
         localStorage.setItem('ai_provider', 'claude');
         localStorage.setItem('ai_model', 'claude-3-haiku-20240307');
         localStorage.setItem('ai_custom_prompt', 'prompt tersimpan');
@@ -252,7 +253,7 @@ describe('ai.js — API key management', () => {
         expect(ctx.apiKey).toBe('sk-baru');
         expect(ctx.apiProvider).toBe('claude');
         expect(ctx.apiModel).toBe('claude-3-haiku-20240307');
-        expect(localStorage.getItem('ai_api_key')).toBe('sk-baru');
+        expect(sessionStorage.getItem('ai_api_key')).toBe('sk-baru');
         expect(localStorage.getItem('ai_provider')).toBe('claude');
         expect(localStorage.getItem('ai_model')).toBe('claude-3-haiku-20240307');
         expect(localStorage.getItem('ai_custom_prompt')).toBe('prompt saya');
@@ -267,7 +268,7 @@ describe('ai.js — API key management', () => {
 
     it('clearApiKey mengosongkan state + localStorage', () => {
         window.app = { showNotification: vi.fn() };
-        localStorage.setItem('ai_api_key', 'sk-lama');
+        sessionStorage.setItem('ai_api_key', 'sk-lama');
         localStorage.setItem('ai_provider', 'claude');
         localStorage.setItem('ai_model', 'm');
         localStorage.setItem('ai_custom_prompt', 'c');
@@ -278,7 +279,7 @@ describe('ai.js — API key management', () => {
         expect(ctx.apiKey).toBe('');
         expect(ctx.apiModel).toBe('');
         expect(ctx.customPrompt).toBe('');
-        expect(localStorage.getItem('ai_api_key')).toBeNull();
+        expect(sessionStorage.getItem('ai_api_key')).toBeNull();
         expect(localStorage.getItem('ai_provider')).toBeNull();
         expect(localStorage.getItem('ai_model')).toBeNull();
         expect(localStorage.getItem('ai_custom_prompt')).toBeNull();
@@ -290,15 +291,15 @@ describe('ai.js — API key management', () => {
         expect(ctx.activeApiKey).toBe('b');
     });
 
-    it('getter activeApiKey jatuh ke localStorage ai_api_key_N lalu ai_api_key', () => {
+    it('getter activeApiKey jatuh ke sessionStorage ai_api_key_N lalu ai_api_key', () => {
         const ctx = makeCtx();
         expect(ctx.activeApiKey).toBe('');
 
-        localStorage.setItem('ai_api_key_2', 'sk-slot-2');
+        sessionStorage.setItem('ai_api_key_2', 'sk-slot-2');
         expect(ctx.activeApiKey).toBe('sk-slot-2');
 
-        localStorage.removeItem('ai_api_key_2');
-        localStorage.setItem('ai_api_key', 'sk-legacy');
+        sessionStorage.removeItem('ai_api_key_2');
+        sessionStorage.setItem('ai_api_key', 'sk-legacy');
         expect(ctx.activeApiKey).toBe('sk-legacy');
     });
 
@@ -316,10 +317,10 @@ describe('ai.js — API key management', () => {
     });
 
     it('rotateApiKey menarik key tambahan dari localStorage tanpa duplikat', () => {
-        localStorage.setItem('ai_api_keys_count', '3');
-        localStorage.setItem('ai_api_key_0', 'k0');
-        localStorage.setItem('ai_api_key_1', 'k1');
-        localStorage.setItem('ai_api_key_2', 'k2');
+        sessionStorage.setItem('ai_api_keys_count', '3');
+        sessionStorage.setItem('ai_api_key_0', 'k0');
+        sessionStorage.setItem('ai_api_key_1', 'k1');
+        sessionStorage.setItem('ai_api_key_2', 'k2');
 
         const ctx = makeCtx({ aiApiKeys: ['k0'], activeKeyIndex: 0 });
         expect(ctx.rotateApiKey()).toBe('k1');
@@ -327,10 +328,10 @@ describe('ai.js — API key management', () => {
     });
 
     it('loadAISettings memuat key non-kosong dari localStorage', async () => {
-        localStorage.setItem('ai_api_keys_count', '3');
-        localStorage.setItem('ai_api_key_0', 'sk-0');
-        localStorage.setItem('ai_api_key_1', '   ');
-        localStorage.setItem('ai_api_key_2', 'sk-2');
+        sessionStorage.setItem('ai_api_keys_count', '3');
+        sessionStorage.setItem('ai_api_key_0', 'sk-0');
+        sessionStorage.setItem('ai_api_key_1', '   ');
+        sessionStorage.setItem('ai_api_key_2', 'sk-2');
         localStorage.setItem('ai_provider', 'claude');
         localStorage.setItem('ai_model', 'claude-3-opus-20240229');
         localStorage.setItem('ai_active_key_index', '1');
@@ -380,7 +381,7 @@ describe('ai.js — API key management', () => {
 describe('ai.js — callAI dispatch', () => {
     it('merutekan ke OpenAI saat provider = openai', async () => {
         localStorage.setItem('ai_provider', 'openai');
-        localStorage.setItem('ai_api_key', 'sk-openai');
+        sessionStorage.setItem('ai_api_key', 'sk-openai');
         const fetchMock = vi.fn(async () => okJson({ choices: [{ message: { content: 'dari-openai' } }] }));
         vi.stubGlobal('fetch', fetchMock);
 
@@ -395,7 +396,7 @@ describe('ai.js — callAI dispatch', () => {
 
     it('merutekan ke Claude saat provider = claude', async () => {
         localStorage.setItem('ai_provider', 'claude');
-        localStorage.setItem('ai_api_key', 'sk-ant');
+        sessionStorage.setItem('ai_api_key', 'sk-ant');
         const fetchMock = vi.fn(async () => okJson({ content: [{ text: 'dari-claude' }] }));
         vi.stubGlobal('fetch', fetchMock);
 
@@ -407,7 +408,7 @@ describe('ai.js — callAI dispatch', () => {
     });
 
     it('jatuh ke OpenRouter sebagai default', async () => {
-        localStorage.setItem('ai_api_key', 'sk-or');
+        sessionStorage.setItem('ai_api_key', 'sk-or');
         const fetchMock = vi.fn(async () => okJson({ choices: [{ message: { content: 'dari-or' } }] }));
         vi.stubGlobal('fetch', fetchMock);
 
@@ -445,14 +446,14 @@ describe('ai.js — callAI dispatch', () => {
 
     it('meneruskan pesan error dari body provider', async () => {
         localStorage.setItem('ai_provider', 'openai');
-        localStorage.setItem('ai_api_key', 'sk-salah');
+        sessionStorage.setItem('ai_api_key', 'sk-salah');
         vi.stubGlobal('fetch', vi.fn(async () => failJson({ error: { message: 'Invalid API key' } }, 401)));
 
         await expect(makeCtx().callAI('halo')).rejects.toThrow('Invalid API key');
     });
 
     it('melempar error teks mentah saat body OpenRouter bukan JSON', async () => {
-        localStorage.setItem('ai_api_key', 'sk-or');
+        sessionStorage.setItem('ai_api_key', 'sk-or');
         vi.stubGlobal(
             'fetch',
             vi.fn(async () => ({ ok: false, status: 502, text: async () => 'Bad Gateway' })),
@@ -472,7 +473,7 @@ describe('ai.js — analyzeKPI', () => {
     });
 
     it('menyimpan hasil analisis dan menandai sukses', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         vi.stubGlobal('fetch', vi.fn(async () => okJson({ choices: [{ message: { content: 'ANALISIS' } }] })));
 
         const ctx = makeCtx({ apiKey: 'sk-test', logs: [{ woNumber: 'WO-1', Status: 'Pending' }] });
@@ -485,7 +486,7 @@ describe('ai.js — analyzeKPI', () => {
     });
 
     it('mengganti placeholder pada custom prompt sebelum dikirim', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         const fetchMock = vi.fn(async () => okJson({ choices: [{ message: { content: 'ok' } }] }));
         vi.stubGlobal('fetch', fetchMock);
 
@@ -505,7 +506,7 @@ describe('ai.js — analyzeKPI', () => {
     });
 
     it('merotasi API key saat kena rate limit lalu mencoba lagi', async () => {
-        localStorage.setItem('ai_api_key', 'sk-1');
+        sessionStorage.setItem('ai_api_key', 'sk-1');
         window.app = {
             activeApiKey: 'sk-2',
             rotateApiKey: vi.fn(),
@@ -526,7 +527,7 @@ describe('ai.js — analyzeKPI', () => {
     });
 
     it('melaporkan "All API keys failed" saat semua percobaan gagal', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         vi.stubGlobal('fetch', vi.fn(async () => failJson({ error: { message: 'boom' } }, 500)));
 
         const ctx = makeCtx({ apiKey: 'sk-test' });
@@ -547,7 +548,7 @@ describe('ai.js — rekomendasi & chat', () => {
     });
 
     it('getAIRecommendations melaporkan jumlah rekomendasi', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         const ctx = makeCtx();
         ctx.generateRecommendations = vi.fn(async () => [{ title: 'A' }, { title: 'B' }]);
 
@@ -557,7 +558,7 @@ describe('ai.js — rekomendasi & chat', () => {
     });
 
     it('getAIRecommendations melaporkan hasil kosong', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         const ctx = makeCtx();
         ctx.generateRecommendations = vi.fn(async () => []);
 
@@ -567,7 +568,7 @@ describe('ai.js — rekomendasi & chat', () => {
     });
 
     it('getAIRecommendations menangkap error', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         const ctx = makeCtx();
         ctx.generateRecommendations = vi.fn(async () => {
             throw new Error('kuota habis');
@@ -610,7 +611,7 @@ describe('ai.js — rekomendasi & chat', () => {
     });
 
     it('sendAIChat menyimpan pertanyaan + jawaban ke riwayat', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         const ctx = makeCtx({ aiChatInput: 'cek pompa' });
         ctx.callAI = vi.fn(async () => 'pompa aman');
 
@@ -625,7 +626,7 @@ describe('ai.js — rekomendasi & chat', () => {
     });
 
     it('sendAIChat mencatat error ke riwayat', async () => {
-        localStorage.setItem('ai_api_key', 'sk-test');
+        sessionStorage.setItem('ai_api_key', 'sk-test');
         const ctx = makeCtx({ aiChatInput: 'cek pompa' });
         ctx.callAI = vi.fn(async () => {
             throw new Error('jaringan mati');
@@ -1019,9 +1020,9 @@ describe('ai.js — simpan/muat Firebase', () => {
         expect(ctx.aiApiKeys).toEqual(['k1', 'k2', 'k3']);
         expect(ctx.activeKeyIndex).toBe(0);
         expect(ctx.aiModel).toBe('my/custom-model');
-        expect(localStorage.getItem('ai_api_keys_count')).toBe('3');
-        expect(localStorage.getItem('ai_api_key_0')).toBe('k1');
-        expect(localStorage.getItem('ai_api_key_2')).toBe('k3');
+        expect(sessionStorage.getItem('ai_api_keys_count')).toBe('3');
+        expect(sessionStorage.getItem('ai_api_key_0')).toBe('k1');
+        expect(sessionStorage.getItem('ai_api_key_2')).toBe('k3');
         expect(localStorage.getItem('ai_model')).toBe('my/custom-model');
         expect(localStorage.getItem('ai_provider')).toBe('openrouter');
         expect(localStorage.getItem('ai_custom_prompt')).toBe('cp');
@@ -1049,7 +1050,7 @@ describe('ai.js — setter aiApiKey', () => {
         ctx.aiApiKey = 'sk-baru';
 
         expect(ctx.aiApiKeys[0]).toBe('sk-baru');
-        expect(localStorage.getItem('ai_api_key_input_0')).toBe('sk-baru');
+        expect(sessionStorage.getItem('ai_api_key_input_0')).toBe('sk-baru');
     });
 
     it('tidak menimpa slot pertama yang sudah terisi', () => {
@@ -1058,6 +1059,68 @@ describe('ai.js — setter aiApiKey', () => {
         ctx.aiApiKey = 'sk-baru';
 
         expect(ctx.aiApiKeys[0]).toBe('sk-lama');
-        expect(localStorage.getItem('ai_api_key_input_0')).toBe('sk-baru');
+        expect(sessionStorage.getItem('ai_api_key_input_0')).toBe('sk-baru');
+    });
+});
+
+describe('ai.js — API key tidak menetap di localStorage', () => {
+    it('setApiKey menyimpan key di sessionStorage, bukan localStorage', () => {
+        const ctx = makeCtx();
+        ctx.setApiKey('sk-rahasia', 'openai', 'gpt-4o');
+
+        expect(sessionStorage.getItem('ai_api_key')).toBe('sk-rahasia');
+        expect(localStorage.getItem('ai_api_key')).toBeNull();
+    });
+
+    it('saveAIWithCustomModel menyimpan semua slot key di sessionStorage saja', () => {
+        const ctx = makeCtx({
+            aiApiKeyInput1: 'k1',
+            aiApiKeyInput2: 'k2',
+            saveAIToFirebase: vi.fn(),
+        });
+
+        ctx.saveAIWithCustomModel();
+
+        expect(sessionStorage.getItem('ai_api_key_0')).toBe('k1');
+        expect(sessionStorage.getItem('ai_api_key_1')).toBe('k2');
+        expect(sessionStorage.getItem('ai_api_keys_count')).toBe('2');
+        expect(localStorage.getItem('ai_api_key_0')).toBeNull();
+        expect(localStorage.getItem('ai_api_keys_count')).toBeNull();
+    });
+
+    it('clearApiKey membersihkan key dari kedua storage', () => {
+        const ctx = makeCtx();
+        sessionStorage.setItem('ai_api_key', 'sk-lama');
+        localStorage.setItem('ai_api_key', 'sk-bocor');
+
+        ctx.clearApiKey();
+
+        expect(sessionStorage.getItem('ai_api_key')).toBeNull();
+        expect(localStorage.getItem('ai_api_key')).toBeNull();
+    });
+
+    it('init membuang sisa key legacy yang tertinggal di localStorage', async () => {
+        localStorage.setItem('ai_api_key', 'sk-legacy');
+        localStorage.setItem('ai_api_key_0', 'sk-legacy-0');
+        localStorage.setItem('ai_api_keys_count', '1');
+        localStorage.setItem('ai_provider', 'claude');
+
+        const ctx = makeCtx();
+        await ctx.init();
+
+        expect(localStorage.getItem('ai_api_key')).toBeNull();
+        expect(localStorage.getItem('ai_api_key_0')).toBeNull();
+        expect(localStorage.getItem('ai_api_keys_count')).toBeNull();
+        // Config non-rahasia tetap dipertahankan.
+        expect(localStorage.getItem('ai_provider')).toBe('claude');
+        expect(ctx.apiProvider).toBe('claude');
+    });
+
+    it('config non-rahasia tetap bertahan di localStorage setelah setApiKey', () => {
+        const ctx = makeCtx();
+        ctx.setApiKey('sk-x', 'claude', 'claude-3-haiku-20240307');
+
+        expect(localStorage.getItem('ai_provider')).toBe('claude');
+        expect(localStorage.getItem('ai_model')).toBe('claude-3-haiku-20240307');
     });
 });

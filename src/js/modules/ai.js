@@ -5,6 +5,52 @@ import { logger } from '../logger.js';
  * AI Module for KPI Analysis and PPT Generation
  */
 
+/**
+ * Penyimpanan API key AI.
+ *
+ * Key TIDAK disimpan di `localStorage` (bertahan lintas sesi + terbaca skrip
+ * pihak ketiga). Hanya `sessionStorage`: hilang saat tab ditutup, tetap hidup
+ * saat reload. Config non-rahasia (provider/model/prompt/indeks) tetap di
+ * `localStorage` supaya preferensi tidak hilang.
+ *
+ * `purgeLegacyLocalKeys()` membuang key telanjur tersimpan oleh versi lama.
+ */
+const KEY_PREFIXES = ['ai_api_key', 'ai_api_keys_count'];
+
+function keyStore() {
+    return typeof sessionStorage !== 'undefined' ? sessionStorage : null;
+}
+
+/**
+ * @param {string} name
+ * @param {string} value
+ */
+function persistKey(name, value) {
+    keyStore()?.setItem(name, value);
+    localStorage.removeItem(name); // jangan pernah tertinggal di localStorage
+}
+
+/** @param {string} name @returns {string} */
+function readKey(name) {
+    return keyStore()?.getItem(name) || '';
+}
+
+/** @param {string} name */
+function forgetKey(name) {
+    keyStore()?.removeItem(name);
+    localStorage.removeItem(name);
+}
+
+/** Hapus sisa key rahasia dari localStorage versi lama. */
+function purgeLegacyLocalKeys() {
+    try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const name = localStorage.key(i);
+            if (name && KEY_PREFIXES.some((p) => name.startsWith(p))) localStorage.removeItem(name);
+        }
+    } catch (/** @type {any} */ e) { logger.debug('[AI] purge legacy keys gagal:', e.message); }
+}
+
 export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     // Single key (legacy)
     apiKey: '',
@@ -32,8 +78,9 @@ export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     aiAnalysisResult: null,
 
     async init() {
-        // Load saved API key
-        this.apiKey = localStorage.getItem('ai_api_key') || '';
+        // Key rahasia: sessionStorage saja (lihat keyStore()).
+        purgeLegacyLocalKeys();
+        this.apiKey = readKey('ai_api_key');
         this.apiProvider = localStorage.getItem('ai_provider') || 'openai';
         this.apiModel = localStorage.getItem('ai_model') || '';
         this.customPrompt = localStorage.getItem('ai_custom_prompt') || '';
@@ -51,8 +98,8 @@ export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         this.apiProvider = provider;
         this.apiModel = model;
         
-        // Save to localStorage
-        localStorage.setItem('ai_api_key', key);
+        // Key rahasia -> sessionStorage; config -> localStorage
+        persistKey('ai_api_key', key);
         localStorage.setItem('ai_provider', provider);
         localStorage.setItem('ai_model', model);
         
@@ -75,7 +122,7 @@ export const aiModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
         this.apiModel = '';
         this.customPrompt = '';
         
-        localStorage.removeItem('ai_api_key');
+        forgetKey('ai_api_key');
         localStorage.removeItem('ai_provider');
         localStorage.removeItem('ai_model');
         localStorage.removeItem('ai_custom_prompt');
@@ -429,10 +476,10 @@ Please provide:
             } else {
                 // Fallback: search all localStorage
                 for (let i = 0; i < 10; i++) {
-                    const key = localStorage.getItem('ai_api_key_' + i);
+                    const key = readKey('ai_api_key_' + i);
                     if (key) { this.apiKey = key; break; }
                 }
-                if (!this.apiKey) this.apiKey = localStorage.getItem('ai_api_key') || '';
+                if (!this.apiKey) this.apiKey = readKey('ai_api_key');
             }
             
             // Also sync provider
@@ -648,9 +695,9 @@ Please provide:
 
     rotateApiKey() {
         if (this.aiApiKeys.length <= 1) {
-            const count = parseInt(localStorage.getItem('ai_api_keys_count') || '0');
+            const count = parseInt(readKey('ai_api_keys_count') || '0', 10);
             for (let i = 0; i < count; i++) {
-                const key = localStorage.getItem('ai_api_key_' + i);
+                const key = readKey('ai_api_key_' + i);
                 if (key && key.trim() && !this.aiApiKeys.includes(key.trim())) {
                     this.aiApiKeys.push(key.trim());
                 }
@@ -719,19 +766,19 @@ Please provide:
     loadAISettings() {
         this.loadAIFromFirebase().then((/** @type {any} */ firebaseLoaded) => {
             if (firebaseLoaded) return;
-            const storedCount = parseInt(localStorage.getItem('ai_api_keys_count') || '0');
+            const storedCount = parseInt(readKey('ai_api_keys_count') || '0', 10);
             if (storedCount > 0) {
                 this.aiApiKeys = [];
                 for (let i = 0; i < storedCount; i++) {
-                    const key = localStorage.getItem('ai_api_key_' + i) || '';
+                    const key = readKey('ai_api_key_' + i);
                     if (key.trim()) this.aiApiKeys.push(key);
                 }
             }
-            this.aiApiKeyInput1 = localStorage.getItem('ai_api_key_0') || '';
-            this.aiApiKeyInput2 = localStorage.getItem('ai_api_key_1') || '';
-            this.aiApiKeyInput3 = localStorage.getItem('ai_api_key_2') || '';
-            this.aiApiKeyInput4 = localStorage.getItem('ai_api_key_3') || '';
-            this.aiApiKeyInput5 = localStorage.getItem('ai_api_key_4') || '';
+            this.aiApiKeyInput1 = readKey('ai_api_key_0');
+            this.aiApiKeyInput2 = readKey('ai_api_key_1');
+            this.aiApiKeyInput3 = readKey('ai_api_key_2');
+            this.aiApiKeyInput4 = readKey('ai_api_key_3');
+            this.aiApiKeyInput5 = readKey('ai_api_key_4');
             this.aiProvider = localStorage.getItem('ai_provider') || 'openrouter';
             this.customPrompt = localStorage.getItem('ai_custom_prompt') || '';
             this.activeKeyIndex = parseInt(localStorage.getItem('ai_active_key_index') || '0');
@@ -781,8 +828,8 @@ Please provide:
         this.aiApiKeys = keys;
         this.activeKeyIndex = 0;
         localStorage.setItem('ai_active_key_index', '0');
-        localStorage.setItem('ai_api_keys_count', String(keys.length));
-        for (let i = 0; i < keys.length; i++) localStorage.setItem('ai_api_key_' + i, keys[i]);
+        persistKey('ai_api_keys_count', String(keys.length));
+        for (let i = 0; i < keys.length; i++) persistKey('ai_api_key_' + i, keys[i]);
 
         let modelToSave = this.aiModel;
         if (this.aiModel === '__custom__' && this.customModelInput?.trim()) modelToSave = this.customModelInput.trim();
@@ -807,16 +854,16 @@ Please provide:
 
     get activeApiKey() {
         if (this.aiApiKeys?.length > 0 && this.aiApiKeys[/** @type {number} */ (this.activeKeyIndex)]) return this.aiApiKeys[/** @type {number} */ (this.activeKeyIndex)];
-        for (let i = 0; i < 10; i++) { const key = localStorage.getItem('ai_api_key_' + i); if (key?.trim()) return key; }
-        return localStorage.getItem('ai_api_key') || '';
+        for (let i = 0; i < 10; i++) { const key = readKey('ai_api_key_' + i); if (key?.trim()) return key; }
+        return readKey('ai_api_key');
     },
 
     get aiApiKey() {
-        return this.aiApiKeys[0] || localStorage.getItem('ai_api_key_0') || '';
+        return this.aiApiKeys[0] || readKey('ai_api_key_0');
     },
     set aiApiKey(v) {
         if (!this.aiApiKeys[0]) this.aiApiKeys[0] = v;
-        localStorage.setItem('ai_api_key_input_0', v);
+        persistKey('ai_api_key_input_0', v);
     },
 
     get apiKeyAlias() { return this.activeApiKey; },
