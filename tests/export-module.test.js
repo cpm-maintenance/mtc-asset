@@ -526,6 +526,59 @@ describe('export.js — importCSV', () => {
         expect(ctx.pmList[0].pmId).toBe('PM-99');
     });
 
+    // Mitigasi advisory xlsx tanpa perbaikan: batasi masukan sebelum parser jalan.
+    it('menolak berkas > 5 MB tanpa membuka FileReader', async () => {
+        const ctx = makeCtx();
+        const event = { target: { files: [{ size: 5 * 1024 * 1024 + 1 }], value: 'besar.xlsx' } };
+
+        await ctx.importCSV(/** @type {any} */ (event), 'equip');
+
+        expect(xlsx.read).not.toHaveBeenCalled();
+        expect(window.set).not.toHaveBeenCalled();
+        expect(ctx.showNotification).toHaveBeenCalledWith(
+            'File too large (5.0 MB). Maximum 5 MB',
+            'error'
+        );
+        // input dikosongkan supaya user bisa memilih berkas lain
+        expect(event.target.value).toBe('');
+        expect(ctx.isLoading).toBe(false);
+    });
+
+    it('menerima berkas tepat 5 MB (batas inklusif)', async () => {
+        const pas = new File(['x'], 'pas.csv', { type: 'text/csv' });
+        Object.defineProperty(pas, 'size', { value: 5 * 1024 * 1024 });
+        const ctx = makeCtx();
+
+        await ctx.importCSV(/** @type {any} */ ({ target: { files: [pas], value: 'pas.csv' } }), 'equip');
+        await vi.waitFor(() => expect(xlsx.read).toHaveBeenCalled());
+
+        expect(ctx.showNotification).not.toHaveBeenCalledWith(
+            expect.stringContaining('File too large'),
+            'error'
+        );
+    });
+
+    it('menolak lembar dengan lebih dari 5000 baris', async () => {
+        xlsx.utils.sheet_to_json.mockReturnValue(
+            Array.from({ length: 5001 }, (_, i) => ({ EquipmentID: 'EQ-' + i }))
+        );
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const ctx = makeCtx();
+
+        await ctx.importCSV(fileEvent(), 'equip');
+        await vi.waitFor(() =>
+            expect(ctx.showNotification).toHaveBeenCalledWith(
+                'Import failed: Too many rows (5001). Maximum 5000',
+                'error'
+            )
+        );
+
+        // tidak ada satu pun baris yang ditulis
+        expect(window.set).not.toHaveBeenCalled();
+        expect(ctx.isLoading).toBe(false);
+        expect(ctx.importProgress).toBe(0);
+    });
+
     it('melaporkan kegagalan import dan mengosongkan progress', async () => {
         xlsx.utils.sheet_to_json.mockReturnValue([{ EquipmentID: 'EQ-1' }]);
         window.set = vi.fn(async () => {

@@ -19,6 +19,21 @@
 import { generateProfessionalWOPDF } from './wo-pdf-template.js';
 
 /**
+ * Batas impor CSV/Excel.
+ *
+ * `xlsx` yang dipakai di sini punya dua advisory tanpa perbaikan
+ * (GHSA-4r6h-8v6p-xvw6 prototype pollution, GHSA-5pgg-2g8v-p4x9 ReDoS), dan
+ * `XLSX.read()` menerima file unggahan user apa adanya. Selama belum ada versi
+ * rilis yang aman, satu-satunya mitigasi yang masuk akal adalah membatasi
+ * ukuran berkas dan jumlah baris yang diproses.
+ *
+ * ponytail: cap tetap, bukan streaming. Naikkan bila impor sah memang lebih
+ * besar, atau ganti ke worker + parser lain bila `xlsx` akhirnya dilepas.
+ */
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+const MAX_IMPORT_ROWS = 5000;
+
+/**
  * Parse JSON dengan aman; bila gagal mengembalikan `fallback`.
  *
  * @param {string} str - String JSON.
@@ -653,6 +668,14 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
         const XLSX = await loadXLSX();
         const file = /** @type {any} */ (event.target).files[0];
         if (!file) return;
+        if (file.size > MAX_IMPORT_BYTES) {
+            /** @type {any} */ (event.target).value = '';
+            this.showNotification(
+                `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum ${MAX_IMPORT_BYTES / 1024 / 1024} MB`,
+                'error'
+            );
+            return;
+        }
         this.isLoading = true;
         const reader = new FileReader();
         reader.onload = async (/** @type {any} */ e) => {
@@ -661,6 +684,9 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
                 const wb = XLSX.read(bstr, { type: 'binary' });
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const data = /** @type {any[]} */ (XLSX.utils.sheet_to_json(ws));
+                if (data.length > MAX_IMPORT_ROWS) {
+                    throw new Error(`Too many rows (${data.length}). Maximum ${MAX_IMPORT_ROWS}`);
+                }
 
                 this.importProgress = 0;
                 let count = 0;
