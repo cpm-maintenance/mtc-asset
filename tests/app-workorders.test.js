@@ -189,6 +189,16 @@ describe('Navigasi sidebar', () => {
     expect(s.currentPage).toBe('mtbfmttr');
   });
 
+    it('navigateTo "analytics" diteruskan ke sub-tab Analytics Hub', () => {
+        const s = makeApp({
+            userRole: 'supervisor',
+            currentPage: 'dash',
+            analyticsTab: 'mtbfmttr',
+        });
+        s.navigateTo('analytics');
+        expect(s.currentPage).toBe('mtbfmttr');
+    });
+
   it('openMenuItem "analytics" memakai sub-tab pertama bila tab tersimpan tidak diizinkan', () => {
     const s = makeApp({
       userRole: 'supervisor',

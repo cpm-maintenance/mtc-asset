@@ -31,7 +31,6 @@ function makeCtx(overrides = {}) {
         setupRequisitionsListener: vi.fn(),
         checkUserRole: vi.fn(),
         computeEnterpriseData: vi.fn(),
-        renderDashboardCharts: vi.fn(),
         renderKPICharts: vi.fn(),
         renderEnterpriseCharts: vi.fn(),
         handleError: vi.fn(),
@@ -108,8 +107,6 @@ describe('bootstrapModule.init — wiring', () => {
         const ctx = makeCtx();
         ctx.init();
         expect(ctx.$watch.mock.calls.map((c) => c[0])).toEqual([
-            'equipment',
-            'logs',
             'currentPage',
             'kpiFilter',
             'kpiFilterDate',
@@ -246,28 +243,6 @@ describe('bootstrapModule.onUser — state pasca-auth', () => {
 });
 
 describe('bootstrapModule watchers', () => {
-    it('debounces the dashboard render for equipment/logs on the dashboard', () => {
-        const ctx = makeCtx({ currentPage: 'dash', equipment: [{ EquipmentID: 'EQ1' }] });
-        ctx.init();
-        const w = watchers(ctx);
-
-        w.equipment();
-        vi.advanceTimersByTime(500);
-        expect(ctx.chartLoaded).toBe(true);
-        expect(ctx.renderDashboardCharts).toHaveBeenCalledOnce();
-
-        ctx.currentPage = 'kpi';
-        w.logs();
-        vi.advanceTimersByTime(500);
-        expect(ctx.renderDashboardCharts).toHaveBeenCalledOnce(); // halaman bukan dash
-
-        ctx.currentPage = 'dash';
-        ctx.equipment = [];
-        w.equipment();
-        vi.advanceTimersByTime(500);
-        expect(ctx.renderDashboardCharts).toHaveBeenCalledOnce(); // data kosong
-    });
-
     it('debounces the KPI render for the three KPI watchers', () => {
         const ctx = makeCtx({ currentPage: 'kpi' });
         ctx.init();
@@ -317,26 +292,9 @@ describe('bootstrapModule watchers', () => {
         expect(ctx.currentPage).toBe('dash');
     });
 
-    it('destroys dashboard charts when leaving the dashboard', () => {
-        const destroy = vi.fn();
-        window._appCharts = { status: { destroy }, cost: null };
-        const ctx = makeCtx();
-        ctx.init();
-
-        watchers(ctx).currentPage('wo', 'dash');
-
-        expect(destroy).toHaveBeenCalledOnce();
-        expect(window._appCharts).toEqual({
-            status: null,
-            cost: null,
-            downtime: null,
-            reliability: null,
-        });
-    });
-
-    it('survives a chart whose destroy throws', () => {
-        window._appCharts = {
-            status: {
+    it('survives a KPI chart whose destroy throws', () => {
+        window._appKpiCharts = {
+            paVsActual: {
                 destroy() {
                     throw new Error('already gone');
                 },
@@ -344,8 +302,8 @@ describe('bootstrapModule watchers', () => {
         };
         const ctx = makeCtx();
         ctx.init();
-        watchers(ctx).currentPage('wo', 'dash');
-        expect(console.warn).toHaveBeenCalledWith('Chart destroy error', expect.any(Error));
+        watchers(ctx).currentPage('wo', 'kpi');
+        expect(console.warn).toHaveBeenCalledWith('KPI Chart destroy error', expect.any(Error));
     });
 
     it('resets the KPI chart map when leaving the KPI page', () => {
@@ -364,14 +322,11 @@ describe('bootstrapModule watchers', () => {
         });
     });
 
-    it('renders dashboard and KPI charts when navigating in', () => {
+    it('renders KPI charts when navigating in', () => {
         const ctx = makeCtx({ equipment: [{ EquipmentID: 'EQ1' }] });
         ctx.init();
         const nav = watchers(ctx).currentPage;
 
-        nav('dash', 'wo');
-        vi.advanceTimersByTime(500);
-        expect(ctx.renderDashboardCharts).toHaveBeenCalledOnce();
 
         nav('kpi', 'dash');
         vi.advanceTimersByTime(1000);

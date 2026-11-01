@@ -622,6 +622,9 @@ export function app() {
             try { localStorage.setItem('sidebarGroups', JSON.stringify(this.sidebarExpandedGroups)); } catch {}
         },
         navigateTo(pageId) {
+            // "analytics" bukan halaman: ia pintu masuk Analytics Hub, jadi
+            // diteruskan ke sub-view terakhir yang diizinkan.
+            if (pageId === 'analytics') return this.openMenuItem('analytics');
             const page = this.menuItems.find(m => m.id === pageId);
             if (page && !this.canAccess(page)) {
                 this.showNotification("Access denied", "error");
@@ -1198,12 +1201,6 @@ export function app() {
         },
 
         // Dashboard date range helpers
-        applyDashboardFilter() {
-            // Reset chart cache so renderDashboardCharts rebuilds
-            Object.values(window._appCharts || {}).forEach(c => { if(c) { try { c.destroy(); } catch {} } });
-            window._appCharts = { status: null, cost: null, downtime: null, reliability: null, woCompletion: null };
-            if (this.currentPage === 'dash') this.renderDashboardCharts();
-        },
         setDashboardPreset(days) {
             if (days === 0) {
                 this.dashboardDateFrom = '';
@@ -1212,7 +1209,6 @@ export function app() {
                 this.dashboardDateFrom = localDateStr(new Date(Date.now() - days * 24 * 60 * 60 * 1000));
                 this.dashboardDateTo = localDateStr();
             }
-            this.applyDashboardFilter();
         },
 
         get heroHUD() {

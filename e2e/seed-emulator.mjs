@@ -108,7 +108,7 @@ export async function seedEmulator({ suffix = '' } = {}) {
     Nama: 'Pompa E2E',
     Lokasi: 'Area E2E',
     Kategori: 'Pump',
-    Status: 'Operational',
+    Status: 'Active',
     FotoURL: '',
   });
 

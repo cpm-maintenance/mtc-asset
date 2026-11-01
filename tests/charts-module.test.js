@@ -81,14 +81,12 @@ function stubCanvases(ids, onGet) {
     return { map, seen, spy };
 }
 
-const DASH_CANVASES = ['reliabilityChart', 'pmStatusChart', 'woCompletionChart', 'costTrendChart'];
 const KPI_CANVASES = [
     'mtbfChart', 'mttrChart', 'availabilityChart', 'reliabilityChartKPI',
     'top5Components', 'schedVsUnsched', 'failureTypeChart', 'costChart', 'paretoChart',
 ];
 const ENT_CANVASES = ['eHealthChart', 'woStatusChart', 'pmTrendChart', 'downtimeTrendChart', 'costTrendChart', 'abcChart'];
 
-let scheduled = /** @type {any} */ (null);
 
 beforeEach(() => {
     delete (/** @type {any} */ (window)._chartJS);
@@ -98,11 +96,6 @@ beforeEach(() => {
     chartMock.Chart.getChart.mockReset();
     chartMock.Chart.getChart.mockImplementation(() => null);
     chartMock.Chart.register.mockReset();
-    scheduled = null;
-    vi.stubGlobal('requestAnimationFrame', (/** @type {any} */ fn) => {
-        scheduled = fn();
-        return 1;
-    });
 });
 
 afterEach(() => {
@@ -182,16 +175,6 @@ describe('helper murni', () => {
         expect(makeCtx({ getEquipName: () => undefined })._equipLabel('EQ-9')).toBe('EQ-9');
         expect(makeCtx()._equipLabel('EQ-7')).toBe('EQ-7');
     });
-
-    it('_chartIdleKind membedakan offline dan empty', () => {
-        const ctx = makeCtx();
-        const orig = navigator.onLine;
-        Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
-        expect(ctx._chartIdleKind()).toBe('offline');
-        Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
-        expect(ctx._chartIdleKind()).toBe('empty');
-        Object.defineProperty(navigator, 'onLine', { value: orig, configurable: true });
-    });
 });
 
 describe('palet tema', () => {
@@ -256,59 +239,6 @@ describe('loadChartJS & safeCreateChart', () => {
         expect(out).toBeNull();
         expect(err).toHaveBeenCalledWith('Chart creation failed:', expect.any(Error));
         expect(ctx.showNotification).toHaveBeenCalledWith('Chart render failed', 'error');
-    });
-});
-
-describe('setChartState / clearChartState', () => {
-    beforeEach(() => {
-        document.body.innerHTML = `
-            <div class="relative"><canvas id="reliabilityChart"></canvas></div>
-            <canvas id="tanpaHost"></canvas>
-        `;
-        // `tanpaHost` dibuat tanpa parent untuk menguji jalur host kosong.
-        const orphan = document.getElementById('tanpaHost');
-        if (orphan) orphan.remove();
-    });
-
-    it('memakai preset ikon per jenis status', () => {
-        const ctx = makeCtx();
-        const cases = [
-            ['offline', 'wifi_off', 'text-tac-status-repair'],
-            ['error', 'warning', 'text-tac-status-emergency'],
-            ['empty', 'show_chart', 'text-tac-on-surface-variant'],
-        ];
-        for (const [kind, icon, tone] of cases) {
-            ctx.setChartState('reliabilityChart', kind, `pesan ${kind}`);
-            const box = /** @type {HTMLElement} */ (document.querySelector('[data-chart-state]'));
-            expect(box.getAttribute('data-chart-state')).toBe(kind);
-            const ic = /** @type {HTMLElement} */ (box.querySelector('i'));
-            expect(ic.textContent).toBe(icon);
-            expect(ic.className).toContain(tone);
-            expect(ic.getAttribute('aria-hidden')).toBe('true');
-        }
-    });
-
-    it('jenis tak dikenal jatuh ke preset empty', () => {
-        const ctx = makeCtx();
-        ctx.setChartState('reliabilityChart', 'ngawur', 'x');
-        const box = /** @type {HTMLElement} */ (document.querySelector('[data-chart-state]'));
-        expect(box.getAttribute('data-chart-state')).toBe('ngawur');
-        expect(/** @type {HTMLElement} */ (box.querySelector('i')).textContent).toBe('show_chart');
-    });
-
-    it('tidak melempar saat kanvas tidak ada', () => {
-        const ctx = makeCtx();
-        expect(() => ctx.setChartState('tidakAda', 'empty', 'x')).not.toThrow();
-        expect(() => ctx.clearChartState('tidakAda')).not.toThrow();
-    });
-
-    it('clearChartState mengembalikan visibilitas kanvas', () => {
-        const ctx = makeCtx();
-        ctx.setChartState('reliabilityChart', 'empty', 'x');
-        expect(/** @type {HTMLElement} */ (document.getElementById('reliabilityChart')).style.visibility).toBe('hidden');
-        ctx.clearChartState('reliabilityChart');
-        expect(/** @type {HTMLElement} */ (document.getElementById('reliabilityChart')).style.visibility).toBe('');
-        expect(document.querySelector('[data-chart-state]')).toBeNull();
     });
 });
 
@@ -385,171 +315,6 @@ describe('renderMTBFMTTRChart', () => {
         await ctx.renderMTBFMTTRChart();
         expect(err).toHaveBeenCalledWith('MTBF/MTTR chart render failed:', expect.any(Error));
         expect(chartMock.instances.length).toBe(0);
-    });
-});
-
-describe('renderDashboardCharts', () => {
-    const equipment = [
-        { EquipmentID: 'EQ-1', Tipe: 'Mechanical' },
-        { EquipmentID: 'EQ-2', Tipe: 'Electrical' },
-    ];
-    const performanceData = [
-        { date: '2026-10-01', wh: 24, bd: 4, stb: 2 },
-        { date: '2026-10-02', wh: 24, bd: 0, stb: 0 },
-    ];
-    const logs = [
-        { woNumber: 'MTC-001', Status: 'Completed', Tanggal: '2026-10-01' },
-        { woNumber: 'MTC-002', Status: 'In Progress', Tanggal: '2026-10-02' },
-        { woNumber: 'MTC-003', Status: 'Pending', Tanggal: '2026-10-03' },
-    ];
-    const pmList = [
-        { status: 'completed', date: '2026-09-01' },
-        { status: 'cancelled', date: '2026-09-02' },
-        { status: 'pending', date: '2020-01-01' },
-        { status: 'pending', date: '2099-01-01' },
-    ];
-
-    /** @param {Record<string, any>} [over] */
-    const base = (over = {}) =>
-        makeCtx({
-            equipment,
-            performanceData,
-            logs,
-            pmList,
-            allParts: [{ Stok: 1, MinStock: 5 }, { Stok: 9, MinStock: 5 }],
-            calcCostTrend: () => [{ month: '2026-09', cost: 1500000 }, { month: '2026-10', cost: 2500000 }],
-            ...over,
-        });
-
-    it('berhenti kalau bukan halaman dashboard', async () => {
-        const ctx = base({ currentPage: 'kpi' });
-        stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        expect(chartMock.instances.length).toBe(0);
-    });
-
-    it('berhenti kalau belum login', async () => {
-        const ctx = base({ isLoggedIn: false });
-        stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        expect(chartMock.instances.length).toBe(0);
-    });
-
-    it('menghancurkan chart sisa (termasuk yang destroy-nya melempar)', async () => {
-        /** @type {any} */ (window)._appCharts = {
-            a: { destroy: () => { throw new Error('x'); } },
-            b: { destroy: vi.fn() },
-            c: null,
-        };
-        const ctx = base({ equipment: [] });
-        stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        expect(/** @type {any} */ (window)._appCharts).toEqual({
-            status: null, cost: null, downtime: null, reliability: null, woCompletion: null,
-        });
-    });
-
-    it('tanpa equipment: mengisi dashboardStats dan 4 overlay status', async () => {
-        const ctx = base({ equipment: [] });
-        const { spy } = stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        expect(ctx.dashboardStats).toEqual({ totalEquip: 0, overduePM: 1, lowStock: 1, totalDowntime: '4.0' });
-        // 4 panggilan setChartState → masing-masing memanggil getElementById.
-        expect(spy).toHaveBeenCalled();
-        expect(chartMock.instances.length).toBe(0);
-    });
-
-    it('merender keempat chart dashboard dengan data nyata', async () => {
-        const ctx = base();
-        stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        expect(scheduled).toBeTruthy();
-        await scheduled;
-
-        const byType = chartMock.instances.map((c) => c.config.type);
-        expect(byType).toEqual(['line', 'bar', 'doughnut', 'line']);
-
-        const rel = chartMock.instances[0];
-        expect(rel.config.data.labels).toEqual(['2026-10-01', '2026-10-02']);
-        // (24-4-2)/24*100 = 75 ; (24-0-0)/24*100 = 100
-        expect(rel.config.data.datasets[0].data).toEqual(['75.0', '100.0']);
-
-        const pm = chartMock.instances[1];
-        expect(pm.config.data.datasets[0].data).toEqual([1, 1, 1, 1]);
-
-        const wo = chartMock.instances[2];
-        expect(wo.config.data.datasets[0].data).toEqual([1, 1, 1]);
-
-        const cost = chartMock.instances[3];
-        expect(cost.config.data.labels).toEqual(['09', '10']);
-        expect(cost.config.data.datasets[0].data).toEqual([1500000, 2500000]);
-    });
-
-    it('memakai label kosong saat data PM/WO/cost tidak ada', async () => {
-        const ctx = base({
-            pmList: [],
-            logs: [],
-            performanceData: [],
-            calcCostTrend: () => [],
-        });
-        const { spy } = stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        await scheduled;
-        expect(chartMock.instances.length).toBe(0);
-        expect(spy).toHaveBeenCalled();
-    });
-
-    it('menghormati rentang tanggal dashboard saat menghitung WO', async () => {
-        const ctx = base({ dashboardDateFrom: '2026-10-02', dashboardDateTo: '2026-10-03' });
-        stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        await scheduled;
-        const wo = chartMock.instances.find((c) => c.config.type === 'doughnut');
-        expect(wo.config.data.datasets[0].data).toEqual([0, 1, 1]);
-    });
-
-    it.each([
-        ['reliabilityChart', 0],
-        ['pmStatusChart', 1],
-        ['woCompletionChart', 2],
-        ['costTrendChart', 3],
-    ])('berhenti di tengah render kalau halaman berpindah (%s)', async (flipId, expectedRendered) => {
-        const ctx = base();
-        stubCanvases(DASH_CANVASES, (id, seen) => {
-            if (id === flipId && seen.get(id) === 2) ctx.currentPage = 'kpi';
-        });
-        await ctx.renderDashboardCharts();
-        await scheduled;
-        expect(chartMock.instances.length).toBe(expectedRendered);
-    });
-
-    it('retry 5x lalu menyerah kalau kanvas tidak pernah muncul', async () => {
-        vi.useFakeTimers();
-        try {
-            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-            const ctx = base();
-            stubCanvases([]);
-            await ctx.renderDashboardCharts();
-            await vi.advanceTimersByTimeAsync(20000);
-            await scheduled;
-            expect(chartMock.instances.length).toBe(0);
-            // setChartState juga tidak menemukan kanvas → tidak melempar.
-            expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('Chart destroy'), expect.anything());
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it('menangkap error state (getter melempar)', async () => {
-        const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-        const ctx = base();
-        Object.defineProperty(ctx, 'pmList', {
-            get() { throw new Error('state rusak'); },
-            configurable: true,
-        });
-        stubCanvases(DASH_CANVASES);
-        await ctx.renderDashboardCharts();
-        expect(err).toHaveBeenCalledWith('renderDashboardCharts Error:', expect.any(Error));
     });
 });
 

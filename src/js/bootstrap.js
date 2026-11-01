@@ -58,13 +58,6 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             window.addEventListener('offline', () => this.isOnline = false);
 
             // Debounced Chart Renders (lazy load chart.js)
-            const debouncedDash = () => {
-                clearTimeout(this._dashTimeout);
-                this._dashTimeout = setTimeout(() => {
-                    this.chartLoaded = true;
-                    this.renderDashboardCharts();
-                }, 500);
-            };
             const debouncedKPI = () => {
                 clearTimeout(this._kpiTimeout);
                 this._kpiTimeout = setTimeout(() => {
@@ -74,12 +67,6 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             };
 
             // Watchers - with data ready checks
-            this.$watch('equipment', () => { 
-                if (this.currentPage === 'dash' && this.equipment && this.equipment.length > 0) debouncedDash(); 
-            });
-            this.$watch('logs', () => { 
-                if (this.currentPage === 'dash' && this.logs && this.logs.length > 0) debouncedDash(); 
-            });
             this.$watch('currentPage', (/** @type {any} */ val, /** @type {any} */ oldVal) => {
                 // Guard: block restricted pages for unauthorized users
                 const page = this.menuItems.find(m => m.id === val);
@@ -89,19 +76,12 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
                     this.currentPage = oldVal || 'dash';
                     return;
                 }
-                if (oldVal === 'dash') {
-                    Object.values(window._appCharts || {}).forEach(c => { 
-                        if(c) { try { c.destroy(); } catch(e) { console.warn('Chart destroy error', e); } }
-                    });
-                    window._appCharts = { status: null, cost: null, downtime: null, reliability: null };
-                }
                 if (oldVal === 'kpi') {
                     Object.values(window._appKpiCharts || {}).forEach(c => { 
                         if(c) { try { c.destroy(); } catch(e) { console.warn('KPI Chart destroy error', e); } }
                     });
                     window._appKpiCharts = { paVsActual: null, top5Events: null, top5Components: null, schedVsUnsched: null, mechVsElec: null, areaPa: null, paretoRCA: null };
                 }
-                if (val === 'dash' && this.equipment && this.equipment.length > 0) debouncedDash();
                 // Trigger KPI charts with delay to ensure DOM is ready - render regardless of data length
                 if (val === 'kpi') {
                     setTimeout(() => this.renderKPICharts(), 1000);

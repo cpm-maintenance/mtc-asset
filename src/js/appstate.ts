@@ -316,7 +316,6 @@ export interface AppState {
   _cropper?: any;
   /** Guard idempotensi `bootstrap.init()`: Alpine memanggil `init()` per scope `x-data="app()"`. */
   _booted?: boolean;
-  _dashTimeout?: any;
   _kpiCache?: any;
   _kpiTimeout?: any;
   _loadingTimeout?: any;
@@ -361,7 +360,6 @@ export interface AppState {
   analyzeKPI: (...args: any[]) => any;
   get apiKeyAlias(): any;
   applyCrop: (...args: any[]) => any;
-  applyDashboardFilter: (...args: any[]) => any;
   applyTheme: (...args: any[]) => any;
   approveRequisition: (...args: any[]) => any;
   approveWO: (...args: any[]) => any;
@@ -642,7 +640,6 @@ export interface AppState {
   removeBDEvent: (...args: any[]) => any;
   removeLogPhoto: (...args: any[]) => any;
   removePartFromLog: (...args: any[]) => any;
-  renderDashboardCharts: (...args: any[]) => any;
   renderEnterpriseCharts: (...args: any[]) => any;
   renderKPICharts: (...args: any[]) => any;
   renderMTBFMTTRChart: (...args: any[]) => any;
@@ -651,9 +648,6 @@ export interface AppState {
   reqRemoveLineItem: (...args: any[]) => any;
   rotateApiKey: (...args: any[]) => any;
   safeCreateChart: (...args: any[]) => any;
-  setChartState: (...args: any[]) => any;
-  clearChartState: (...args: any[]) => any;
-  _chartIdleKind: (...args: any[]) => any;
   safeDeepClone: (...args: any[]) => any;
   safeParseLogParts: (...args: any[]) => any;
   saveAIToFirebase: (...args: any[]) => any;

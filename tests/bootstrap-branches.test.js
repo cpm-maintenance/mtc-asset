@@ -33,7 +33,6 @@ function makeCtx(overrides = {}) {
         setupRequisitionsListener: vi.fn(),
         checkUserRole: vi.fn(),
         computeEnterpriseData: vi.fn(),
-        renderDashboardCharts: vi.fn(),
         renderKPICharts: vi.fn(),
         renderEnterpriseCharts: vi.fn(),
         handleError: vi.fn(),
@@ -98,24 +97,6 @@ describe('bootstrap.js — handler global', () => {
     });
 });
 
-describe('bootstrap.js — watcher logs', () => {
-    it('hanya menjadwalkan chart saat halaman dash dan log terisi', () => {
-        const ctx = makeCtx({ currentPage: 'dash' });
-        ctx.init();
-        const w = watchers(ctx);
-
-        w.logs(); // logs kosong
-        ctx.logs = null;
-        w.logs(); // logs null
-        ctx.logs = [{ LogID: 'L1' }];
-        w.logs(); // rantai penuh
-        vi.advanceTimersByTime(500);
-
-        expect(ctx.renderDashboardCharts).toHaveBeenCalledOnce();
-        expect(ctx.chartLoaded).toBe(true);
-    });
-});
-
 describe('bootstrap.js — guard navigasi', () => {
     it('kembali ke dash saat halaman terlarang dibuka dari state kosong', () => {
         const ctx = makeCtx({
@@ -132,20 +113,6 @@ describe('bootstrap.js — guard navigasi', () => {
 });
 
 describe('bootstrap.js — pembersihan chart', () => {
-    it('membersihkan chart dashboard walau wadah belum pernah dibuat', () => {
-        delete window._appCharts;
-        const ctx = makeCtx();
-        ctx.init();
-
-        expect(() => watchers(ctx).currentPage('logs', 'dash')).not.toThrow();
-        expect(window._appCharts).toEqual({
-            status: null,
-            cost: null,
-            downtime: null,
-            reliability: null,
-        });
-    });
-
     it('membuat wadah chart KPI baru walau belum ada', () => {
         delete window._appKpiCharts;
         const ctx = makeCtx();
@@ -178,14 +145,6 @@ describe('bootstrap.js — pembersihan chart', () => {
         const w = watchers(ctx);
 
         delete window._appCharts;
-        expect(() => w.currentPage('logs', 'dash')).not.toThrow();
-        // blok `oldVal === 'dash'` membuat wadah baru
-        expect(window._appCharts).toEqual({
-            status: null,
-            cost: null,
-            downtime: null,
-            reliability: null,
-        });
         // wadah ada tapi setiap kuncinya kosong → cabang `_appCharts[k]` false
         window._appCharts = {};
         expect(() => w.currentPage('logs', 'enterprise')).not.toThrow();
