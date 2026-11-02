@@ -345,7 +345,7 @@ export interface AppState {
   _hmIntervalHours: (a: { HM?: number | string, Tanggal?: string }, b: { HM?: number | string, Tanggal?: string }) => number;
   _kpiKey: (extra?: string) => string;
   _monthKey: (d: string | number | Date | null | undefined) => string;
-  _partMap: (...args: any[]) => any;
+  _partMap: () => Map<string, any>;
   _pmHMMap: (...args: any[]) => any;
   _raw: (data?: any) => any[];
   _rgba: (hex: string, a: number) => string;
@@ -375,7 +375,7 @@ export interface AppState {
   get backlogAging(): any;
   backlogScore: (wo: { EquipmentID?: string, woPriority?: string, priority?: string } | null) => number;
   backlogScoreColor: (score: number) => string;
-  badgeCount: (...args: any[]) => any;
+  badgeCount: (itemId: string) => number | '';
   badgeClass: (itemId: string) => string;
   badgeLabel: (itemId: string, itemName?: string) => string;
   blobToBase64: (...args: any[]) => any;
@@ -491,7 +491,7 @@ export interface AppState {
   generateRecommendations: (...args: any[]) => any;
   generateSimpleReport: (...args: any[]) => any;
   getAIRecommendations: (...args: any[]) => any;
-  getEquipName: (...args: any[]) => any;
+  getEquipName: (id: string) => string;
   getFilteredPerfData: (...args: any[]) => any;
   getKPIContext: (...args: any[]) => any;
   getLastHM: (...args: any[]) => any;
@@ -501,7 +501,7 @@ export interface AppState {
   getPartStock: (...args: any[]) => any;
   getStatColor: (c: string) => string;
   getUserFriendlyError: (...args: any[]) => any;
-  getUserRole: (...args: any[]) => any;
+  getUserRole: (uid: string) => Promise<string>;
   goToDetail: (...args: any[]) => any;
   handleEquipPhoto: (...args: any[]) => any;
   handleError: (...args: any[]) => any;
@@ -513,8 +513,8 @@ export interface AppState {
   historyExportExcel: (...args: any[]) => any;
   historyExportPDF: (...args: any[]) => any;
   get historyFilteredLogs(): any;
-  historyGetPartName: (...args: any[]) => any;
-  historyGetPartNumber: (...args: any[]) => any;
+  historyGetPartName: (partId: string) => string;
+  historyGetPartNumber: (partId: string) => string;
   historyGetParts: (...args: any[]) => any;
   historyNextPage: (...args: any[]) => any;
   get historyPartRows(): any;
@@ -564,7 +564,7 @@ export interface AppState {
   get menuGroups(): any;
   migrateLegacyImages: (...args: any[]) => any;
   get mobilePrimaryItems(): any;
-  mpEquipName: (...args: any[]) => any;
+  mpEquipName: (id: string) => string;
   mpExportPDF: (...args: any[]) => any;
   get mpOpenWOs(): any;
   get mpPMTasks(): any;
@@ -604,7 +604,7 @@ export interface AppState {
   planningDragEnd: (...args: any[]) => any;
   planningDragStart: (...args: any[]) => any;
   planningDrop: (...args: any[]) => any;
-  planningEquipName: (...args: any[]) => any;
+  planningEquipName: (id: string) => string;
   planningFilteredByColumn: (...args: any[]) => any;
   get planningFilteredWOs(): any;
   planningGanttBar: (...args: any[]) => any;
