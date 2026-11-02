@@ -256,8 +256,8 @@ export interface AppState {
   equipSortBy?: string;
   get equipCounts(): any;
   get equipKpi(): any;
-  equipStatusTac?: (...args: any[]) => any;
-  equipMarkerTac?: (...args: any[]) => any;
+  equipStatusTac: (status: string) => string;
+  equipMarkerTac: (item: { Status?: string } | null) => string;
   /** Batas jumlah kartu WO yang dirender (P1) — pola sama `allLogsLimit`. */
   woLimit?: number;
   /** Versi rilis (inject vite `define` dari package.json) untuk footer status strip. */
@@ -340,16 +340,16 @@ export interface AppState {
   // ------------------------------------------------------------------ methods
   _breakdownEvents: (...args: any[]) => any;
   _cleanupFirebaseListeners: (...args: any[]) => any;
-  _equipLabel: (...args: any[]) => any;
+  _equipLabel: (id: string) => string;
   _gradFill: (...args: any[]) => any;
-  _hmIntervalHours: (...args: any[]) => any;
-  _kpiKey: (...args: any[]) => any;
-  _monthKey: (...args: any[]) => any;
+  _hmIntervalHours: (a: { HM?: number | string, Tanggal?: string }, b: { HM?: number | string, Tanggal?: string }) => number;
+  _kpiKey: (extra?: string) => string;
+  _monthKey: (d: string | number | Date | null | undefined) => string;
   _partMap: (...args: any[]) => any;
   _pmHMMap: (...args: any[]) => any;
   _raw: (data?: any) => any[];
-  _rgba: (...args: any[]) => any;
-  _tech: (...args: any[]) => any;
+  _rgba: (hex: string, a: number) => string;
+  _tech: (t: string) => { name: string, mttr: number, breakdowns: number } | undefined;
   get activeApiKey(): any;
   addBDEvent: (...args: any[]) => any;
   addPartToLog: (...args: any[]) => any;
@@ -376,8 +376,8 @@ export interface AppState {
   backlogScore: (...args: any[]) => any;
   backlogScoreColor: (...args: any[]) => any;
   badgeCount: (...args: any[]) => any;
-  badgeClass: (...args: any[]) => any;
-  badgeLabel: (...args: any[]) => any;
+  badgeClass: (itemId: string) => string;
+  badgeLabel: (itemId: string, itemName?: string) => string;
   blobToBase64: (...args: any[]) => any;
   buildAnalysisPrompt: (...args: any[]) => any;
   buildSmartPrompt: (...args: any[]) => any;
@@ -431,7 +431,7 @@ export interface AppState {
   confirmDelete: (...args: any[]) => any;
   createUser: (...args: any[]) => any;
   critColor: (arg: string) => string;
-  criticalityScore: (...args: any[]) => any;
+  criticalityScore: (equipId: string) => number;
   get dashAlerts(): any;
   get dashKPIs(): any;
   get heroHUD(): any;
@@ -483,7 +483,7 @@ export interface AppState {
   mpStatusMarkerTac(...args: any[]): any;
   get filteredWorkOrders(): any;
   forceRefreshLogs: (...args: any[]) => any;
-  formatAuditTime: (...args: any[]) => any;
+  formatAuditTime: (dateStr: string) => string;
   formatKPIForPrompt: (...args: any[]) => any;
   generateNextPM: (...args: any[]) => any;
   generatePPT: (...args: any[]) => any;
@@ -508,7 +508,7 @@ export interface AppState {
   handleLogPhoto: (...args: any[]) => any;
   handleLogPhotoDrop: (...args: any[]) => any;
   handleScanResult: (...args: any[]) => any;
-  healthRiskScore: (...args: any[]) => any;
+  healthRiskScore: (equipId: string) => number;
   get historyCurrentPageLogs(): any;
   historyExportExcel: (...args: any[]) => any;
   historyExportPDF: (...args: any[]) => any;
@@ -534,7 +534,7 @@ export interface AppState {
   isPMDueSoon: (...args: any[]) => any;
   isPMOverdue: (...args: any[]) => any;
   get isSupervisor(): any;
-  itemAvail: (...args: any[]) => any;
+  itemAvail: (item: { partId?: string, quantity?: number } | null) => { ok: boolean, available: number | null, shortage: number };
   kpiClick: (...args: any[]) => any;
   loadAIFromFirebase: (...args: any[]) => any;
   loadAISettings: (...args: any[]) => any;
@@ -683,9 +683,9 @@ export interface AppState {
   systemReset: (...args: any[]) => any;
   techBreakdowns: (...args: any[]) => any;
   techMttr: (...args: any[]) => any;
-  themeAccent: (...args: any[]) => any;
-  themeAccentSoft: (...args: any[]) => any;
-  themeGrid: (...args: any[]) => any;
+  themeAccent: () => string;
+  themeAccentSoft: () => string;
+  themeGrid: () => string;
   /** Warna seri chart dari token `--tac-chart-*` (lihat chart-palette.js). */
   chartColor: (name: string, alpha?: number) => string;
   toggleEquipDetail: (...args: any[]) => any;
@@ -703,12 +703,12 @@ export interface AppState {
   uploadImage: (...args: any[]) => any;
   get usageHistoryLogs(): any;
   get visibleEquipLogs(): any;
-  woAgeBucket: (...args: any[]) => any;
-  woAgeClass: (...args: any[]) => any;
-  woAgeColor: (...args: any[]) => any;
-  woAgeDays: (...args: any[]) => any;
+  woAgeBucket: (days: number) => string;
+  woAgeClass: (days: number) => string;
+  woAgeColor: (days: number) => string;
+  woAgeDays: (log: { Tanggal?: string } | null) => number;
   woAvailability: (...args: any[]) => any;
-  woPrioScore: (...args: any[]) => any;
+  woPrioScore: (wo: { woPriority?: string, priority?: string }) => number;
   woPriorityColor: (arg: string) => string;
   woShortageSummary: (...args: any[]) => any;
   // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate)
@@ -723,15 +723,15 @@ export interface AppState {
   get woKpi(): any;
   woParts: (...args: any[]) => any;
   woPhotos: (...args: any[]) => any;
-  woStatusTac: (...args: any[]) => any;
-  woPriorityTac: (...args: any[]) => any;
-  woMarkerTac: (...args: any[]) => any;
-  woElapsed: (...args: any[]) => any;
+  woStatusTac: (status: string) => string;
+  woPriorityTac: (prio: string) => string;
+  woMarkerTac: (log: { Status?: string, woPriority?: string, Jenis?: string } | null) => string;
+  woElapsed: (log: { Tanggal?: string } | null) => string;
   get woDowntimeSpark(): any;
   get woVisible(): any;
   get canLoadMoreWO(): any;
   loadMoreWO: (...args: any[]) => any;
   partsMap: (...args: any[]) => any;
-  rp: (...args: any[]) => any;
-  rpShort: (...args: any[]) => any;
+  rp: (n: number | string) => string;
+  rpShort: (n: number | string) => string;
 }
