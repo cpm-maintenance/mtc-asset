@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Work Order PDF — premium maintenance form, revisi 2 (S41b).
  *
@@ -23,6 +24,29 @@ const M = 14;
 const CW = PW - M * 2;
 const BOTTOM = PH - 22;
 
+/**
+ * Palet dokumen. Tiap warna bertipe tupel `[r, g, b]`, bukan `number[]`,
+ * supaya `...C.ink` sah sebagai spread ke `setTextColor(...)` / `setFillColor(...)`.
+ * Key didaftar eksplisit: salah ketik nama warna jadi error tipe, bukan
+ * `undefined` yang lolos diam-diam ke PDF.
+ *
+ * @typedef {object} Palette
+ * @property {[number, number, number]} ink
+ * @property {[number, number, number]} ink2
+ * @property {[number, number, number]} slate
+ * @property {[number, number, number]} mute
+ * @property {[number, number, number]} line
+ * @property {[number, number, number]} paper
+ * @property {[number, number, number]} gold
+ * @property {[number, number, number]} goldSoft
+ * @property {[number, number, number]} white
+ * @property {[number, number, number]} danger
+ * @property {[number, number, number]} success
+ * @property {[number, number, number]} info
+ * @property {[number, number, number]} warn
+ * @property {[number, number, number]} neutral
+ */
+/** @type {Palette} */
 const C = {
     ink: [15, 23, 42],
     ink2: [30, 41, 59],
@@ -41,16 +65,19 @@ const C = {
 };
 
 /** Angka gaya Indonesia: 4.5 → `4,5`. */
+/** @param {any} value @returns {string} */
 function num(value) {
     return String(value).replace('.', ',');
 }
 
+/** @param {any} num @returns {string} */
 function formatCurrency(num) {
     if (!num) return 'Rp 0';
     return 'Rp ' + String(num || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 /** `2026-10-18` → `18 Oct 2026`; bentuk lain dikembalikan apa adanya. */
+/** @param {any} value @returns {string} */
 function formatDate(value) {
     const s = String(value || '').trim();
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
@@ -66,6 +93,7 @@ function formatDate(value) {
  * `utils → constants` yang membuatnya tidak bisa dirender di luar Vite.
  * Perilakunya sama dengan `formatAssignee()` di `src/js/utils.js`.
  */
+/** @param {any} value @returns {string} */
 function formatAssignees(value) {
     if (Array.isArray(value)) {
         const names = value.map((v) => String(v ?? '').trim()).filter(Boolean);
@@ -75,6 +103,7 @@ function formatAssignees(value) {
     return 'UNASSIGNED';
 }
 
+/** @param {string} priority @returns {[number, number, number]} */
 function priorityTone(priority) {
     if (priority === 'Emergency') return C.danger;
     if (priority === 'Urgent') return C.warn;
@@ -82,6 +111,7 @@ function priorityTone(priority) {
     return C.gold;
 }
 
+/** @param {string} status @returns {[number, number, number]} */
 function statusTone(status) {
     if (status === 'Completed') return C.success;
     if (status === 'In Progress') return C.info;
@@ -89,6 +119,12 @@ function statusTone(status) {
     return C.neutral;
 }
 
+/**
+ * @param {any} log
+ * @param {any} equipment
+ * @param {any} _parts
+ * @returns {Promise<void>}
+ */
 export async function generateProfessionalWOPDF(log, equipment, _parts) {
     const { jsPDF } = await import('jspdf');
 
@@ -112,6 +148,13 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     // ── primitif tipografi ──────────────────────────────────────────────────
     const ink = () => doc.setTextColor(...C.ink);
 
+    /**
+     * @param {number} x1
+     * @param {number} x2
+     * @param {number} yTop
+     * @param {[number, number, number]} [color]
+     * @param {number} [width]
+     */
     function hairline(x1, x2, yTop, color = C.line, width = 0.2) {
         doc.setDrawColor(...color);
         doc.setLineWidth(width);
@@ -119,6 +162,13 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     }
 
     /** Label kecil huruf besar berspasi. */
+    /**
+     * @param {any} text
+     * @param {number} x
+     * @param {number} yTop
+     * @param {[number, number, number]} [color]
+     * @param {number} [size]
+     */
     function label(text, x, yTop, color = C.slate, size = 5.9) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(size);
@@ -129,6 +179,13 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     }
 
     /** Judul seksi bernomor: `01` emas + judul + garis. */
+    /**
+     * @param {number} index
+     * @param {any} text
+     * @param {number} yTop
+     * @param {number} [x]
+     * @param {number} [right]
+     */
     function sectionTitle(index, text, yTop, x = M, right = PW - M) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.6);
@@ -143,6 +200,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         hairline(x + 9.6 + w, right, yTop - 0.9, C.line, 0.25);
     }
 
+    /** @param {any} text @param {number} maxWidth @returns {string} */
     function truncate(text, maxWidth) {
         const s = String(text);
         if (doc.getTextWidth(s) <= maxWidth) return s;
@@ -151,6 +209,12 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         return cut + '…';
     }
 
+    /**
+     * @param {any} text
+     * @param {number} x
+     * @param {number} yTop
+     * @param {number} [size]
+     */
     function value(text, x, yTop, size = 9) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(size);
@@ -159,6 +223,12 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     }
 
     /** Pil berwarna + teks putih; lebar mengikuti isi. */
+    /**
+     * @param {any} text
+     * @param {number} x
+     * @param {number} yTop
+     * @param {[number, number, number]} fill
+     */
     function pill(text, x, yTop, fill) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6.2);
@@ -239,6 +309,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         continuationHeader();
     }
 
+    /** @param {number} height */
     function ensure(height) {
         if (y + height > BOTTOM) newPage();
     }
@@ -445,6 +516,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         doc.setFillColor(...C.gold);
         doc.rect(M, y, 1.4, 17, 'F');
 
+        /** @type {{ key: string, value: string, accent?: boolean }[]} */
         const cells = [{ key: 'Downtime', value: log.Downtime ? num(log.Downtime) + ' hrs' : '—' }];
         if (hasHours) {
             cells.push({ key: 'Est. Hours', value: log.estimatedHours ? num(log.estimatedHours) + ' h' : '—' });
