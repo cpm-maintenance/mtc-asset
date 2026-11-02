@@ -205,13 +205,12 @@ describe('indexeddb tanpa dukungan IndexedDB', () => {
         await expect(manager.removePendingOp(1)).resolves.toBeUndefined();
     });
 
-    it('localStorage yang menolak akses tidak menjatuhkan modul', async () => {
-        stubOnWindow('indexedDB', undefined);
-        stubOnWindow('localStorage', {
-            setItem() {
+    it('akses window.indexedDB yang melempar tidak menjatuhkan modul', async () => {
+        Object.defineProperty(window, 'indexedDB', {
+            configurable: true,
+            get() {
                 throw new Error('denied');
             },
-            removeItem() {},
         });
         vi.resetModules();
         const mod = await import('../src/js/modules/indexeddb.js');

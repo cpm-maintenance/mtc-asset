@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * IndexedDB Manager for Offline Support
  */
@@ -5,22 +6,30 @@
 const DB_NAME = 'mtc-nexus-db';
 const DB_VERSION = 1;
 
+/**
+ * Nama object store yang benar-benar dibuat di `onupgradeneeded`. Dibatasi di
+ * sini supaya salah ketik nama store jadi error tipe, bukan promise kosong.
+ *
+ * @typedef {'equipment'|'parts'|'logs'|'performance'|'pendingOps'} StoreName
+ *
+ * @typedef {object} NewPendingOp
+ * @property {string} type Jenis operasi, dipakai `syncPendingOperations`.
+ * @property {any} data Payload operasi.
+ * @property {string} [status] Status lokal, mis. `'pending'`.
+ *
+ * @typedef {NewPendingOp & { id: number, timestamp: number, retries: number }} PendingOp
+ */
+
 // Check if storage is available
-function isStorageAvailable(type) {
+// ponytail: cabang localStorage dibuang — satu-satunya pemanggil memakai
+// 'indexedDB' dan langsung return, jadi sisa fungsi itu tidak pernah dijangkau.
+const CAN_USE_IDB = (() => {
     try {
-        if (type === 'indexedDB') {
-            return !!window.indexedDB;
-        }
-        const test = '__storage_test__';
-        window[type].setItem(test, test);
-        window[type].removeItem(test);
-        return true;
+        return !!window.indexedDB;
     } catch {
         return false;
     }
-}
-
-const CAN_USE_IDB = isStorageAvailable('indexedDB');
+})();
 
 export { CAN_USE_IDB };
 
@@ -29,6 +38,8 @@ class IndexedDBManager {
         this.db = null;
         this.dbReady = CAN_USE_IDB ? this.initDB() : Promise.resolve(null);
     }
+
+    /** @returns {Promise<IDBDatabase|null>} */
 
     async initDB() {
         if (!CAN_USE_IDB) return null;
@@ -43,29 +54,29 @@ class IndexedDBManager {
             };
 
             request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                
+                const db = /** @type {IDBOpenDBRequest} */ (event.target).result;
+
                 // Equipment store
                 if (!db.objectStoreNames.contains('equipment')) {
                     db.createObjectStore('equipment', { keyPath: 'EquipmentID' });
                 }
-                
+
                 // Parts store
                 if (!db.objectStoreNames.contains('parts')) {
                     db.createObjectStore('parts', { keyPath: 'PartID' });
                 }
-                
+
                 // Logs store
                 if (!db.objectStoreNames.contains('logs')) {
                     const logStore = db.createObjectStore('logs', { keyPath: 'LogID' });
                     logStore.createIndex('EquipmentID', 'EquipmentID', { unique: false });
                 }
-                
+
                 // Performance store
                 if (!db.objectStoreNames.contains('performance')) {
                     db.createObjectStore('performance', { keyPath: 'id' });
                 }
-                
+
                 // Pending operations queue
                 if (!db.objectStoreNames.contains('pendingOps')) {
                     const opStore = db.createObjectStore('pendingOps', { keyPath: 'id', autoIncrement: true });
@@ -84,7 +95,7 @@ class IndexedDBManager {
             console.warn('IndexedDB not available');
             return null;
         }
-        if (!this.db.objectStoreNames.contains('equipment') && 
+        if (!this.db.objectStoreNames.contains('equipment') &&
             !this.db.objectStoreNames.contains('parts') &&
             !this.db.objectStoreNames.contains('logs')) {
             console.warn('IndexedDB stores not initialized, reopening...');
@@ -94,11 +105,15 @@ class IndexedDBManager {
     }
 
     // Generic CRUD
+    /**
+     * @param {StoreName} storeName
+     * @returns {Promise<any[]>}
+     */
     async getAll(storeName) {
         const db = await this.ensureReady();
         if (!db) return [];
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction(storeName, 'readonly');
                 if (!tx) {
                     resolve([]);
@@ -115,11 +130,21 @@ class IndexedDBManager {
         }
     }
 
+    /**
+
+     * @param {StoreName} storeName
+
+     * @param {IDBValidKey} key
+
+     * @returns {Promise<any>}
+
+     */
+
     async get(storeName, key) {
         const db = await this.ensureReady();
         if (!db) return null;
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction(storeName, 'readonly');
                 if (!tx) {
                     resolve(null);
@@ -136,11 +161,21 @@ class IndexedDBManager {
         }
     }
 
+    /**
+
+     * @param {StoreName} storeName
+
+     * @param {any} data
+
+     * @returns {Promise<void>}
+
+     */
+
     async put(storeName, data) {
         const db = await this.ensureReady();
         if (!db) return;
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -156,11 +191,21 @@ class IndexedDBManager {
         }
     }
 
+    /**
+
+     * @param {StoreName} storeName
+
+     * @param {any[]} items
+
+     * @returns {Promise<void>}
+
+     */
+
     async putBulk(storeName, items) {
         const db = await this.ensureReady();
         if (!db || !items || items.length === 0) return;
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -176,11 +221,21 @@ class IndexedDBManager {
         }
     }
 
+    /**
+
+     * @param {StoreName} storeName
+
+     * @param {IDBValidKey} key
+
+     * @returns {Promise<void>}
+
+     */
+
     async delete(storeName, key) {
         const db = await this.ensureReady();
         if (!db) return;
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -196,11 +251,19 @@ class IndexedDBManager {
         }
     }
 
+    /**
+
+     * @param {StoreName} storeName
+
+     * @returns {Promise<void>}
+
+     */
+
     async clear(storeName) {
         const db = await this.ensureReady();
         if (!db) return;
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction(storeName, 'readwrite');
                 if (!tx) {
                     resolve();
@@ -217,6 +280,10 @@ class IndexedDBManager {
     }
 
     // Pending Operations Queue
+    /**
+     * @param {NewPendingOp} operation
+     * @returns {Promise<void>}
+     */
     async addPendingOp(operation) {
         const db = await this.ensureReady();
         if (!db) return;
@@ -231,11 +298,13 @@ class IndexedDBManager {
         }
     }
 
+    /** @returns {Promise<PendingOp[]>} */
+
     async getPendingOps() {
         const db = await this.ensureReady();
         if (!db) return [];
         try {
-            return new Promise((resolve) => {
+            return new Promise((/** @type {(v?: any) => void} */ resolve) => {
                 const tx = db.transaction('pendingOps', 'readonly');
                 if (!tx) { resolve([]); return; }
                 const store = tx.objectStore('pendingOps');
@@ -249,6 +318,14 @@ class IndexedDBManager {
             return [];
         }
     }
+
+    /**
+
+     * @param {number} id
+
+     * @returns {Promise<void>}
+
+     */
 
     async removePendingOp(id) {
         const db = await this.ensureReady();
