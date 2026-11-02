@@ -307,6 +307,20 @@ describe('notification.js — checkAllNotifications: PM', () => {
         expect(findNotif('PM Overdue')).toBeUndefined();
         expect(findNotif('PM Due Soon')).toBeUndefined();
     });
+
+    it('mengabaikan PM tanpa tanggal jadwal', () => {
+        resetApp({
+            pmList: [
+                { status: 'pending', taskName: 'Tanpa tanggal' },
+                { status: 'pending', date: null, taskName: 'Tanggal null' },
+            ],
+        });
+
+        checkAllNotifications();
+
+        expect(findNotif('PM Overdue')).toBeUndefined();
+        expect(findNotif('PM Due Soon')).toBeUndefined();
+    });
 });
 
 describe('notification.js — checkAllNotifications: umur pakai part', () => {

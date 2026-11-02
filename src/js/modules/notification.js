@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * notification.js — Push & In-App Notification Module
  * 
@@ -18,6 +19,11 @@
  */
 
 import { logger } from '../logger.js';
+
+// `catch (e)` bertipe `unknown` di bawah @ts-check; `String(e)` lebih aman
+// daripada `e.message` yang jadi `undefined` kalau yang dilempar bukan Error.
+/** @param {unknown} e @returns {string} */
+const errMsg = (e) => (e instanceof Error ? e.message : String(e));
 
 // ============================================================
 // CONFIG
@@ -69,7 +75,7 @@ export async function requestNotificationPermission() {
     logger.debug('[Notif] Permission denied by user');
     return false;
   } catch (e) {
-    console.warn('[Notif] Permission error:', e.message);
+    console.warn('[Notif] Permission error:', errMsg(e));
     return false;
   }
 }
@@ -77,6 +83,12 @@ export async function requestNotificationPermission() {
 /**
  * Send browser notification via ServiceWorker.
  * This is the CORE method for client-side notifications.
+ */
+/**
+ * @param {string} title
+ * @param {string} body
+ * @param {{ tag?: string, data?: any, actions?: any[] }} [options]
+ * @returns {Promise<boolean>}
  */
 export async function sendBrowserNotification(title, body, options = {}) {
   try {
@@ -99,7 +111,10 @@ export async function sendBrowserNotification(title, body, options = {}) {
     const registration = await navigator.serviceWorker.ready;
     if (!registration?.active) return showDirect();
 
-    await registration.showNotification(title, {
+    // ponytail: `vibrate` belum ada di lib.dom NotificationOptions.
+    // Kalau lib.dom diperbarui, hapus irisan ini.
+    /** @type {NotificationOptions & { vibrate: number[], actions: any[] }} */
+    const swOptions = {
       body,
       icon: '/logo.png',
       badge: '/logo.png',
@@ -108,11 +123,12 @@ export async function sendBrowserNotification(title, body, options = {}) {
       tag: options.tag || 'mtc-notification',
       data: options.data || {},
       actions: options.actions || [],
-    });
+    };
+    await registration.showNotification(title, swOptions);
 
     return true;
   } catch (e) {
-    console.warn('[Notif] Browser notif error:', e.message);
+    console.warn('[Notif] Browser notif error:', errMsg(e));
     return false;
   }
 }
@@ -120,6 +136,7 @@ export async function sendBrowserNotification(title, body, options = {}) {
 /**
  * Check if notification was already sent this session (anti-spam)
  */
+/** @param {string} key @returns {boolean} */
 function shouldNotify(key) {
   if (_notifiedKeys.has(key)) return false;
   _notifiedKeys.add(key);
@@ -154,11 +171,12 @@ export async function registerFCMToken() {
     return null;
   } catch (e) {
     // FCM may fail if Cloud Messaging API not enabled in Firebase
-    console.warn('[FCM] Token error:', e.message, '- non-critical, browser notifs still work');
+    console.warn('[FCM] Token error:', errMsg(e), '- non-critical, browser notifs still work');
     return null;
   }
 }
 
+/** @param {string} token */
 async function saveFCMToken(token) {
   if (!window.db || !window.app?.user?.uid) return;
 
@@ -178,7 +196,7 @@ async function saveFCMToken(token) {
 
     logger.debug('[FCM] Token saved to Firebase');
   } catch (e) {
-    console.warn('[FCM] Save token error:', e.message);
+    console.warn('[FCM] Save token error:', errMsg(e));
   }
 }
 
@@ -193,7 +211,7 @@ export async function removeFCMToken() {
     await window.remove(window.ref(window.db, `_fcmTokens/${uid}`));
     logger.debug('[FCM] Token removed');
   } catch (e) {
-    console.warn('[FCM] Remove token error:', e.message);
+    console.warn('[FCM] Remove token error:', errMsg(e));
   }
 }
 
@@ -218,7 +236,7 @@ export async function setupForegroundListener() {
       }
     });
   } catch (e) {
-    console.warn('[FCM] Foreground listener error:', e.message);
+    console.warn('[FCM] Foreground listener error:', errMsg(e));
   }
 }
 
@@ -229,6 +247,12 @@ export async function setupForegroundListener() {
 /**
  * Push a notification into the in-app notification panel (lonceng).
  * This makes alerts visible in the bell badge + notification modal.
+ */
+/**
+ * @param {string} type
+ * @param {string} message
+ * @param {string} [icon]
+ * @param {string} [color]
  */
 function pushInAppNotif(type, message, icon, color = 'border-tac-status-repair bg-tac-status-repair/20 text-tac-status-repair') {
   const app = window.app;
@@ -322,14 +346,14 @@ function checkPendingWorkOrders() {
     if (!(l.Status === 'Pending' || l.Status === 'Draft')) return false;
     if (!l.Tanggal) return false;
     const d = new Date(l.Tanggal);
-    if (isNaN(d)) return false;
-    const age = (new Date(today) - d) / 86400000;
+    if (isNaN(d.getTime())) return false;
+    const age = (new Date(today).getTime() - d.getTime()) / 86400000;
     return age > 3;
   });
 
   if (aging.length > 0 && shouldNotify('wo_aging')) {
     const list = aging.slice(0, 3).map(l => {
-      const age = Math.floor((new Date(today) - new Date(l.Tanggal)) / 86400000);
+      const age = Math.floor((new Date(today).getTime() - new Date(/** @type {string} */ (l.Tanggal)).getTime()) / 86400000);
       return `#${l.woNumber || 'N/A'} (${age}d)`;
     }).join(', ');
     sendBrowserNotification(
@@ -350,7 +374,7 @@ function checkPMOverdue() {
 
   // Overdue from pmList (real PM tasks)
   const overdue = (window.app.pmList || []).filter(pm =>
-    pm.status === 'pending' && pm.date < today
+    pm.status === 'pending' && pm.date && pm.date < today
   );
 
   if (overdue.length > 0 && shouldNotify('pm_overdue')) {
@@ -365,7 +389,7 @@ function checkPMOverdue() {
 
   // H-3 upcoming
   const upcoming = (window.app.pmList || []).filter(pm =>
-    pm.status === 'pending' && pm.date >= today && pm.date <= threeDaysStr
+    pm.status === 'pending' && pm.date && pm.date >= today && pm.date <= threeDaysStr
   );
 
   if (upcoming.length > 0 && shouldNotify('pm_upcoming')) {
@@ -387,8 +411,8 @@ function checkWarrantyExpiry() {
   const expired = (window.app.allParts || []).filter(p => {
     if (!p.lastReplaceDate || !p.avgLifetimeDays) return false;
     const install = new Date(p.lastReplaceDate);
-    if (isNaN(install)) return false;
-    const age = (today - install) / 86400000;
+    if (isNaN(install.getTime())) return false;
+    const age = (today.getTime() - install.getTime()) / 86400000;
     return age >= Number(p.avgLifetimeDays);
   });
 
