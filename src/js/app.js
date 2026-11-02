@@ -1801,99 +1801,32 @@ export function app() {
                 },
 
                 partSelectedIds: [],
-                get filteredAllParts() {
-                    if (!this.allParts || !Array.isArray(this.allParts)) {
-                        return [];
-                    }
-            
+                /**
+                 * Predikat filter Spare Parts — satu sumber untuk daftar dan jumlahnya.
+                 * Dipakai `filteredAllParts` (perlu sort + slice) dan `filteredAllPartsCount` (length saja),
+                 * supaya filter di kedua getter tidak bisa berbeda.
+                 *
+                 * @returns {any[]} Part yang lolos filter pencarian, equipment, dan status stok.
+                 */
+                _filteredParts() {
+                    if (!this.allParts || !Array.isArray(this.allParts)) return [];
                     const searchLower = (this.searchPart || '').toLowerCase().trim();
                     const filterEquip = this.partFilterEquip;
                     const filterStatus = this.partStatusFilter;
-            
-                    let result = this.allParts.filter(p => {
-                        if (!p) return false;
-                
-                        const name = (p.NamaPart || '').toString().toLowerCase();
-                        const id = (p.PartID || '').toString().toLowerCase();
-                        const shortName = (p.NamaSingkat || '').toString().toLowerCase();
-                        const partNum = (p.PartNumber || '').toString().toLowerCase();
-                        const lokasi = (p.Lokasi || '').toString().toLowerCase();
-
-                        const matchesSearch = !searchLower || 
-                            name.includes(searchLower) ||
-                            id.includes(searchLower) ||
-                            shortName.includes(searchLower) ||
-                            partNum.includes(searchLower) ||
-                            lokasi.includes(searchLower);
-                
-                        let linkedIds = [];
-                        if (Array.isArray(p.EquipmentIDs)) {
-                            linkedIds = p.EquipmentIDs;
-                        } else if (p.EquipmentIDs && typeof p.EquipmentIDs === 'string') {
-                            linkedIds = [p.EquipmentIDs];
-                        } else if (p.EquipmentID) {
-                            linkedIds = [p.EquipmentID];
-                        }
-
-                        const matchesEquip = !filterEquip || linkedIds.includes(filterEquip);
-                        if (!matchesSearch || !matchesEquip) return false;
-
-                        const stok = Number(p.Stok) || 0;
-                        const min = Number(p.MinStock) || 0;
-                        if (filterStatus === 'low') {
-                            return min > 0 && stok <= min;
-                        }
-                        if (filterStatus === 'zero') {
-                            return stok === 0;
-                        }
-                        if (filterStatus === 'optimal') {
-                            return min === 0 || stok > min;
-                        }
-                        return true;
-                    });
-
-                    // Sorting
-                    if (this.partSortBy === 'stock_asc') {
-                        result = [...result].sort((a, b) => (Number(a.Stok) || 0) - (Number(b.Stok) || 0));
-                    } else if (this.partSortBy === 'stock_desc') {
-                        result = [...result].sort((a, b) => (Number(b.Stok) || 0) - (Number(a.Stok) || 0));
-                    } else if (this.partSortBy === 'value') {
-                        result = [...result].sort((a, b) => ((Number(b.Stok) || 0) * (Number(b.Harga) || 0)) - ((Number(a.Stok) || 0) * (Number(a.Harga) || 0)));
-                    } else {
-                        result = [...result].sort((a, b) => (a.NamaPart || '').localeCompare(b.NamaPart || ''));
-                    }
-
-                    // Pagination slice
-                    const limit = this.partLimit || 30;
-                    return result.slice(0, limit);
-                },
-
-                get canLoadMoreParts() {
-                    if (!this.allParts || !Array.isArray(this.allParts)) return false;
-                    return (this.filteredAllPartsCount || 0) > (this.partLimit || 30);
-                },
-
-                get filteredAllPartsCount() {
-                    if (!this.allParts || !Array.isArray(this.allParts)) return 0;
-                    const searchLower = (this.searchPart || '').toLowerCase().trim();
-                    const filterEquip = this.partFilterEquip;
-                    const filterStatus = this.partStatusFilter;
-            
-                    return this.allParts.filter(p => {
+                    return this.allParts.filter((/** @type {any} */ p) => {
                         if (!p) return false;
                         const name = (p.NamaPart || '').toString().toLowerCase();
                         const id = (p.PartID || '').toString().toLowerCase();
                         const shortName = (p.NamaSingkat || '').toString().toLowerCase();
                         const partNum = (p.PartNumber || '').toString().toLowerCase();
                         const lokasi = (p.Lokasi || '').toString().toLowerCase();
-
-                        const matchesSearch = !searchLower || 
+                        const matchesSearch = !searchLower ||
                             name.includes(searchLower) ||
                             id.includes(searchLower) ||
                             shortName.includes(searchLower) ||
                             partNum.includes(searchLower) ||
                             lokasi.includes(searchLower);
-                
+
                         let linkedIds = [];
                         if (Array.isArray(p.EquipmentIDs)) {
                             linkedIds = p.EquipmentIDs;
@@ -1912,8 +1845,30 @@ export function app() {
                         if (filterStatus === 'zero') return stok === 0;
                         if (filterStatus === 'optimal') return min === 0 || stok > min;
                         return true;
-                    }).length;
+                    });
                 },
+                get filteredAllParts() {
+                    let result = this._filteredParts();
+                    if (this.partSortBy === 'stock_asc') {
+                        result = [...result].sort((a, b) => (Number(a.Stok) || 0) - (Number(b.Stok) || 0));
+                    } else if (this.partSortBy === 'stock_desc') {
+                        result = [...result].sort((a, b) => (Number(b.Stok) || 0) - (Number(a.Stok) || 0));
+                    } else if (this.partSortBy === 'value') {
+                        result = [...result].sort((a, b) => ((Number(b.Stok) || 0) * (Number(b.Harga) || 0)) - ((Number(a.Stok) || 0) * (Number(a.Harga) || 0)));
+                    } else {
+                        result = [...result].sort((a, b) => (a.NamaPart || '').localeCompare(b.NamaPart || ''));
+                    }
+                    return result.slice(0, this.partLimit || 30);
+                },
+                get filteredAllPartsCount() {
+                    return this._filteredParts().length;
+                },
+
+                get canLoadMoreParts() {
+                    if (!this.allParts || !Array.isArray(this.allParts)) return false;
+                    return (this.filteredAllPartsCount || 0) > (this.partLimit || 30);
+                },
+
 
                 loadMoreParts() {
                     this.partLimit = (this.partLimit || 30) + 30;

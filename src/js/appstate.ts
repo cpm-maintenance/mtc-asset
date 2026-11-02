@@ -454,6 +454,7 @@ export interface AppState {
   exportWOToPDF: (...args: any[]) => any;
   get filteredAllLogs(): any;
   get filteredAllLogsAll(): any;
+  _filteredParts: () => any[];
   get filteredAllParts(): any;
   get partAllVisibleSelected(): boolean;
   get filteredAudit(): any;
