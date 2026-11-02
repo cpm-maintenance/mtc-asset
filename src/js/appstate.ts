@@ -82,7 +82,6 @@ export interface AppState {
   customPrompt?: string;
   dashboardDateFrom?: any;
   dashboardDateTo?: any;
-  dashboardStats: Record<string, any>;
   deleteConfirmCallback?: any;
   deptFilter?: string;
   detailLogLimit?: number;

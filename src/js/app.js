@@ -516,7 +516,6 @@ export function app() {
         modalsLoaded: false,
 
         importProgress: 0,
-        dashboardStats: { totalEquip: 0, overduePM: 0, lowStock: 0, totalDowntime: 0 },
         
         // --- FORMS ---
         equipForm: DEFAULT_EQUIP_FORM(),

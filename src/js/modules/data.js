@@ -441,32 +441,6 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 saveCache('performanceData', next);
             }, (/** @type {any} */ error) => console.error('Performance remove listener:', error)));
         }
-
-        // 1. Listen to static Stats node
-        this._listeners.push(window.onValue(window.ref(window.db, 'Stats'), (/** @type {any} */ snap) => {
-            const val = snap.val() || {};
-            if (this.dashboardStats) {
-                this.dashboardStats.totalEquip = val.totalEquip || 0;
-                this.dashboardStats.totalDowntime = val.totalDowntime || 0;
-            }
-        }));
-
-        // 2. Query Overdue PM (only fetch overdue items, highly efficient)
-        const todayStr = new Date().toISOString().split('T')[0];
-        const overdueQuery = window.query(window.ref(window.db, 'Equipment'), window.orderByChild('NextPMDate'), window.endAt(todayStr));
-        this._listeners.push(window.onValue(overdueQuery, (/** @type {any} */ snap) => {
-            let count = 0;
-            snap.forEach((/** @type {any} */ child) => {
-                if (child.val().NextPMDate && child.val().NextPMDate !== '') count++;
-            });
-            if (this.dashboardStats) this.dashboardStats.overduePM = count;
-        }));
-
-        // 3. Query Low Stock Parts
-        const lowStockQuery = window.query(window.ref(window.db, 'SpareParts'), window.orderByChild('isLowStock'), window.equalTo(true));
-        this._listeners.push(window.onValue(lowStockQuery, (/** @type {any} */ snap) => {
-            if (this.dashboardStats) this.dashboardStats.lowStock = snap.exists() ? snap.size : 0;
-        }));
         } catch (/** @type {any} */ e) {
             console.error('Firebase listeners setup error:', e);
             this.showNotification('Error loading data, please refresh', 'error');

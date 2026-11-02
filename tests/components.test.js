@@ -50,7 +50,6 @@ function baseState(overrides = {}) {
         allParts: [],
         logs: [],
         requisitions: [],
-        dashboardStats: { totalEquip: 0, overduePM: 0, lowStock: 0, totalDowntime: 0 },
         selectedEquip: null,
         currentPage: 'dash',
         activeTab: 'hist',

@@ -44,7 +44,6 @@ function makeCtx(overrides = {}) {
         logs: [{ LogID: 'L1', Downtime: 0 }],
         performanceData: [],
         activeWorkOrders: [],
-        dashboardStats: { totalEquip: 0, overduePM: 0, lowStock: 0, totalDowntime: 0 },
         search: '',
         filteredEquip: [],
         selectedEquip: null,

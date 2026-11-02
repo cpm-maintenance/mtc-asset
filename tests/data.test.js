@@ -86,7 +86,6 @@ function makeCtx(overrides = {}) {
         logs: [],
         performanceData: [],
         activeWorkOrders: [],
-        dashboardStats: { totalEquip: 0, overduePM: 0, lowStock: 0, totalDowntime: 0 },
         search: '',
         filteredEquip: [],
         selectedEquip: null,
@@ -536,9 +535,6 @@ describe('dataModule.setupFirebaseListeners', () => {
             '.info/connected',
             'Equipment',
             'HistoryLog',
-            'Stats',
-            'Equipment',
-            'SpareParts',
         ]);
         expect(l.children.map((c) => c.path)).toEqual([
             'SpareParts',
@@ -741,42 +737,6 @@ describe('dataModule.setupFirebaseListeners', () => {
         ctx.setupFirebaseListeners();
         l.child('Performance').cb({ val: () => ({ id: 'X', events: 'not-json' }), key: 'k' });
         expect(ctx.performanceData[0].events).toEqual([]);
-    });
-
-    it('updates Stats, overdue PM count and low-stock count', () => {
-        const ctx = makeCtx();
-        const l = captureListeners();
-        ctx.setupFirebaseListeners();
-
-        l.first('Stats').cb({ val: () => ({ totalEquip: 7, totalDowntime: 12 }) });
-        expect(ctx.dashboardStats).toMatchObject({ totalEquip: 7, totalDowntime: 12 });
-        l.first('Stats').cb({ val: () => null });
-        expect(ctx.dashboardStats).toMatchObject({ totalEquip: 0, totalDowntime: 0 });
-
-        const overdue = l.last('Equipment');
-        overdue.cb({
-            forEach: (fn) => {
-                [{ NextPMDate: '2026-01-01' }, { NextPMDate: '' }, {}].forEach((v) =>
-                    fn({ val: () => v })
-                );
-            },
-        });
-        expect(ctx.dashboardStats.overduePM).toBe(1);
-
-        const lowStock = l.first('SpareParts');
-        lowStock.cb({ exists: () => true, size: 4 });
-        expect(ctx.dashboardStats.lowStock).toBe(4);
-        lowStock.cb({ exists: () => false, size: 0 });
-        expect(ctx.dashboardStats.lowStock).toBe(0);
-    });
-
-    it('skips dashboard updates when dashboardStats is absent', () => {
-        const ctx = makeCtx({ dashboardStats: null });
-        const l = captureListeners();
-        ctx.setupFirebaseListeners();
-        expect(() => l.first('Stats').cb({ val: () => ({ totalEquip: 1 }) })).not.toThrow();
-        expect(() => l.last('Equipment').cb({ forEach: () => {} })).not.toThrow();
-        expect(() => l.first('SpareParts').cb({ exists: () => false, size: 0 })).not.toThrow();
     });
 
     it('re-syncs pending operations when the browser goes online', () => {
