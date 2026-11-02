@@ -12,7 +12,7 @@
     "noUnusedParameters": false,
 
     "allowJs": true,
-    "checkJs": false,
+    "checkJs": true,
     "noEmit": true,
 
     "resolveJsonModule": true,
