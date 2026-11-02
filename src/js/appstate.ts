@@ -364,7 +364,7 @@ export interface AppState {
   approveWO: (...args: any[]) => any;
   autoReorderLowStock: (...args: any[]) => any;
   bulkDeleteItems: (...args: any[]) => any;
-  toggleWOSelect: (...args: any[]) => any;
+  toggleWOSelect: (id: string) => void;
   toggleSelectAllWOs: (...args: any[]) => any;
   bulkDeleteWOs: (...args: any[]) => any;
   togglePartSelect: (...args: any[]) => any;
@@ -410,12 +410,12 @@ export interface AppState {
   callClaude: (...args: any[]) => any;
   callOpenAI: (...args: any[]) => any;
   callOpenRouter: (...args: any[]) => any;
-  canAccess: (...args: any[]) => any;
+  canAccess: (menuItem: { allowedRole?: string }) => boolean;
   get canLoadMoreAllLogs(): any;
   get canLoadMoreEquip(): any;
   checkPendingOperations: (...args: any[]) => any;
   checkPendingWorkOrders: (...args: any[]) => any;
-  checkUserRole: (...args: any[]) => any;
+  checkUserRole: (uid: string) => void;
   cleanUrl: (url: string | null | undefined) => string;
   clearAIChat: (...args: any[]) => any;
   clearApiKey: (...args: any[]) => any;
@@ -568,7 +568,7 @@ export interface AppState {
   mpExportPDF: (...args: any[]) => any;
   get mpOpenWOs(): any;
   get mpPMTasks(): any;
-  mpPriorityColor: (...args: any[]) => any;
+  mpPriorityColor: (priority: string) => string;
   mpRefresh: (...args: any[]) => any;
   get mpTotalHours(): any;
   get mpTotalItems(): any;
@@ -611,7 +611,7 @@ export interface AppState {
   get planningGanttDays(): any;
   get planningMonths(): any;
   planningMoveTo: (...args: any[]) => any;
-  planningPriorityColor: (...args: any[]) => any;
+  planningPriorityColor: (priority: string) => string;
   planningShowDetail: (...args: any[]) => any;
   get planningTechList(): any;
   get planningWOs(): any;
@@ -625,7 +625,7 @@ export interface AppState {
   pmGetGanttRows: (...args: any[]) => any;
   pmGetMonthLabel: (...args: any[]) => any;
   pmGetStats: (...args: any[]) => any;
-  pmToggleSelect: (...args: any[]) => any;
+  pmToggleSelect: (pmId: string) => void;
   pmToggleSelectAll: (...args: any[]) => any;
   get pmUpcomingList(): any[];
   get pmOverdueCount(): any;
