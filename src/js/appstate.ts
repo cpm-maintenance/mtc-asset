@@ -430,7 +430,7 @@ export interface AppState {
   computeEnterpriseData: (...args: any[]) => any;
   confirmDelete: (...args: any[]) => any;
   createUser: (...args: any[]) => any;
-  critColor: (...args: any[]) => any;
+  critColor: (arg: string) => string;
   criticalityScore: (...args: any[]) => any;
   get dashAlerts(): any;
   get dashKPIs(): any;
@@ -548,9 +548,9 @@ export interface AppState {
   loadMoreEquipment: (...args: any[]) => any;
   loadMoreLogs: (...args: any[]) => any;
   loadPMSchedule: (...args: any[]) => any;
-  logColor: (...args: any[]) => any;
+  logColor: (arg: string) => string;
   logPMFromSchedule: (...args: any[]) => any;
-  logStatusColor: (...args: any[]) => any;
+  logStatusColor: (arg: string) => string;
   login: (...args: any[]) => any;
   logout: (...args: any[]) => any;
   /** Alias logout (dipakai audit.js sebagai fallback). */
@@ -666,7 +666,7 @@ export interface AppState {
   showUID: (...args: any[]) => any;
   get sortedByPriority(): any;
   startWO: (...args: any[]) => any;
-  statusColor: (...args: any[]) => any;
+  statusColor: (arg: string) => string;
   stopScanner: (...args: any[]) => any;
   submitCreateUser: (...args: any[]) => any;
   submitEquipment: (...args: any[]) => any;
@@ -709,7 +709,7 @@ export interface AppState {
   woAgeDays: (...args: any[]) => any;
   woAvailability: (...args: any[]) => any;
   woPrioScore: (...args: any[]) => any;
-  woPriorityColor: (...args: any[]) => any;
+  woPriorityColor: (arg: string) => string;
   woShortageSummary: (...args: any[]) => any;
   // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate)
   woSectorOf: (...args: any[]) => any;
