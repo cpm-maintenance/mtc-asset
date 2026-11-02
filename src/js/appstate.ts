@@ -341,7 +341,7 @@ export interface AppState {
   _breakdownEvents: (...args: any[]) => any;
   _cleanupFirebaseListeners: (...args: any[]) => any;
   _equipLabel: (id: string) => string;
-  _gradFill: (...args: any[]) => any;
+  _gradFill: (ctx: CanvasRenderingContext2D, color: string, from?: number, to?: number) => CanvasGradient;
   _hmIntervalHours: (a: { HM?: number | string, Tanggal?: string }, b: { HM?: number | string, Tanggal?: string }) => number;
   _kpiKey: (extra?: string) => string;
   _monthKey: (d: string | number | Date | null | undefined) => string;
@@ -373,8 +373,8 @@ export interface AppState {
   toggleSelectAllRequisitions: (...args: any[]) => any;
   bulkDeleteRequisitions: (...args: any[]) => any;
   get backlogAging(): any;
-  backlogScore: (...args: any[]) => any;
-  backlogScoreColor: (...args: any[]) => any;
+  backlogScore: (wo: { EquipmentID?: string, woPriority?: string, priority?: string } | null) => number;
+  backlogScoreColor: (score: number) => string;
   badgeCount: (...args: any[]) => any;
   badgeClass: (itemId: string) => string;
   badgeLabel: (itemId: string, itemName?: string) => string;
@@ -416,7 +416,7 @@ export interface AppState {
   checkPendingOperations: (...args: any[]) => any;
   checkPendingWorkOrders: (...args: any[]) => any;
   checkUserRole: (...args: any[]) => any;
-  cleanUrl: (...args: any[]) => any;
+  cleanUrl: (url: string | null | undefined) => string;
   clearAIChat: (...args: any[]) => any;
   clearApiKey: (...args: any[]) => any;
   clearError: (...args: any[]) => any;
@@ -499,7 +499,7 @@ export interface AppState {
   getLifetimeColorLabel: (...args: any[]) => any;
   getPartLifetimeInfo: (...args: any[]) => any;
   getPartStock: (...args: any[]) => any;
-  getStatColor: (...args: any[]) => any;
+  getStatColor: (c: string) => string;
   getUserFriendlyError: (...args: any[]) => any;
   getUserRole: (...args: any[]) => any;
   goToDetail: (...args: any[]) => any;
@@ -530,7 +530,7 @@ export interface AppState {
   get isAdminOrSupervisor(): boolean;
   get isAnalyzingAlias(): any;
   get isGeneratingAlias(): any;
-  isLowStock: (...args: any[]) => any;
+  isLowStock: (current: number | string | null | undefined, minimum: number | string | null | undefined) => boolean;
   isPMDueSoon: (...args: any[]) => any;
   isPMOverdue: (...args: any[]) => any;
   get isSupervisor(): any;
@@ -599,7 +599,7 @@ export interface AppState {
   get criticalDowntimeLabel(): any;
   get openWOs(): any[];
   paginatedEquip: (...args: any[]) => any;
-  parsePartsUsed: (...args: any[]) => any;
+  parsePartsUsed: (parts: unknown) => any[];
   get pendingReqCount(): any;
   planningDragEnd: (...args: any[]) => any;
   planningDragStart: (...args: any[]) => any;
@@ -708,11 +708,11 @@ export interface AppState {
   woAgeColor: (days: number) => string;
   woAgeDays: (log: { Tanggal?: string } | null) => number;
   woAvailability: (...args: any[]) => any;
-  woPrioScore: (wo: { woPriority?: string, priority?: string }) => number;
+  woPrioScore: (wo: { woPriority?: string, priority?: string } | null | undefined) => number;
   woPriorityColor: (arg: string) => string;
   woShortageSummary: (...args: any[]) => any;
   // Halaman Work Orders (design Stitch 'Work Orders Ledger', Tactical Slate)
-  woSectorOf: (...args: any[]) => any;
+  woSectorOf: (equipId: string) => string;
   get woSectorOptions(): any;
   get woFiltered(): any;
   get woAllVisibleSelected(): boolean;

@@ -1012,7 +1012,7 @@ export function app() {
         woPrioScore(wo) {
             /** @type {Record<string, number>} */
             const map = { 'Emergency': 3, 'Urgent': 2.5, 'High': 2, 'Normal': 1, 'Low': 0.5, 'Planned': 0.5 };
-            return map[(wo.woPriority || wo.priority || 'Normal')] ?? 1;
+            return map[(wo?.woPriority || wo?.priority || 'Normal')] ?? 1;
         },
         criticalityScore(equipId) {
             // Map lookup instead of .find() per call (O(1) vs O(n))
