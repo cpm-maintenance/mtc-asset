@@ -125,8 +125,12 @@
                 <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface tracking-widest">RELIABILITY OPERATIONS</span>
               </div>
               <div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-tac-surface-container-high/80 backdrop-blur-md">
-                <span class="material-symbols-outlined text-tac-secondary text-[14px]">wifi_tethering</span>
-                <span class="font-label-mono-sm text-label-mono-sm text-tac-secondary font-semibold">MODE OFFLINE</span>
+                <span class="material-symbols-outlined text-[14px]"
+                  :class="isOnline ? 'text-tac-status-operational' : 'text-tac-status-repair'"
+                  x-text="isOnline ? 'wifi' : 'wifi_off'"></span>
+                <span class="font-label-mono-sm text-label-mono-sm font-semibold"
+                  :class="isOnline ? 'text-tac-status-operational' : 'text-tac-status-repair'"
+                  x-text="isOnline ? 'MODE ONLINE' : 'MODE OFFLINE'"></span>
               </div>
             </div>
 

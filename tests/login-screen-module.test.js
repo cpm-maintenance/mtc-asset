@@ -45,6 +45,7 @@ describe('createLoginScreen — bentuk state', () => {
             'notifications',
             'showNotification',
             'applyTheme',
+            'isOnline',
         ]) {
             expect(s[key], `binding hilang dari komponen login: ${key}`).toBeDefined();
         }
@@ -57,6 +58,22 @@ describe('createLoginScreen — bentuk state', () => {
         expect(s.onUser).toBeUndefined();
         expect(s.checkUserRole).toBeUndefined();
         expect(s.$watch).toBeUndefined();
+    });
+});
+
+describe('createLoginScreen — isOnline', () => {
+    it('awalnya mengikuti navigator.onLine', () => {
+        const s = createLoginScreen();
+        expect(s.isOnline).toBe(navigator.onLine);
+    });
+
+    it('init() memasang listener online/offline yang menulis isOnline', () => {
+        const s = createLoginScreen();
+        s.init();
+        window.dispatchEvent(new Event('offline'));
+        expect(s.isOnline).toBe(false);
+        window.dispatchEvent(new Event('online'));
+        expect(s.isOnline).toBe(true);
     });
 });
 

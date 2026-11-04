@@ -9,6 +9,41 @@ import { askConfirm } from './confirm-dialog.js';
 // Role user bersumber tunggal dari RTDB `Users/{uid}/role` (dikelola admin).
 // Tidak ada lagi pemetaan role hardcoded by email — lihat ensureUserProfile (P0-2).
 
+/**
+ * Kode error Firebase Auth → kalimat yang bisa dibaca operator.
+ *
+ * Sebelumnya `error.message` mentah dicetak ke toast: operator melihat
+ * `Login failed: Firebase: Error (auth/invalid-credential).` Kode `auth/*`
+ * adalah kosakata SDK, bukan pesan. Peta ini yang menggantikannya.
+ *
+ * `error.code` dipakai lebih dulu karena pesan Firebase membungkus kode dalam
+ * kurung; `error.message` jadi cadangan untuk error non-SDK (mis. `network`).
+ */
+const AUTH_ERROR_TEXT = {
+    'auth/invalid-credential': 'Email atau kata sandi salah',
+    'auth/wrong-password': 'Email atau kata sandi salah',
+    'auth/user-not-found': 'Email atau kata sandi salah',
+    'auth/invalid-email': 'Format email tidak valid',
+    'auth/too-many-requests': 'Terlalu banyak percobaan. Coba lagi nanti',
+    'auth/network-request-failed': 'Jaringan bermasalah. Periksa koneksi lalu coba lagi',
+    'auth/operation-not-allowed': 'Metode login ini belum diaktifkan di Firebase Console',
+    'auth/popup-closed-by-user': 'Jendela login ditutup sebelum selesai',
+    'auth/popup-blocked': 'Popup login diblokir browser. Izinkan popup lalu coba lagi',
+    'auth/user-disabled': 'Akun ini dinonaktifkan admin',
+};
+
+/**
+ * @param {any} error
+ * @returns {string} Pesan siap tampil — tidak pernah memuat kode `auth/*`.
+ */
+export function mapAuthError(error) {
+    const raw = String(error?.code || error?.message || '');
+    for (const [code, text] of Object.entries(AUTH_ERROR_TEXT)) {
+        if (raw.includes(code)) return text;
+    }
+    return 'Terjadi kesalahan. Coba lagi.';
+}
+
 export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     loginForm: { email: '', password: '', pin: '', keepSession: false },
     // Toggle "tampilkan secure key" di layar login (bukan rahasia — hanya UI state).
@@ -105,7 +140,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             this.showNotification('Welcome back!');
         } catch (/** @type {any} */ error) {
             console.error(error);
-            this.showNotification('SSO gagal: ' + (error?.message || error), 'error');
+            this.showNotification('SSO gagal: ' + mapAuthError(error), 'error');
         } finally {
             this.isLoading = false;
         }
@@ -178,6 +213,9 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
     },
 
     async login() {
+        // Klik ganda / Enter beruntun: `isLoading` baru di-set setelah await,
+        // jadi guard ini satu-satunya yang menahan percobaan auth paralel.
+        if (this.isLoading) return;
         const form = this.loginForm;
         if (!form.email || !form.password) {
             this.showNotification("Please enter email and password", "error");
@@ -201,7 +239,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             this.showNotification("Welcome back!");
         } catch (/** @type {any} */ error) {
             console.error(error);
-            this.showNotification("Login failed: " + error.message, "error");
+            this.showNotification(mapAuthError(error), "error");
         } finally {
             this.isLoading = false;
         }
@@ -217,7 +255,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 this.userRole = 'user';
                 this.showNotification("Logged out successfully", "info");
             } catch (/** @type {any} */ error) {
-                this.showNotification("Error logging out: " + error.message, "error");
+                this.showNotification(mapAuthError(error), "error");
             } finally {
                 this.isLoading = false;
             }

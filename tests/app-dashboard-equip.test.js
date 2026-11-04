@@ -11,7 +11,13 @@ import { makeApp, stubFirebase } from './helpers/app-harness.js';
 
 const isoDaysAgo = (/** @type {number} */ n) =>
   new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
-const today = () => new Date().toISOString().split('T')[0];
+// `toISOString()` = UTC. Aplikasi menghitung "hari ini" dari tanggal LOKAL
+// (lihat src/js/modules/utils.js `localDay`), jadi antara 00:00–07:59 WIB
+// keduanya berbeda satu hari dan tes ini merah tiap pagi.
+const today = () => {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+};
 
 const EQUIP = [
   { EquipmentID: 'EQ-1', Nama: 'Pump A', Lokasi: 'Mill', Tipe: 'Pump', Status: 'Active', Kritikalitas: 'High', NextPMDate: '2026-02-01' },

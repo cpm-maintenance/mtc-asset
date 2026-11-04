@@ -30,6 +30,8 @@ export function createLoginScreen() {
         notifications: [],
         darkMode: true,
         themeMode: readThemeMode(),
+  // Badge "MODE OFFLINE" dulu markup statis — tampil offline walau online.
+  isOnline: navigator.onLine,
 
         ...uiCore,
         ...authModule,
@@ -41,6 +43,10 @@ export function createLoginScreen() {
          */
         init() {
             this.applyTheme();
+            // Badge header memakai isOnline milik scope ini. Listener di
+            // `bootstrap.init()` tidak bisa dipakai: chunk app dimuat malas.
+            window.addEventListener('online', () => { this.isOnline = true; });
+            window.addEventListener('offline', () => { this.isOnline = false; });
         },
     };
 }

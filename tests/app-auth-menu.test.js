@@ -70,7 +70,7 @@ describe('login', () => {
     expect(s.isLoading).toBe(false);
   });
 
-  it('kredensial ditolak: pesan error diteruskan, isLoading tetap direset', async () => {
+  it('kredensial ditolak: kode diterjemahkan, isLoading tetap direset', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     window.signInWithEmailAndPassword = vi.fn().mockRejectedValue(new Error('wrong-password'));
     const s = makeApp({ loginForm: { email: 'a@b.c', password: 'salah' }, isLoading: false });
@@ -78,7 +78,7 @@ describe('login', () => {
     await s.login();
 
     expect(err).toHaveBeenCalled();
-    expect(s.showNotification).toHaveBeenCalledWith('Login failed: wrong-password', 'error');
+    expect(s.showNotification).toHaveBeenCalledWith('Terjadi kesalahan. Coba lagi.', 'error');
     expect(s.isLoading).toBe(false);
   });
 });
@@ -115,7 +115,7 @@ describe('logout', () => {
 
     await s.logout();
 
-    expect(s.showNotification).toHaveBeenCalledWith('Error logging out: network', 'error');
+    expect(s.showNotification).toHaveBeenCalledWith('Terjadi kesalahan. Coba lagi.', 'error');
     expect(s.isLoading).toBe(false);
   });
 });

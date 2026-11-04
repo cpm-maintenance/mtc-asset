@@ -100,6 +100,10 @@ const DECISIONS = {
     notifications: 'shared',
     isLoading: 'both',
     isLoggedIn: 'separate',
+    // Dua sumber terpisah: layar login punya listener online/offline sendiri
+    // (bootstrap pemilik isOnline shell ada di chunk malas), shell memakai
+    // milik bootstrap.
+    isOnline: 'separate',
 };
 
 describe('irisan kunci antar dua scope', () => {
@@ -162,6 +166,14 @@ describe('kunci "separate" tetap ditulis eksplisit', () => {
     it('logout menutup gate login DAN gate shell', () => {
         expect(mainJs).toMatch(/loginScreen\.isLoggedIn\s*=\s*false/);
         expect(mainJs).toMatch(/window\.app\.isLoggedIn\s*=\s*false/);
+    });
+
+    it('layar login punya listener jaringan sendiri', () => {
+        const loginJs = read('src/js/modules/login.js');
+        expect(loginJs).toMatch(/addEventListener\('online'/);
+        expect(loginJs).toMatch(/addEventListener\('offline'/);
+        // Badge di index.html harus terikat state, bukan teks statis.
+        expect(index).toMatch(/x-text="isOnline \? 'MODE ONLINE' : 'MODE OFFLINE'"/);
     });
 
     it('login membuka gate login setelah shell ter-init', () => {

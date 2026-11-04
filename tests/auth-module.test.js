@@ -15,7 +15,7 @@
  * `vi.stubGlobal` — tidak perlu mock Firebase SDK.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { authModule } from '../src/js/modules/auth.js';
+import { authModule, mapAuthError } from '../src/js/modules/auth.js';
 // Kartu t_505ab09a: `GoogleAuthProvider` + `signInWithPopup` di-load secara
 // dinamis lewat `import('firebase/auth')` di `loginWithSSO` — SDK Google tidak
 // lagi menempel di chunk boot. Mock modul (bukan window) membuktikan jalur
@@ -204,14 +204,79 @@ describe('login', () => {
         expect(ctx.userRole).toBe('user');
     });
 
-    it('gagal auth: pesan error diteruskan, isLoading tetap direset', async () => {
+    it('gagal auth: kode Firebase diterjemahkan, isLoading tetap direset', async () => {
         stubFirebase({
             signInWithEmailAndPassword: vi.fn(async () => { throw new Error('auth/wrong-password'); }),
         });
         const ctx = makeCtx({ loginForm: { email: 'a@b.c', password: 'salah' } });
         await ctx.login();
-        expect(ctx.showNotification).toHaveBeenCalledWith('Login failed: auth/wrong-password', 'error');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Email atau kata sandi salah', 'error');
         expect(ctx.isLoading).toBe(false);
+    });
+
+    it('kode auth/* tidak pernah muncul di toast', async () => {
+        stubFirebase({
+            signInWithEmailAndPassword: vi.fn(async () => {
+                throw Object.assign(new Error('Firebase: Error (auth/invalid-credential).'), {
+                    code: 'auth/invalid-credential',
+                });
+            }),
+        });
+        const ctx = makeCtx({ loginForm: { email: 'a@b.c', password: 'salah' } });
+        await ctx.login();
+        const msg = ctx.showNotification.mock.calls[0][0];
+        expect(msg).not.toMatch(/auth\//);
+        expect(msg).toBe('Email atau kata sandi salah');
+    });
+
+    it('login ganda saat in-flight: hanya satu percobaan Firebase', async () => {
+        let release;
+        const pending = new Promise((r) => { release = r; });
+        const fb = stubFirebase({
+            signInWithEmailAndPassword: vi.fn(() => pending),
+        });
+        const ctx = makeCtx({ loginForm: { email: 'a@b.c', password: 'p' } });
+
+        const first = ctx.login();
+        // Guard harus sudah menutup SEBELUM await pertama selesai — makanya
+        // panggilan kedua/ketiga terjadi langsung, tanpa menunggu tick.
+        const second = ctx.login();
+        const third = ctx.login();
+        // Satu tick: guard sudah menahan #2 & #3, #1 baru lewat setPersistence.
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(fb.signInWithEmailAndPassword).toHaveBeenCalledTimes(1);
+
+        release({ user: { uid: 'u1', email: 'a@b.c' } });
+        await Promise.all([first, second, third]);
+        expect(ctx.isLoading).toBe(false);
+    });
+});
+
+describe('mapAuthError — kode Firebase jadi kalimat', () => {
+    const cases = [
+        ['auth/invalid-credential', 'Email atau kata sandi salah'],
+        ['auth/user-not-found', 'Email atau kata sandi salah'],
+        ['auth/invalid-email', 'Format email tidak valid'],
+        ['auth/too-many-requests', 'Terlalu banyak percobaan. Coba lagi nanti'],
+        ['auth/network-request-failed', 'Jaringan bermasalah. Periksa koneksi lalu coba lagi'],
+        ['auth/user-disabled', 'Akun ini dinonaktifkan admin'],
+        ['auth/popup-blocked', 'Popup login diblokir browser. Izinkan popup lalu coba lagi'],
+    ];
+
+    it.each(cases)('%s', (code, expected) => {
+        expect(mapAuthError({ code })).toBe(expected);
+    });
+
+    it('tanpa code: mencari di message', () => {
+        expect(mapAuthError(new Error('Firebase: Error (auth/too-many-requests).'))).toBe(
+            'Terlalu banyak percobaan. Coba lagi nanti'
+        );
+    });
+
+    it('error tak dikenal: kalimat umum, kode tidak bocor', () => {
+        expect(mapAuthError(new Error('network'))).toBe('Terjadi kesalahan. Coba lagi.');
+        expect(mapAuthError(undefined)).toBe('Terjadi kesalahan. Coba lagi.');
     });
 });
 
@@ -242,7 +307,7 @@ describe('logout', () => {
         vi.stubGlobal('confirm', vi.fn(() => true));
         const ctx = makeCtx({ isLoggedIn: true });
         await ctx.logout();
-        expect(ctx.showNotification).toHaveBeenCalledWith('Error logging out: network', 'error');
+        expect(ctx.showNotification).toHaveBeenCalledWith('Terjadi kesalahan. Coba lagi.', 'error');
         expect(ctx.isLoading).toBe(false);
     });
 });
@@ -681,7 +746,7 @@ describe('login — mode akses (email / pin / sso)', () => {
         expect(ctx.isLoading).toBe(false);
     });
 
-    it('loginWithSSO gagal: pesan Firebase diteruskan apa adanya', async () => {
+    it('loginWithSSO gagal: kode Firebase diterjemahkan', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
         ssoMock.signInWithPopup.mockRejectedValueOnce(new Error('auth/operation-not-allowed'));
 
@@ -689,7 +754,7 @@ describe('login — mode akses (email / pin / sso)', () => {
         await ctx.loginWithSSO();
 
         expect(ctx.showNotification).toHaveBeenCalledWith(
-            'SSO gagal: auth/operation-not-allowed',
+            'SSO gagal: Metode login ini belum diaktifkan di Firebase Console',
             'error'
         );
         expect(ctx.isLoading).toBe(false);
