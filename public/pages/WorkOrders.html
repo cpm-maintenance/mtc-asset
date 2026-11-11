@@ -614,11 +614,6 @@
                         <span class="material-symbols-outlined text-[14px] text-tac-on-surface">person</span>
                         <span>Tech: </span><strong class="text-tac-on-surface ml-0.5" x-text="formatAssignee(log.assignedTo)"></strong>
                       </span>
-                      <span class="flex items-center gap-1" x-show="woParts(log).length > 0">
-                        <span class="material-symbols-outlined text-[14px] text-tac-secondary">inventory_2</span>
-                        <span>Spares: </span><strong class="text-tac-secondary ml-0.5"
-                          x-text="woParts(log).map(p => p.name + ' (' + p.qty + ')').join(', ')"></strong>
-                      </span>
                       <span x-show="log.dueDate && log.Status !== 'Completed' && log.dueDate < new Date().toISOString().split('T')[0]"
                         class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-tac-surface-recessed text-tac-status-emergency font-bold">
                         <span class="material-symbols-outlined text-[14px]">event_busy</span>
