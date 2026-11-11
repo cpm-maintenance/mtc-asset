@@ -17,6 +17,7 @@
  * Export & Import module
  */
 import { generateProfessionalWOPDF } from './wo-pdf-template.js';
+import { localDateStr } from '../utils.js';
 
 /**
  * Batas impor CSV/Excel.
@@ -201,7 +202,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
         const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'MTC_Asset_Full_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        a.download = 'MTC_Asset_Full_' + localDateStr() + '.xlsx';
         a.click();
         this.showNotification?.('Excel lengkap diekspor');
     },
@@ -383,7 +384,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
             }
 
             // Sort: overdue first, then by date
-            const today = new Date().toISOString().split('T')[0];
+            const today = localDateStr();
             list.sort((/** @type {any} */ a, /** @type {any} */ b) => {
                 const aO = a.status === 'pending' && a.date < today ? 1 : 0;
                 const bO = b.status === 'pending' && b.date < today ? 1 : 0;
@@ -492,7 +493,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
             doc.setTextColor(156, 163, 175);
             doc.text(`MTC-ASSET · PM Schedule · Page ${doc.internal.getNumberOfPages()}`, 20, y + 6);
 
-            doc.save(`PM_Schedule_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`PM_Schedule_${localDateStr()}.pdf`);
             this.showNotification('PM Schedule PDF exported');
         } catch (e) {
             console.error('PM Schedule PDF Export Error:', e);
@@ -700,7 +701,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
                     if (type === 'perf') {
                         dataToSave = {
                             id: String(id),
-                            date: row.date || row.Date || new Date().toISOString().split('T')[0],
+                            date: row.date || row.Date || localDateStr(),
                             equipmentId: row.equipmentId || row.AssetID || '',
                             area: row.area || row.Area || '',
                             wh: parseFloat(row.wh || 0),
@@ -755,7 +756,7 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
                             taskName: String(row.taskName || row.TaskName || row.NamaTask || 'PM Task'),
                             equipmentId: String(row.equipmentId || row.EquipmentID || ''),
                             description: String(row.description || row.Description || row.Deskripsi || ''),
-                            date: String(row.date || row.Date || row.Tanggal || new Date().toISOString().split('T')[0]),
+                            date: String(row.date || row.Date || row.Tanggal || localDateStr()),
                             frequency: String(row.frequency || row.Frequency || 'monthly').toLowerCase(),
                             basis: String(row.basis || row.Basis || 'calendar').toLowerCase(),
                             intervalHours: parseFloat(row.intervalHours || row.IntervalHours || 0) || 0,

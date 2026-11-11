@@ -39,28 +39,38 @@ export const DEFAULT_PART_FORM = () => ({
 });
 
 /**
+ * Tanggal `YYYY-MM-DD` menurut waktu **LOKAL**. `toISOString()` memberi tanggal
+ * UTC — di WIB (UTC+8) itu menggeser satu hari pada 00:00-08:00, jendela shift
+ * pagi. Salinan lokal `localDateStr()` (`src/js/utils.js`): modul ini tidak bisa
+ * mengimpornya karena `utils.js` sendiri mengimpor `constants` (siklus).
+ * @param {Date} [d]
+ * @returns {string}
+ */
+const localDateStr = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/**
  * Tanggal default tenggat WO: hari ini + 7 hari (ISO yyyy-mm-dd).
  * Dipakai `DEFAULT_LOG_FORM()` dan `openLogModal()` supaya keduanya sama.
  */
 export const DEFAULT_DUE_DATE = () =>
-  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  localDateStr(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
 
 export const DEFAULT_LOG_FORM = () => ({
   logId: '', type: 'PM', desc: '', downtime: '', cost: '', equipmentId: '',
-  date: new Date().toISOString().split('T')[0], tech: 'Maintenance Team',
+  date: localDateStr(), tech: 'Maintenance Team',
   parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM',
   // Work Order Fields
   woPriority: 'Normal', woNumber: '', assignedTo: '', dueDate: DEFAULT_DUE_DATE(),
   estimatedHours: '', actualHours: '', laborCost: 0, completedDate: '',
   // Department Request Fields
-  requestSource: 'Production', requestedBy: '', requestDate: new Date().toISOString().split('T')[0],
+  requestSource: 'Production', requestedBy: '', requestDate: localDateStr(),
   approvedBy: '', approvalDate: '',
   // External Fields
   externalEquipName: ''
 });
 
 export const DEFAULT_PERF_FORM = () => ({
-  id: '', equipmentId: '', date: new Date().toISOString().split('T')[0],
+  id: '', equipmentId: '', date: localDateStr(),
   wh: "24.00", bd: "0.00", stb: "0.00", freq: 0, type: 'Unscheduled',
   area: '', paPlan: 90, remarks: '', rca: 'None', category: 'Mechanical', events: []
 });
@@ -70,7 +80,7 @@ export const DEFAULT_PM_FORM = () => ({
   taskName: '',
   equipmentId: '',
   description: '',
-  date: new Date().toISOString().split('T')[0],
+  date: localDateStr(),
   frequency: 'none',
   basis: 'calendar',
   intervalHours: 0,

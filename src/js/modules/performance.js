@@ -3,7 +3,7 @@
 /**
  * Performance & KPI module
  */
-import { validatePerformanceForm, withRetry, isNetworkError, sanitizeDataForFirebase, computeBDFromLogs } from '../utils.js';
+import { localDateStr, validatePerformanceForm, withRetry, isNetworkError, sanitizeDataForFirebase, computeBDFromLogs } from '../utils.js';
 
 export const performanceModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     openPerformanceModal(edit = false, data = null) {
@@ -15,7 +15,7 @@ export const performanceModule = /** @type {Partial<AppState> & ThisType<AppStat
             };
         } else {
             this.performanceForm = {
-                id: '', equipmentId: '', date: new Date().toISOString().split('T')[0],
+                id: '', equipmentId: '', date: localDateStr(),
                 wh: "24.00", bd: "0.00", stb: "0.00", hm: "", freq: 0, type: 'Unscheduled', 
                 area: '', paPlan: 90, remarks: '',
                 rca: 'None', category: 'Mechanical', events: []
@@ -275,12 +275,16 @@ export const performanceModule = /** @type {Partial<AppState> & ThisType<AppStat
         const filter = this.kpiFilter || 'yearly';
 
         // yearly - return all data from that year
+        // Perbandingan dilakukan pada prefix string tanggal, bukan getter lokal
+        // sebuah Date: `new Date('2026-10-01')` = tengah malam UTC, jadi
+        // `getMonth()`/`getFullYear()` lokalnya jatuh ke bulan/tahun sebelumnya
+        // di zona barat UTC. Tanggal di sini selalu ber-semantik lokal.
+        const refYear = ref.slice(0, 4);
         if (filter === 'yearly') {
             return data.filter(p => {
                 if (!p || !p.date) return false;
-                const d = new Date(p.date);
-                if (isNaN(d.getTime())) return false;
-                return d.getFullYear() === refDate.getFullYear();
+                if (isNaN(new Date(p.date).getTime())) return false;
+                return String(p.date).slice(0, 4) === refYear;
             });
         }
 
@@ -298,8 +302,8 @@ export const performanceModule = /** @type {Partial<AppState> & ThisType<AppStat
                 weekEnd.setHours(23,59,59,999);
                 return d >= weekStart && d <= weekEnd;
             }
-            // monthly
-            return d.getFullYear() === refDate.getFullYear() && d.getMonth() === refDate.getMonth();
+            // monthly — alasan sama dengan `yearly` di atas.
+            return String(p.date).slice(0, 7) === ref.slice(0, 7);
         });
     }
 });

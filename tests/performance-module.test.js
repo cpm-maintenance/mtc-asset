@@ -11,6 +11,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { performanceModule } from '../src/js/modules/performance.js';
 
+// Tanggal LOKAL. `toISOString()` = UTC; membandingkan keduanya merah di zona
+// barat UTC dan salah lapor di WIB pagi (form mengisi tanggal lokal).
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 function stubFirebase(overrides = {}) {
     const fns = {
         db: { name: 'db' },
@@ -80,7 +84,7 @@ describe('openPerformanceModal', () => {
         expect(ctx.isEditingPerformance).toBe(false);
         expect(ctx.showPerformanceModal).toBe(true);
         expect(ctx.performanceForm).toMatchObject({ wh: '24.00', bd: '0.00', stb: '0.00', freq: 0, paPlan: 90, events: [] });
-        expect(ctx.performanceForm.date).toBe(new Date().toISOString().split('T')[0]);
+        expect(ctx.performanceForm.date).toBe(isoLocalDay(new Date()));
     });
 
     it('mode edit: menyalin data dan menormalkan events non-array', () => {

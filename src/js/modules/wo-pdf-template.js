@@ -103,6 +103,17 @@ function formatAssignees(value) {
     return 'UNASSIGNED';
 }
 
+/**
+ * Tanggal `YYYY-MM-DD` menurut waktu LOKAL. Disalin lokal, bukan impor
+ * `utils.js`, karena alasan modul-daun yang sama dengan `formatAssignees`
+ * di atas — tanpa rantai `utils -> constants` yang butuh Vite.
+ * @param {Date} [d]
+ * @returns {string}
+ */
+function localDay(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /** @param {string} priority @returns {[number, number, number]} */
 function priorityTone(priority) {
     if (priority === 'Emergency') return C.danger;
@@ -560,7 +571,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     // ── footer semua halaman ────────────────────────────────────────────────
     const total = doc.getNumberOfPages();
     const now = new Date();
-    const stamp = formatDate(now.toISOString().slice(0, 10)) + ' · ' + now.toTimeString().slice(0, 5);
+    const stamp = formatDate(localDay(now)) + ' · ' + now.toTimeString().slice(0, 5);
     for (let page = 1; page <= total; page++) {
         doc.setPage(page);
         hairline(M, PW - M, PH - 16, C.line, 0.25);

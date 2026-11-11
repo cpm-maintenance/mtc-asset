@@ -19,6 +19,7 @@
  */
 
 import { logger } from '../logger.js';
+import { localDateStr } from '../utils.js';
 
 // `catch (e)` bertipe `unknown` di bawah @ts-check; `String(e)` lebih aman
 // daripada `e.message` yang jadi `undefined` kalau yang dilempar bukan Error.
@@ -322,7 +323,7 @@ function checkPendingWorkOrders() {
   if (!window.app?.logs) return;
 
   const logs = window.app.logs;
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const urgentWO = logs.filter(l =>
     (l.Status === 'Pending' || l.Status === 'Draft') &&
     (l.woPriority === 'Emergency' || l.woPriority === 'Urgent')
@@ -367,10 +368,10 @@ function checkPendingWorkOrders() {
 
 function checkPMOverdue() {
   if (!window.app?.pmList) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const threeDaysLater = new Date();
   threeDaysLater.setDate(threeDaysLater.getDate() + 3);
-  const threeDaysStr = threeDaysLater.toISOString().split('T')[0];
+  const threeDaysStr = localDateStr(threeDaysLater);
 
   // Overdue from pmList (real PM tasks)
   const overdue = (window.app.pmList || []).filter(pm =>

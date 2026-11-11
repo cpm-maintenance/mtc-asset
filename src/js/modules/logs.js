@@ -4,7 +4,7 @@ import { logger } from '../logger.js';
 /**
  * History log management module
  */
-import { validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, formatAssignee as formatAssigneeText } from '../utils.js';
+import { localDateStr, validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, formatAssignee as formatAssigneeText } from '../utils.js';
 import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 import { askConfirm } from './confirm-dialog.js';
@@ -264,7 +264,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 downtime: '',
                 cost: '',
                 equipmentId: fromDetail ? (this.selectedEquip?.EquipmentID || '') : '',
-                date: new Date().toISOString().split('T')[0], 
+                date: localDateStr(), 
                 tech: 'Maintenance Team',
                 parts: [], 
                 status: 'Pending', 
@@ -283,7 +283,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 // Department Request fields
                 requestSource: 'Production',
                 requestedBy: '',
-                requestDate: new Date().toISOString().split('T')[0],
+                requestDate: localDateStr(),
                 approvedBy: '',
                 approvalDate: '',
                 // External fields
@@ -684,7 +684,7 @@ async approveWO(logId) {
             const updates = {
                 Status: 'Approved',
                 approvedBy: this.user?.email || 'supervisor',
-                approvalDate: new Date().toISOString().split('T')[0],
+                approvalDate: localDateStr(),
                 rejectedBy: '',
                 rejectionDate: '',
                 rejectionReason: ''
@@ -802,7 +802,7 @@ async approveWO(logId) {
             const updates = {
                 Status: 'Rejected',
                 rejectedBy: this.user?.email || 'supervisor',
-                rejectionDate: new Date().toISOString().split('T')[0],
+                rejectionDate: localDateStr(),
                 rejectionReason: reason,
                 approvedBy: '',
                 approvalDate: ''
@@ -935,7 +935,7 @@ async approveWO(logId) {
                 Status: 'Completed',
                 Cost: calculatedCost,
                 actualHours: log.estimatedHours || log.actualHours || 0,
-                completedDate: new Date().toISOString().split('T')[0]
+                completedDate: localDateStr()
             };
             
             await window.update(window.ref(window.db, 'HistoryLog/' + logId), updates);

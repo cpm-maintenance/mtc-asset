@@ -7,6 +7,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { makeApp, stubFirebase } from './helpers/app-harness.js';
 
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 beforeEach(() => {
   stubFirebase();
 });
@@ -278,7 +280,7 @@ describe('Planning Board — kalender & bar Gantt', () => {
   it('planningGanttBar menghitung left/width untuk WO satu hari', () => {
     const a = makeApp();
     const days = a.planningGanttDays;
-    const today = new Date().toISOString().split('T')[0];
+    const today = isoLocalDay(new Date());
     const idx = days.findIndex((d) => d.dateStr === today);
     const bar = a.planningGanttBar({ Tanggal: today });
     expect(bar).toEqual({ left: idx * 20, width: 20 });
@@ -298,7 +300,7 @@ describe('Planning Board — kalender & bar Gantt', () => {
   it('planningGanttBar memakai dueDate sebagai awal bila Tanggal kosong', () => {
     const a = makeApp();
     const days = a.planningGanttDays;
-    const today = new Date().toISOString().split('T')[0];
+    const today = isoLocalDay(new Date());
     const idx = days.findIndex((d) => d.dateStr === today);
     expect(a.planningGanttBar({ dueDate: today })).toEqual({ left: idx * 20, width: 20 });
   });
@@ -306,7 +308,7 @@ describe('Planning Board — kalender & bar Gantt', () => {
   it('planningGanttBar menjepit bar yang mulai sebelum rentang kalender', () => {
     const a = makeApp();
     const days = a.planningGanttDays;
-    const endIdx = days.findIndex((d) => d.dateStr === new Date().toISOString().split('T')[0]);
+    const endIdx = days.findIndex((d) => d.dateStr === isoLocalDay(new Date()));
     const bar = a.planningGanttBar({ Tanggal: '1999-01-01', dueDate: days[endIdx].dateStr });
     expect(bar.left).toBe(0);
     expect(bar.width).toBe((endIdx + 1) * 20);

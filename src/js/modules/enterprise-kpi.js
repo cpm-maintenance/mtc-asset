@@ -1,6 +1,7 @@
 // @ts-check
 /** @typedef {import('../appstate').AppState} AppState */
 import { chartToken } from '../chart-palette.js';
+import { localDateStr } from '../utils.js';
 /**
  * Enterprise KPI Engine — Decision Support Analytics
  * Industry standards: ISO 14224, SAE JA1011, SMRP
@@ -127,10 +128,17 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     const breakdowns = elogs.filter(l => l.Jenis === 'Breakdown' && l.Tanggal && new Date(l.Tanggal) > d90);
     score -= breakdowns.length * 15;
     if (asset.NextPMDate) {
-      const pmd = new Date(asset.NextPMDate);
+      // Tanggal polos (YYYY-MM-DD) dibaca sebagai hari kalender LOKAL, bukan UTC
+      // midnight. Kalau tidak, `new Date('2026-11-06')` di zona barat jatuh ke 5 Nov
+      // setempat dan hitungan hari overdue meleset satu.
+      const pmIso = String(asset.NextPMDate).slice(0, 10);
+      const pmd = /^\d{4}-\d{2}-\d{2}$/.test(pmIso)
+          ? new Date(+pmIso.slice(0, 4), +pmIso.slice(5, 7) - 1, +pmIso.slice(8, 10))
+          : new Date(asset.NextPMDate);
       if (!isNaN(pmd.getTime()) && pmd < now) {
-        const days = Math.floor((now.getTime() - pmd.getTime()) / 86400000);
-        score -= Math.min(days * 2, 30);
+          const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const days = Math.round((today0.getTime() - pmd.getTime()) / 86400000);
+          score -= Math.min(days * 2, 30);
       }
     }
     const mtbf = this.calcMTBF(equipId);
@@ -168,7 +176,7 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     if (!pm.length) return { pct: 100, completed: 0, total: 0, overdue: 0, status: 'N/A', color: 'gray' };
     const completed = pm.filter(p => p.status === 'completed').length;
     const total = pm.length;
-    const now = new Date().toISOString().split('T')[0];
+    const now = localDateStr();
     const overdue = pm.filter(p => p.status === 'pending' && p.date < now).length;
     const pct = Math.round((completed / total) * 100);
     return {
@@ -192,7 +200,7 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
     const wos = logs.filter(l => l.woNumber || l.Status === 'Pending' || l.Status === 'Approved');
     const openWO = wos.filter(l => l.Status === 'Pending' || l.Status === 'Draft').length;
     const completedWO = wos.filter(l => l.Status === 'Completed').length;
-    const overduePM = pm.filter(p => p.status === 'pending' && p.date < new Date().toISOString().split('T')[0]).length;
+    const overduePM = pm.filter(p => p.status === 'pending' && p.date < localDateStr()).length;
     const backlogWO = wos.filter(l => l.Status !== 'Completed' && l.Status !== 'Cancelled').length;
     let mtbfSum = 0, mtbfCount = 0;
     equip.forEach(e => { const m = this.calcMTBF(e.EquipmentID); if (m) { mtbfSum += m; mtbfCount++; } });
@@ -297,7 +305,7 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
       waitingMaterial: wos.filter(l => l.Status === 'Approved').length,
       pending: wos.filter(l => l.Status === 'Pending' || l.Status === 'Draft').length,
       cancelled: wos.filter(l => l.Status === 'Cancelled').length,
-      overdue: wos.filter(l => l.Status === 'Pending' && l.Tanggal && l.Tanggal < new Date().toISOString().split('T')[0]).length,
+      overdue: wos.filter(l => l.Status === 'Pending' && l.Tanggal && l.Tanggal < localDateStr()).length,
     };
   },
 
@@ -383,8 +391,8 @@ export const enterpriseKPI = /** @type {Partial<AppState> & ThisType<AppState>} 
       { key: 'avgHealth', label: 'Health Index', value: s.avgHealth + '%', ms: 'verified_user', color: s.avgHealth >= 80 ? TONE.green : TONE.orange, trend: s.avgHealth },
     ];
     const pm = this._raw(this.pmList) || [];
-    const today = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const today = localDateStr();
+    const tomorrow = localDateStr(new Date(Date.now() + 86400000));
     this.enterpriseUpcomingPM = pm.filter(p => p.status !== 'completed' && p.status !== 'cancelled' && p.date)
       .sort((a, b) => (a.date || '').localeCompare(b.date || '')).slice(0, 15)
       .map(p => ({ ...p, due: p.date === today ? 'today' : p.date === tomorrow ? 'tomorrow' : p.date }));

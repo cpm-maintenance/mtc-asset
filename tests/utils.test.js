@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction, computeBDFromLogs, fetchWithTimeout } from '../src/js/utils.js';
+import { isLowStock, sanitizeInput, isValidID, calculatePartLifetime, validateEquipmentForm, validatePartForm, validateLogForm, isValidDate, withRetry, isNetworkError, isQuotaError, parseJsonSafe, formatDate, formatCurrency, debounce, sanitizeForDisplay, isValidPositiveNumber, isValidInteger, isValidDateRange, isValidPhone, isValidURL, isValidLength, validateEmail, validateForm, sanitizeDataForFirebase, generateId, isOverdue, calculateStats, validatePerformanceForm, getLifetimeColor, getLifetimeBgColor, checkPartAvailability, applyStockDeduction, computeBDFromLogs, fetchWithTimeout, localDateStr } from '../src/js/utils.js';
 import { kpiEngineModule } from '../src/js/modules/kpi-engine.js';
 import { performanceModule } from '../src/js/modules/performance.js';
 
@@ -472,6 +472,30 @@ describe('formatDate', () => {
   it('should return empty for invalid', () => {
     expect(formatDate('')).toBe('');
     expect(formatDate('invalid')).toBe('');
+  });
+});
+
+/**
+ * `localDateStr` menggantikan `toISOString().split('T')[0]` di 25 titik "hari ini".
+ * Kalau salah satunya balik ke UTC, sore hari di zona barat (= pagi WIB) akan
+ * mundur/hari ini meleset — makanya kasus jam 20:00 dikunci eksplisit.
+ */
+describe('localDateStr', () => {
+  it('memakai hari kalender lokal, bukan tanggal UTC', () => {
+    expect(localDateStr(new Date(2026, 0, 1, 0, 30))).toBe('2026-01-01');
+    expect(localDateStr(new Date(2026, 0, 1, 20, 0))).toBe('2026-01-01');
+    expect(localDateStr(new Date(2026, 5, 30, 12, 0))).toBe('2026-06-30');
+    expect(localDateStr(new Date(2026, 11, 31, 23, 59, 59))).toBe('2026-12-31');
+  });
+
+  it('default tanpa argumen = hari ini lokal', () => {
+    const n = new Date();
+    const pad = (x) => String(x).padStart(2, '0');
+    expect(localDateStr()).toBe(`${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`);
+  });
+
+  it('formatDate tetap round-trip tanggal polos (di-guard, jangan diubah)', () => {
+    expect(formatDate('2025-01-15')).toBe('2025-01-15');
   });
 });
 

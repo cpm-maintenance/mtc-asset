@@ -51,8 +51,9 @@ function resetApp(overrides = {}) {
 }
 
 const findNotif = (type) => window.app.notifications.find((n) => n.type === type);
-const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
-const daysAhead = (n) => new Date(Date.now() + n * 86400000).toISOString().split('T')[0];
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const daysAgo = (n) => isoLocalDay(new Date(Date.now() - n * 86400000));
+const daysAhead = (n) => isoLocalDay(new Date(Date.now() + n * 86400000));
 
 beforeEach(() => {
     resetNotifBlocker();
@@ -510,8 +511,8 @@ describe('sendBrowserNotification — izin & ServiceWorker', () => {
  * itulah kondisi shift normal (belasan part low stock sekaligus).
  */
 describe('notification — kategori dengan lebih dari 3 item', () => {
-    const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
-    const daysAhead = (n) => new Date(Date.now() + n * 86400000).toISOString().split('T')[0];
+    const daysAgo = (n) => isoLocalDay(new Date(Date.now() - n * 86400000));
+    const daysAhead = (n) => isoLocalDay(new Date(Date.now() + n * 86400000));
 
     function seedSemua() {
         window.app = {

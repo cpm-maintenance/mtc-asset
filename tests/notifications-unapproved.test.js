@@ -21,6 +21,8 @@ vi.mock('../src/js/modules/push-client.js', () => ({
 import { dataModule } from '../src/js/modules/data.js';
 import { checkAllNotifications, resetNotifBlocker } from '../src/js/modules/notification.js';
 
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 describe('Unapproved Work Order Notifications', () => {
     beforeEach(() => {
         resetNotifBlocker();
@@ -80,7 +82,7 @@ describe('Unapproved Work Order Notifications', () => {
 
     describe('notification.js aging WO check', () => {
         it('tidak memasukkan WO yang sudah Approved ke dalam WO aging pending', () => {
-            const fourDaysAgo = new Date(Date.now() - 4 * 86400000).toISOString().split('T')[0];
+            const fourDaysAgo = isoLocalDay(new Date(Date.now() - 4 * 86400000));
 
             window.app.logs = [
                 // Pending > 3 hari (harus kena alert)

@@ -16,8 +16,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { enterpriseKPI } from '../src/js/modules/enterprise-kpi.js';
 
 const DAY = 86400000;
-const iso = (offsetDays = 0) => new Date(Date.now() + offsetDays * DAY).toISOString();
-const ymd = (offsetDays = 0) => iso(offsetDays).slice(0, 10);
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const ymd = (offsetDays = 0) => isoLocalDay(new Date(Date.now() + offsetDays * DAY));
 
 function makeCtx(overrides = {}) {
     const ctx = Object.create(enterpriseKPI);

@@ -9,8 +9,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { makeApp, stubFirebase } from './helpers/app-harness.js';
 
-const isoDaysAgo = (/** @type {number} */ n) =>
-  new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const isoDaysAgo = (/** @type {number} */ n) => isoLocalDay(new Date(Date.now() - n * 86400000));
 // `toISOString()` = UTC. Aplikasi menghitung "hari ini" dari tanggal LOKAL
 // (lihat src/js/modules/utils.js `localDay`), jadi antara 00:00–07:59 WIB
 // keduanya berbeda satu hari dan tes ini merah tiap pagi.

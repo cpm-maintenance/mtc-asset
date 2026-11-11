@@ -11,7 +11,9 @@ import { describe, it, expect } from 'vitest';
 import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../src/js/constants.ts';
 import { logsModule } from '../src/js/modules/logs.js';
 
-const isoPlus = (days) => new Date(Date.now() + days * 86400000).toISOString().split('T')[0];
+const isoLocalDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const isoPlus = (days) => isoLocalDay(new Date(Date.now() + days * 86400000));
 
 const makeCtx = (logs) => Object.assign(Object.create(logsModule), { logs });
 
