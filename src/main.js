@@ -186,6 +186,28 @@ Alpine.magic('loadPage', () => {
   };
 });
 
+/**
+ * Skeleton generik untuk fragmen halaman yang belum pernah diunduh.
+ *
+ * Sebelum ini 5 menu (`wo`, `pms`, `planning`, `monthlyplan`, `workload`)
+ * tampil kosong selama `fetch` fragmen, sedangkan 13 menu lain punya blok
+ * skeleton sendiri di `app-shell.html`. Satu markup di sini menutup semuanya
+ * tanpa menyalin lima blok ke shell.
+ */
+const PAGE_SKELETON = [
+  '<div class="space-y-4" role="status" aria-label="Memuat halaman">',
+  '  <div class="flex justify-between items-center">',
+  '    <div class="skeleton skeleton-line skeleton-sm" style="height:32px"></div>',
+  '    <div class="skeleton skeleton-line skeleton-sm" style="width:120px;height:36px"></div>',
+  '  </div>',
+  '  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">',
+  '    <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>',
+  '    <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>',
+  '  </div>',
+  '  <div class="skeleton skeleton-card" style="min-height:220px"></div>',
+  '</div>',
+].join('');
+
 // Add Alpine directive for dynamic page loading
 Alpine.directive('page', (el, { expression }, { evaluateLater, effect }) => {
   const getPageName = evaluateLater(expression);
@@ -193,6 +215,8 @@ Alpine.directive('page', (el, { expression }, { evaluateLater, effect }) => {
   effect(() => {
     getPageName(async (pageName) => {
       if (pageName) {
+        // Cache miss -> paint skeleton dulu; tanpa ini menu tampil kosong.
+        if (!componentLoader.cache.has(pageName)) el.innerHTML = PAGE_SKELETON;
         try {
           const html = await componentLoader.loadPage(pageName);
           // If the page already has content or failed to return valid HTML, guard it
