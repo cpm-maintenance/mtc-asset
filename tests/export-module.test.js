@@ -425,6 +425,30 @@ describe('export.js — importCSV', () => {
         expect(record.Stok).toBe(7);
     });
 
+    it('menyimpan tiap baris parts ke PartID-nya walau EquipmentID sama', async () => {
+        xlsx.utils.sheet_to_json.mockReturnValue([
+            { PartID: '14001430', EquipmentID: '5060-PU-12, 5060-PU-13', NamaPart: 'A' },
+            { PartID: '14001439', EquipmentID: '5060-PU-12, 5060-PU-13', NamaPart: 'B' },
+        ]);
+        const ctx = makeCtx();
+
+        await ctx.importCSV(fileEvent(), 'parts');
+        await vi.waitFor(() => expect(window.set).toHaveBeenCalledTimes(2));
+
+        expect(window.set.mock.calls[0][0]).toBe('SpareParts/14001430');
+        expect(window.set.mock.calls[1][0]).toBe('SpareParts/14001439');
+    });
+
+    it('memberi id unik per baris parts saat tidak ada PartID', async () => {
+        xlsx.utils.sheet_to_json.mockReturnValue([{ NamaPart: 'A' }, { NamaPart: 'B' }]);
+        const ctx = makeCtx();
+
+        await ctx.importCSV(fileEvent(), 'parts');
+        await vi.waitFor(() => expect(window.set).toHaveBeenCalledTimes(2));
+
+        expect(window.set.mock.calls[0][0]).not.toBe(window.set.mock.calls[1][0]);
+    });
+
     it('memakai EquipmentID tunggal bila EquipmentIDs tidak ada', async () => {
         xlsx.utils.sheet_to_json.mockReturnValue([{ PartID: 'P-2', EquipmentID: 'EQ-7' }]);
         const ctx = makeCtx();

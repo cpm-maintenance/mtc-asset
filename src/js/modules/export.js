@@ -695,7 +695,11 @@ export const exportModule = /** @type {Partial<AppState> & ThisType<AppState>} *
 
                 for (let i = 0; i < total; i++) {
                     const row = data[i];
-                    const id = row.EquipmentID || row.PartID || row.LogID || row.pmId || row.PMID || row.id || row.ID || (type.toUpperCase() + "-" + Date.now());
+                // parts: key harus PartID. EquipmentID identik di banyak baris -> menimpa.
+                // Fallback parts ikut indeks baris supaya dua baris tanpa PartID tidak menimpa.
+                const id = type === 'parts'
+                    ? (row.PartID || row.PartNumber || row.id || row.ID || `${type.toUpperCase()}-${Date.now()}-${i}`)
+                    : (row.EquipmentID || row.PartID || row.LogID || row.pmId || row.PMID || row.id || row.ID || (type.toUpperCase() + "-" + Date.now()));
                     
                     let dataToSave = /** @type {Record<string, any>} */ ({});
                     if (type === 'perf') {
