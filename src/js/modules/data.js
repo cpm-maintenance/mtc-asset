@@ -306,7 +306,30 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 const next = (this.allParts || []).filter(p => p && p.PartID !== id);
                 this.allParts = next;
                 saveCache('allParts', next);
+                // Cache IndexedDB bersifat upsert: baris yang sudah hilang di server
+                // tetap tersimpan, jadi harus dibuang eksplisit.
+                idbManager.delete('parts', id);
             }, (/** @type {any} */ error) => console.error('Spare Parts remove listener:', error)));
+        }
+
+        // Rekonsiliasi cache: part yang sudah tidak ada di server tidak boleh
+        // hidup lagi dari IndexedDB saat boot/refresh. Aman hanya bila hasil
+        // query belum menyentuh cap 500. (Cermin dari jalur HistoryLog.)
+        if (window.onValue) {
+            const unsubOnce = window.onValue(spRef, (/** @type {any} */ snap) => {
+                try {
+                    const data = snap?.val?.();
+                    const ids = new Set(Object.keys(data || {}));
+                    if (ids.size < 500 && Array.isArray(this.allParts)) {
+                        const pruned = this.allParts.filter(p => p && p.PartID && ids.has(p.PartID));
+                        if (pruned.length !== this.allParts.length) {
+                            this.allParts = pruned;
+                            this._cacheWriter?.('allParts', pruned);
+                        }
+                    }
+                } catch { /* biarkan data apa adanya */ }
+            }, { onlyOnce: true });
+            if (typeof unsubOnce === 'function') this._listeners.push(unsubOnce);
         }
 
         // HistoryLog: incremental onChildAdded + limitToLast (delta-only, no full re-download per write)
@@ -735,6 +758,10 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     this.equipment = this.equipment.filter(e => e.EquipmentID !== id);
                 } else if (node === 'SpareParts') {
                     this.allParts = this.allParts.filter(p => p.PartID !== id);
+                    // Cache IndexedDB bersifat upsert: baris yang sudah hilang di server
+                    // tetap tersimpan, jadi harus dibuang eksplisit.
+                    this._cacheWriter?.('allParts', this.allParts);
+                    idbManager.delete('parts', id);
                 } else if (node === 'HistoryLog') {
                     this.logs = this.logs.filter(l => l.LogID !== id);
                     // `filteredWorkOrders` membaca activeWorkOrders lebih dulu:
@@ -867,6 +894,10 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 this.equipment = this.equipment.filter(e => e.EquipmentID !== id);
             } else if (node === 'SpareParts') {
                 this.allParts = this.allParts.filter(p => p.PartID !== id);
+                // Cache IndexedDB bersifat upsert: baris yang sudah hilang di server
+                // tetap tersimpan, jadi harus dibuang eksplisit.
+                this._cacheWriter?.('allParts', this.allParts);
+                idbManager.delete('parts', id);
             } else if (node === 'HistoryLog') {
                 this.logs = this.logs.filter(l => l.LogID !== id);
                 // Lihat catatan di jalur offline: activeWorkOrders ikut dibersihkan.

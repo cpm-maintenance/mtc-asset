@@ -22,6 +22,7 @@ vi.mock('../src/js/modules/indexeddb.js', () => ({
         getPendingOps: vi.fn(async () => []),
         addPendingOp: vi.fn(async () => {}),
         removePendingOp: vi.fn(async () => {}),
+        delete: vi.fn(async () => {}),
     },
 }));
 
@@ -534,6 +535,8 @@ describe('dataModule.setupFirebaseListeners', () => {
             'Users/uid-user',
             '.info/connected',
             'Equipment',
+            // SpareParts menyusul Equipment: rekonsiliasi cache onValue.
+            'SpareParts',
             'HistoryLog',
         ]);
         expect(l.children.map((c) => c.path)).toEqual([
@@ -1346,8 +1349,8 @@ describe('dataModule.setupFirebaseListeners — hapus WO lintas perangkat (S39c)
         });
 
         ctx.setupFirebaseListeners();
-        // Listener HistoryLog dikenali dari constraint limitToLast(500).
-        const hist = valueCbs.find((v) => JSON.stringify(v.ref).includes('"n":500'));
+        // SpareParts juga memakai limitToLast(500) — pilih lewat path-nya.
+        const hist = valueCbs.find((v) => JSON.stringify(v.ref).includes('HistoryLog'));
         expect(hist, 'listener HistoryLog tidak terdaftar').toBeTruthy();
 
         // Server hanya punya L1 — GHOST hidup lagi dari cache IndexedDB.
