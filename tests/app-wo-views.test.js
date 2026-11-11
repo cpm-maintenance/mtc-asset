@@ -194,15 +194,15 @@ describe('woKpi', () => {
     expect(kpi.mttr).toBe(2.3);
     expect(kpi.downtimeOpen).toBe(7);
     expect(kpi.cost).toBe(1500);
-    expect(kpi.partsQty).toBe(3);
-    expect(kpi.partsCount).toBe(2);
-    expect(kpi.partsValue).toBe(1100);
+    // Agregat spare part dihapus bersama kartu KPI-nya (D16 lanjutan).
+    expect(kpi).not.toHaveProperty('partsQty');
   });
 
   it('tanpa data: seluruh angka nol, mttr 0 (bukan NaN)', () => {
     const s = woApp({ logs: [], allParts: [] });
 
-    expect(s.woKpi).toMatchObject({ total: 0, open: 0, mttr: 0, cost: 0, partsQty: 0, partsValue: 0, partsCount: 0 });
+    expect(s.woKpi).toMatchObject({ total: 0, open: 0, mttr: 0, cost: 0 });
+    expect(s.woKpi).not.toHaveProperty('partsQty');
   });
 
   it('hasil di-cache; ganti referensi allParts membangun ulang', () => {
@@ -215,14 +215,13 @@ describe('woKpi', () => {
     expect(s.woKpi).not.toBe(first);
   });
 
-  it('spare part dengan PartID tak dikenal tidak menambah nilai', () => {
+  it('PartsUsed tidak lagi diagregasi ke KPI', () => {
     const s = woApp({
       logs: [{ LogID: 'L1', woNumber: 'WO-1', Status: 'Pending', Jenis: 'Repair', PartsUsed: [{ id: 'PX', qty: 5 }] }],
       allParts: [],
     });
 
-    expect(s.woKpi.partsQty).toBe(5);
-    expect(s.woKpi.partsValue).toBe(0);
+    expect(s.woKpi).not.toHaveProperty('partsQty');
   });
 });
 

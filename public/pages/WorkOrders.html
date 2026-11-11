@@ -6,7 +6,7 @@
   Urutan modul mengikuti markup Stitch, sama persis:
     1. PWA / Offline Sync strip
     2. Breadcrumb + Control sub-bar (aksi global)
-    3. KPI & SLA Industrial Telemetry Deck (4 kartu)
+    3. KPI & SLA Industrial Telemetry Deck (3 kartu)
     4. Search / Filter Matrix + view switcher + status tabs + sektor/prioritas
     5. Maintenance Log Console (form input — collapsible)
     6. Workspace 12 kolom → kiri 8 kolom (Work Order Ledger Stream),
@@ -88,7 +88,7 @@
   </div>
 
   <!-- ═══ 3. KPI & SLA INDUSTRIAL TELEMETRY DECK (4 kartu) ══════════════ -->
-  <section aria-label="KPI work order" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+  <section aria-label="KPI work order" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-space-md">
 
     <!-- KPI 1 — Work order aktif -->
     <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
@@ -159,28 +159,10 @@
       </div>
     </div>
 
-    <!-- KPI 4 — Spares yang sudah dialokasikan ke WO terbuka -->
-    <div class="bg-tac-surface-card rounded-lg p-space-md shadow-[12px_16px_28px_rgba(0,0,0,0.5),-4px_-4px_14px_rgba(255,255,255,0.03)] flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <span class="font-label-mono-sm text-label-mono-sm uppercase tracking-wider text-tac-status-standby">Staged Spares &amp; Kits</span>
-        <span class="p-1 rounded bg-tac-surface-container text-tac-secondary">
-          <span class="material-symbols-outlined text-[18px]">inventory</span>
-        </span>
-      </div>
-      <div class="my-space-xs flex items-baseline gap-space-sm">
-        <span class="font-display-hero text-display-hero text-tac-on-surface font-bold" x-text="woKpi.partsQty"></span>
-        <span class="font-label-mono-md text-label-mono-md text-tac-secondary font-semibold uppercase">PARTS COMMITTED</span>
-      </div>
-      <div class="flex items-center gap-1.5 py-0.5">
-        <span class="material-symbols-outlined text-tac-secondary text-[16px]">warehouse</span>
-        <span class="font-label-mono-sm text-label-mono-sm text-tac-on-surface font-medium"
-          x-text="rp(woKpi.partsValue) + ' NILAI TERPAKAI'"></span>
-      </div>
-      <div class="flex items-center justify-between font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant pt-1">
-        <span x-text="woKpi.partsCount + ' item unik'"></span>
-        <span class="text-tac-status-emergency font-semibold" x-text="lowStockCount + ' Low Stock'"></span>
-      </div>
-    </div>
+    <!-- Kartu keempat sengaja tidak ada: angka agregat spare part dihapus
+         karena tidak ada reservasi stok di aplikasi ini — nilainya hanya
+         penjumlahan PartsUsed WO terbuka, dan itu sudah terlihat per WO di
+         daftar. Grid jadi 3 kartu supaya tidak ada slot kosong. -->
   </section>
 
   <!-- ═══ 4. SEARCH / FILTER MATRIX + VIEW SWITCHER ═════════════════════ -->

@@ -882,16 +882,9 @@ export function app() {
             const byStatus = (/** @type {string} */ s) => logs.filter(l => (l.Status || 'Pending') === s).length;
             const repairs = (this.logs || []).filter(l => l && (l.Jenis === 'Breakdown' || l.Jenis === 'Repair'));
             const downSum = repairs.reduce((s, l) => s + (Number(l.Downtime) || 0), 0);
-            const partMap = this.partsMap();
-            const partIds = new Set();
-            let partsQty = 0, partsValue = 0;
-            open.forEach(l => this.parsePartsUsed(l.PartsUsed).forEach((/** @type {any} */ p) => {
-                const q = Number(p.qty) || 0;
-                partsQty += q;
-                partIds.add(p.id);
-                const pr = partMap.get(p.id);
-                if (pr) partsValue += q * (Number(pr.Harga) || 0);
-            }));
+            // Agregat spare part TIDAK dihitung di sini: satu-satunya pemakai
+            // (kartu "Staged Spares & Kits") sudah dihapus. Rincian per WO ada
+            // di daftar WO dan modal detail.
             const today = localDateStr();
             const result = {
                 total: logs.length,
@@ -905,7 +898,6 @@ export function app() {
                 mttr: repairs.length ? Math.round((downSum / repairs.length) * 10) / 10 : 0,
                 downtimeOpen: open.reduce((s, l) => s + (Number(l.Downtime) || 0), 0),
                 cost: logs.reduce((s, l) => s + (Number(l.Cost) || 0), 0),
-                partsQty, partsValue, partsCount: partIds.size,
             };
             this._woKpiLogsRef = this.logs;
             this._woKpiPartsRef = this.allParts;
