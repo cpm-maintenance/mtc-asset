@@ -86,7 +86,7 @@ cmd /c "cd /d D:\CODING\MTC-Asset && node scripts\verify-precache.mjs"
 
 - [x] RED → patch → GREEN (3 tes baru hijau, 180 tes terkait hijau).
 - [x] Gate 5 → angka di tabel atas.
-- [ ] Commit + push (deploy via CI).
-- [ ] Verifikasi produksi `mtc-asset-v123`.
+- [x] Commit + push `9c6db17` (deploy via CI). CI: Test, Build and Deploy, Lighthouse CI = success.
+- [x] Verifikasi produksi `mtc-asset-v123` (status 200, 6721 byte).
 - [ ] (laten, di luar scope) `saveCache` menulis `cache_allParts` tapi `loadFromIndexedDB`
       membaca `cache_parts` — key mismatch, fallback localStorage tidak pernah kena.
