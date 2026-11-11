@@ -74,6 +74,6 @@ cmd /c "node scripts\verify-precache.mjs"
 ## TODO
 
 - [x] Gate 5 perintah → angka verbatim di tabel atas.
-- [ ] Commit + push.
+- [x] Commit + push → `f1e4e53` (`a88716b..f1e4e53 main -> main`), 18 berkas.
 - [ ] (opsional) `curl -s 'https://mtc-asset.web.app/sw.js?cb=1' | grep -o 'mtc-asset-v[0-9]*'` → `v122`.
 
