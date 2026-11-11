@@ -83,3 +83,4 @@ Plus 4 TZ: Asia/Jakarta, UTC, Pacific/Kiritimati, America/Los_Angeles.
 - Jangan sentuh `package.json`, `src/js/app.js`, `src/main.js`, `globals.d.ts`.
 - Commit via CI saja. Jangan stage `docs/SOP-*`.
 - Lihat `NOTE-D15.md` (skeleton), `NOTE-D14.md` (import CSV), `NOTE-D13.md` (cache SpareParts).
+
