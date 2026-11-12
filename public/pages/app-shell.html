@@ -1518,13 +1518,13 @@
               <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.date" x-text="logFormErrors.date" x-cloak></p>
           </div>
           <div>
-            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Start Date</label>
-            <input aria-label="Tanggal mulai" type="date" x-model="logForm.startDate" @change="recalcLogAuto()"
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Start Time</label>
+            <input aria-label="Waktu mulai" type="datetime-local" x-model="logForm.startDate" @change="recalcLogAuto()"
               class="w-full">
           </div>
           <div>
-            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">End Date</label>
-            <input aria-label="Tanggal selesai" type="date" x-model="logForm.endDate" @change="recalcLogAuto()"
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">End Time</label>
+            <input aria-label="Waktu selesai" type="datetime-local" x-model="logForm.endDate" @change="recalcLogAuto()"
               class="w-full">
             <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.endDate" x-text="logFormErrors.endDate" x-cloak></p>
           </div>

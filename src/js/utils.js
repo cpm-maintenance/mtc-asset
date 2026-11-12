@@ -193,23 +193,32 @@ export function isValidDateRange(startDate, endDate) {
 }
 
 /**
- * Downtime otomatis dari rentang tanggal: selisih hari x 24 jam.
+ * Downtime otomatis dari rentang waktu: selisih jam (1 desimal).
  *
  * Mengembalikan `null` (bukan `0`) bila salah satu tanggal kosong / tidak valid
  * atau rentangnya terbalik - supaya pemanggil tidak menimpa angka manual dengan
  * nilai kosong.
  *
- * @param {string} startDate - Tanggal awal (`YYYY-MM-DD`).
- * @param {string} endDate - Tanggal akhir (`YYYY-MM-DD`).
- * @returns {number|null} Jam downtime; `0` bila tanggal sama, `null` bila rentang belum sah.
+ * @param {string} startDate - Waktu awal (`YYYY-MM-DD` atau `YYYY-MM-DDTHH:mm`).
+ * @param {string} endDate - Waktu akhir (`YYYY-MM-DD` atau `YYYY-MM-DDTHH:mm`).
+ * @returns {number|null} Jam downtime (1 desimal); `0` bila waktu sama, `null` bila rentang belum sah.
  */
 export function computeDowntimeHours(startDate, endDate) {
   if (!startDate || !endDate) return null;
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
-  if (end.getTime() < start.getTime()) return null;
-  return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) * 24;
+  // Jam kalender (wall-clock): pergantian DST tidak boleh menggeser downtime.
+  // `new Date('YYYY-MM-DD')` di-parse sebagai UTC, jadi format date-only dipaksa 00:00 lokal.
+  /** @param {string} value @returns {number} epoch-ms dari komponen kalender, atau NaN bila tak valid. */
+  const wallMs = (value) => {
+    const text = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00` : value;
+    const date = new Date(text);
+    if (isNaN(date.getTime())) return NaN;
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds());
+  };
+  const start = wallMs(startDate);
+  const end = wallMs(endDate);
+  if (isNaN(start) || isNaN(end)) return null;
+  if (end < start) return null;
+  return Math.round((end - start) / 3600000 * 10) / 10;
 }
 
 /**

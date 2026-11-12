@@ -5,8 +5,8 @@
  * field rentang waktu sama sekali — modal Work Order cuma punya satu
  * "Timeline Date". Sekarang:
  *
- *   1. ada field `startDate` + `endDate` (keduanya `YYYY-MM-DD`);
- *   2. `downtime` terisi otomatis = selisih hari × 24 jam;
+ *   1. ada field `startDate` + `endDate` (`datetime-local`, `YYYY-MM-DDTHH:mm`);
+ *   2. `downtime` terisi otomatis = selisih jam (1 desimal, `step="0.1"`);
  *   3. `cost` terisi otomatis = Σ(qty × Harga) dari spare part di form.
  *
  * Auto-isi bersifat *prefill*, bukan read-only: nilai yang sudah dihitung
@@ -172,3 +172,44 @@ describe('markup: kedua form punya input rentang + pemicu recalc', () => {
   });
 });
 
+describe('D20 — datetime-local & downtime jam pecahan', () => {
+  it('selisih jam pecahan dibulatkan 1 desimal', () => {
+    expect(computeDowntimeHours('2026-11-01T08:00', '2026-11-01T08:06')).toBe(0.1);
+    expect(computeDowntimeHours('2026-11-01T00:00', '2026-11-02T08:00')).toBe(32);
+  });
+
+  it('format lama date-only tetap terbaca sebagai 00:00 lokal', () => {
+    expect(computeDowntimeHours('2026-11-01', '2026-11-02')).toBe(24);
+    expect(computeDowntimeHours('2026-11-01', '2026-11-03')).toBe(48);
+  });
+
+  it('start/end kosong atau undefined -> null, bukan NaN', () => {
+    expect(computeDowntimeHours(undefined, '2026-11-01T00:00')).toBeNull();
+    expect(computeDowntimeHours('2026-11-01T00:00', undefined)).toBeNull();
+    expect(computeDowntimeHours(null, '2026-11-01T00:00')).toBeNull();
+  });
+
+  it('start === end -> 0 jam', () => {
+    expect(computeDowntimeHours('2026-11-01T08:00', '2026-11-01T08:00')).toBe(0);
+  });
+
+  it('recalcLogAuto menulis jam pecahan ke logForm.downtime', () => {
+    const ctx = makeCtx({ startDate: '2026-11-01T08:00', endDate: '2026-11-01T08:30' });
+    ctx.recalcLogAuto();
+    expect(ctx.logForm.downtime).toBe(0.5);
+  });
+
+  it('markup: input startDate/endDate bertipe datetime-local', () => {
+    for (const [name, markup] of [['WorkOrders', WORK_ORDERS], ['app-shell', APP_SHELL]]) {
+      const at = markup.indexOf('x-model="logForm.startDate"');
+      expect(at, `${name}: input startDate tidak ditemukan`).toBeGreaterThan(-1);
+      const near = markup.slice(Math.max(0, at - 200), at + 200);
+      expect(near, `${name}: bukan datetime-local`).toContain('type="datetime-local"');
+
+      const et = markup.indexOf('x-model="logForm.endDate"');
+      expect(et, `${name}: input endDate tidak ditemukan`).toBeGreaterThan(-1);
+      expect(markup.slice(Math.max(0, et - 200), et + 200), `${name}: end bukan datetime-local`)
+        .toContain('type="datetime-local"');
+    }
+  });
+});
