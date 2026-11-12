@@ -4,7 +4,7 @@ import { logger } from '../logger.js';
 /**
  * History log management module
  */
-import { localDateStr, validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, formatAssignee as formatAssigneeText } from '../utils.js';
+import { localDateStr, validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, computeDowntimeHours, computePartsCost, formatAssignee as formatAssigneeText } from '../utils.js';
 import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 import { askConfirm } from './confirm-dialog.js';
@@ -68,6 +68,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         if (errors.dueDate) n += 1;
         if (errors.estimatedHours) n += 1;
         if (errors.actualHours) n += 1;
+        if (errors.endDate) n += 1;
         return n;
     },
 
@@ -91,6 +92,9 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         if (!f.desc || !String(f.desc).trim()) errors.desc = 'Temuan teknis wajib diisi';
         if (f.date && f.dueDate && String(f.dueDate) < String(f.date)) {
             errors.dueDate = 'Tenggat lebih awal dari tanggal pekerjaan';
+        }
+        if (f.startDate && f.endDate && String(f.endDate) < String(f.startDate)) {
+            errors.endDate = 'Tanggal selesai lebih awal dari tanggal mulai';
         }
         for (const key of ['estimatedHours', 'actualHours']) {
             const v = f[key];
@@ -199,6 +203,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 cost: data.Cost || 0, 
                 equipmentId: data.EquipmentID || '',
                 date: formatDateForInput(data.Tanggal), 
+                startDate: data.StartDate || '',
+                endDate: data.EndDate || '',
                 tech: data.Technician || '',
                 parts: parsedParts, 
                 status: data.Status || 'Pending',
@@ -265,6 +271,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 cost: '',
                 equipmentId: fromDetail ? (this.selectedEquip?.EquipmentID || '') : '',
                 date: localDateStr(), 
+                startDate: '',
+                endDate: '',
                 tech: 'Maintenance Team',
                 parts: [], 
                 status: 'Pending', 
@@ -323,6 +331,34 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             return;
         }
         this.logForm.photos.splice(index, 1);
+    },
+
+    /** Downtime otomatis dari `startDate`/`endDate`; `null` bila rentang belum sah. */
+    get logAutoDowntime() {
+        const f = this.logForm || {};
+        return computeDowntimeHours(f.startDate, f.endDate);
+    },
+
+    /** Biaya otomatis dari baris part pada form x katalog `allParts`. */
+    get logAutoCost() {
+        const f = this.logForm || {};
+        return computePartsCost(f.parts, this.allParts || []);
+    },
+
+    /**
+     * Prefill `logForm.downtime` / `logForm.cost` dari rentang tanggal + spare part.
+     *
+     * Hanya menulis saat nilai otomatis memang tersedia, jadi angka yang sudah
+     * diketik manual tidak dihapus ketika rentang tanggal belum lengkap. Dipanggil
+     * dari `@change` input tanggal / part, bukan getter - supaya modal yang dibuka
+     * untuk edit tidak menimpa nilai tersimpan sebelum user mengubah apa pun.
+     */
+    recalcLogAuto() {
+        const f = this.logForm;
+        if (!f) return;
+        const hours = this.logAutoDowntime;
+        if (hours !== null) f.downtime = hours;
+        if (Array.isArray(f.parts) && f.parts.length > 0) f.cost = this.logAutoCost;
     },
 
     addPartToLog() {
@@ -463,6 +499,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 LogID: logId, 
                 EquipmentID: this.logForm.equipmentId, 
                 Tanggal: this.logForm.date,
+                StartDate: this.logForm.startDate || '',
+                EndDate: this.logForm.endDate || '',
                 Jenis: this.logForm.type, 
                 Deskripsi: this.logForm.desc, 
                 Technician: this.logForm.tech,

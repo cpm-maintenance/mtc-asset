@@ -193,6 +193,50 @@ export function isValidDateRange(startDate, endDate) {
 }
 
 /**
+ * Downtime otomatis dari rentang tanggal: selisih hari x 24 jam.
+ *
+ * Mengembalikan `null` (bukan `0`) bila salah satu tanggal kosong / tidak valid
+ * atau rentangnya terbalik - supaya pemanggil tidak menimpa angka manual dengan
+ * nilai kosong.
+ *
+ * @param {string} startDate - Tanggal awal (`YYYY-MM-DD`).
+ * @param {string} endDate - Tanggal akhir (`YYYY-MM-DD`).
+ * @returns {number|null} Jam downtime; `0` bila tanggal sama, `null` bila rentang belum sah.
+ */
+export function computeDowntimeHours(startDate, endDate) {
+  if (!startDate || !endDate) return null;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+  if (end.getTime() < start.getTime()) return null;
+  return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) * 24;
+}
+
+/**
+ * Biaya spare part otomatis: jumlah (qty x Harga) dari baris part di form.
+ *
+ * Part tak dikenal / tanpa harga dihitung 0. `qty` yang masih kosong (`''`)
+ * dianggap 1 supaya part terpilih tetap terhitung; `0` tetap 0.
+ *
+ * @param {any[]} parts - Baris part pada form log (`{ id, qty }`).
+ * @param {any[]} catalog - Katalog spare part (`allParts`).
+ * @returns {number} Total biaya; `0` bila tidak ada yang bisa dihitung.
+ */
+export function computePartsCost(parts, catalog) {
+  if (!Array.isArray(parts) || !Array.isArray(catalog)) return 0;
+  const byId = new Map(catalog.map((p) => [p.PartID, p]));
+  let total = 0;
+  for (const row of parts) {
+    const part = byId.get(row && row.id);
+    if (!part) continue;
+    const raw = row.qty;
+    const qty = raw === '' || raw === null || raw === undefined ? 1 : Number(raw) || 0;
+    total += qty * (Number(part.Harga) || 0);
+  }
+  return total;
+}
+
+/**
  * Validasi format id (hanya huruf, angka, `_`, dan `-`).
  *
  * @param {string} id - Id yang divalidasi.
@@ -373,6 +417,7 @@ export function validateLogForm(form) {
   if (form.date && !isValidDate(form.date)) errors.push('Invalid date format');
   if (!form.desc?.trim()) errors.push('Description is required');
   if (form.desc && form.desc.length > 500) errors.push('Description too long (max 500 chars)');
+  if (form.startDate && form.endDate && String(form.endDate) < String(form.startDate)) errors.push('End date cannot be before start date');
   if (form.downtime !== undefined && !isValidPositiveNumber(form.downtime, true)) errors.push('Downtime must be a positive number');
   if (form.cost !== undefined && !isValidPositiveNumber(form.cost, true)) errors.push('Cost must be a positive number');
   if (form.hm && !isValidPositiveNumber(form.hm, true)) errors.push('HM must be a positive number');

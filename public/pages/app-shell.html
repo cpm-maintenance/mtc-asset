@@ -1517,6 +1517,17 @@
               class="w-full">
               <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.date" x-text="logFormErrors.date" x-cloak></p>
           </div>
+          <div>
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Start Date</label>
+            <input aria-label="Tanggal mulai" type="date" x-model="logForm.startDate" @change="recalcLogAuto()"
+              class="w-full">
+          </div>
+          <div>
+            <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">End Date</label>
+            <input aria-label="Tanggal selesai" type="date" x-model="logForm.endDate" @change="recalcLogAuto()"
+              class="w-full">
+            <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.endDate" x-text="logFormErrors.endDate" x-cloak></p>
+          </div>
         </div>
 
         <div class="form-grid">
@@ -1720,16 +1731,16 @@
           <div x-show="logForm.parts.length === 0" class="font-label-mono-sm text-label-mono-sm text-tac-status-standby italic text-center py-4 uppercase tracking-widest" x-cloak>No components registered to this log.</div>
           <template x-for="(part, index) in logForm.parts" :key="index">
             <div class="flex gap-3 mb-4 items-center">
-              <select aria-label="Id" x-model="part.id"
+              <select aria-label="Id" x-model="part.id" @change="recalcLogAuto()"
                 class="flex-1">
                 <option value="">Select Component...</option>
                 <template x-for="p in filteredPartsForLog">
                   <option :value="p.PartID" x-text="(p.NamaSingkat || p.NamaPart) + (p.PartNumber ? ' (' + p.PartNumber + ')' : '')"></option>
                 </template>
               </select>
-              <input aria-label="Jumlah" type="number" x-model="part.qty" min="1" placeholder="Qty"
+              <input aria-label="Jumlah" type="number" x-model="part.qty" @change="recalcLogAuto()" min="1" placeholder="Qty"
                 class="w-20 text-center font-black text-tac-on-surface">
-              <button type="button" @click="removePartFromLog(index)" aria-label="Remove part"
+              <button type="button" @click="removePartFromLog(index); recalcLogAuto()" aria-label="Remove part"
                 class="text-tac-status-emergency bg-tac-surface-card/60 border border-tac-border-tactical hover:bg-tac-status-emergency/20 w-12 h-12 rounded-xl border-tac-status-emergency/20 transition-all flex items-center justify-center shadow-xl"><span class="material-symbols-outlined text-[16px]">close</span></button>
             </div>
           </template>

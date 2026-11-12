@@ -353,6 +353,8 @@ export interface AppState {
   get activeApiKey(): any;
   addBDEvent: (...args: any[]) => any;
   addPartToLog: (...args: any[]) => any;
+/** Isi ulang `downtime`/`cost` dari rentang tanggal + spare part (prefill, bisa ditimpa). */
+recalcLogAuto: (...args: any[]) => any;
   get aiApiKey(): any;
   set aiApiKey(v: any);
   get analysisResultAlias(): any;
@@ -472,6 +474,10 @@ export interface AppState {
   get technicianSuggestions(): string[];
   /** Jumlah field form log yang belum valid. */
   get logFormErrorCount(): number;
+/** Downtime otomatis dari `startDate`/`endDate`; `null` bila rentang belum sah. */
+get logAutoDowntime(): number | null;
+/** Biaya otomatis dari baris part pada form x katalog `allParts`. */
+get logAutoCost(): number;
   /** False selama masih ada field wajib kosong / tanggal terbalik. */
   get isLogFormValid(): boolean;
   get filteredPerformanceData(): any;
