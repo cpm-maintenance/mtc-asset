@@ -120,3 +120,8 @@ docs/*.browser-check.json
 docs/*.delivery.json
 docs/*.finalize.json
 docs/*.finalize-summary.json
+
+# Skill/plugin repo lokal (.open/skills = repo git bersarang, bukan submodule).
+# Ter-track sebagai gitlink 160000 tanpa .gitmodules → `git submodule foreach`
+# di CI gagal "No url found for submodule path" (exit 128).
+.open/
