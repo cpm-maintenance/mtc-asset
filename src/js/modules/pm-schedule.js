@@ -36,6 +36,9 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   pmView: 'calendar',
   pmMonthOffset: 0,
   pmGanttScroll: 0,
+  pmGanttZoom: 'day',
+  pmGanttShowDeps: true,
+  pmGanttShowCritical: true,
   pmLoading: true,
   pmSelectedIds: [],
   _pmHM: null, _pmHMRef: null, _pmHMEqRef: null,
@@ -636,7 +639,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     const days = this.pmGetGanttDays();
     if (days.length === 0) return [];
 
-    const dayWidth = 20;
+    const dayWidth = this.pmGetGanttDayWidth();
     const firstDateStr = days[0]?.dateStr || '';
     const lastDateStr = days[days.length - 1]?.dateStr || '';
     const todayStr = localDateStr();
@@ -705,5 +708,128 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
         events: eq.events,
       };
     });
+  },
+  pmGetGanttDayWidth() {
+    const widths = /** @type {Record<string, number>} */ ({ day: 32, week: 20, month: 10 });
+    return widths[/** @type {string} */ (this.pmGanttZoom)] || 32;
+  },
+
+  pmGanttWidth() {
+    return this.pmGetGanttDays().length * this.pmGetGanttDayWidth();
+  },
+
+  pmToggleDeps() {
+    this.pmGanttShowDeps = !this.pmGanttShowDeps;
+  },
+
+  pmToggleCritical() {
+    this.pmGanttShowCritical = !this.pmGanttShowCritical;
+  },
+
+  /**
+   * Pecah deskripsi PM jadi langkah bersih (buang bullet & penomoran).
+   * @param {any} pm
+   * @returns {string[]}
+   */
+  pmGetChecklist(pm) {
+    const raw = pm && typeof pm.description === 'string' ? pm.description : '';
+    return raw
+      .split('\n')
+      .map((/** @type {string} */ line) => line.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s*/, '').trim())
+      .filter((/** @type {string} */ line) => line.length > 0);
+  },
+
+  /**
+   * Pasangan event berurutan (urut tanggal) dalam satu baris equipment.
+   * ponytail: heuristik chain — PM se-equipment yang berurutan tanggal
+   * dianggap bergantung; ganti ke field dependsOn kalau data nyata ada.
+   * @param {any} row
+   * @returns {any[][]}
+   */
+  pmGanttEventPairs(row) {
+    const events = [...((row && row.events) || [])].sort((/** @type {any} */ a, /** @type {any} */ b) =>
+      String(a.date).localeCompare(String(b.date)));
+    const pairs = [];
+    for (let i = 0; i + 1 < events.length; i++) pairs.push([events[i], events[i + 1]]);
+    return pairs;
+  },
+
+  pmGetGanttLinks() {
+    return this.pmGetGanttRows().flatMap((/** @type {any} */ row) =>
+      this.pmGanttEventPairs(row).map((/** @type {any[]} */ p) => ({
+        key: p[0].id + '-' + p[1].id,
+        equipId: row.equipId,
+        from: p[0].id,
+        to: p[1].id,
+        critical: this.pmGanttIsCritical(row.equipId),
+      })));
+  },
+
+  /**
+   * chain critical = equip dengan PM overdue DAN PM terakhir <= 7 hari ke depan.
+   * ponytail: O(rows) per render karena dipanggil dari pmGanttIsCritical.
+   * @returns {{ ids: string[], equipIds: string[] }}
+   */
+  pmGetCriticalPath() {
+    const ids = /** @type {string[]} */ ([]);
+    const equipIds = /** @type {string[]} */ ([]);
+    const end = new Date();
+    end.setDate(end.getDate() + 7);
+    const endStr = localDateStr(end);
+
+    this.pmGetGanttRows().forEach((/** @type {any} */ row) => {
+      const events = [...(row.events || [])].sort((/** @type {any} */ a, /** @type {any} */ b) =>
+        String(a.date).localeCompare(String(b.date)));
+      if (events.length < 2) return;
+      const hasOverdue = events.some((/** @type {any} */ e) => e.isOverdue);
+      if (!hasOverdue) return;
+      if (!(String(events[events.length - 1].date) <= endStr)) return;
+      equipIds.push(row.equipId);
+      events.forEach((/** @type {any} */ e) => ids.push(e.id));
+    });
+
+    return { ids, equipIds };
+  },
+
+  /**
+   * @param {string} equipId
+   * @returns {boolean}
+   */
+  pmGanttIsCritical(equipId) {
+    return this.pmGetCriticalPath().equipIds.includes(equipId);
+  },
+
+  /**
+   * Elbow SVG antar event se-baris (koordinat viewBox 0 0 pmGanttWidth() 100).
+   * @param {any} row
+   * @returns {{ critical: boolean, d: string }[]}
+   */
+  pmGanttRowLinks(row) {
+    const equipId = row && row.equipId;
+    return this.pmGanttEventPairs(row).map((/** @type {any[]} */ p) => {
+      const critical = this.pmGanttIsCritical(equipId);
+      return {
+        critical,
+        d: 'M ' + (p[0].left + p[0].width) + ' 50 V 78 H ' + p[1].left + ' V 50',
+      };
+    });
+  },
+
+  /**
+   * @param {any} row
+   * @returns {string}
+   */
+  pmGanttRowSvg(row) {
+    if (!this.pmGanttShowDeps) return '';
+    const links = this.pmGanttRowLinks(row);
+    if (links.length === 0) return '';
+    return links
+      .map((/** @type {{ critical: boolean, d: string }} */ l) => {
+        const stroke = l.critical ? 'rgb(var(--tac-status-emergency))' : 'rgb(var(--tac-sync-cyan))';
+        const dash = l.critical ? '0' : '4 3';
+        return '<path d="' + l.d + '" fill="none" stroke="' + stroke +
+          '" stroke-width="2" stroke-dasharray="' + dash + '" />';
+      })
+      .join('');
   },
 });

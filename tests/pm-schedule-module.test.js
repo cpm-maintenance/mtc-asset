@@ -491,7 +491,7 @@ describe('pmScheduleModule stats & gantt', () => {
         expect(Object.keys(byId).sort()).toEqual(['EQ1', 'EQ2', 'EQ3']);
         expect(byId.EQ1.status).toBe('Overdue');
         expect(byId.EQ1.name).toBe('Excavator');
-        expect(byId.EQ1.events[0]).toMatchObject({ id: '1', width: 38, isOverdue: true });
+        expect(byId.EQ1.events[0]).toMatchObject({ id: '1', width: 62, isOverdue: true });
         expect(byId.EQ2.status).toBe('Due Soon');
         expect(byId.EQ2.name).toBe('EQ2'); // tanpa entri di window.app → fallback id
         expect(byId.EQ3.status).toBe('Scheduled');
