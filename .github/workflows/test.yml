@@ -47,8 +47,22 @@ jobs:
           VITE_FIREBASE_APP_ID: 1:400206066339:web:demo
           VITE_FIREBASE_MEASUREMENT_ID: G-DEMO
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      # Unduhan browser (CDN Playwright) dipisah dari pemasangan paket sistem
+      # (mirror apt Ubuntu). Dulu keduanya satu langkah (flag deps bawaan);
+      # saat runner gagal DNS ke archive.ubuntu.com seluruh langkah ikut mati
+      # dengan "E: Unable to fetch some archives" (exit 100) walau tesnya benar.
+      - name: Install Playwright browser
+        run: npx playwright install chromium
+
+      - name: Install Playwright system deps
+        run: |
+          for i in 1 2 3; do
+            npx playwright install-deps chromium && exit 0
+            echo "::warning::install-deps percobaan $i gagal, ulangi dalam 15s"
+            sleep 15
+          done
+          echo "::error::install-deps gagal 3x berturut-turut"
+          exit 1
 
       # firebase-tools 15 butuh JDK 21+; runner ubuntu-latest masih Java 17 →
       # emulator mati seketika ("no longer supports Java version before 21")

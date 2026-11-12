@@ -43,3 +43,4 @@ describe('higiene repo — tidak ada gitlink tanpa .gitmodules', () => {
     expect(gitlinks, `gitlink tanpa .gitmodules:\n${gitlinks.join('\n')}`).toEqual([]);
   });
 });
+
