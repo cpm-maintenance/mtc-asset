@@ -42,7 +42,7 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
   pmLoading: true,
   pmSelectedIds: [],
   _pmHM: null, _pmHMRef: null, _pmHMEqRef: null,
-  _ganttEqMap: null, _ganttEqRef: null,
+  _ganttEqMap: null, _ganttEqFullMap: null, _ganttEqRef: null, _inGanttRows: false,
 
   // --- INIT ---
   /** Load PM_Schedule from Firebase */
@@ -635,6 +635,54 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
     return days;
   },
 
+  /**
+   * Window 1 bulan aktif (default bulan berjalan, offset pmGanttScroll).
+   * Menghasilkan slice hari dari pmGetGanttDays() dan offset koordinat.
+   * ponytail: hari diambil dari pmGetGanttDays() agar koordinat identik.
+   */
+  pmGanttMonthWindow() {
+    const scrollOffset = this.pmGanttScroll || 0;
+    const target = new Date();
+    target.setDate(1);
+    target.setMonth(target.getMonth() + scrollOffset);
+    const targetYear = target.getFullYear();
+    const targetMonth = target.getMonth();
+    const label = target.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const allDays = this.pmGetGanttDays();
+    const days = allDays.filter((/** @type {any} */ d) => {
+      const parts = d.dateStr.split('-');
+      return Number(parts[0]) === targetYear && Number(parts[1]) === (targetMonth + 1);
+    });
+
+    const firstDateStr = days[0]?.dateStr || '';
+    const start = allDays.findIndex((/** @type {any} */ d) => d.dateStr === firstDateStr);
+    const dayWidth = this.pmGetGanttDayWidth();
+    const offsetX = (start >= 0 ? start : 0) * dayWidth;
+    const width = days.length * dayWidth;
+
+    return { days, label, start, offsetX, width };
+  },
+
+  /**
+   * @param {any} evt
+   * @returns {boolean}
+   */
+  pmGanttVisible(evt) {
+    if (!evt || typeof evt.left !== 'number') return false;
+    const w = this.pmGanttMonthWindow();
+    return evt.left >= w.offsetX && evt.left < w.offsetX + w.width;
+  },
+
+  /**
+   * @param {any} evt
+   * @returns {number}
+   */
+  pmGanttBarLeft(evt) {
+    if (!evt || typeof evt.left !== 'number') return 0;
+    return evt.left - this.pmGanttMonthWindow().offsetX;
+  },
+
   pmGetGanttRows() {
     const days = this.pmGetGanttDays();
     if (days.length === 0) return [];
@@ -691,6 +739,27 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
       equipMap[eqKey].events.push(evt);
     });
 
+    // Guard against circular recursion when called from pmGetCriticalPath
+    if (this._inGanttRows) {
+      return Object.values(equipMap).map(eq => ({
+        equipId: eq.equipId,
+        name: eq.equipId,
+        status: 'Scheduled',
+        events: eq.events,
+      }));
+    }
+
+    /** @type {string[]} */
+    let criticalEquipIds = [];
+    this._inGanttRows = true;
+    try {
+      criticalEquipIds = typeof this.pmGetCriticalPath === 'function'
+        ? (this.pmGetCriticalPath().equipIds || [])
+        : [];
+    } finally {
+      this._inGanttRows = false;
+    }
+
     return Object.values(equipMap).map(eq => {
       const status = eq.events.some((/** @type {any} */ e) => e.isOverdue) ? 'Overdue'
         : eq.events.some((/** @type {any} */ e) => e.isDueSoon) ? 'Due Soon'
@@ -699,13 +768,37 @@ export const pmScheduleModule = /** @type {Partial<AppState> & ThisType<AppState
       const eqList = window.app?.equipment || [];
       if (!this._ganttEqMap || this._ganttEqRef !== eqList) {
         this._ganttEqMap = new Map(eqList.map((/** @type {any} */ e) => [e && e.EquipmentID, e && e.Nama]));
+        this._ganttEqFullMap = new Map(eqList.map((/** @type {any} */ e) => [e && e.EquipmentID, e]));
         this._ganttEqRef = eqList;
       }
+      const eqRecord = this._ganttEqFullMap ? this._ganttEqFullMap.get(eq.equipId) : null;
+      const tipe = eqRecord ? eqRecord.Tipe : undefined;
+      const hm = typeof this.pmCurrentHM === 'function' ? (this.pmCurrentHM(eq.equipId) || 0) : 0;
+      const hmLabel = hm + 'h';
+      const iconMap = /** @type {Record<string, string>} */ ({
+        crusher: 'factory',
+        pump: 'engineering',
+        mechanical: 'settings',
+        electrical: 'precision_manufacturing',
+        operational: 'precision_manufacturing',
+        centrifugal: 'engineering',
+        jaw: 'factory',
+      });
+      const icon = (tipe && iconMap[String(tipe).toLowerCase()]) || 'precision_manufacturing';
+      const critical = criticalEquipIds.includes(eq.equipId);
+      const statusLabel = String(status).toUpperCase();
+
       return {
         equipId: eq.equipId,
         name: this._ganttEqMap.get(eq.equipId) || eq.equipId,
         status,
         events: eq.events,
+        tipe,
+        hm,
+        hmLabel,
+        icon,
+        critical,
+        statusLabel,
       };
     });
   },

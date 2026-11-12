@@ -25,7 +25,9 @@ export interface AppState {
 
   // ------------------------------------------------------------------ state
   _ganttEqMap?: any;
+  _ganttEqFullMap?: any;
   _ganttEqRef?: any;
+  _inGanttRows?: boolean;
   _lastHM?: any;
   _lastHMLogsRef?: any;
   _listeners: any[];
@@ -630,6 +632,9 @@ get logAutoCost(): number;
   pmGetCalendarDays: (...args: any[]) => any;
   pmGetCalendarEvents: (...args: any[]) => any;
   pmGetFilteredList: (...args: any[]) => any;
+  pmGanttMonthWindow: () => { days: any[]; label: string; start: number; offsetX: number; width: number };
+  pmGanttVisible: (evt: any) => boolean;
+  pmGanttBarLeft: (evt: any) => number;
   pmGanttEventPairs: (...args: any[]) => any;
   pmGanttIsCritical: (equipId: string) => boolean;
   pmGanttRowLinks: (...args: any[]) => any;

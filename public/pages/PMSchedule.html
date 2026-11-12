@@ -525,11 +525,23 @@
       <!-- Month Tabs -->
       <div class="flex items-center gap-2 overflow-x-auto pb-1">
         <template x-for="(m, idx) in pmGetGanttMonths()" :key="idx">
-          <button type="button" @click="pmGanttScroll = idx"
-            :class="pmGanttScroll === idx ? 'bg-tac-primary-container text-tac-on-primary-container font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'bg-tac-surface-recessed text-tac-status-standby border-tac-border-subtle hover:text-tac-on-surface'"
+          <button type="button" @click="pmGanttScroll = idx - 2"
+            :class="pmGanttScroll === (idx - 2) ? 'bg-tac-primary-container text-tac-on-primary-container font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'bg-tac-surface-recessed text-tac-status-standby border-tac-border-subtle hover:text-tac-on-surface'"
             class="px-4 py-2 rounded border font-label-mono-sm text-label-mono-sm uppercase tracking-wider whitespace-nowrap transition-all"
             x-text="m.label"></button>
         </template>
+        <div class="flex items-center gap-1 ml-auto">
+          <button type="button" @click="pmGanttScroll = 0"
+            class="px-3 py-2 rounded border border-tac-border-subtle bg-tac-surface-recessed text-tac-status-standby hover:text-tac-on-surface font-label-mono-sm text-label-mono-sm uppercase tracking-wider transition-all">TODAY</button>
+          <button type="button" @click="pmGanttScroll--" aria-label="Previous month"
+            class="p-2 rounded border border-tac-border-subtle bg-tac-surface-recessed text-tac-status-standby hover:text-tac-on-surface transition-all flex items-center justify-center">
+            <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+          </button>
+          <button type="button" @click="pmGanttScroll++" aria-label="Next month"
+            class="p-2 rounded border border-tac-border-subtle bg-tac-surface-recessed text-tac-status-standby hover:text-tac-on-surface transition-all flex items-center justify-center">
+            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -540,11 +552,12 @@
         <div class="min-w-max">
           <!-- Timeline Header -->
           <div class="flex border-b border-tac-border-subtle bg-tac-surface-recessed">
-            <div class="shrink-0 p-3 border-r border-tac-border-subtle w-48">
-              <span class="font-label-mono-sm text-label-mono-sm tracking-wider text-tac-status-standby">TARGET ASSET TASK</span>
+            <div class="shrink-0 p-3 border-r border-tac-border-subtle w-64 flex items-center justify-between">
+              <span class="font-label-mono-sm text-label-mono-sm tracking-wider text-tac-status-standby">TARGET ASSET // TASK</span>
+              <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm bg-tac-surface-card text-tac-status-standby" x-text="pmGetGanttRows().length + ' UNITS'"></span>
             </div>
-            <div class="flex" :style="`width:${pmGanttWidth()}px`">
-              <template x-for="day in pmGetGanttDays()" :key="day.dateStr">
+            <div class="flex" :style="`width:${pmGanttMonthWindow().width}px`">
+              <template x-for="day in pmGanttMonthWindow().days" :key="day.dateStr">
                 <div class="shrink-0 border-r border-tac-border-subtle text-center py-2"
                   :style="`width:${pmGetGanttDayWidth()}px`"
                   :class="{'bg-tac-primary/10': day.isToday, 'bg-tac-surface-recessed/40': day.isWeekend && !day.isToday}"
@@ -558,33 +571,45 @@
           <!-- Equipment Rows -->
           <template x-for="row in pmGetGanttRows()" :key="row.equipId">
             <div class="flex border-b border-tac-border-subtle last:border-b-0 hover:bg-tac-surface-elevated/30 transition-colors">
-              <div class="shrink-0 p-3 border-r border-tac-border-subtle w-48 flex flex-col justify-center bg-tac-surface-card">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full shrink-0"
-                    :class="row.status === 'Overdue' ? 'bg-tac-status-emergency' : (row.status === 'Due Soon' ? 'bg-tac-status-repair' : 'bg-tac-status-operational')"></span>
-                  <span class="font-body-sm text-body-sm font-bold text-tac-on-surface truncate" x-text="row.name"></span>
+              <div class="shrink-0 p-3 border-r border-tac-border-subtle w-64 flex items-center justify-between bg-tac-surface-card gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-[20px] text-tac-primary shrink-0" x-text="row.icon"></span>
+                  <div class="flex flex-col min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-body-sm text-body-sm font-bold text-tac-on-surface truncate" x-text="row.name"></span>
+                      <span x-show="row.critical" class="px-1 py-0.5 rounded text-[10px] font-bold bg-tac-status-emergency/20 text-tac-status-emergency border border-tac-status-emergency/40 leading-none">CP</span>
+                    </div>
+                    <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby font-mono truncate" x-text="row.equipId"></span>
+                  </div>
                 </div>
-                <span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby mt-0.5 font-mono" x-text="row.equipId"></span>
+                <div class="flex items-center gap-1 shrink-0">
+                  <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm bg-tac-surface-recessed text-tac-status-standby font-mono" x-text="row.hmLabel"></span>
+                  <span class="px-2 py-0.5 rounded font-label-mono-sm text-label-mono-sm font-bold uppercase"
+                    :class="row.status === 'Overdue' ? 'bg-tac-status-emergency/20 text-tac-status-emergency border border-tac-status-emergency/40' : (row.status === 'Due Soon' ? 'bg-tac-status-repair/20 text-tac-status-repair border border-tac-status-repair/40' : 'bg-tac-status-operational/20 text-tac-status-operational border border-tac-status-operational/40')"
+                    x-text="row.statusLabel"></span>
+                </div>
               </div>
-              <div class="relative flex-1 bg-tac-surface-canvas/50" :style="`width:${pmGanttWidth()}px`">
+              <div class="relative flex-1 bg-tac-surface-canvas/50 overflow-hidden" :style="`width:${pmGanttMonthWindow().width}px`">
                 <div class="flex h-full">
-                  <template x-for="day in pmGetGanttDays()" :key="day.dateStr">
+                  <template x-for="day in pmGanttMonthWindow().days" :key="day.dateStr">
                     <div class="shrink-0 border-r border-tac-border-subtle h-full"
                       :style="`width:${pmGetGanttDayWidth()}px`"
                       :class="{'bg-tac-primary/5': day.isToday, 'bg-tac-surface-recessed/30': day.isWeekend}"></div>
                   </template>
                 </div>
-                <svg class="absolute inset-0 w-full h-full overflow-visible pointer-events-none"
+                <svg class="absolute inset-0 h-full overflow-visible pointer-events-none"
+                  :style="`left:-${pmGanttMonthWindow().offsetX}px; width:${pmGanttWidth()}px;`"
                   :viewBox="`0 0 ${pmGanttWidth()} 100`" preserveAspectRatio="none"
                   x-html="pmGanttRowSvg(row)"></svg>
                 <template x-for="evt in row.events" :key="evt.id">
                   <button type="button"
+                    x-show="pmGanttVisible(evt)"
                     @click="selectedPM = pmList.find(p => p.pmId === evt.id); pmShowDetail = true"
-                    class="absolute top-1/2 -translate-y-1/2 h-5 rounded border cursor-pointer transition-all z-10 shadow-sm overflow-hidden"
+                    class="absolute top-1/2 -translate-y-1/2 h-7 min-w-[96px] rounded border cursor-pointer transition-all z-10 shadow-sm overflow-hidden flex items-center px-2 gap-1.5"
                     :class="evt.isOverdue ? 'bg-tac-status-emergency/40 border-tac-status-emergency hover:bg-tac-status-emergency/60' : (evt.isCompleted ? 'bg-tac-status-operational/40 border-tac-status-operational' : (evt.isDueSoon ? 'bg-tac-status-repair/40 border-tac-status-repair hover:bg-tac-status-repair/60' : 'bg-tac-status-repair/15 border-tac-status-repair/50 hover:bg-tac-status-repair/25'))"
-                    :style="`left:${evt.left}px; width:${evt.width}px;`"
+                    :style="`left:${pmGanttBarLeft(evt)}px; width:${evt.width}px;`"
                     :title="evt.tooltip">
-                    <span class="px-1 font-label-mono-sm text-label-mono-sm font-bold text-tac-on-surface leading-5 opacity-0 hover:opacity-100 transition-opacity block truncate" x-text="evt.name"></span>
+                    <span class="font-label-mono-sm text-label-mono-sm font-bold text-tac-on-surface truncate block" x-text="evt.name"></span>
                   </button>
                 </template>
               </div>
@@ -600,14 +625,19 @@
       <p class="font-headline-md text-headline-md text-tac-on-surface uppercase">No PM Tasks in Range</p>
     </div>
 
-    <!-- Legend -->
-    <div class="flex flex-wrap items-center gap-space-md bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
-      <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-emergency/40 border border-tac-status-emergency"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Overdue</span></div>
-      <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-repair/40 border border-tac-status-repair"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Due &lt;7D</span></div>
-      <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-repair/15 border border-tac-status-repair/50"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Scheduled</span></div>
-      <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-operational/40 border border-tac-status-operational"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Completed</span></div>
-      <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-sync-cyan/20 border border-tac-sync-cyan"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Dependency</span></div>
-      <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-emergency border border-tac-status-emergency"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Critical Path</span></div>
+    <!-- Legend & Status Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-space-md bg-tac-surface-card rounded-lg border border-tac-border-subtle p-space-md">
+      <div class="flex flex-wrap items-center gap-space-md">
+        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-emergency/40 border border-tac-status-emergency"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Overdue</span></div>
+        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-repair/40 border border-tac-status-repair"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Due &lt;7D</span></div>
+        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-repair/15 border border-tac-status-repair/50"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Scheduled</span></div>
+        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-operational/40 border border-tac-status-operational"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Completed</span></div>
+        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-sync-cyan/20 border border-tac-sync-cyan"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Dependency</span></div>
+        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-tac-status-emergency border border-tac-status-emergency"></div><span class="font-label-mono-sm text-label-mono-sm text-tac-status-standby uppercase">Critical Path</span></div>
+      </div>
+      <div class="font-label-mono-sm text-label-mono-sm text-tac-sync-cyan font-bold uppercase tracking-wider">
+        SHOWING <span x-text="pmGetGanttRows().filter(r => r.events.some(e => pmGanttVisible(e))).length"></span> OF <span x-text="pmGetGanttRows().length"></span> SCHEDULED UNITS
+      </div>
     </div>
 
     <!-- Planner Intelligence -->
