@@ -50,3 +50,8 @@ cmd /c "cd /d D:\CODING\MTC-Asset && node scratch\tz.mjs"
 
 ## TODO
 - Verifikasi CI + prod (`gh run list --limit 3`, `scratch/prod.mjs`) setelah push.
+
+
+## Verifikasi rilis (turn yang sama)
+- push `259d701` → CI **3/3 success** (Test 3m48s, Build and Deploy 1m48s, Lighthouse CI 1m13s).
+- prod: `GET /` 200, `GET /sw.js` `cache=mtc-asset-v130`.
