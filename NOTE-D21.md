@@ -26,6 +26,13 @@ Keputusan user: "pakai usulanmu semua beri yang terbaik" (3 usulan disetujui pen
 - Ikon baru (`view_timeline`, `insights`, `check_box_outline_blank`) TIDAK ada di `src/css/icon-subset.txt` -> pakai yang sudah ada (`table_rows`, `monitoring`, `check`).
 - `docs/SOP-*.pdf|pptx` dan `scratch/` jangan pernah di-stage.
 
+## Bukti (D21, commit 45729c5)
+- `tsc --noEmit` bersih, `eslint .` bersih.
+- `vitest run --coverage`: **124 files / 2391 passed**, coverage **98.55 / 90.20 / 97.75 / 98.55** (ratchet 96/89/96/97).
+- `vite build` 636 modul, `verify-precache` **60 berkas** OK, `tz.mjs` **4/4** OK.
+- CI: Test / Build and Deploy / Lighthouse CI **3/3 success**.
+- Prod `https://mtc-asset.web.app`: `/` 200, `cache=mtc-asset-v131`.
+
 ## Perintah verifikasi (verbatim, drive kapital)
 ```
 cmd /c "cd /d D:\CODING\MTC-Asset && npx tsc --noEmit"
