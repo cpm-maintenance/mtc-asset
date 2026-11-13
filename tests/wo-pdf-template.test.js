@@ -171,9 +171,23 @@ describe('seksi data', () => {
         expect(texts()).toContain('Yuli, Gunawan, Maruf M');
     });
 
+    it('truncate memotong teks panjang yang melebihi lebar sel', async () => {
+        await generateProfessionalWOPDF(
+            { ...WO, requestedBy: 'Nama Sangat Panjang Sekali Melebihi Batas Kolom Tanda Tangan' },
+            EQUIP,
+            [],
+        );
+        expect(texts().some((x) => x.endsWith('…'))).toBe(true);
+    });
+
     it('assignedTo kosong jadi UNASSIGNED', async () => {
         await generateProfessionalWOPDF({ ...WO, assignedTo: '' }, EQUIP, []);
         expect(texts()).toContain('UNASSIGNED');
+    });
+
+    it('decode HTML entity seperti Fatigue&#x2F;Wear menjadi Fatigue/Wear', async () => {
+        await generateProfessionalWOPDF({ ...WO, rca: 'Fatigue&#x2F;Wear' }, EQUIP, []);
+        expect(texts()).toContain('Category: Fatigue/Wear  ·  Dept: Produksi');
     });
 });
 
@@ -182,8 +196,8 @@ describe('deskripsi tidak dipotong', () => {
         jsPDF.doc.splitTextToSize.mockReturnValueOnce(['a', 'b', 'c', 'd', 'e', 'f']);
         await generateProfessionalWOPDF({ ...WO, Deskripsi: 'panjang' }, EQUIP, []);
 
-        // Lebar sel deskripsi (148 mm dikurangi margin = 140 mm).
-        expect(jsPDF.doc.splitTextToSize).toHaveBeenCalledWith('panjang', 140);
+        // Lebar sel deskripsi (150 mm dikurangi margin = 142 mm).
+        expect(jsPDF.doc.splitTextToSize).toHaveBeenCalledWith('panjang', 142);
         const rendered = jsPDF.doc.text.mock.calls
             .filter((c) => Array.isArray(c[0]))
             .map((c) => c[0]);
@@ -220,6 +234,16 @@ describe('parts used', () => {
             [],
         );
         expect(texts()).toContain('Bearing 6312');
+    });
+
+    it('nama part diambil dari master parts jika tidak ada di record WO', async () => {
+        const masterParts = [{ PartID: '14007107', NamaPart: 'Impeller Pump PU 13', Satuan: 'pcs' }];
+        await generateProfessionalWOPDF(
+            { ...WO, PartsUsed: [{ id: '14007107', qty: 1 }] },
+            EQUIP,
+            masterParts,
+        );
+        expect(texts()).toContain('Impeller Pump PU 13');
     });
 
     it('array langsung juga diterima', async () => {

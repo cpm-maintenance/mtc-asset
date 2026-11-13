@@ -3,13 +3,14 @@
  * Work Order PDF — Template Form Grid Korporat (Gaya TemplateLab / Corporate CPM).
  *
  * Mengikuti standar formulir kerja formal industri pertambangan:
- *  · Kop bersih: Banner nama PT. CITRA PALU MINERALS + blok judul MAINTENANCE WORK ORDER.
- *  · Metadata Grid 2-Kolom: Kolom kiri informasi alat (Equipment, Lokasi, Status, Dept, Tipe),
- *    kolom kanan informasi order (Order Number, Issued, Priority, Due, Status, Requestor).
- *  · Lingkup & Deskripsi Pekerjaan (Terms & Work Description) tersusun dalam baris tabel berbingkai.
+ *  · Kop resmi: Banner nama PT. CITRA PALU MINERALS + alamat site Poboya (tanpa no. telp)
+ *    + blok judul MAINTENANCE WORK ORDER.
+ *  · Metadata Grid 2-Kolom & Lingkup Pekerjaan: Kolom biru label dibuat SEJAJAR presisi (36 mm).
+ *  · Sanitasi Entitas: Otomatis mendecode HTML entities (misal Fatigue&#x2F;Wear -> Fatigue/Wear).
+ *  · Resolusi Part: Otomatis mencari Material Description dari master spare parts jika log hanya mencatat Part ID.
  *  · Tabel Parts / Material: Header biru solid, baris belang (zebra), dan rekap Total Items.
- *  · Blok Bawah Terbagi: Kolom tanda tangan 3-pihak di kiri dan rekap Jam & Biaya di kanan.
- *  · Dukungan multi-halaman jika item parts panjang tanpa memotong teks atau menabrak footer.
+ *  · Blok Bawah: Kolom tanda tangan 3-pihak di kiri dan rekap Jam & Biaya di kanan.
+ *  · Multi-halaman aman jika daftar parts panjang.
  */
 
 const PW = 210;
@@ -56,6 +57,24 @@ const C = {
     neutral: [71, 85, 105],
 };
 
+/**
+ * Decode entitas HTML seperti &#x2F; menjadi /, &amp; menjadi &, dsb.
+ * @param {any} val
+ * @returns {string}
+ */
+function decodeHtml(val) {
+    if (val === null || val === undefined) return '';
+    return String(val)
+        .replace(/&#x2F;/gi, '/')
+        .replace(/&#47;/g, '/')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+}
+
 /** @param {any} value @returns {string} */
 function num(value) {
     return String(value).replace('.', ',');
@@ -81,10 +100,10 @@ function formatDate(value) {
 /** @param {any} value @returns {string} */
 function formatAssignees(value) {
     if (Array.isArray(value)) {
-        const names = value.map((v) => String(v ?? '').trim()).filter(Boolean);
+        const names = value.map((v) => decodeHtml(String(v ?? '').trim())).filter(Boolean);
         return names.length ? names.join(', ') : 'UNASSIGNED';
     }
-    if (typeof value === 'string') return value.trim() || 'UNASSIGNED';
+    if (typeof value === 'string') return decodeHtml(value.trim()) || 'UNASSIGNED';
     return 'UNASSIGNED';
 }
 
@@ -112,10 +131,10 @@ function statusTone(status) {
 /**
  * @param {any} log
  * @param {any} equipment
- * @param {any} _parts
+ * @param {any[]} [partsList=[]]
  * @returns {Promise<void>}
  */
-export async function generateProfessionalWOPDF(log, equipment, _parts) {
+export async function generateProfessionalWOPDF(log, equipment, partsList = []) {
     const { jsPDF } = await import('jspdf');
 
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -127,7 +146,8 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
 
     let parseParts;
     try {
-        parseParts = typeof log.PartsUsed === 'string' ? JSON.parse(log.PartsUsed || '[]') : log.PartsUsed || [];
+        const raw = log.PartsUsed ?? log.parts ?? [];
+        parseParts = typeof raw === 'string' ? JSON.parse(raw || '[]') : raw || [];
     } catch {
         parseParts = [];
     }
@@ -137,7 +157,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
 
     /** @param {any} text @param {number} maxWidth @returns {string} */
     function truncate(text, maxWidth) {
-        const s = String(text ?? '-');
+        const s = decodeHtml(String(text ?? '-'));
         if (doc.getTextWidth(s) <= maxWidth) return s;
         let cut = s;
         while (cut.length > 1 && doc.getTextWidth(cut + '…') > maxWidth) cut = cut.slice(0, -1);
@@ -167,12 +187,13 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         doc.setCharSpace(0.3);
 
         const textY = yTop + h / 2 + 1.2;
+        const cleanText = decodeHtml(String(text)).toUpperCase();
         if (align === 'center') {
-            doc.text(String(text).toUpperCase(), x + w / 2, textY, { align: 'center' });
+            doc.text(cleanText, x + w / 2, textY, { align: 'center' });
         } else if (align === 'right') {
-            doc.text(String(text).toUpperCase(), x + w - 2.5, textY, { align: 'right' });
+            doc.text(cleanText, x + w - 2.5, textY, { align: 'right' });
         } else {
-            doc.text(String(text).toUpperCase(), x + 2.5, textY);
+            doc.text(cleanText, x + 2.5, textY);
         }
         doc.setCharSpace(0);
     }
@@ -201,7 +222,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         doc.setTextColor(...C.text);
 
         const textY = yTop + h / 2 + 1.2;
-        const textVal = truncate(text, w - 5);
+        const textVal = truncate(decodeHtml(text), w - 5);
         if (align === 'center') {
             doc.text(textVal, x + w / 2, textY, { align: 'center' });
         } else if (align === 'right') {
@@ -227,11 +248,12 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         doc.setTextColor(...C.darkBlue);
         doc.text('MAINTENANCE TECHNICAL CENTER', M, 24.5);
 
+        // Alamat Resmi Kantor / Tambang (tanpa nomor telepon)
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.8);
+        doc.setFontSize(6.5);
         doc.setTextColor(...C.slate);
-        doc.text('Poboya Gold Mine Project · Palu, Sulawesi Tengah', M, 28.5);
-        doc.text('Indonesia · Tel: +62 451 4012800 · www.citrapalu.com', M, 32.2);
+        doc.text('Alamat Kantor/Tambang: Jl. Kapusaragja KM 4, Poboya,', M, 28.5);
+        doc.text('Kecamatan Mantikulore, Kota Palu, Sulawesi Tengah 94119', M, 32.2);
 
         // Banner Judul Dokumen (Kanan)
         const bannerW = 92;
@@ -286,9 +308,10 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     y = 37;
 
     // ── METADATA GRID (Tabel 2-Kolom Berbingkai) ────────────────────────────
+    // Dibuat SEJAJAR dengan tabel lingkup kerja di bawahnya (kolom label persis 36 mm)
     const leftW = 100;
-    const labelW = 34;
-    const valW = leftW - labelW; // 66 mm
+    const labelW = 36;
+    const valW = leftW - labelW; // 64 mm
     const rowH = 6.2;
 
     const leftRows = isExternal
@@ -312,7 +335,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     leftRows.forEach(([lbl, val], idx) => {
         const ry = y + idx * rowH;
         cellHeader(M, ry, labelW, rowH, lbl);
-        cellValue(M + labelW, ry, valW, rowH, val);
+        cellValue(M + labelW, ry, valW, rowH, decodeHtml(val));
     });
 
     // Kolom Kanan: 3 Baris Pasangan (Header Atas, Nilai Bawah)
@@ -380,29 +403,33 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     y += leftRows.length * rowH + 3.5;
 
     // ── LINGKUP & DESKRIPSI PEKERJAAN (TERMS & WORK SCOPE) ─────────────────
-    const descLabelW = 38;
-    const descValW = CW - descLabelW; // 148 mm
-    const textWrapW = 140;            // 140 mm (lebar aman dengan margin 4 mm)
+    // Kolom label SEJAJAR presisi 36 mm dengan tabel atas
+    const descLabelW = 36;
+    const descValW = CW - descLabelW; // 150 mm
+    const textWrapW = 142;            // 142 mm (margin aman 4 mm)
 
-    // Baris 1: TERMS OF SERVICE / SCOPE
+    // Baris 1: TERMS OF SERVICE / KATEGORI (Hapus "Class A Mining Service Agreement")
     const termsH = 6.2;
+    const cleanCategory = decodeHtml(log.rca || 'PM');
+    const cleanDept = decodeHtml(log.requestSource || 'Production');
     cellHeader(M, y, descLabelW, termsH, 'TERMS OF SERVICE');
     cellValue(
         M + descLabelW,
         y,
         descValW,
         termsH,
-        `Class A Mining Service Agreement. Category: ${log.rca || 'PM'} · Dept: ${log.requestSource || 'Production'}`,
+        `Category: ${cleanCategory}  ·  Dept: ${cleanDept}`,
         'left',
         false,
-        6.8,
+        7.0,
     );
     y += termsH;
 
-    // Baris 2: BRIEF WORK DESCRIPTION
+    // Baris 2: WORK DESCRIPTION
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.2);
-    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), textWrapW);
+    const cleanDesc = decodeHtml(log.Deskripsi || '-');
+    const descLines = doc.splitTextToSize(cleanDesc, textWrapW);
     const descBoxH = Math.max(8.5, descLines.length * 4.0 + 4.0);
 
     doc.setFillColor(...C.blue);
@@ -415,7 +442,7 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     doc.setFontSize(6.2);
     doc.setTextColor(...C.white);
     doc.setCharSpace(0.3);
-    doc.text('BRIEF WORK DESCRIPTION', M + 2.5, y + 5.2);
+    doc.text('WORK DESCRIPTION', M + 2.5, y + 5.2);
     doc.setCharSpace(0);
 
     doc.setFillColor(...C.white);
@@ -494,9 +521,28 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
             const rowFill = i % 2 === 1 ? C.zebra : C.white;
             const rH = 5.6;
 
-            const partId = String(part?.id || part?.PartID || '-');
-            const partName = String(part?.name || part?.NamaPart || '-');
-            const partUom = String(part?.uom || part?.UOM || 'pcs');
+            const partId = String(part?.id || part?.PartID || part?.partNumber || part?.PartNumber || '-').trim();
+            let partName = String(part?.name || part?.NamaPart || part?.description || part?.Deskripsi || '').trim();
+            let partUom = String(part?.uom || part?.UOM || part?.satuan || part?.Satuan || '').trim();
+
+            // Jika deskripsi part kosong di record WO, cari dari master list partsList
+            if (!partName || partName === '-') {
+                const found = Array.isArray(partsList)
+                    ? partsList.find((sp) => {
+                          const spId = String(sp?.PartID || sp?.id || '').trim();
+                          const spNum = String(sp?.PartNumber || sp?.partNumber || '').trim();
+                          return Boolean(partId && partId !== '-' && (spId === partId || spNum === partId));
+                      })
+                    : null;
+                if (found) {
+                    partName = String(found.NamaPart || found.name || found.Description || found.Deskripsi || '').trim();
+                    if (!partUom || partUom === 'pcs') {
+                        partUom = String(found.Satuan || found.satuan || found.uom || found.UOM || 'pcs').trim();
+                    }
+                }
+            }
+            if (!partName) partName = '-';
+            if (!partUom) partUom = 'pcs';
 
             cellValue(M, y, colNo, rH, String(i + 1).padStart(2, '0'), 'center', false, 7.0, rowFill);
             cellValue(M + colNo, y, colPart, rH, partId, 'left', true, 7.2, rowFill);
