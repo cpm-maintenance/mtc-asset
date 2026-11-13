@@ -1,45 +1,36 @@
 // @ts-check
 /**
- * Work Order PDF — premium maintenance form, revisi 2 (S41b).
+ * Work Order PDF — Template Form Grid Korporat (Gaya TemplateLab / Corporate CPM).
  *
- * Perubahan dari revisi 1: dokumen tidak lagi berupa deretan baris rata kiri.
- *  · Masthead **ink full-bleed** 27 mm dengan aksen emas — titik masuk mata,
- *    sekaligus membawa identitas (monogram, perusahaan, jenis dokumen, nomor WO).
- *  · Pita statistik di bawah masthead: ISSUED / DUE / PRIORITY / STATUS, tone
- *    berupa pil berwarna + teks, jadi tetap terbaca saat dicetak hitam-putih.
- *  · Badan dua kolom: kiri untuk aset + deskripsi, kanan **panel JOB CARD**
- *    berisi seluruh metadata pekerjaan. Panel inilah yang membuat halaman
- *    terbaca "dirancang", bukan daftar baris.
- *  · Seksi bernomor (01…04) supaya alur baca jelas: aset → lingkup → parts →
- *    tanda tangan.
- *  · TOTAL COST adalah jangkar angka terbesar; tanda tangan memakai panel
- *    bertanda tangan basah dengan catatan keabsahan.
- *
- * Prinsip yang dijaga: tidak ada isi yang dipotong diam-diam (deskripsi penuh,
- * semua baris parts), dan tidak ada koordinat yang dipaku ke dasar halaman.
+ * Mengikuti standar formulir kerja formal industri pertambangan:
+ *  · Kop bersih: Banner nama PT. CITRA PALU MINERALS + blok judul MAINTENANCE WORK ORDER.
+ *  · Metadata Grid 2-Kolom: Kolom kiri informasi alat (Equipment, Lokasi, Status, Dept, Tipe),
+ *    kolom kanan informasi order (Order Number, Issued, Priority, Due, Status, Requestor).
+ *  · Lingkup & Deskripsi Pekerjaan (Terms & Work Description) tersusun dalam baris tabel berbingkai.
+ *  · Tabel Parts / Material: Header biru solid, baris belang (zebra), dan rekap Total Items.
+ *  · Blok Bawah Terbagi: Kolom tanda tangan 3-pihak di kiri dan rekap Jam & Biaya di kanan.
+ *  · Dukungan multi-halaman jika item parts panjang tanpa memotong teks atau menabrak footer.
  */
+
 const PW = 210;
 const PH = 297;
-const M = 14;
-const CW = PW - M * 2;
-const BOTTOM = PH - 22;
+const M = 12;
+const CW = PW - M * 2; // 186 mm
+const BOTTOM = PH - 24;
 
 /**
- * Palet dokumen. Tiap warna bertipe tupel `[r, g, b]`, bukan `number[]`,
- * supaya `...C.ink` sah sebagai spread ke `setTextColor(...)` / `setFillColor(...)`.
- * Key didaftar eksplisit: salah ketik nama warna jadi error tipe, bukan
- * `undefined` yang lolos diam-diam ke PDF.
- *
+ * Palet dokumen.
  * @typedef {object} Palette
- * @property {[number, number, number]} ink
- * @property {[number, number, number]} ink2
+ * @property {[number, number, number]} blue
+ * @property {[number, number, number]} darkBlue
+ * @property {[number, number, number]} lightBlue
+ * @property {[number, number, number]} zebra
+ * @property {[number, number, number]} line
+ * @property {[number, number, number]} text
  * @property {[number, number, number]} slate
  * @property {[number, number, number]} mute
- * @property {[number, number, number]} line
- * @property {[number, number, number]} paper
- * @property {[number, number, number]} gold
- * @property {[number, number, number]} goldSoft
  * @property {[number, number, number]} white
+ * @property {[number, number, number]} gold
  * @property {[number, number, number]} danger
  * @property {[number, number, number]} success
  * @property {[number, number, number]} info
@@ -48,35 +39,35 @@ const BOTTOM = PH - 22;
  */
 /** @type {Palette} */
 const C = {
-    ink: [15, 23, 42],
-    ink2: [30, 41, 59],
-    slate: [100, 116, 139],
-    mute: [148, 163, 184],
-    line: [226, 232, 240],
-    paper: [248, 250, 252],
-    gold: [191, 155, 90],
-    goldSoft: [246, 240, 226],
+    blue: [27, 85, 155],        // Biru Korporat TemplateLab
+    darkBlue: [18, 58, 110],    // Biru Tua / Header Aksen
+    lightBlue: [238, 244, 252], // Biru Es Lembut
+    zebra: [248, 250, 254],     // Baris Belang
+    line: [185, 200, 218],      // Garis Tabel
+    text: [25, 30, 40],         // Teks Utama Gelap
+    slate: [95, 110, 130],      // Teks Redup
+    mute: [145, 155, 170],      // Teks Keterangan
     white: [255, 255, 255],
+    gold: [191, 155, 90],
     danger: [185, 28, 28],
+    warn: [180, 83, 9],
     success: [5, 150, 105],
     info: [37, 99, 235],
-    warn: [180, 83, 9],
     neutral: [71, 85, 105],
 };
 
-/** Angka gaya Indonesia: 4.5 → `4,5`. */
 /** @param {any} value @returns {string} */
 function num(value) {
     return String(value).replace('.', ',');
 }
 
-/** @param {any} num @returns {string} */
-function formatCurrency(num) {
-    if (!num) return 'Rp 0';
-    return 'Rp ' + String(num || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+/** @param {any} val @returns {string} */
+function formatCurrency(val) {
+    if (val === 0 || val === '0') return 'Rp 0';
+    if (!val) return 'Rp 0';
+    return 'Rp ' + String(val).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-/** `2026-10-18` → `18 Oct 2026`; bentuk lain dikembalikan apa adanya. */
 /** @param {any} value @returns {string} */
 function formatDate(value) {
     const s = String(value || '').trim();
@@ -87,12 +78,6 @@ function formatDate(value) {
     return `${m[3]} ${bulan[idx] || m[2]} ${m[1]}`;
 }
 
-/**
- * `assignedTo` di RTDB bisa berupa larik (multi-teknisi). Disalin lokal, bukan
- * diimpor dari `utils.js`, supaya modul PDF tetap daun — tanpa rantai
- * `utils → constants` yang membuatnya tidak bisa dirender di luar Vite.
- * Perilakunya sama dengan `formatAssignee()` di `src/js/utils.js`.
- */
 /** @param {any} value @returns {string} */
 function formatAssignees(value) {
     if (Array.isArray(value)) {
@@ -103,13 +88,7 @@ function formatAssignees(value) {
     return 'UNASSIGNED';
 }
 
-/**
- * Tanggal `YYYY-MM-DD` menurut waktu LOKAL. Disalin lokal, bukan impor
- * `utils.js`, karena alasan modul-daun yang sama dengan `formatAssignees`
- * di atas — tanpa rantai `utils -> constants` yang butuh Vite.
- * @param {Date} [d]
- * @returns {string}
- */
+/** @param {Date} [d] @returns {string} */
 function localDay(d = new Date()) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -156,64 +135,9 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
 
     let y = 0;
 
-    // ── primitif tipografi ──────────────────────────────────────────────────
-    const ink = () => doc.setTextColor(...C.ink);
-
-    /**
-     * @param {number} x1
-     * @param {number} x2
-     * @param {number} yTop
-     * @param {[number, number, number]} [color]
-     * @param {number} [width]
-     */
-    function hairline(x1, x2, yTop, color = C.line, width = 0.2) {
-        doc.setDrawColor(...color);
-        doc.setLineWidth(width);
-        doc.line(x1, yTop, x2, yTop);
-    }
-
-    /** Label kecil huruf besar berspasi. */
-    /**
-     * @param {any} text
-     * @param {number} x
-     * @param {number} yTop
-     * @param {[number, number, number]} [color]
-     * @param {number} [size]
-     */
-    function label(text, x, yTop, color = C.slate, size = 5.9) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(size);
-        doc.setCharSpace(0.4);
-        doc.setTextColor(...color);
-        doc.text(String(text).toUpperCase(), x, yTop);
-        doc.setCharSpace(0);
-    }
-
-    /** Judul seksi bernomor: `01` emas + judul + garis. */
-    /**
-     * @param {number} index
-     * @param {any} text
-     * @param {number} yTop
-     * @param {number} [x]
-     * @param {number} [right]
-     */
-    function sectionTitle(index, text, yTop, x = M, right = PW - M) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.6);
-        doc.setCharSpace(0.2);
-        doc.setTextColor(...C.gold);
-        doc.text(String(index).padStart(2, '0'), x, yTop);
-        doc.setCharSpace(0.7);
-        ink();
-        doc.text(String(text).toUpperCase(), x + 7.4, yTop);
-        const w = doc.getTextWidth(String(text).toUpperCase());
-        doc.setCharSpace(0);
-        hairline(x + 9.6 + w, right, yTop - 0.9, C.line, 0.25);
-    }
-
     /** @param {any} text @param {number} maxWidth @returns {string} */
     function truncate(text, maxWidth) {
-        const s = String(text);
+        const s = String(text ?? '-');
         if (doc.getTextWidth(s) <= maxWidth) return s;
         let cut = s;
         while (cut.length > 1 && doc.getTextWidth(cut + '…') > maxWidth) cut = cut.slice(0, -1);
@@ -221,98 +145,130 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
     }
 
     /**
-     * @param {any} text
+     * Gambar sel header (latar biru, teks putih).
      * @param {number} x
      * @param {number} yTop
-     * @param {number} [size]
+     * @param {number} w
+     * @param {number} h
+     * @param {string} text
+     * @param {'left'|'center'|'right'} [align]
+     * @param {number} [fontSize]
      */
-    function value(text, x, yTop, size = 9) {
+    function cellHeader(x, yTop, w, h, text, align = 'left', fontSize = 6.2) {
+        doc.setFillColor(...C.blue);
+        doc.rect(x, yTop, w, h, 'F');
+        doc.setDrawColor(...C.line);
+        doc.setLineWidth(0.2);
+        doc.rect(x, yTop, w, h, 'S');
+
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(size);
-        ink();
-        doc.text(String(text), x, yTop);
+        doc.setFontSize(fontSize);
+        doc.setTextColor(...C.white);
+        doc.setCharSpace(0.3);
+
+        const textY = yTop + h / 2 + 1.2;
+        if (align === 'center') {
+            doc.text(String(text).toUpperCase(), x + w / 2, textY, { align: 'center' });
+        } else if (align === 'right') {
+            doc.text(String(text).toUpperCase(), x + w - 2.5, textY, { align: 'right' });
+        } else {
+            doc.text(String(text).toUpperCase(), x + 2.5, textY);
+        }
+        doc.setCharSpace(0);
     }
 
-    /** Pil berwarna + teks putih; lebar mengikuti isi. */
     /**
-     * @param {any} text
+     * Gambar sel nilai data (latar putih, border garis, teks gelap).
      * @param {number} x
      * @param {number} yTop
-     * @param {[number, number, number]} fill
+     * @param {number} w
+     * @param {number} h
+     * @param {string} text
+     * @param {'left'|'center'|'right'} [align]
+     * @param {boolean} [bold]
+     * @param {number} [fontSize]
+     * @param {[number, number, number]} [fill]
      */
-    function pill(text, x, yTop, fill) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6.2);
-        doc.setCharSpace(0.4);
-        const w = doc.getTextWidth(text) + 7;
+    function cellValue(x, yTop, w, h, text, align = 'left', bold = true, fontSize = 7.2, fill = C.white) {
         doc.setFillColor(...fill);
-        doc.roundedRect(x, yTop, w, 5.6, 1.2, 1.2, 'F');
-        doc.setTextColor(...C.white);
-        doc.text(text, x + w / 2, yTop + 3.9, { align: 'center' });
-        doc.setCharSpace(0);
-        return w;
+        doc.rect(x, yTop, w, h, 'F');
+        doc.setDrawColor(...C.line);
+        doc.setLineWidth(0.2);
+        doc.rect(x, yTop, w, h, 'S');
+
+        doc.setFont('helvetica', bold ? 'bold' : 'normal');
+        doc.setFontSize(fontSize);
+        doc.setTextColor(...C.text);
+
+        const textY = yTop + h / 2 + 1.2;
+        const textVal = truncate(text, w - 5);
+        if (align === 'center') {
+            doc.text(textVal, x + w / 2, textY, { align: 'center' });
+        } else if (align === 'right') {
+            doc.text(textVal, x + w - 2.5, textY, { align: 'right' });
+        } else {
+            doc.text(textVal, x + 2.5, textY);
+        }
     }
 
-    // ── masthead ────────────────────────────────────────────────────────────
-    function masthead() {
-        doc.setFillColor(...C.ink);
-        doc.rect(0, 0, PW, 27, 'F');
-        doc.setFillColor(...C.gold);
-        doc.rect(0, 27, PW, 1.4, 'F');
-
-        // Monogram: kotak bergaris emas, huruf emas.
-        doc.setDrawColor(...C.gold);
-        doc.setLineWidth(0.45);
-        doc.roundedRect(M, 7.5, 13, 13, 2.4, 2.4, 'S');
+    // ── KOP / HEADER DOKUMEN ───────────────────────────────────────────────
+    function headerBanner() {
+        // Blok Identitas Perusahaan (Kiri)
+        const leftBoxW = 86;
+        doc.setFillColor(...C.blue);
+        doc.rect(M, 12, leftBoxW, 8.5, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.2);
-        doc.setCharSpace(0.6);
-        doc.setTextColor(...C.gold);
-        doc.text('MTC', M + 6.5, 15.8, { align: 'center' });
-        doc.setCharSpace(0);
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12.4);
+        doc.setFontSize(10.5);
         doc.setTextColor(...C.white);
-        doc.text('PT. CITRA PALU MINERALS', M + 17.5, 13.4);
+        doc.text('PT. CITRA PALU MINERALS', M + 3, 17.8);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.6);
+        doc.setTextColor(...C.darkBlue);
+        doc.text('MAINTENANCE TECHNICAL CENTER', M, 24.5);
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.2);
-        doc.setCharSpace(0.55);
-        doc.setTextColor(148, 163, 184);
-        doc.text('MAINTENANCE TECHNICAL CENTER', M + 17.5, 18.4);
-        doc.setCharSpace(0);
+        doc.setFontSize(6.8);
+        doc.setTextColor(...C.slate);
+        doc.text('Poboya Gold Mine Project · Palu, Sulawesi Tengah', M, 28.5);
+        doc.text('Indonesia · Tel: +62 451 4012800 · www.citrapalu.com', M, 32.2);
+
+        // Banner Judul Dokumen (Kanan)
+        const bannerW = 92;
+        const bannerX = PW - M - bannerW;
+        doc.setFillColor(...C.darkBlue);
+        doc.roundedRect(bannerX, 12, bannerW, 21.5, 1.2, 1.2, 'F');
 
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(15.6);
-        doc.setCharSpace(0.6);
+        doc.setFontSize(8.2);
         doc.setTextColor(...C.white);
-        doc.text('WORK ORDER', PW - M, 13.4, { align: 'right' });
+        doc.setCharSpace(1.8);
+        doc.text('MAINTENANCE', bannerX + bannerW / 2, 18.5, { align: 'center' });
+
+        doc.setFontSize(14.5);
+        doc.setCharSpace(1.2);
+        doc.text('WORK ORDER', bannerX + bannerW / 2, 26.5, { align: 'center' });
         doc.setCharSpace(0);
 
+        // Sub-strip nomor WO di dalam banner
         doc.setFont('courier', 'bold');
-        doc.setFontSize(9.6);
-        doc.setCharSpace(0.4);
-        doc.setTextColor(...C.gold);
-        doc.text(woNumber, PW - M, 19.6, { align: 'right' });
-        doc.setCharSpace(0);
-    }
-
-    /** Header tipis untuk halaman lanjutan. */
-    function continuationHeader() {
-        doc.setFillColor(...C.ink);
-        doc.rect(0, 0, PW, 13, 'F');
-        doc.setFillColor(...C.gold);
-        doc.rect(0, 13, PW, 1.2, 'F');
-        doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.4);
         doc.setTextColor(...C.white);
-        doc.text('PT. CITRA PALU MINERALS', M, 8.6);
+        doc.text(woNumber, bannerX + bannerW / 2, 31, { align: 'center' });
+    }
+
+    /** Header halaman lanjutan (jika tabel parts panjang) */
+    function continuationHeader() {
+        doc.setFillColor(...C.darkBlue);
+        doc.rect(M, 10, CW, 11, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.2);
+        doc.setTextColor(...C.white);
+        doc.text('PT. CITRA PALU MINERALS', M + 4, 17);
         doc.setFont('courier', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(...C.gold);
-        doc.text('WORK ORDER · ' + woNumber, PW - M, 8.6, { align: 'right' });
-        y = 21;
+        doc.setFontSize(8.2);
+        doc.text('WORK ORDER · ' + woNumber, PW - M - 4, 17, { align: 'right' });
+        y = 25;
     }
 
     function newPage() {
@@ -325,146 +281,205 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
         if (y + height > BOTTOM) newPage();
     }
 
-    // ── masthead + pita statistik ───────────────────────────────────────────
-    masthead();
+    // ── RENDER HALAMAN UTAMA ────────────────────────────────────────────────
+    headerBanner();
+    y = 37;
 
-    const stats = [
-        { key: 'Issued', value: formatDate(log.Tanggal) },
-        { key: 'Due', value: log.dueDate ? formatDate(log.dueDate) : '—' },
-        { key: 'Department', value: truncate(log.requestSource || '-', 30) },
-        { key: 'Priority', value: String(priority).toUpperCase(), tone: priorityTone(priority) },
-        { key: 'Status', value: String(status).toUpperCase(), tone: statusTone(status) },
-    ];
-    const statW = CW / stats.length;
-    stats.forEach((cell, i) => {
-        const x = M + i * statW;
-        label(cell.key, x, 35.5);
-        if (cell.tone) pill(cell.value, x, 39.2, cell.tone);
-        else value(cell.value, x, 43, 9.4);
-        if (i > 0) {
-            doc.setDrawColor(...C.line);
-            doc.setLineWidth(0.2);
-            doc.line(x - 4.5, 34, x - 4.5, 44);
-        }
+    // ── METADATA GRID (Tabel 2-Kolom Berbingkai) ────────────────────────────
+    const leftW = 100;
+    const labelW = 34;
+    const valW = leftW - labelW; // 66 mm
+    const rowH = 6.2;
+
+    const leftRows = isExternal
+        ? [
+              ['EXTERNAL ASSET', log.externalEquipName || '-'],
+              ['SOURCE', log.requestSource || '-'],
+              ['DEPARTMENT', log.requestSource || 'Production'],
+              ['MAINTENANCE TYPE', log.Jenis || 'PM'],
+              ['LOCATION', log.Lokasi || 'Plant Site'],
+              ['ASSIGNED TO', formatAssignees(log.assignedTo)],
+          ]
+        : [
+              ['EQUIPMENT', (equipment?.EquipmentID || '-') + ' · ' + (equipment?.Nama || '-')],
+              ['LOCATION', equipment?.Lokasi || '-'],
+              ['ASSET STATUS', equipment?.Status || '-'],
+              ['DEPARTMENT', log.requestSource || 'Production'],
+              ['MAINTENANCE TYPE', log.Jenis || 'PM'],
+              ['ASSIGNED TO', formatAssignees(log.assignedTo)],
+          ];
+
+    leftRows.forEach(([lbl, val], idx) => {
+        const ry = y + idx * rowH;
+        cellHeader(M, ry, labelW, rowH, lbl);
+        cellValue(M + labelW, ry, valW, rowH, val);
     });
-    hairline(M, PW - M, 49);
 
-    // ── badan dua kolom ─────────────────────────────────────────────────────
-    const leftX = M;
-    const leftW = 106;
-    const rightX = M + 114;
-    const rightW = CW - 114;
+    // Kolom Kanan: 3 Baris Pasangan (Header Atas, Nilai Bawah)
+    const rightX = M + leftW + 3;
+    const rightW = CW - leftW - 3; // 83 mm
+    const halfW = rightW / 2; // 41.5 mm
+    const headH = 5.0;
+    const dataH = 7.4;
+    const tierH = headH + dataH; // 12.4 mm
 
-    const bodyTop = 58;
-    const GAP = 10;
+    // Tier 1: ORDER NUMBER & ISSUED
+    const t1Y = y;
+    cellHeader(rightX, t1Y, halfW, headH, 'ORDER NUMBER');
+    cellHeader(rightX + halfW, t1Y, halfW, headH, 'ISSUED');
+    cellValue(rightX, t1Y + headH, halfW, dataH, woNumber, 'left', true, 7.8);
+    cellValue(rightX + halfW, t1Y + headH, halfW, dataH, formatDate(log.Tanggal), 'left', true, 7.8);
 
-    // Kolom kiri diukur lebih dulu, lalu **diseimbangkan** terhadap tinggi panel:
-    // tanpa ini, deskripsi pendek menyisakan lubang 15–20 mm di bawah kolom kiri
-    // sementara panel kanan berakhir jauh lebih rendah.
-    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), leftW - 5);
-    const leftH = 39 + descLines.length * 4.4;
+    // Tier 2: PRIORITY & DUE
+    const t2Y = y + tierH;
+    cellHeader(rightX, t2Y, halfW, headH, 'PRIORITY');
+    cellHeader(rightX + halfW, t2Y, halfW, headH, 'DUE');
 
-    const cardRows = [
-        ['Type', log.Jenis || 'PM'],
-        ['Category', log.rca || 'PM'],
-        ['Technician', log.Technician || '-'],
-        ['Assigned To', formatAssignees(log.assignedTo)],
-        ['Requested By', log.requestedBy || '-'],
-        ['Request Date', formatDate(log.requestDate)],
-        ['Approved By', log.approvedBy || '-'],
-    ];
-    // Panel mulai di ketinggian huruf kapital judul seksi (baseline − 2,4 mm),
-    // bukan di baseline-nya, supaya tepi atas kedua kolom benar-benar sejajar.
-    const cardTop = bodyTop - 2.4;
-    const cardRowH = 8.4;
-    // Panel dan kolom kiri berbagi tinggi yang sama: tepi atas sejajar, tepi bawah
-    // sejajar. Kelebihan ruang (kalau deskripsi pendek) masuk ke jarak **sebelum**
-    // seksi 02, bukan menumpuk sebagai lubang di dasar kolom.
-    const cardH = Math.max(11 + cardRows.length * cardRowH, leftH + 2.4);
-    const slack = Math.max(0, cardH - leftH - 2.4);
+    // Nilai Priority dengan Badge Tone Warna
+    doc.setFillColor(...C.white);
+    doc.rect(rightX, t2Y + headH, halfW, dataH, 'F');
+    doc.setDrawColor(...C.line);
+    doc.setLineWidth(0.2);
+    doc.rect(rightX, t2Y + headH, halfW, dataH, 'S');
 
-    y = bodyTop;
+    const prioTone = priorityTone(priority);
+    doc.setFillColor(...prioTone);
+    doc.roundedRect(rightX + 3, t2Y + headH + 1.2, halfW - 6, 5.0, 1.0, 1.0, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.4);
+    doc.setTextColor(...C.white);
+    doc.text(String(priority).toUpperCase(), rightX + halfW / 2, t2Y + headH + 4.4, { align: 'center' });
 
-    // Kiri: aset
-    sectionTitle(1, 'Equipment / Asset', y, leftX, leftX + leftW);
-    y += 8.6;
-    if (isExternal) {
-        label('External Asset', leftX, y);
-        value(truncate(log.externalEquipName || '-', leftW), leftX, y + 4.8, 9.6);
-        y += 12;
-        label('Source', leftX, y);
-        value(truncate(log.requestSource || '-', leftW), leftX, y + 4.8);
-    } else {
-        label('Equipment', leftX, y);
-        value(truncate((equipment?.EquipmentID || '-') + ' · ' + (equipment?.Nama || '-'), leftW), leftX, y + 4.8, 9.6);
-        y += 12;
-        label('Location', leftX, y);
-        value(truncate(equipment?.Lokasi || '-', leftW * 0.62), leftX, y + 4.8);
-        label('Asset Status', leftX + leftW * 0.66, y);
-        value(truncate(equipment?.Status || '-', leftW * 0.34), leftX + leftW * 0.66, y + 4.8);
-    }
-    y += GAP + slack;
+    // Nilai Due Date
+    const dueStr = log.dueDate ? formatDate(log.dueDate) : '—';
+    cellValue(rightX + halfW, t2Y + headH, halfW, dataH, dueStr, 'left', true, 7.8);
 
-    // Kiri: deskripsi
-    sectionTitle(2, 'Description', y, leftX, leftX + leftW);
-    y += 8.4;
-    const descTop = y - 3.4;
+    // Tier 3: STATUS & REQUESTED BY
+    const t3Y = y + tierH * 2;
+    cellHeader(rightX, t3Y, halfW, headH, 'STATUS');
+    cellHeader(rightX + halfW, t3Y, halfW, headH, 'REQUESTED BY');
+
+    // Nilai Status dengan Badge Tone Warna
+    doc.setFillColor(...C.white);
+    doc.rect(rightX, t3Y + headH, halfW, dataH, 'F');
+    doc.setDrawColor(...C.line);
+    doc.setLineWidth(0.2);
+    doc.rect(rightX, t3Y + headH, halfW, dataH, 'S');
+
+    const statCol = statusTone(status);
+    doc.setFillColor(...statCol);
+    doc.roundedRect(rightX + 3, t3Y + headH + 1.2, halfW - 6, 5.0, 1.0, 1.0, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.4);
+    doc.setTextColor(...C.white);
+    doc.text(String(status).toUpperCase(), rightX + halfW / 2, t3Y + headH + 4.4, { align: 'center' });
+
+    // Nilai Requested By
+    cellValue(rightX + halfW, t3Y + headH, halfW, dataH, log.requestedBy || '-', 'left', true, 7.4);
+
+    y += leftRows.length * rowH + 3.5;
+
+    // ── LINGKUP & DESKRIPSI PEKERJAAN (TERMS & WORK SCOPE) ─────────────────
+    const descLabelW = 38;
+    const descValW = CW - descLabelW; // 148 mm
+    const textWrapW = 140;            // 140 mm (lebar aman dengan margin 4 mm)
+
+    // Baris 1: TERMS OF SERVICE / SCOPE
+    const termsH = 6.2;
+    cellHeader(M, y, descLabelW, termsH, 'TERMS OF SERVICE');
+    cellValue(
+        M + descLabelW,
+        y,
+        descValW,
+        termsH,
+        `Class A Mining Service Agreement. Category: ${log.rca || 'PM'} · Dept: ${log.requestSource || 'Production'}`,
+        'left',
+        false,
+        6.8,
+    );
+    y += termsH;
+
+    // Baris 2: BRIEF WORK DESCRIPTION
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    const descLines = doc.splitTextToSize(String(log.Deskripsi || '-'), textWrapW);
+    const descBoxH = Math.max(8.5, descLines.length * 4.0 + 4.0);
+
+    doc.setFillColor(...C.blue);
+    doc.rect(M, y, descLabelW, descBoxH, 'F');
+    doc.setDrawColor(...C.line);
+    doc.setLineWidth(0.2);
+    doc.rect(M, y, descLabelW, descBoxH, 'S');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.2);
+    doc.setTextColor(...C.white);
+    doc.setCharSpace(0.3);
+    doc.text('BRIEF WORK DESCRIPTION', M + 2.5, y + 5.2);
+    doc.setCharSpace(0);
+
+    doc.setFillColor(...C.white);
+    doc.rect(M + descLabelW, y, descValW, descBoxH, 'F');
+    doc.setDrawColor(...C.line);
+    doc.setLineWidth(0.2);
+    doc.rect(M + descLabelW, y, descValW, descBoxH, 'S');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(...C.text);
+    let lineY = y + 4.4;
     for (const line of descLines) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.8);
-        ink();
-        doc.text(line, leftX + 5, y);
-        y += 4.4;
+        doc.text(line, M + descLabelW + 3.5, lineY);
+        lineY += 4.0;
     }
-    doc.setFillColor(...C.gold);
-    doc.rect(leftX, descTop, 1.2, Math.max(4, y - descTop - 1.6), 'F');
-    const leftBottom = y;
+    y += descBoxH;
 
-    // Kanan: panel JOB CARD (tingginya sendiri; kolom kiri yang menyesuaikan)
-    doc.setFillColor(...C.paper);
-    doc.roundedRect(rightX, cardTop, rightW, cardH, 1.8, 1.8, 'F');
-    doc.setFillColor(...C.gold);
-    doc.rect(rightX, cardTop, 1.4, cardH, 'F');
-    label('Work Details', rightX + 6, cardTop + 7, C.ink2, 6.4);
-    hairline(rightX + 6, rightX + rightW - 5, cardTop + 9.4, C.line, 0.2);
-    let cy = cardTop + 16;
-    for (const [key, val] of cardRows) {
-        label(key, rightX + 6, cy, C.slate, 5.9);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8.7);
-        ink();
-        doc.text(truncate(val, rightW - 12), rightX + 6, cy + 4.3);
-        cy += cardRowH;
-    }
+    // Baris 3: SPECIAL NOTES
+    const notesH = 6.2;
+    cellHeader(M, y, descLabelW, notesH, 'SPECIAL NOTES');
+    cellValue(
+        M + descLabelW,
+        y,
+        descValW,
+        notesH,
+        'Ensure work complies with CPM safety protocols, mandatory LOTO, and appropriate PPE.',
+        'left',
+        false,
+        6.8,
+    );
+    y += notesH + 4.5;
 
-    y = Math.max(leftBottom, cardTop + cardH) + GAP;
-
-    // ── parts ───────────────────────────────────────────────────────────────
+    // ── TABEL MATERIAL & PARTS USED ─────────────────────────────────────────
     if (parseParts.length > 0) {
-        ensure(26);
-        sectionTitle(3, 'Parts Used', y);
-        y += 6.4;
+        ensure(28);
 
-        const colNo = M + 3;
-        const colPart = M + 16;
-        const colDesc = M + 66;
-        const colQtyRight = PW - M - 5;
-        const descMax = colQtyRight - colDesc - 20;
+        const colNo = 12;
+        const colPart = 36;
+        const colDesc = 92;
+        const colQty = 23;
+        const colUom = 23;
 
         const tableHead = () => {
-            doc.setFillColor(...C.ink);
-            doc.rect(M, y, CW, 6.4, 'F');
+            // Header Seksi Bersih Bergaris
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(5.9);
-            doc.setCharSpace(0.45);
-            doc.setTextColor(...C.white);
-            doc.text('NO', colNo, y + 4.2, { align: 'center' });
-            doc.text('PART NUMBER', colPart, y + 4.2);
-            doc.text('DESCRIPTION', colDesc, y + 4.2);
-            doc.text('QTY', colQtyRight, y + 4.2, { align: 'right' });
-            doc.setCharSpace(0);
-            y += 6.4;
+            doc.setFontSize(8.0);
+            doc.setTextColor(...C.darkBlue);
+            doc.text('PARTS USED', M, y + 3.2);
+
+            doc.setDrawColor(...C.line);
+            doc.setLineWidth(0.25);
+            doc.line(M + 24, y + 2.5, PW - M, y + 2.5);
+            y += 5.5;
+
+            // Baris Kolom Tabel
+            cellHeader(M, y, colNo, 6.0, 'NO', 'center');
+            cellHeader(M + colNo, y, colPart, 6.0, 'PART NUMBER', 'left');
+            cellHeader(M + colNo + colPart, y, colDesc, 6.0, 'MATERIAL DESCRIPTION', 'left');
+            cellHeader(M + colNo + colPart + colDesc, y, colQty, 6.0, 'QUANTITY', 'right');
+            cellHeader(M + colNo + colPart + colDesc + colQty, y, colUom, 6.0, 'UOM', 'center');
+            y += 6.0;
         };
+
         tableHead();
 
         let totalQty = 0;
@@ -473,114 +488,163 @@ export async function generateProfessionalWOPDF(log, equipment, _parts) {
                 newPage();
                 tableHead();
             }
+
             const qty = Number(part?.qty ?? part?.Qty ?? 0) || 0;
             totalQty += qty;
-            if (i % 2 === 1) {
-                doc.setFillColor(...C.paper);
-                doc.rect(M, y, CW, 5.6, 'F');
-            }
-            doc.setFont('courier', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(...C.mute);
-            doc.text(String(i + 1).padStart(2, '0'), colNo, y + 4, { align: 'center' });
-            doc.setFont('courier', 'bold');
-            doc.setFontSize(7.4);
-            ink();
-            doc.text(truncate(part?.id || part?.PartID || '-', colDesc - colPart - 6), colPart, y + 4);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7.4);
-            doc.setTextColor(...C.ink2);
-            doc.text(truncate(part?.name || part?.NamaPart || '-', descMax), colDesc, y + 4);
-            doc.setFont('helvetica', 'bold');
-            ink();
-            doc.text(String(qty), colQtyRight, y + 4, { align: 'right' });
-            hairline(M, PW - M, y + 5.6, C.line, 0.15);
-            y += 5.6;
+            const rowFill = i % 2 === 1 ? C.zebra : C.white;
+            const rH = 5.6;
+
+            const partId = String(part?.id || part?.PartID || '-');
+            const partName = String(part?.name || part?.NamaPart || '-');
+            const partUom = String(part?.uom || part?.UOM || 'pcs');
+
+            cellValue(M, y, colNo, rH, String(i + 1).padStart(2, '0'), 'center', false, 7.0, rowFill);
+            cellValue(M + colNo, y, colPart, rH, partId, 'left', true, 7.2, rowFill);
+            cellValue(M + colNo + colPart, y, colDesc, rH, partName, 'left', false, 7.2, rowFill);
+            cellValue(M + colNo + colPart + colDesc, y, colQty, rH, String(qty), 'right', true, 7.4, rowFill);
+            cellValue(M + colNo + colPart + colDesc + colQty, y, colUom, rH, partUom, 'center', false, 7.0, rowFill);
+
+            y += rH;
         });
 
-        // Baris total: jeda putih 1,2 mm + latar krem + garis emas tegas, angka
-        // sejajar kolom QTY — supaya terbaca sebagai penutup tabel, bukan baris ke-7.
-        ensure(10);
-        y += 1.2;
-        doc.setFillColor(...C.ink2);
-        doc.rect(M, y, CW, 7.4, 'F');
-        doc.setFillColor(...C.gold);
-        doc.rect(M, y, CW, 0.7, 'F');
+        // Baris MATERIAL TOTAL / TOTAL ITEMS
+        ensure(8);
+        const totW = colQty + colUom; // 46 mm
+        const totX = PW - M - totW;
+        doc.setFillColor(...C.darkBlue);
+        doc.rect(totX, y, totW, 6.4, 'F');
+        doc.setDrawColor(...C.line);
+        doc.setLineWidth(0.2);
+        doc.rect(totX, y, totW, 6.4, 'S');
+
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6.4);
-        doc.setCharSpace(0.45);
         doc.setTextColor(...C.white);
-        doc.text('TOTAL ITEMS', colDesc, y + 5);
-        doc.setCharSpace(0);
-        doc.setFontSize(8.8);
-        doc.setTextColor(...C.white);
-        doc.text(String(totalQty), colQtyRight, y + 5.1);
-        y += 14;
+        doc.text('TOTAL ITEMS', totX + 3, y + 4.3);
+
+        doc.setFontSize(8.4);
+        doc.text(String(totalQty), PW - M - 3, y + 4.4, { align: 'right' });
+        y += 10.5;
     }
 
-    // ── ringkasan biaya ─────────────────────────────────────────────────────
-    const hasHours = log.estimatedHours || log.actualHours;
-    if (log.Downtime || log.Cost || hasHours) {
-        ensure(22);
-        doc.setFillColor(...C.goldSoft);
-        doc.roundedRect(M, y, CW, 17, 1.8, 1.8, 'F');
-        doc.setFillColor(...C.gold);
-        doc.rect(M, y, 1.4, 17, 'F');
+    // ── BLOK BAWAH: TANDA TANGAN & REKAP BIAYA ──────────────────────────────
+    ensure(38);
 
-        /** @type {{ key: string, value: string, accent?: boolean }[]} */
-        const cells = [{ key: 'Downtime', value: log.Downtime ? num(log.Downtime) + ' hrs' : '—' }];
-        if (hasHours) {
-            cells.push({ key: 'Est. Hours', value: log.estimatedHours ? num(log.estimatedHours) + ' h' : '—' });
-            cells.push({ key: 'Actual Hours', value: log.actualHours ? num(log.actualHours) + ' h' : '—' });
-        }
-        cells.push({ key: 'Total Cost', value: formatCurrency(log.Cost), accent: true });
+    const hasHours = Boolean(log.estimatedHours || log.actualHours);
+    const hasCostBlock = Boolean(log.Downtime || log.Cost || hasHours);
 
-        const w = CW / cells.length;
-        cells.forEach((cell, i) => {
-            const x = M + 9 + i * w;
-            label(cell.key, x, y + 5.6, C.slate, 5.8);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(cell.accent ? 13.4 : 10.6);
-            ink();
-            doc.text(cell.value, x, y + 12.4);
-            if (cell.accent) hairline(x, x + doc.getTextWidth(cell.value), y + 13.6, C.gold, 0.6);
+    // Kiri: Tanda Tangan 3 Kolom
+    const sigSectionW = hasCostBlock ? 104 : CW;
+    const sigColW = (sigSectionW - 4) / 3;
+
+    const signatures = [
+        { role: 'REQUESTED BY', name: log.requestedBy || '-' },
+        { role: 'APPROVED BY', name: log.approvedBy || '-' },
+        { role: 'EXECUTED BY', name: formatAssignees(log.assignedTo) },
+    ];
+
+    const boxH = 21.8; // Menyelaraskan tinggi dengan tabel ringkasan 4 baris * 6.7 mm
+
+    signatures.forEach((sig, i) => {
+        const sx = M + i * (sigColW + 2);
+        // Header Tanda Tangan
+        cellHeader(sx, y, sigColW, 5.0, sig.role, 'center', 5.6);
+
+        // Kotak Tanda Tangan
+        doc.setFillColor(...C.white);
+        doc.rect(sx, y + 5.0, sigColW, boxH, 'F');
+        doc.setDrawColor(...C.line);
+        doc.setLineWidth(0.2);
+        doc.rect(sx, y + 5.0, sigColW, boxH, 'S');
+
+        // Nama & Jabatan
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(...C.text);
+        doc.text(truncate(sig.name, sigColW - 4), sx + sigColW / 2, y + 10.5, { align: 'center' });
+
+        // Garis Tanda Tangan Basah
+        doc.setDrawColor(...C.slate);
+        doc.setLineWidth(0.2);
+        doc.line(sx + 3, y + 19, sx + sigColW - 3, y + 19);
+
+        // Keterangan Bawah
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(...C.slate);
+        doc.text('Name / Position', sx + sigColW / 2, y + 22.5, { align: 'center' });
+        doc.text('Date & Time', sx + sigColW / 2, y + 25.5, { align: 'center' });
+    });
+
+    // Kanan: Tabel Rekap Jam & Biaya
+    if (hasCostBlock) {
+        const costX = M + sigSectionW + 3;
+        const costW = CW - sigSectionW - 3; // 79 mm
+        const costLblW = 38;
+        const costValW = costW - costLblW; // 41 mm
+        const cH = 6.7; // 4 * 6.7 = 26.8 mm (sama persis dengan 5.0 + 21.8 mm tanda tangan)
+
+        const costRows = [
+            ['DOWNTIME', log.Downtime ? num(log.Downtime) + ' hrs' : '—', false],
+            ['EST. HOURS', log.estimatedHours ? num(log.estimatedHours) + ' h' : '—', false],
+            ['ACTUAL HOURS', log.actualHours ? num(log.actualHours) + ' h' : '—', false],
+            ['TOTAL COST', formatCurrency(log.Cost), true],
+        ];
+
+        costRows.forEach(([lbl, val, isTotal], idx) => {
+            const cy = y + idx * cH;
+            if (isTotal) {
+                cellHeader(costX, cy, costLblW, cH, String(lbl), 'left', 6.4);
+                cellValue(costX + costLblW, cy, costValW, cH, String(val), 'right', true, 8.4, C.lightBlue);
+            } else {
+                cellHeader(costX, cy, costLblW, cH, String(lbl), 'left', 5.8);
+                cellValue(costX + costLblW, cy, costValW, cH, String(val), 'right', true, 7.4);
+            }
         });
-        y += 23;
     }
 
-    // ── tanda tangan ────────────────────────────────────────────────────────
-    ensure(32);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.8);
+    y += 5.0 + boxH + 2.5;
+
+    // Keterangan Validitas
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(5.6);
     doc.setTextColor(...C.mute);
     doc.text('Valid only with original signatures.', M, y);
     y += 5;
 
-    const sigW = (CW - 12) / 3;
-    ['Requested By', 'Approved By', 'Executed By'].forEach((title, i) => {
-        const x = M + i * (sigW + 6);
-        label(title, x, y, C.ink2, 6.2);
-        hairline(x, x + sigW, y + 14, C.ink, 0.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6);
-        doc.setTextColor(...C.slate);
-        doc.text('Name / Position', x, y + 18);
-        doc.text('Date & Time', x, y + 21.5);
-    });
-
-    // ── footer semua halaman ────────────────────────────────────────────────
-    const total = doc.getNumberOfPages();
+    // ── FOOTER SEMUA HALAMAN ────────────────────────────────────────────────
+    const totalPages = doc.getNumberOfPages();
     const now = new Date();
     const stamp = formatDate(localDay(now)) + ' · ' + now.toTimeString().slice(0, 5);
-    for (let page = 1; page <= total; page++) {
+
+    for (let page = 1; page <= totalPages; page++) {
         doc.setPage(page);
-        hairline(M, PW - M, PH - 16, C.line, 0.25);
+
+        // Paragraf Deklarasi Standar CPM
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.8);
+        doc.setFontSize(5.8);
         doc.setTextColor(...C.slate);
-        doc.text('MTC System v2.0  ·  Form MTC-WO-01  ·  Printed ' + stamp + '  ·  ' + woNumber, M, PH - 11);
-        doc.text('Page ' + page + ' of ' + total, PW - M, PH - 11, { align: 'right' });
+        doc.text(
+            'Under CPM Technical Standards, this Work Order certifies that all maintenance tasks, parts replacement, and quality inspections comply with OEM specifications and site safety protocols.',
+            M,
+            PH - 16.5,
+        );
+
+        // Garis Pembatas Footer
+        doc.setDrawColor(...C.line);
+        doc.setLineWidth(0.25);
+        doc.line(M, PH - 13.5, PW - M, PH - 13.5);
+
+        // Meta Footer
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.4);
+        doc.setTextColor(...C.slate);
+        doc.text(
+            'MTC System v2.0  ·  Form MTC-WO-01  ·  Printed ' + stamp + '  ·  ' + woNumber,
+            M,
+            PH - 9.0,
+        );
+        doc.text('Page ' + page + ' of ' + totalPages, PW - M, PH - 9.0, { align: 'right' });
     }
 
     doc.save('WorkOrder_' + (log.woNumber || 'DRAFT') + '.pdf');

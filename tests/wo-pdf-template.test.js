@@ -182,8 +182,8 @@ describe('deskripsi tidak dipotong', () => {
         jsPDF.doc.splitTextToSize.mockReturnValueOnce(['a', 'b', 'c', 'd', 'e', 'f']);
         await generateProfessionalWOPDF({ ...WO, Deskripsi: 'panjang' }, EQUIP, []);
 
-        // Kolom kiri 106 mm, teks menjorok 5 mm dari rail emas.
-        expect(jsPDF.doc.splitTextToSize).toHaveBeenCalledWith('panjang', 101);
+        // Lebar sel deskripsi (148 mm dikurangi margin = 140 mm).
+        expect(jsPDF.doc.splitTextToSize).toHaveBeenCalledWith('panjang', 140);
         const rendered = jsPDF.doc.text.mock.calls
             .filter((c) => Array.isArray(c[0]))
             .map((c) => c[0]);
