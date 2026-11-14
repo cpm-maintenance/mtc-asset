@@ -356,7 +356,7 @@
   </div>
 
   <!-- 🍞 Toast Notification Stack -->
-  <div class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" style="perspective: 800px;" role="status" aria-live="polite">
+  <div class="fixed top-5 right-5 z-[250] flex flex-col gap-3 pointer-events-none" style="perspective: 800px;" role="status" aria-live="polite">
     <template x-for="note in notifications.filter(n => n.progress !== undefined)" :key="note.id">
       <div x-show="!note.exiting"
         x-transition:enter="transition ease-out duration-400"

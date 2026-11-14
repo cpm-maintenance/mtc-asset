@@ -47,7 +47,17 @@ describe('app shell dipisah dari index.html', () => {
     expect(index).toContain('id="login-id"');
     expect(index).toContain('id="login-key"');
     // Toast harus hidup sebelum login (dipakai untuk pesan gagal login).
-    expect(index).toMatch(/fixed top-5 right-5 z-\[100\]/);
+    expect(index).toMatch(/fixed top-5 right-5 z-\[\d+\]/);
+  });
+
+  it('toast stack menumpuk DI ATAS overlay login', () => {
+    // Bug D30: toast stack `z-[100]` sementara overlay login `z-[200]`, jadi
+    // "Email atau kata sandi salah" tercetak ke DOM tapi tak pernah terlihat.
+    // Angka mentah di markup gampang melenceng lagi, jadi bandingkan nilainya.
+    const zOf = (re) => Number(index.match(re)?.[1]);
+    const toastZ = zOf(/fixed top-5 right-5 z-\[(\d+)\]/);
+    const overlayZ = zOf(/x-show="!isLoggedIn" class="fixed inset-0 z-\[(\d+)\]/);
+    expect(toastZ).toBeGreaterThan(overlayZ);
   });
 
   it('index.html tetap jauh lebih kecil dari fragmen shell', () => {
