@@ -118,8 +118,14 @@ describe('irisan kunci antar dua scope', () => {
 });
 
 describe('kunci "shared" benar-benar dibagi', () => {
-    it('main.js membagi larik notifikasi ke instance app', () => {
-        expect(mainJs).toMatch(/loginScreen\.notifications\s*=\s*instance\.notifications;/);
+    // Arah adopsi WAJIB login → app. Kalau app memasang larik BARU ke
+    // `loginScreen.notifications`, toast yang sudah tampil (auth menolak
+    // sebelum chunk app selesai diunduh) ditinggal di larik lama dan lenyap.
+    it('main.js mengadopsi larik notifikasi milik layar login', () => {
+        expect(mainJs).toMatch(/instance\.notifications\s*=\s*loginScreen\.notifications;/);
+        expect(mainJs, 'arah lama membuang toast yang sudah tampil').not.toMatch(
+            /loginScreen\.notifications\s*=\s*instance\.notifications;/
+        );
     });
 
     // Penghapusan yang menugaskan array baru memutus referensi bersama itu, dan

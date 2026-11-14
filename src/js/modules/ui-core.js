@@ -69,9 +69,9 @@ export const uiCore = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
                 setTimeout(() => {
                     // Hapus DI TEMPAT, jangan mengganti referensi array: sejak
                     // S33u larik ini dibagi dengan komponen layar login
-                    // (`loginScreen.notifications = instance.notifications`),
-                    // jadi menugaskan array baru akan memutus salah satu sisi
-                    // dan toast berhenti tampil.
+                    // (`instance.notifications = loginScreen.notifications` di
+                    // main.js), jadi menugaskan array baru akan memutus salah
+                    // satu sisi dan toast berhenti tampil.
                     const idx = this.notifications.findIndex(x => x.id === id);
                     if (idx > -1) this.notifications.splice(idx, 1);
                 }, 400);

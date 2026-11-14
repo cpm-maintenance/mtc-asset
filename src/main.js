@@ -153,7 +153,14 @@ window.__loadApp = () => {
       // `showNotification()` pasca-login dipanggil dari instance app. Satu larik
       // untuk keduanya, kalau tidak toast berhenti tampil setelah login.
       // `ui.js` menghapus entri dengan `splice()` supaya referensi ini tidak putus.
-      loginScreen.notifications = instance.notifications;
+      //
+      // Arah adopsi WAJIB login → app, bukan sebaliknya. Menugaskan larik BARU
+      // ke `loginScreen.notifications` meninggalkan toast yang sudah tampil di
+      // larik lama: Alpine berhenti merendernya dan toast lenyap dalam
+      // milidetik. Itu persis gejala "password salah tanpa notif" — auth
+      // menolak lebih cepat daripada 240 KiB `app-*.js` selesai diunduh, jadi
+      // toast dibuat SEBELUM baris ini jalan.
+      instance.notifications = loginScreen.notifications;
       // `beforeinstallprompt` bisa sudah terpicu sebelum chunk ini selesai.
       if (window.__installPromptEvent) {
         instance.installPromptEvent = window.__installPromptEvent;
