@@ -84,4 +84,32 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+/**
+ * Penjaga tautan gantung. `inlineCriticalCssPlugin.generateBundle()` mengganti
+ * nama bundel CSS; kalau ada berkas yang masih menyebut nama lama, preload helper
+ * mem-intip URL yang tidak ada, hosting SPA membalas `index.html` (`text/html`),
+ * dan `import()` dinamis yang bergantung padanya REJECT — fiturnya mati senyap.
+ * Kejadian nyata: AuditTrail tidak bisa dibaca maupun ditulis (S53).
+ */
+const assetNames = new Set(fs.readdirSync(path.join(DIST, 'assets')));
+const dangling = {};
+for (const abs of walk(DIST, (f) => /\.(?:js|mjs|html|json)$/.test(f))) {
+  const src = fs.readFileSync(abs, 'utf-8');
+  for (const m of src.matchAll(/assets\/[A-Za-z0-9_.-]+\.(?:css|js)/g)) {
+    const name = m[0].slice('assets/'.length);
+    if (!assetNames.has(name)) (dangling[m[0]] ||= new Set()).add(path.relative(DIST, abs));
+  }
+}
+
+if (Object.keys(dangling).length > 0) {
+  console.error('[verify-precache] tautan gantung ke aset yang tidak ada di dist:');
+  for (const [url, files] of Object.entries(dangling)) {
+    console.error(`  - ${url}  ←  ${[...files].join(', ')}`);
+  }
+  console.error('\n`inlineCriticalCssPlugin` harus menambal nama CSS baru di SEMUA berkas');
+  console.error('teks (chunk JS + .html) DAN hook `generateBundle`-nya harus `order: \'post\'`,');
+  console.error('kalau tidak Vite menyuntik `__vite__mapDeps` setelah hook kita jalan.');
+  process.exit(1);
+}
+
 console.log(`[verify-precache] OK — ${targets.length} berkas build semuanya ter-precache.`);

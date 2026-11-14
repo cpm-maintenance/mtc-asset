@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildCriticalCss } from './scripts/critical-css.mjs';
 import { dedupeCss } from './scripts/css-dedupe.mjs';
+import { patchCssRefs } from './scripts/patch-css-refs.mjs';
 
 /**
  * CSS kritis layar login di-inline, bundel penuh dimuat setelah paint (S33ab).
@@ -57,31 +58,36 @@ function inlineCriticalCssPlugin() {
      * tetap, pengunjung lama akan disajikan berkas 16,5 KB dari cache HTTP
      * (aset ber-hash di-cache `immutable`), bukan 9 KB yang baru.
      */
-    async generateBundle(_options, bundle) {
-      const critical = await criticalCss();
-      for (const asset of Object.values(bundle)) {
-        if (asset.type !== 'asset' || !String(asset.fileName).endsWith('.css')) continue;
-        const before = String(asset.source);
-        const { css, removed, kept } = dedupeCss(before, critical);
-        if (removed === 0) continue;
+    generateBundle: {
+      // `order: 'post'` WAJIB: Vite baru menyuntik `__vite__mapDeps` (daftar URL
+      // preload chunk — termasuk CSS) di generateBundle plugin import-analysis.
+      // Tanpa order ini hook kita jalan lebih dulu (`ref ditambal: 0`) dan chunk
+      // di disk tetap menunjuk CSS yang sudah dihapus → SPA balas index.html
+      // (`text/html`) → preload CSS gagal → import() dinamis reject.
+      order: 'post',
+      async handler(_options, bundle) {
+        const critical = await criticalCss();
+        for (const asset of Object.values(bundle)) {
+          if (asset.type !== 'asset' || !String(asset.fileName).endsWith('.css')) continue;
+          const before = String(asset.source);
+          const { css, removed, kept } = dedupeCss(before, critical);
+          if (removed === 0) continue;
 
-        const refId = this.emitFile({
-          type: 'asset',
-          name: path.basename(asset.fileName).replace(/-[\w-]+\.css$/, '') + '.css',
-          source: css,
-        });
-        const newName = this.getFileName(refId);
-        // HTML sudah dibuat oleh plugin Vite (hook ini `enforce: 'post'`), jadi
-        // tautan `data-full-css` harus ditukar manual.
-        for (const other of Object.values(bundle)) {
-          if (other.type !== 'asset' || !String(other.fileName).endsWith('.html')) continue;
-          other.source = String(other.source).split(asset.fileName).join(newName);
+          const refId = this.emitFile({
+            type: 'asset',
+            name: path.basename(asset.fileName).replace(/-[\w-]+\.css$/, '') + '.css',
+            source: css,
+          });
+          const newName = this.getFileName(refId);
+          // Tambal nama lama → nama baru di SELURUH berkas teks bundel, bukan
+          // hanya .html: chunk JS menyimpan URL CSS di `__vite__mapDeps`.
+          const patched = patchCssRefs(bundle, asset.fileName, newName);
+          delete bundle[asset.fileName];
+          this.info(
+            `[inline-critical-css] ${asset.fileName} → ${newName}: ${removed} aturan dobel dibuang, ${kept} tersisa (ref ditambal: ${patched})`
+          );
         }
-        delete bundle[asset.fileName];
-        this.info(
-          `[inline-critical-css] ${asset.fileName} → ${newName}: ${removed} aturan dobel dibuang, ${kept} tersisa`
-        );
-      }
+      },
     },
   };
 }

@@ -1,22 +1,26 @@
-# NOTE-D29 — Audit Trail tidak pernah terekam (v139)
+# NOTE-D29 — Audit Trail kosong & CSS dangling (v140)
 
 ## Status
-FIXED, menunggu commit/push. Bukti: gate 1 `typecheck && lint && test:run` → 125 files / 2410 tests PASS.
+IN PROGRESS, belum commit. Bukti: `npm run build` → `ref ditambal: 4`, `verify-precache` lulus.
 
-## Root cause (2 bug)
-1. **Ghost logger.** `src/js/modules/audit.js` hanya di-`import()` dinamis di dalam `loadAuditLogs()` (app.js:370) — yaitu saat halaman Audit Trail dibuka. Saat kerja normal `window.auditModule === undefined`, sementara semua pemanggil pakai `window.auditModule?.logAudit?.(...)` → no-op senyap. Hook login/logout (`setupAuditHooks`) juga belum terpasang karena itu.
-2. **Tidak ada auto-fetch.** `navigateTo()` hanya set `this.currentPage`; tidak ada pemanggilan `loadAuditLogs()`. Data baru muncul setelah klik REFRESH manual.
+## Root cause (3 bug, berurutan)
+1. **Ghost logger.** `src/js/modules/audit.js` hanya di-`import()` dinamis di dalam `loadAuditLogs()` (app.js:370). Saat kerja normal `window.auditModule === undefined`, sementara pemanggil pakai `window.auditModule?.logAudit?.(...)` → no-op senyap. (FIXED, v139)
+2. **Tidak ada auto-fetch.** `navigateTo()` cuma set `this.currentPage`; `loadAuditLogs()` hanya dari tombol REFRESH. (FIXED, v139)
+3. **CSS dangling (bug sebenarnya yang bikin tetap kosong).** `vite.config.js` plugin `inline-critical-css` mengganti nama aset CSS (`main-CUVvVzhu.css` → `main-DznTAXno.css`) setelah dedupe, tapi hanya menambal `.html`. Chunk JS menyimpan URL CSS di `__vite__mapDeps`; URL lama 404 → Firebase balas `index.html` (`text/html`) → preload CSS gagal → `vite:preloadError` → `import()` dinamis REJECT → `[Audit] Load error: Unable to preload CSS`. Tiap lazy `import()` yang dep-nya memuat `.css` ikut mati.
 
 ## Perubahan
-| File | Baris | Isi |
-|---|---|---|
-| `src/js/bootstrap.js` | 146-147 | `import('./modules/audit.js').catch(() => {})` di `onUser()` |
-| `src/js/bootstrap.js` | 100-101 | watcher `currentPage`: `if (val === 'audit') this.loadAuditLogs()` |
-| `sw.js` | 6 | `mtc-asset-v138` → `mtc-asset-v139` |
+| File | Isi |
+|---|---|
+| `vite.config.js` | `generateBundle` → bentuk objek `{ order: 'post', handler }` — Vite menyuntik `__vite__mapDeps` di generateBundle plugin import-analysis, jadi hook kita harus jalan SESUDAHNYA |
+| `scripts/patch-css-refs.mjs` | helper baru: tambal nama lama → baru di seluruh berkas teks bundel (chunk + `.html`/`.js`/`.json`/`.css`) |
+| `scripts/verify-precache.mjs` | guard baru: deteksi tautan gantung `assets/*.(css|js)` di `dist`, exit 1 |
+| `tests/patch-css-refs.test.js` | 3 tes regresi |
+| `sw.js` | `v139` → `v140` |
 
-## Aturan keras yang tetap dipatuhi
-- `src/js/modules/audit.js` TIDAK boleh impor statis `../db.js` — dikunci `tests/data-layer-lazy.test.js` (harus `await import('../db.js')`).
-- Urutan boot di `main.js` tidak diubah.
+## Jebakan
+- `order: 'post'` itu inti fix. Tanpa itu `ref ditambal: 0` walau `enforce: 'post'` sudah ada di plugin — `enforce` mengurutkan plugin, `order` mengurutkan hook.
+- Chunk code belum final saat `generateBundle` default; buktinya hitungan `ref ditambal` = 0.
+- `git add/commit/push` butuh `BypassSandbox: true` (`.git/index.lock` ditolak di sandbox).
 
 ## Verifikasi
 ```bash
@@ -26,5 +30,5 @@ curl.exe -s https://mtc-asset.web.app/sw.js
 ```
 
 ## TODO
-- Entry `Login` baru tercatat pada login BERIKUTNYA (import terjadi di `onUser()`, sesudah sesi aktif). Kalau Login harus tercatat sejak percobaan pertama, pindahkan import ke `main.js` sebelum `onUser` — cek dulu `tests/data-layer-lazy.test.js`.
-- `database.rules.json` tidak ikut ter-deploy oleh CI (deploy manual kalau rules berubah).
+- `database.rules.json` tidak ikut ter-deploy CI (deploy manual kalau rules berubah).
+- `ref ditambal: 4` (2 chunk + index.html/noscript) — kalau angka ini jadi 0 lagi, `order: 'post'` hilang.
