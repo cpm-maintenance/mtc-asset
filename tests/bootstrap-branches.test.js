@@ -35,6 +35,7 @@ function makeCtx(overrides = {}) {
         computeEnterpriseData: vi.fn(),
         renderKPICharts: vi.fn(),
         renderEnterpriseCharts: vi.fn(),
+        loadAuditLogs: vi.fn(),
         handleError: vi.fn(),
         canAccess: vi.fn(() => true),
         $watch: vi.fn(),
@@ -152,6 +153,19 @@ describe('bootstrap.js — pembersihan chart', () => {
         // meninggalkan halaman enterprise saat wadah belum ada → cabang kiri false
         delete window._appCharts;
         expect(() => w.currentPage('logs', 'enterprise')).not.toThrow();
+    });
+
+    it('memuat log audit otomatis saat halaman audit dibuka', () => {
+        const ctx = makeCtx();
+        ctx.init();
+        const w = watchers(ctx);
+
+        w.currentPage('audit', 'dash');
+        expect(ctx.loadAuditLogs).toHaveBeenCalledTimes(1);
+
+        // halaman lain tidak ikut memicu fetch
+        w.currentPage('logs', 'audit');
+        expect(ctx.loadAuditLogs).toHaveBeenCalledTimes(1);
     });
 });
 

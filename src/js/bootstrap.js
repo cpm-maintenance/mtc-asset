@@ -97,6 +97,8 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
                     this.computeEnterpriseData();
                     setTimeout(() => this.renderEnterpriseCharts(), 800);
                 }
+                // Audit Trail: muat otomatis saat halaman dibuka (tak perlu REFRESH).
+                if (val === 'audit') this.loadAuditLogs();
             });
             this.$watch('kpiFilter', () => { if (this.currentPage === 'kpi') debouncedKPI(); });
             this.$watch('kpiFilterDate', () => { if (this.currentPage === 'kpi') debouncedKPI(); });
@@ -142,6 +144,9 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
         this.loadAISettings();
         this.loadPMSchedule();
         this.setupRequisitionsListener();
+
+        // Modul audit dimuat malas — aktifkan window.auditModule & hook login/logout.
+        import('./modules/audit.js').catch(() => {});
 
         // Modul notifikasi dimuat malas (8,1 KiB gzip tidak boleh di jalur login).
         // JANGAN di-await: gate tidak boleh menunggu chunk ini; sapuan di bawah
