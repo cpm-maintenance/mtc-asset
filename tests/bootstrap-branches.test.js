@@ -10,6 +10,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { bootstrapModule } from '../src/js/bootstrap.js';
 
+const auditMock = vi.hoisted(() => ({ logAudit: vi.fn(async () => {}) }));
+vi.mock('../src/js/modules/audit.js', () => auditMock);
+
 function makeCtx(overrides = {}) {
     const ctx = Object.create(bootstrapModule);
     return Object.assign(ctx, {
@@ -68,6 +71,7 @@ function watchers(ctx) {
 beforeEach(() => {
     vi.useFakeTimers();
     stubWindow();
+    auditMock.logAudit.mockClear();
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -223,6 +227,45 @@ describe('bootstrap.js — watcher filter & modal', () => {
 });
 
 describe('bootstrap.js — onUser', () => {
+    it('mencatat "Login" SEKALI saat sesi pertama jadi aktif', async () => {
+        const ctx = makeCtx();
+        ctx.init();
+
+        await ctx.onUser({ uid: 'u1', email: 'operator@cpm.co.id' });
+
+        expect(auditMock.logAudit).toHaveBeenCalledTimes(1);
+        expect(auditMock.logAudit).toHaveBeenCalledWith('Login');
+    });
+
+    it('tidak mencatat "Login" kedua saat listener auth terpicu ulang (refresh token)', async () => {
+        const ctx = makeCtx();
+        ctx.init();
+
+        await ctx.onUser({ uid: 'u1', email: 'operator@cpm.co.id' });
+        await ctx.onUser({ uid: 'u1', email: 'operator@cpm.co.id' });
+
+        expect(auditMock.logAudit).toHaveBeenCalledTimes(1);
+    });
+
+    it('mencatat "Login" lagi setelah sesi berakhir (logout → login)', async () => {
+        const ctx = makeCtx();
+        ctx.init();
+
+        await ctx.onUser({ uid: 'u1', email: 'operator@cpm.co.id' });
+        ctx.isLoggedIn = false; // `main.js` mereset ini lewat cabang `!user`
+        await ctx.onUser({ uid: 'u1', email: 'operator@cpm.co.id' });
+
+        expect(auditMock.logAudit).toHaveBeenCalledTimes(2);
+    });
+
+    it('kegagalan load modul audit tidak menjatuhkan boot', async () => {
+        const ctx = makeCtx();
+        ctx.init();
+
+        await expect(ctx.onUser({ uid: 'u1', email: 'operator@cpm.co.id' })).resolves.toBeUndefined();
+        expect(ctx.isLoggedIn).toBe(true);
+    });
+
     it('tidak memanggil loader notifikasi bila belum tersedia', async () => {
         delete window.__loadNotifications;
         const ctx = makeCtx();

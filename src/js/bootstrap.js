@@ -131,6 +131,8 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
             this.isLoading = false;
             return;
         }
+        /** Transisi sesi: hanya login BARU yang dicatat, bukan refresh token. */
+        const wasLoggedIn = this.isLoggedIn;
         this.isLoggedIn = true;
         this.user = user;
         this.isLoading = false;
@@ -146,7 +148,15 @@ export const bootstrapModule = /** @type {Partial<AppState> & ThisType<AppState>
         this.setupRequisitionsListener();
 
         // Modul audit dimuat malas — aktifkan window.auditModule & hook login/logout.
-        import('./modules/audit.js').catch(() => {});
+        // `await` (bukan fire-and-forget): "Login" menunggu modulnya siap, dan
+        // chunk ini kecil (1,7 KB) serta baru diminta pasca-auth. Kegagalan
+        // ditelan — audit tidak boleh menjatuhkan boot.
+        try {
+            const audit = await import('./modules/audit.js');
+            if (!wasLoggedIn) await audit.logAudit('Login');
+        } catch (/** @type {any} */ err) {
+            logger.warn('[audit] gagal memuat modul audit:', err);
+        }
 
         // Modul notifikasi dimuat malas (8,1 KiB gzip tidak boleh di jalur login).
         // JANGAN di-await: gate tidak boleh menunggu chunk ini; sapuan di bawah
