@@ -127,9 +127,9 @@ h1, h2, h3, h4 {
   --field-h-xs: 32px;     /* filter bar — > WCAG 2.2 (2.5.8) 24px */
   --field-px: 12px;
   --field-radius: 8px;    /* design doc §Shapes: 0.5rem default */
-  --field-ring: 0 0 0 2px rgb(var(--tac-primary) / 0.45);
-  --field-ring-err: 0 0 0 2px rgb(var(--tac-status-emergency) / 0.45);
-  --field-well: inset 2px 2px 5px rgba(0, 0, 0, 0.6), inset -1px -1px 3px rgba(255, 255, 255, 0.04);
+  --field-ring: 0 0 0 2px rgb(var(--tac-primary) / 0.5), 0 0 12px -2px rgb(var(--tac-primary) / 0.35);
+  --field-ring-err: 0 0 0 2px rgb(var(--tac-status-emergency) / 0.5), 0 0 12px -2px rgb(var(--tac-status-emergency) / 0.35);
+  --field-well: inset 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 /* Daftar kontrol: sengaja satu sumber supaya base & state tidak menyimpang. */
@@ -176,7 +176,7 @@ select:not([multiple]) {
 :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
     select:not([multiple]),
     textarea):hover:not(:disabled):not([readonly]) {
-  border-color: rgb(var(--tac-outline-variant));
+  border-color: rgb(var(--tac-gold-bright) / 0.45);
 }
 
 :is(input:not([type='checkbox']):not([type='radio']):not([type='file']),
