@@ -1,8 +1,9 @@
 # NOTE-D29 — Audit Trail kosong & CSS dangling (v141)
 
 ## Status
-v140 DONE, live (commit `9fce952`). v141 IN PROGRESS: catat `Login` dari transisi sesi.
-Gate 1 ✓ 126 files / 2418 tests PASS.
+v140 DONE, live (`9fce952`). v141 DONE, live (`4713489`). Gate 1 ✓ 126 files / 2418 tests.
+CI ✓ Test 2m54s, Build and Deploy 1m13s, Lighthouse 1m4s. Prod `sw.js` = `mtc-asset-v141`, 21/21 aset resolve.
+Bukti v141 di bundel prod `app-CFvSIJvn.js`: `let t=this.isLoggedIn;this.isLoggedIn=!0;...try{await import("./audit-D1vJm0wa.js");t||await e.logAudit("Login")}catch`.
 
 ## Root cause (4 bug, berurutan)
 1. **Ghost logger.** `src/js/modules/audit.js` hanya di-`import()` dinamis di dalam `loadAuditLogs()` (app.js:370). Saat kerja normal `window.auditModule === undefined`, sementara pemanggil pakai `window.auditModule?.logAudit?.(...)` → no-op senyap. (FIXED, v139)
