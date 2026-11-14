@@ -1721,27 +1721,58 @@
         </div>
 
         <div class="bg-tac-surface-card/60 border border-tac-border-tactical p-8 rounded-[3rem] border-tac-border-subtle">
-          <div class="flex justify-between items-center mb-6">
-            <span class="font-label-mono-sm text-label-mono-sm font-black text-tac-gold-bright/60 uppercase"><span class="material-symbols-outlined text-[16px] mr-2">monitoring</span>
-              Components Linked</span>
-            <button type="button" @click="addPartToLog()"
-              class="font-label-mono-sm text-label-mono-sm bg-tac-surface-card/60 border border-tac-border-tactical text-tac-gold-bright px-5 py-2.5 rounded-xl border-tac-gold-bright/20 font-black hover:bg-tac-gold-bright/10 transition-all shadow-xl uppercase tracking-widest">+
-              Link Part</button>
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+            <span class="font-label-mono-sm text-label-mono-sm font-black text-tac-gold-bright/60 uppercase flex items-center">
+              <span class="material-symbols-outlined text-[16px] mr-2">monitoring</span>
+              Components Linked
+            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" @click="addPartToLog('link')"
+                class="font-label-mono-sm text-label-mono-sm bg-tac-surface-card/60 border border-tac-border-tactical text-tac-gold-bright px-3.5 py-2.5 rounded-xl border-tac-gold-bright/20 font-black hover:bg-tac-gold-bright/10 transition-all shadow-xl uppercase tracking-widest flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[14px]">link</span>+ Link Part
+              </button>
+              <button type="button" @click="addPartToLog('manual')"
+                class="font-label-mono-sm text-label-mono-sm bg-tac-surface-card/60 border border-tac-border-tactical text-tac-gold-bright/80 px-3.5 py-2.5 rounded-xl border-tac-gold-bright/20 font-black hover:bg-tac-gold-bright/10 transition-all shadow-xl uppercase tracking-widest flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[14px]">edit_note</span>+ Manual Part
+              </button>
+            </div>
           </div>
           <div x-show="logForm.parts.length === 0" class="font-label-mono-sm text-label-mono-sm text-tac-status-standby italic text-center py-4 uppercase tracking-widest" x-cloak>No components registered to this log.</div>
           <template x-for="(part, index) in logForm.parts" :key="index">
-            <div class="flex gap-3 mb-4 items-center">
-              <select aria-label="Id" x-model="part.id" @change="recalcLogAuto()"
-                class="flex-1">
-                <option value="">Select Component...</option>
-                <template x-for="p in filteredPartsForLog">
-                  <option :value="p.PartID" x-text="(p.NamaSingkat || p.NamaPart) + (p.PartNumber ? ' (' + p.PartNumber + ')' : '')"></option>
-                </template>
-              </select>
-              <input aria-label="Jumlah" type="number" x-model="part.qty" @change="recalcLogAuto()" min="1" placeholder="Qty"
-                class="w-20 text-center font-black text-tac-on-surface">
-              <button type="button" @click="removePartFromLog(index); recalcLogAuto()" aria-label="Remove part"
-                class="text-tac-status-emergency bg-tac-surface-card/60 border border-tac-border-tactical hover:bg-tac-status-emergency/20 w-12 h-12 rounded-xl border-tac-status-emergency/20 transition-all flex items-center justify-center shadow-xl"><span class="material-symbols-outlined text-[16px]">close</span></button>
+            <div class="flex flex-col sm:flex-row gap-2.5 mb-3 sm:items-center bg-tac-surface-card/40 p-3 rounded-2xl border border-tac-border-tactical">
+              <!-- Mode: LINK PART -->
+              <template x-if="part.type !== 'manual'">
+                <div class="flex-1 flex gap-2 items-center min-w-0">
+                  <span class="font-label-mono-sm text-label-mono-sm font-black text-tac-gold-bright/70 uppercase px-2 py-0.5 rounded bg-tac-surface-card border border-tac-gold-bright/20 shrink-0">LINK</span>
+                  <select aria-label="Id" x-model="part.id" @change="recalcLogAuto()" class="flex-1 min-w-0">
+                    <option value="">Select Component...</option>
+                    <template x-for="p in filteredPartsForLog" :key="p.PartID">
+                      <option :value="p.PartID" x-text="(p.NamaSingkat || p.NamaPart) + (p.PartNumber ? ' (' + p.PartNumber + ')' : '')"></option>
+                    </template>
+                  </select>
+                </div>
+              </template>
+
+              <!-- Mode: MANUAL PART -->
+              <template x-if="part.type === 'manual'">
+                <div class="flex-1 flex flex-col sm:flex-row gap-2 sm:items-center min-w-0">
+                  <span class="font-label-mono-sm text-label-mono-sm font-black text-tac-status-standby uppercase px-2 py-0.5 rounded bg-tac-surface-card border border-tac-border-tactical shrink-0 self-start sm:self-center">MANUAL</span>
+                  <input type="text" x-model="part.name" placeholder="Nama / Deskripsi Part *" aria-label="Nama Part"
+                    class="flex-1 min-w-0 px-3 py-2 text-xs bg-tac-surface-card border border-tac-border-tactical rounded-xl text-tac-on-surface focus:outline-none focus:border-tac-gold-bright">
+                  <input type="text" x-model="part.partNumber" placeholder="No. Part (opsional)" aria-label="Nomor Part"
+                    class="w-full sm:w-36 px-3 py-2 text-xs bg-tac-surface-card border border-tac-border-tactical rounded-xl text-tac-on-surface focus:outline-none focus:border-tac-gold-bright">
+                </div>
+              </template>
+
+              <!-- Qty & Hapus -->
+              <div class="flex items-center justify-end gap-2 shrink-0">
+                <input aria-label="Jumlah" type="number" x-model="part.qty" @change="recalcLogAuto()" min="1" placeholder="Qty"
+                  class="w-20 text-center font-black text-tac-on-surface">
+                <button type="button" @click="removePartFromLog(index); recalcLogAuto()" aria-label="Remove part"
+                  class="text-tac-status-emergency bg-tac-surface-card/60 border border-tac-border-tactical hover:bg-tac-status-emergency/20 w-12 h-12 rounded-xl border-tac-status-emergency/20 transition-all flex items-center justify-center shadow-xl">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
             </div>
           </template>
         </div>

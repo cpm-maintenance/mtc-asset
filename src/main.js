@@ -441,8 +441,9 @@ window.onAuthStateChanged(window.auth, async (/** @type {any} */ user) => {
     loginScreen.isLoggedIn = false;
     loginScreen.user = null;
     loginScreen.isLoading = false;
-    // Sesi berakhir setelah app pernah termuat (logout): tutup juga shell.
+    // Sesi berakhir setelah app pernah termuat (logout): tutup juga shell & bersihkan listener.
     if (window.app && window.app !== loginScreen) {
+      window.app._cleanupFirebaseListeners?.();
       window.app.isLoggedIn = false;
       window.app.user = null;
       window.app.isLoading = false;

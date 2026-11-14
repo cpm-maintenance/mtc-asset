@@ -117,6 +117,14 @@ describe('woAvailability / woShortageSummary', () => {
         expect(ctx.woAvailability(null)).toEqual([]);
         expect(ctx.woShortageSummary({})).toEqual({ ok: true, total: 0, count: 0 });
     });
+
+    it('woAvailability mengabaikan part bertipe manual', () => {
+        const ctx = makeCtx({ allParts: parts });
+        const wo = { PartsUsed: [{ type: 'manual', name: 'Seal Ring', qty: 5 }, { id: 'P1', qty: 2 }] };
+        const res = ctx.woAvailability(wo);
+        expect(res).toHaveLength(1);
+        expect(res[0].partId).toBe('P1');
+    });
 });
 
 describe('openLogModal — mode buat baru', () => {
@@ -200,6 +208,22 @@ describe('openLogModal — mode edit', () => {
         expect(ctx.logForm.parts).toEqual([]);
     });
 
+    it('openLogModal mempertahankan part bertipe manual', () => {
+        const ctx = makeCtx();
+        ctx.openLogModal(true, {
+            ...base,
+            PartsUsed: JSON.stringify([{ type: 'manual', name: 'Custom Gasket', partNumber: 'CG-01', qty: 2 }])
+        });
+        expect(ctx.logForm.parts).toEqual([{
+            type: 'manual',
+            id: '',
+            name: 'Custom Gasket',
+            partNumber: 'CG-01',
+            qty: 2,
+            uom: 'pcs'
+        }]);
+    });
+
     it('foto: JSON string, array, dan PhotoURL tunggal', () => {
         const fromJson = makeCtx();
         fromJson.openLogModal(true, { ...base, PhotoURLs: '["u1","u2"]' });
@@ -280,6 +304,12 @@ describe('removeLogPhoto / addPartToLog / removePartFromLog', () => {
         const ctx = makeCtx({ logForm: { photos: [], parts: [] } });
         ctx.addPartToLog();
         expect(ctx.logForm.parts).toEqual([{ id: '', qty: 1 }]);
+    });
+
+    it('addPartToLog manual menambah baris manual part', () => {
+        const ctx = makeCtx({ logForm: { photos: [], parts: [] } });
+        ctx.addPartToLog('manual');
+        expect(ctx.logForm.parts).toEqual([{ type: 'manual', id: '', name: '', partNumber: '', qty: 1, uom: 'pcs' }]);
     });
 
     it('field bukan array → direset ke [] tanpa melempar', () => {

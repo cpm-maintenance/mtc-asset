@@ -246,6 +246,16 @@ describe('parts used', () => {
         expect(texts()).toContain('Impeller Pump PU 13');
     });
 
+    it('merender part manual dengan nama dan nomor part kustom', async () => {
+        await generateProfessionalWOPDF(
+            { ...WO, PartsUsed: [{ type: 'manual', name: 'Custom O-Ring Seal', partNumber: 'MAN-COR-01', qty: 4 }] },
+            EQUIP,
+            [],
+        );
+        expect(texts()).toContain('Custom O-Ring Seal');
+        expect(texts()).toContain('MAN-COR-01');
+    });
+
     it('array langsung juga diterima', async () => {
         await generateProfessionalWOPDF({ ...WO, PartsUsed: [{ id: 'SP-9', qty: 3 }] }, EQUIP, []);
         expect(texts()).toContain('SP-9');

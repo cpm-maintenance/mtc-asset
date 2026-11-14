@@ -453,7 +453,12 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             } catch (/** @type {any} */ e) {
                 console.error('Performance Listener Error:', e);
             }
-        }, (/** @type {any} */ error) => console.error('Performance Listener:', error)));
+        }, (/** @type {any} */ error) => {
+            if (error?.code === 'PERMISSION_DENIED' || String(error?.message).includes('permission_denied')) {
+                return;
+            }
+            console.error('Performance Listener:', error);
+        }));
 
         if (typeof window.onChildRemoved === 'function') {
             this._listeners.push(window.onChildRemoved(perfRef, (/** @type {any} */ snapshot) => {
@@ -462,7 +467,12 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 const next = (this.performanceData || []).filter(p => p && p.id !== id);
                 this.performanceData = next;
                 saveCache('performanceData', next);
-            }, (/** @type {any} */ error) => console.error('Performance remove listener:', error)));
+            }, (/** @type {any} */ error) => {
+                if (error?.code === 'PERMISSION_DENIED' || String(error?.message).includes('permission_denied')) {
+                    return;
+                }
+                console.error('Performance remove listener:', error);
+            }));
         }
         } catch (/** @type {any} */ e) {
             console.error('Firebase listeners setup error:', e);

@@ -169,11 +169,21 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     }
                 }
                 if (!Array.isArray(parsedParts)) parsedParts = [];
-                // Step 5: deep-clean each part object to remove any Proxy
-                parsedParts = parsedParts.map(p => {
-                    const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch { return p; }})() : p;
-                    return { id: clean.id || clean.PartID || '', qty: Number(clean.qty) || 1 };
-                });
+            // Step 5: deep-clean each part object and remove any Proxy
+            parsedParts = parsedParts.map(p => {
+                const clean = window.Alpine?.raw ? (() => { try { return window.Alpine.raw(p); } catch { return p; }})() : p;
+                if (clean?.type === 'manual' || (!clean?.id && !clean?.PartID && (clean?.name || clean?.NamaPart))) {
+                    return {
+                        type: 'manual',
+                        id: '',
+                        name: clean?.name || clean?.NamaPart || clean?.description || clean?.Deskripsi || '',
+                        partNumber: clean?.partNumber || clean?.PartNumber || '',
+                        qty: Number(clean?.qty) || 1,
+                        uom: clean?.uom || clean?.UOM || clean?.satuan || clean?.Satuan || 'pcs',
+                    };
+                }
+                return { id: clean.id || clean.PartID || '', qty: Number(clean.qty) || 1 };
+            });
             } catch (/** @type {any} */ e) {
                 console.warn('[openLogModal] PartsUsed parse error:', e);
             }
@@ -361,11 +371,15 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         if (Array.isArray(f.parts) && f.parts.length > 0) f.cost = this.logAutoCost;
     },
 
-    addPartToLog() {
+    addPartToLog(type = 'link') {
         if (!this.logForm.parts || !Array.isArray(this.logForm.parts)) {
             this.logForm.parts = [];
         }
-        this.logForm.parts.push({ id: '', qty: 1 });
+        if (type === 'manual') {
+            this.logForm.parts.push({ type: 'manual', id: '', name: '', partNumber: '', qty: 1, uom: 'pcs' });
+        } else {
+            this.logForm.parts.push({ id: '', qty: 1 });
+        }
     },
 
     removePartFromLog(index) {
@@ -444,7 +458,17 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                         if (clean && window.Alpine?.raw) {
                             try { clean = window.Alpine.raw(p); } catch {}
                         }
-                        return { id: clean?.id || '', qty: Number(clean?.qty) || 1 };
+                        if (clean?.type === 'manual' || (!clean?.id && !clean?.PartID && (clean?.name || clean?.NamaPart))) {
+                            return {
+                                type: 'manual',
+                                id: '',
+                                name: String(clean?.name || clean?.NamaPart || clean?.description || '').trim(),
+                                partNumber: String(clean?.partNumber || clean?.PartNumber || '').trim(),
+                                qty: Number(clean?.qty) || 1,
+                                uom: String(clean?.uom || clean?.UOM || clean?.satuan || 'pcs').trim() || 'pcs',
+                            };
+                        }
+                        return { id: clean?.id || clean?.PartID || '', qty: Number(clean?.qty) || 1 };
                     });
                 }
             } catch(/** @type {any} */ e) {
@@ -607,7 +631,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // Deduct Stock (skip for WOs — deduct on approve instead, Part Reservation & Kitting)
             if (!this.isEditingLog && this.logForm.parts && this.logForm.parts.length > 0 && !this.logForm.woNumber) {
                 for (const p of this.logForm.parts) {
-                    if (!p.id) continue;
+                    if (p?.type === 'manual' || !p.id) continue;
                     try {
                         await window.runTransaction(window.ref(window.db, 'SpareParts/' + p.id + '/Stok'), (/** @type {any} */ curr) => {
                             // Part tidak ada / qty rusak → batalkan: menulis Stok saja ditolak
@@ -673,7 +697,9 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
 
     // R3: availability check utk WO (pakai pure helper, allParts dari store)
     woAvailability(wo) {
-        const parts = this.parsePartsUsed(wo?.PartsUsed).map((/** @type {any} */ p) => ({ partId: p.id, quantity: p.qty }));
+        const parts = this.parsePartsUsed(wo?.PartsUsed)
+            .filter((/** @type {any} */ p) => p?.type !== 'manual')
+            .map((/** @type {any} */ p) => ({ partId: p.id, quantity: p.qty }));
         return checkPartAvailability(parts, this.allParts || []);
     },
 

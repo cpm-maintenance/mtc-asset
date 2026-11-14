@@ -249,6 +249,7 @@ export const authModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         if (await askConfirm('Sesi login akan diakhiri dan kamu kembali ke layar masuk.', { title: 'Keluar aplikasi', confirmLabel: 'Keluar' })) {
             this.isLoading = true;
             try {
+                this._cleanupFirebaseListeners?.();
                 await window.signOut(window.auth);
                 this.isLoggedIn = false;
                 this.user = null;
