@@ -1479,7 +1479,7 @@
   <template x-if="showLogModal">
   <div x-cloak
     class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-opacity">
-    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl lg:max-w-6xl max-h-[calc(100dvh-2rem)] flex flex-col p-5 sm:p-8 lg:p-10 rounded-2xl md:rounded-[3rem] border-tac-gold-bright/20 shadow-2xl">
+    <div class="bg-tac-surface-card/95 backdrop-blur-xl border border-tac-border-tactical w-full max-w-4xl lg:max-w-6xl max-h-[calc(100dvh-2rem)] flex flex-col p-5 sm:p-8 lg:p-10 rounded-2xl border-tac-gold-bright/20 shadow-2xl">
       <div class="flex justify-between items-center mb-6 md:mb-8 shrink-0 border-b border-tac-border-subtle pb-6">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-tac-primary-container flex items-center justify-center shadow-lg">
@@ -1495,7 +1495,9 @@
       </div>
       <form @submit.prevent="submitLog()" class="space-y-6 flex-1 min-h-0 overflow-y-auto overscroll-contain">
 
-        <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3 text-tac-gold-bright">🗂️ Asset &amp; Activity</h4>
+        <!-- Asset & Activity Card -->
+        <div class="bg-tac-surface-card/40 border border-tac-border-tactical/70 p-4 sm:p-6 rounded-2xl shadow-sm">
+          <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3 text-tac-gold-bright">🗂️ Asset &amp; Activity</h4>
         <div x-show="!isLogDetailView || isEditingLog" class="form-grid form-grid--two" x-cloak>
           <div>
             <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Neural Target (Asset) <span class="text-tac-status-emergency" aria-hidden="true">*</span></label>
@@ -1557,8 +1559,11 @@
           </div>
         </div>
 
+        </div>
+
         <!-- Work Order Section -->
-        <div class="mt-6 pt-6 border-t border-tac-gold-bright/20">
+        <!-- Work Order Settings Card -->
+        <div class="bg-tac-surface-card/40 border border-tac-border-tactical/70 p-4 sm:p-6 rounded-2xl shadow-sm">
           <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3">⚡ Work Order Settings</h4>
           <div class="form-grid form-grid--two">
             <div>
@@ -1610,7 +1615,7 @@
         </div>
 
         <!-- Department Request Section (opsional, terlipat) -->
-        <details class="mt-6 pt-6 border-t border-tac-gold-bright/20" :open="logDeptOpen"
+        <details class="bg-tac-surface-card/30 border border-tac-border-tactical/60 p-4 sm:p-5 rounded-2xl transition-all" :open="logDeptOpen"
           @toggle="logDeptOpen = $event.target.open">
           <summary class="flex items-center gap-3 cursor-pointer list-none">
             <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-0">🏢 Department Request</h4>
@@ -1649,7 +1654,8 @@
         </details>
 
         <!-- Diagnosis & Briefing Section -->
-        <div class="mt-6 pt-6 border-t border-tac-gold-bright/20">
+        <!-- Diagnosis & Briefing Card -->
+        <div class="bg-tac-surface-card/40 border border-tac-border-tactical/70 p-4 sm:p-6 rounded-2xl shadow-sm">
           <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-3 text-tac-status-repair">🧠 Diagnosis &amp; Briefing</h4>
           <div class="form-grid form-grid--two">
             <div class="relative">
@@ -1690,8 +1696,8 @@
           </div>
         </div>
 
-        <!-- Documentation Photo (Multiple) -->
-        <div class="space-y-4">
+        <!-- Visual Documentation Card -->
+        <div class="bg-tac-surface-card/40 border border-tac-border-tactical/70 p-4 sm:p-6 rounded-2xl shadow-sm space-y-4">
           <div class="flex justify-between items-center">
             <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Visual Documentation (Limit 4)</label>
             <span class="font-label-mono-sm text-label-mono-sm font-black text-tac-gold-bright" x-text="logForm.photos.length + ' / 4'"></span>
@@ -1777,7 +1783,7 @@
           </template>
         </div>
 
-        <div class="sticky bottom-0 -mx-5 sm:-mx-8 px-5 sm:px-8 py-3 mt-6 border-t border-tac-border-subtle bg-tac-surface-card/95 backdrop-blur">
+        <div class="sticky bottom-0 -mx-5 sm:-mx-8 lg:-mx-10 px-5 sm:px-8 lg:px-10 py-3 mt-6 border-t border-tac-border-subtle bg-tac-surface-card/95 backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,0.3)]">
           <div class="flex items-center gap-3">
             <span class="font-label-mono-sm text-label-mono-sm uppercase"
               x-text="logFormErrorCount === 0 ? 'Wajib terisi' : logFormErrorCount + ' field belum valid'"
