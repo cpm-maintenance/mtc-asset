@@ -426,7 +426,11 @@ export function validateLogForm(form) {
   if (form.date && !isValidDate(form.date)) errors.push('Invalid date format');
   if (!form.desc?.trim()) errors.push('Description is required');
   if (form.desc && form.desc.length > 500) errors.push('Description too long (max 500 chars)');
-  if (form.startDate && form.endDate && String(form.endDate) < String(form.startDate)) errors.push('End date cannot be before start date');
+  if (form.startDate && form.endDate) {
+    const start = form.startTime ? `${form.startDate}T${form.startTime}` : form.startDate;
+    const end = form.endTime ? `${form.endDate}T${form.endTime}` : form.endDate;
+    if (String(end) < String(start)) errors.push('End date cannot be before start date');
+  }
   if (form.downtime !== undefined && !isValidPositiveNumber(form.downtime, true)) errors.push('Downtime must be a positive number');
   if (form.cost !== undefined && !isValidPositiveNumber(form.cost, true)) errors.push('Cost must be a positive number');
   if (form.hm && !isValidPositiveNumber(form.hm, true)) errors.push('HM must be a positive number');

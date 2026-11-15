@@ -9,6 +9,36 @@ import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 import { askConfirm } from './confirm-dialog.js';
 
+/**
+ * Pecah nilai `YYYY-MM-DD[T]HH:mm` (boleh date-only) menjadi `{date, time}`.
+ * Dipakai saat edit untuk mengisi input `date`/`time` terpisah.
+ *
+ * @param {string|undefined|null} value - `YYYY-MM-DD`, `YYYY-MM-DDTHH:mm`, atau kosong.
+ * @returns {{date: string, time: string}}
+ */
+function splitDateTime(value) {
+    if (!value) return { date: '', time: '' };
+    const m = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}))?/.exec(String(value));
+    if (!m) return { date: '', time: '' };
+    return { date: m[1], time: m[2] || '' };
+}
+
+/**
+ * Gabung `date` + `time` menjadi `YYYY-MM-DDTHH:mm` untuk disimpan di DB.
+ * `time` opsional: kosong → tetap `YYYY-MM-DD` (date-only, kompatibel lama).
+ * Kosong total → `''`.
+ *
+ * @param {string|undefined} date
+ * @param {string|undefined} time
+ * @returns {string}
+ */
+function joinDateTime(date, time) {
+    const d = (date || '').trim();
+    if (!d) return '';
+    const t = (time || '').trim();
+    return t ? `${d}T${t}` : d;
+}
+
 export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ ({
     _lastHM: null,
     _lastHMLogsRef: null,
@@ -93,7 +123,9 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         if (f.date && f.dueDate && String(f.dueDate) < String(f.date)) {
             errors.dueDate = 'Tenggat lebih awal dari tanggal pekerjaan';
         }
-        if (f.startDate && f.endDate && String(f.endDate) < String(f.startDate)) {
+        const start = joinDateTime(f.startDate, f.startTime);
+        const end = joinDateTime(f.endDate, f.endTime);
+        if (start && end && String(end) < String(start)) {
             errors.endDate = 'Tanggal selesai lebih awal dari tanggal mulai';
         }
         for (const key of ['estimatedHours', 'actualHours']) {
@@ -213,8 +245,10 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 cost: data.Cost || 0, 
                 equipmentId: data.EquipmentID || '',
                 date: formatDateForInput(data.Tanggal), 
-                startDate: data.StartDate || '',
-                endDate: data.EndDate || '',
+                startDate: splitDateTime(data.StartDate).date,
+                startTime: splitDateTime(data.StartDate).time,
+                endDate: splitDateTime(data.EndDate).date,
+                endTime: splitDateTime(data.EndDate).time,
                 tech: data.Technician || '',
                 parts: parsedParts, 
                 status: data.Status || 'Pending',
@@ -282,7 +316,9 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 equipmentId: fromDetail ? (this.selectedEquip?.EquipmentID || '') : '',
                 date: localDateStr(), 
                 startDate: '',
+                startTime: '',
                 endDate: '',
+                endTime: '',
                 tech: 'Maintenance Team',
                 parts: [], 
                 status: 'Pending', 
@@ -343,10 +379,12 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         this.logForm.photos.splice(index, 1);
     },
 
-    /** Downtime otomatis dari `startDate`/`endDate`; `null` bila rentang belum sah. */
+    /** Downtime otomatis dari `startDate`/`startTime`/`endDate`/`endTime`; `null` bila rentang belum sah. */
     get logAutoDowntime() {
         const f = this.logForm || {};
-        return computeDowntimeHours(f.startDate, f.endDate);
+        const start = joinDateTime(f.startDate, f.startTime);
+        const end = joinDateTime(f.endDate, f.endTime);
+        return computeDowntimeHours(start, end);
     },
 
     /** Biaya otomatis dari baris part pada form x katalog `allParts`. */
@@ -523,8 +561,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 LogID: logId, 
                 EquipmentID: this.logForm.equipmentId, 
                 Tanggal: this.logForm.date,
-                StartDate: this.logForm.startDate || '',
-                EndDate: this.logForm.endDate || '',
+                StartDate: joinDateTime(this.logForm.startDate, this.logForm.startTime),
+                EndDate: joinDateTime(this.logForm.endDate, this.logForm.endTime),
                 Jenis: this.logForm.type, 
                 Deskripsi: this.logForm.desc, 
                 Technician: this.logForm.tech,

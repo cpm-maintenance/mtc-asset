@@ -57,7 +57,7 @@ export const DEFAULT_DUE_DATE = () =>
 
 export const DEFAULT_LOG_FORM = () => ({
   logId: '', type: 'PM', desc: '', downtime: '', cost: '', equipmentId: '',
-  startDate: '', endDate: '',
+  startDate: '', startTime: '', endDate: '', endTime: '',
   date: localDateStr(), tech: 'Maintenance Team',
   parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM',
   // Work Order Fields

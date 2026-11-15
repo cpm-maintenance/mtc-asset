@@ -199,17 +199,20 @@ describe('D20 — datetime-local & downtime jam pecahan', () => {
     expect(ctx.logForm.downtime).toBe(0.5);
   });
 
-  it('markup: input startDate/endDate bertipe datetime-local', () => {
+  it('markup: input tanggal tipe date + input waktu opsional tipe time', () => {
     for (const [name, markup] of [['WorkOrders', WORK_ORDERS], ['app-shell', APP_SHELL]]) {
       const at = markup.indexOf('x-model="logForm.startDate"');
       expect(at, `${name}: input startDate tidak ditemukan`).toBeGreaterThan(-1);
-      const near = markup.slice(Math.max(0, at - 200), at + 200);
-      expect(near, `${name}: bukan datetime-local`).toContain('type="datetime-local"');
+      expect(markup.slice(Math.max(0, at - 200), at + 200), `${name}: startDate bukan type=date`).toContain('type="date"');
 
       const et = markup.indexOf('x-model="logForm.endDate"');
       expect(et, `${name}: input endDate tidak ditemukan`).toBeGreaterThan(-1);
-      expect(markup.slice(Math.max(0, et - 200), et + 200), `${name}: end bukan datetime-local`)
-        .toContain('type="datetime-local"');
+      expect(markup.slice(Math.max(0, et - 200), et + 200), `${name}: endDate bukan type=date`).toContain('type="date"');
+
+      expect(markup, `${name}: input startTime tidak ditemukan`).toContain('x-model="logForm.startTime"');
+      expect(markup, `${name}: input endTime tidak ditemukan`).toContain('x-model="logForm.endTime"');
+      const st = markup.indexOf('x-model="logForm.startTime"');
+      expect(markup.slice(Math.max(0, st - 200), st + 200), `${name}: startTime bukan type=time`).toContain('type="time"');
     }
   });
 });
