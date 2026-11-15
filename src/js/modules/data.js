@@ -139,7 +139,9 @@ export const dataModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                     
                     const globalApp = window.app || window.appState;
                     if (globalApp && globalApp !== this) {
-                        globalApp.notifications = globalApp.notifications || [];
+                        // `notifications` dibagi dua scope Alpine (main.js:163). Jangan pernah
+                        // menugaskan array baru — memutus salah satu sisi (bug v142).
+                        if (!Array.isArray(globalApp.notifications)) return;
                         const globalExists = globalApp.notifications.some(n => n.type === 'Work Order' && n.message === msg);
                         if (!globalExists) {
                             globalApp.notifications.push({

@@ -813,8 +813,7 @@ async approveWO(logId) {
             
             // Sync to global
             const globalApp = window.app || window.appState;
-            if (globalApp) {
-                globalApp.notifications = globalApp.notifications || [];
+            if (globalApp && Array.isArray(globalApp.notifications)) {
                 globalApp.notifications.push({
                     id: Date.now(),
                     type: 'Work Order',
@@ -943,8 +942,7 @@ async approveWO(logId) {
             });
             
             // Sync to global
-            if (globalApp) {
-                globalApp.notifications = globalApp.notifications || [];
+            if (globalApp && Array.isArray(globalApp.notifications)) {
                 globalApp.notifications.push({
                     id: Date.now(),
                     type: 'Work Order',

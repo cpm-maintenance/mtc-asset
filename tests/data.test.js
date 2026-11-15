@@ -1177,7 +1177,7 @@ describe('dataModule.deleteItem branches', () => {
 });
 
 describe('dataModule — checkPendingWorkOrders (notifikasi global)', () => {
-    it('membuat larik notifikasi sendiri dan menyalin ke appState', async () => {
+    it('skips sync global saat array asing tidak dibagikan (tidak mencipatakan array)', async () => {
         setupFirebaseMock(async () => ({
             val: () => ({ L1: { Status: 'Pending', woNumber: 'WO-1', Jenis: 'Repair' } }),
         }));
@@ -1188,7 +1188,7 @@ describe('dataModule — checkPendingWorkOrders (notifikasi global)', () => {
 
         expect(ctx.notifications).toHaveLength(1);
         expect(ctx.notifications[0]).toMatchObject({ type: 'Work Order', icon: 'schedule' });
-        expect(window.appState.notifications).toHaveLength(1);
+        expect(window.appState.notifications).toBeUndefined();
     });
 });
 
