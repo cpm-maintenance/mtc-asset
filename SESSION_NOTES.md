@@ -19,10 +19,12 @@
 - `npm run build` exit 0 · `npm run verify:precache` exit 0 → 59 berkas ter-precache + `Firebase config terisi di 1 chunk (main-_4pu5gfx.js)`.
 - Satu kali `test:coverage` merah karena `Test timed out in 5000ms` (bukan asersi); dijalankan ulang hijau.
 
-### Belum dikerjakan
-- Produksi masih menyajikan bundel rusak. Deploy adalah publikasi → menunggu konfirmasi Andi.
-- Sebelum deploy: pastikan GitHub Secrets `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_APP_ID`, `FIREBASE_TOKEN` terisi (`.github/workflows/deploy.yml`).
-- `package-lock.json` sudah modified sebelum sesi ini (churn npm tak terkait fix) — jangan ikut di-commit bersama guard.
+### Deploy & verifikasi live
+- Commit `cacf492` (`fix(auth): guard missing Firebase build config`) — hanya `scripts/**`, `tests/**`, `SESSION_NOTES.md`; `package-lock.json` yang kotor karena churn npm dikembalikan dengan `git checkout --`.
+- Deploy manual: `firebase deploy --only hosting --project mtc-asset` → 64 berkas di `dist`, upload 9 berkas baru, release complete.
+- Live `https://mtc-asset.web.app/` kini memuat `/assets/main-_4pu5gfx.js`. Tujuh field `window.firebaseConfig` diperiksa di bundel live: **semua terisi, nol `void 0`** (nilai tidak dicetak).
+- `sw.js` tetap **mtc-asset-v145** karena `src/**` dan `public/**` tidak berubah.
+- CI push `cacf492` menjalankan tiga workflow (`Test`, `Build and Deploy`, `Lighthouse CI`); statusnya dipantau terpisah dan tidak menghalangi rilis manual yang sudah live.
 
 ## 📝 S55 · Template CSV & Impor Lengkap: Spare Parts, Equipment, dan PM Schedule, sw v105 → v106 (2026-10-30)
 
