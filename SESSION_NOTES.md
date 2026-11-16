@@ -1,3 +1,29 @@
+## 📝 S56 · Guard konfigurasi Firebase di gate build — login `auth/invalid-api-key` (2026-11-16)
+
+> Tanpa perubahan rilis: hanya `scripts/**` dan `tests/**`. `src/**` dan `public/**` tidak tersentuh, `sw.js` tetap **mtc-asset-v145**.
+
+### Masalah
+- Login produksi melempar `Uncaught FirebaseError: Firebase: Error (auth/invalid-api-key)`.
+- `src/js/firebase-core.js` membaca config dari `import.meta.env.VITE_FIREBASE_*`. Kalau env tidak ada saat `vite build`, Vite meng-inline `void 0` dan **build tetap exit 0**.
+- Bundel live `assets/main-6Ca-A7FM.js` diperiksa: objek `window.firebaseConfig` berisi **8 × `void 0`** (tujuh field wajib + `measurementId`). Jadi akar masalahnya build tanpa env, bukan database atau password.
+
+### Perbaikan
+- `scripts/lib/firebase-config-guard.mjs` (baru): `checkFirebaseConfig(source, label)` mengambil literal objek dari sisi ekspor `window.firebaseConfig` (nama variabel minify berubah tiap build), lalu menolak field yang `void 0`, `undefined`, `null`, atau string kosong. Menerima nilai berkutip maupun template literal.
+- `scripts/verify-precache.mjs`: setelah precache OK, guard dijalankan. Tidak ada chunk yang mengekspor `window.firebaseConfig` → exit 1; ada field kosong → exit 1 dengan daftar field.
+- `tests/firebase-config-guard.test.js` (baru, 4 tes): config `void 0` ditolak, config berisi nilai diterima, output template literal Vite diterima, dan guard benar-benar terpasang di gate.
+
+### Verifikasi
+- `npm run typecheck` exit 0 · `npm run lint` exit 0.
+- `npm run test:run`: **127 berkas / 2.449 tes** lulus.
+- `npm run test:coverage`: 127 berkas lulus · **97,38 / 89,68 / 97,90 / 98,44** (ratchet tidak diturunkan).
+- `npm run build` exit 0 · `npm run verify:precache` exit 0 → 59 berkas ter-precache + `Firebase config terisi di 1 chunk (main-_4pu5gfx.js)`.
+- Satu kali `test:coverage` merah karena `Test timed out in 5000ms` (bukan asersi); dijalankan ulang hijau.
+
+### Belum dikerjakan
+- Produksi masih menyajikan bundel rusak. Deploy adalah publikasi → menunggu konfirmasi Andi.
+- Sebelum deploy: pastikan GitHub Secrets `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_APP_ID`, `FIREBASE_TOKEN` terisi (`.github/workflows/deploy.yml`).
+- `package-lock.json` sudah modified sebelum sesi ini (churn npm tak terkait fix) — jangan ikut di-commit bersama guard.
+
 ## 📝 S55 · Template CSV & Impor Lengkap: Spare Parts, Equipment, dan PM Schedule, sw v105 → v106 (2026-10-30)
 
 > Rilis **sw v105 → v106** (`src/**` + `public/**` berubah).

@@ -15,6 +15,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { checkFirebaseConfig } from './lib/firebase-config-guard.mjs';
 
 const DIST = path.resolve(process.cwd(), 'dist');
 const SW = path.join(DIST, 'sw.js');
@@ -113,3 +114,34 @@ if (Object.keys(dangling).length > 0) {
 }
 
 console.log(`[verify-precache] OK — ${targets.length} berkas build semuanya ter-precache.`);
+
+/**
+ * Penjaga konfigurasi Firebase (S54b).
+ *
+ * `vite build` tanpa env `VITE_FIREBASE_*` meng-inline `void 0` ke
+ * `firebaseConfig` dan tetap keluar dengan exit 0 — aplikasinya lalu melempar
+ * `auth/invalid-api-key` di layar login, bukan di sini. Karena itu bundel yang
+ * memuat `firebaseConfig` diperiksa isinya sebelum dianggap sah.
+ */
+const configChunks = fs
+  .readdirSync(path.join(DIST, 'assets'))
+  .filter((name) => name.endsWith('.js'))
+  .map((name) => ({ name, source: fs.readFileSync(path.join(DIST, 'assets', name), 'utf-8') }))
+  .filter(({ source }) => source.includes('window.firebaseConfig'));
+
+if (configChunks.length === 0) {
+  console.error('[verify-precache] tidak ada chunk yang mengekspor `window.firebaseConfig` di dist/assets.');
+  console.error('Chunk firebase-core kemungkinan tidak ikut ter-build — periksa src/main.js.');
+  process.exit(1);
+}
+
+const configProblems = configChunks.flatMap(({ name, source }) => checkFirebaseConfig(source, name));
+
+if (configProblems.length > 0) {
+  console.error('[verify-precache] konfigurasi Firebase kosong di bundel:');
+  for (const line of configProblems) console.error('  ' + line);
+  console.error('\nDeploy bundel ini akan membuat login gagal dengan auth/invalid-api-key.');
+  process.exit(1);
+}
+
+console.log(`[verify-precache] Firebase config terisi di ${configChunks.length} chunk (${configChunks.map((c) => c.name).join(', ')}).`);
