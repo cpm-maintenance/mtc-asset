@@ -72,3 +72,28 @@ describe('kontrak fragmen: <details> terikat ke flag', () => {
         expect(attrs).toContain('@toggle="logDeptOpen = $event.target.open"');
     });
 });
+
+describe('department request extension prefill/reset', () => {
+    it('restores new request and Other details without overwriting maintenance schedule', () => {
+        const record = { ...RECORD, requestedBy: '', approvedBy: '', requesterContact: 'Ext 123', neededByDate: '2030-12-01', dueDate: '2030-12-05', rca: 'Other', rcaOther: 'Non-equipment work', woPriority: 'Other', woPriorityOther: 'Shutdown window' };
+        const ctx = makeCtx([record]);
+        ctx.openLogModal(true, record);
+        expect(ctx.logDeptOpen).toBe(true);
+        expect(ctx.logForm).toMatchObject({ requesterContact: 'Ext 123', neededByDate: '2030-12-01', dueDate: '2030-12-05', rcaOther: 'Non-equipment work', woPriorityOther: 'Shutdown window' });
+        ctx.openLogModal(false);
+        expect(ctx.logForm).toMatchObject({ requesterContact: '', neededByDate: '', rcaOther: '', woPriorityOther: '' });
+    });
+
+    it('opens section when only needed-by date exists', () => {
+        const record = { ...RECORD, requestedBy: '', approvedBy: '', neededByDate: '2030-12-01' };
+        const ctx = makeCtx([record]);
+        ctx.openLogModal(true, record);
+        expect(ctx.logDeptOpen).toBe(true);
+    });
+
+    it('legacy data supplies empty extensions', () => {
+        const ctx = makeCtx([RECORD]);
+        ctx.openLogModal(true, RECORD);
+        expect(ctx.logForm).toMatchObject({ requesterContact: '', neededByDate: '', rcaOther: '', woPriorityOther: '' });
+    });
+});

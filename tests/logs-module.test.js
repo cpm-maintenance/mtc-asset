@@ -717,7 +717,33 @@ describe('submitLog — jalur online: payload, Equipment, Stats', () => {
     beforeEach(() => { vi.useFakeTimers(); });
     afterEach(() => { vi.useRealTimers(); });
 
-    it('menulis HistoryLog/LOG-*, menutup modal, dan menaruh log di daftar lokal', async () => {
+    it('persists request extensions and trimmed Other explanations', async () => {
+const fb = stubFirebase();
+const ctx = submitCtx({ logForm: baseForm({ requesterContact: '  Ext 123  ', neededByDate: '2030-12-01', rca: 'Other', rcaOther: '  Facility repair  ', woPriority: 'Other', woPriorityOther: '  Shutdown window  ' }) });
+await runSubmit(ctx);
+expect(writtenPayload(fb)).toMatchObject({ requesterContact: 'Ext 123', neededByDate: '2030-12-01', rca: 'Other', rcaOther: 'Facility repair', woPriority: 'Other', woPriorityOther: 'Shutdown window' });
+});
+
+it('clears inactive Other explanations and defaults legacy request extensions', async () => {
+const fb = stubFirebase();
+const ctx = submitCtx({ logForm: baseForm({ rca: 'PM', rcaOther: 'old cause', woPriority: 'Normal', woPriorityOther: 'old priority' }) });
+await runSubmit(ctx);
+expect(writtenPayload(fb)).toMatchObject({ requesterContact: '', neededByDate: '', rcaOther: '', woPriorityOther: '' });
+});
+
+it.each([
+{ rca: 'Other', rcaOther: ' ' },
+{ woPriority: 'Other', woPriorityOther: '' },
+{ neededByDate: '2030-02-30' },
+])('blocks Firebase writes for invalid extension %j', async (fields) => {
+const fb = stubFirebase();
+const ctx = submitCtx({ logForm: baseForm(fields) });
+await runSubmit(ctx);
+expect(fb.set).not.toHaveBeenCalled();
+expect(ctx.showNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+});
+
+it('menulis HistoryLog/LOG-*, menutup modal, dan menaruh log di daftar lokal', async () => {
         const fb = stubFirebase();
         const ctx = submitCtx({ user: { uid: 'U1' } });
         await runSubmit(ctx);

@@ -15,7 +15,7 @@ export const LOG_TYPES = ['PM', 'Repair', 'Inspection', 'Breakdown'];
 export const LOG_STATUS = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
 
 // Work Order Priority Levels
-export const WO_PRIORITY = ['Emergency', 'Urgent', 'Normal', 'Planned'];
+export const WO_PRIORITY = ['Emergency', 'Urgent', 'Normal', 'Planned', 'Other'];
 
 // Work Order Status Workflow
 export const WO_STATUS = ['Draft', 'Pending', 'Approved', 'In Progress', 'Completed', 'Cancelled'];
@@ -23,7 +23,7 @@ export const WO_STATUS = ['Draft', 'Pending', 'Approved', 'In Progress', 'Comple
 // Work Order Source/Department
 export const WO_DEPARTMENTS = ['Production', 'Maintenance', 'Safety', 'Quality', 'Engineering', 'Operations', 'DTMF', 'MineGEO', 'GeoDEV', 'Mining', 'External', 'Other'];
 
-export const RCA_OPTIONS = ['PM', 'Human Error', 'Fatigue/Wear', 'External Factor', 'Design/Quality', 'Operational Misuse'];
+export const RCA_OPTIONS = ['PM', 'Human Error', 'Fatigue/Wear', 'External Factor', 'Design/Quality', 'Operational Misuse', 'Other'];
 export const BD_CATEGORIES = ['Mechanical', 'Electrical', 'Operational'];
 export const PERFORMANCE_TYPES = ['Unscheduled', 'Scheduled'];
 
@@ -59,12 +59,13 @@ export const DEFAULT_LOG_FORM = () => ({
   logId: '', type: 'PM', desc: '', downtime: '', cost: '', equipmentId: '',
   startDate: '', startTime: '', endDate: '', endTime: '',
   date: localDateStr(), tech: 'Maintenance Team',
-  parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM',
+  parts: [], status: 'Pending', hm: '', catatan: '', photos: [], rca: 'PM', rcaOther: '', woPriorityOther: '',
   // Work Order Fields
   woPriority: 'Normal', woNumber: '', assignedTo: '', dueDate: DEFAULT_DUE_DATE(),
   estimatedHours: '', actualHours: '', laborCost: 0, completedDate: '',
   // Department Request Fields
   requestSource: 'Production', requestedBy: '', requestDate: localDateStr(),
+ requesterContact: '', neededByDate: '',
   approvedBy: '', approvalDate: '',
   // External Fields
   externalEquipName: ''

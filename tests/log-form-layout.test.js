@@ -75,7 +75,7 @@ describe('modal New System Entry — tata letak konsisten', () => {
 });
 
 describe('modal New System Entry — tata letak desktop (S39h)', () => {
-    it('seksi 4-field memakai grid 2 kolom (form-grid--two), bukan 3 kolom penuh', () => {
+    it('seksi 6-field memakai grid 2 kolom (form-grid--two), bukan 3 kolom penuh', () => {
         const twoCol = [...modal.matchAll(/class="form-grid form-grid--two[^"]*"/g)];
         expect(twoCol.length).toBe(4);
     });
@@ -94,10 +94,12 @@ describe('modal New System Entry — tata letak desktop (S39h)', () => {
         const block = modal.slice(i, end);
         expect(block).toContain('<details');
         expect(block).toContain('<summary');
-        expect(block).toContain('Opsional · 4 field');
-        // keempat field Department Request ada di dalam blok terlipat
+        expect(block).toContain('Opsional · 6 field');
+        // keenam field Department Request ada di dalam blok terlipat
         expect(block).toContain('logForm.requestSource');
         expect(block).toContain('logForm.approvedBy');
+        expect(block).toContain('logForm.requesterContact');
+        expect(block).toContain('logForm.neededByDate');
     });
 
     it('tiga field wajib bertanda * dan aria-required', () => {

@@ -414,13 +414,30 @@ export function validatePartForm(form) {
 }
 
 /**
+ * Error field tambahan permintaan WO; dipakai submit, pesan inline, dan tombol simpan.
+ * @param {HistoryLog} form
+ * @returns {Record<string, string>}
+ */
+export function validateLogRequestFields(form) {
+ /** @type {Record<string, string>} */
+ const errors = {};
+ if (form.rca === 'Other' && !String(form.rcaOther || '').trim()) errors.rcaOther = 'Keterangan root cause wajib diisi';
+ if (form.woPriority === 'Other' && !String(form.woPriorityOther || '').trim()) errors.woPriorityOther = 'Keterangan prioritas wajib diisi';
+ const date = form.neededByDate;
+ if (date && (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || new Date(date).toJSON()?.slice(0, 10) !== date)) {
+ errors.neededByDate = 'Tanggal dibutuhkan tidak valid';
+ }
+ return errors;
+}
+
+/**
  * Validasi form History Log / Work Order (equipment, tanggal, deskripsi, downtime, cost, HM, foto).
  *
  * @param {HistoryLog} form - Data form log.
  * @returns {string[]} Daftar pesan error (kosong bila valid).
  */
 export function validateLogForm(form) {
-  const errors = [];
+  const errors = Object.values(validateLogRequestFields(form));
   if (!form.equipmentId?.trim()) errors.push('Equipment selection is required');
   if (!form.date?.trim()) errors.push('Date is required');
   if (form.date && !isValidDate(form.date)) errors.push('Invalid date format');

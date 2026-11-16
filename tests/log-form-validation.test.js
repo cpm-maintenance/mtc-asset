@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { logsModule } from '../src/js/modules/logs.js';
+import { validateLogForm } from '../src/js/utils.js';
 
 const makeCtx = (logForm) =>
     Object.assign(Object.create(logsModule), {
@@ -73,5 +74,63 @@ describe('syncLogFormErrors', () => {
         Object.assign(ctx.logForm, valid());
         expect(ctx.syncLogFormErrors()).toBe(true);
         expect(ctx.logFormErrors).toEqual({});
+    });
+});
+
+// Guard: missing Other explanations or impossible needed-by dates must block writes.
+describe('WO request extensions validation', () => {
+    it.each([
+        ['rca', 'rcaOther'],
+        ['woPriority', 'woPriorityOther'],
+    ])('%s Other rejects absent, empty and whitespace explanations', (choice, detail) => {
+        for (const value of [undefined, '', '   ']) {
+            const form = { ...valid(), [choice]: 'Other', [detail]: value };
+            const ctx = makeCtx(form);
+            expect(ctx.isLogFormValid).toBe(false);
+            expect(ctx.syncLogFormErrors()).toBe(false);
+            expect(ctx.logFormErrors[detail]).toBeTruthy();
+            expect(ctx.logFormErrorCount).toBe(1);
+            expect(validateLogForm(form)).toHaveLength(1);
+        }
+    });
+
+    it.each([
+        ['rca', 'rcaOther', 'PM'],
+        ['woPriority', 'woPriorityOther', 'Normal'],
+    ])('%s accepts explanation and removes obsolete errors when choice changes', (choice, detail, normal) => {
+        const form = { ...valid(), [choice]: 'Other', [detail]: 'Pekerjaan fasilitas umum' };
+        const ctx = makeCtx(form);
+        expect(ctx.syncLogFormErrors()).toBe(true);
+        expect(validateLogForm(form)).toEqual([]);
+        form[detail] = '';
+        ctx.syncLogFormErrors();
+        form[choice] = normal;
+        expect(ctx.isLogFormValid).toBe(true);
+        expect(ctx.syncLogFormErrors()).toBe(true);
+        expect(validateLogForm(form)).toEqual([]);
+    });
+
+    it('both Other selections count as two missing fields', () => {
+        const ctx = makeCtx({ ...valid(), rca: 'Other', woPriority: 'Other' });
+        expect(ctx.syncLogFormErrors()).toBe(false);
+        expect(ctx.logFormErrorCount).toBe(2);
+    });
+
+    it.each(['2030-02-30', '2030-13-01', '2030-2-01', 'not-a-date'])('rejects invalid needed-by date %s', (neededByDate) => {
+        const form = { ...valid(), neededByDate };
+        const ctx = makeCtx(form);
+        expect(ctx.isLogFormValid).toBe(false);
+        expect(ctx.syncLogFormErrors()).toBe(false);
+        expect(ctx.logFormErrors.neededByDate).toBeTruthy();
+        expect(ctx.logFormErrorCount).toBe(1);
+        expect(validateLogForm(form)).toHaveLength(1);
+    });
+
+    it.each([undefined, '', '2032-02-29', '2030-12-01', '2020-01-01'])('accepts optional or real needed-by date %s including future dates', (neededByDate) => {
+        const form = { ...valid(), neededByDate };
+        const ctx = makeCtx(form);
+        expect(ctx.syncLogFormErrors()).toBe(true);
+        expect(ctx.isLogFormValid).toBe(true);
+        expect(validateLogForm(form)).toEqual([]);
     });
 });

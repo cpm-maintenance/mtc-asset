@@ -4,7 +4,7 @@ import { logger } from '../logger.js';
 /**
  * History log management module
  */
-import { localDateStr, validateLogForm, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, computeDowntimeHours, computePartsCost, formatAssignee as formatAssigneeText } from '../utils.js';
+import { localDateStr, validateLogForm, validateLogRequestFields, formatDateForInput, withRetry, isNetworkError, sanitizeDataForFirebase, checkPartAvailability, computeBDFromLogs, computeDowntimeHours, computePartsCost, formatAssignee as formatAssigneeText } from '../utils.js';
 import { DEFAULT_DUE_DATE, DEFAULT_LOG_FORM } from '../constants';
 import { safeProcessFirebaseData } from './data.js';
 import { askConfirm } from './confirm-dialog.js';
@@ -99,6 +99,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
         if (errors.estimatedHours) n += 1;
         if (errors.actualHours) n += 1;
         if (errors.endDate) n += 1;
+ n += Object.keys(validateLogRequestFields(f)).length;
         return n;
     },
 
@@ -134,7 +135,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 errors[key] = 'Tidak boleh negatif';
             }
         }
-        this.logFormErrors = errors;
+        Object.assign(errors, validateLogRequestFields(f));
+ this.logFormErrors = errors;
         return Object.keys(errors).length === 0;
     },
 
@@ -256,6 +258,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 catatan: data.Catatan || '',
                 photos: existingPhotos, 
                 rca: data.rca || 'PM',
+ rcaOther: data.rcaOther || '',
+ woPriorityOther: data.woPriorityOther || '',
                 // Work Order fields
                 woPriority: data.woPriority || 'Normal',
                 woNumber: data.woNumber || '',
@@ -268,6 +272,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 requestSource: data.requestSource || 'Production',
                 requestedBy: data.requestedBy || '',
                 requestDate: data.requestDate || '',
+ requesterContact: data.requesterContact || '',
+ neededByDate: data.neededByDate || '',
                 approvedBy: data.approvedBy || '',
                 approvalDate: data.approvalDate || '',
                 // External fields
@@ -277,7 +283,7 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
             // Buka seksi Department Request bila record ini memang punya data
             // permintaan — tanpa flag ini empat field terisi tapi tak terlihat
             // karena <details> selalu tertutup.
-            this.logDeptOpen = !!(this.logForm.requestedBy || this.logForm.approvedBy);
+            this.logDeptOpen = !!(this.logForm.requestedBy || this.logForm.approvedBy || this.logForm.requesterContact || this.logForm.neededByDate);
 
             // ════════════════════════════════════════════
             // DIAGNOSTIC: Check logForm after assignment
@@ -326,6 +332,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 catatan: '',
                 photos: [], 
                 rca: 'PM',
+ rcaOther: '',
+ woPriorityOther: '',
                 // Work Order fields
                 woPriority: 'Normal',
                 woNumber: woNum,
@@ -338,6 +346,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 requestSource: 'Production',
                 requestedBy: '',
                 requestDate: localDateStr(),
+ requesterContact: '',
+ neededByDate: '',
                 approvedBy: '',
                 approvalDate: '',
                 // External fields
@@ -574,6 +584,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 Catatan: this.logForm.catatan, 
                 PhotoURLs: JSON.stringify(photoUrls), 
                 rca: this.logForm.rca,
+ rcaOther: this.logForm.rca === 'Other' ? String(this.logForm.rcaOther || '').trim() : '',
+ woPriorityOther: this.logForm.woPriority === 'Other' ? String(this.logForm.woPriorityOther || '').trim() : '',
                 // Work Order fields
                 woNumber: this.logForm.woNumber || this.logForm.woNumber || '',
                 woPriority: this.logForm.woPriority || 'Normal',
@@ -586,6 +598,8 @@ export const logsModule = /** @type {Partial<AppState> & ThisType<AppState>} */ 
                 requestSource: this.logForm.requestSource || 'Production',
                 requestedBy: this.logForm.requestedBy || '',
                 requestDate: this.logForm.requestDate || '',
+ requesterContact: String(this.logForm.requesterContact || '').trim(),
+ neededByDate: this.logForm.neededByDate || '',
                 approvedBy: this.logForm.approvedBy || '',
                 approvalDate: this.logForm.approvalDate || '',
                 rejectedBy: this.logForm.rejectedBy || '',

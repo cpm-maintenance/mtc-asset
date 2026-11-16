@@ -1592,13 +1592,21 @@
           <div class="form-grid form-grid--two">
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Priority Level</label>
-              <select aria-label="Prioritas work order" x-model="logForm.woPriority"
+              <select aria-label="Prioritas work order" x-model="logForm.woPriority" @change="syncLogFormErrors()"
                 class="w-full">
                 <option value="Planned">Planned - Schedule normally</option>
                 <option value="Normal">Normal - Can wait</option>
                 <option value="Urgent">Urgent - Fix today</option>
                 <option value="Emergency">Emergency - Production stopped</option>
+                <option value="Other">Other - Custom priority</option>
               </select>
+            </div>
+            <div x-show="logForm.woPriority === 'Other'" x-cloak>
+              <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Priority Detail <span class="normal-case">(wajib bila Other)</span></label>
+              <input aria-label="Keterangan prioritas lainnya" type="text" x-model="logForm.woPriorityOther"
+                x-bind:required="logForm.woPriority === 'Other'" x-bind:aria-required="logForm.woPriority === 'Other'"
+                @input="syncLogFormErrors()" placeholder="Jelaskan prioritas khusus..." class="w-full">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.woPriorityOther" x-text="logFormErrors.woPriorityOther" x-cloak></p>
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Assigned Technician</label>
@@ -1643,7 +1651,7 @@
           @toggle="logDeptOpen = $event.target.open">
           <summary class="flex items-center gap-3 cursor-pointer list-none">
             <h4 class="font-label-mono-md text-label-mono-md font-black uppercase tracking-widest mb-0">🏢 Department Request</h4>
-            <span class="ml-auto font-label-mono-sm text-label-mono-sm text-tac-sync-cyan border border-tac-sync-cyan/40 rounded px-2 py-0.5 uppercase">Opsional · 4 field</span>
+              <span class="ml-auto font-label-mono-sm text-label-mono-sm text-tac-sync-cyan border border-tac-sync-cyan/40 rounded px-2 py-0.5 uppercase">Opsional · 6 field</span>
           </summary>
           <div class="form-grid form-grid--two mt-3">
             <div>
@@ -1665,9 +1673,21 @@
                 class="w-full">
             </div>
             <div>
+              <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Requester Contact <span class="normal-case">(opsional)</span></label>
+              <input aria-label="Kontak peminta" type="text" x-model="logForm.requesterContact" @input="syncLogFormErrors()"
+                placeholder="Phone, email, or extension" class="w-full">
+            </div>
+            <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Request Date</label>
               <input aria-label="Tanggal permintaan" type="date" x-model="logForm.requestDate"
                 class="w-full">
+            </div>
+            <div>
+              <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Needed By <span class="normal-case">(opsional)</span></label>
+              <input aria-label="Tanggal dibutuhkan" type="date" x-model="logForm.neededByDate" @input="syncLogFormErrors()"
+                aria-describedby="needed-by-date-help" class="w-full">
+              <p id="needed-by-date-help" class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-on-surface-variant">Request Date is when the request was made; Needed By is when the requester needs the work completed. It is separate from maintenance due date.</p>
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.neededByDate" x-text="logFormErrors.neededByDate" x-cloak></p>
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Approved By</label>
@@ -1702,13 +1722,21 @@
             </div>
             <div>
               <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Root Cause (RCA)</label>
-              <select aria-label="RCA" x-model="logForm.rca" class="w-full">
+              <select aria-label="RCA" x-model="logForm.rca" @change="syncLogFormErrors()" class="w-full">
                 <option value="PM">Normal PM</option>
                 <option value="Human Error">Human Error</option>
                 <option value="Fatigue/Wear">Fatigue/Wear</option>
                 <option value="External Factor">External Factor</option>
                 <option value="Design/Quality">Design/Quality</option>
+                <option value="Other">Other</option>
               </select>
+            </div>
+            <div x-show="logForm.rca === 'Other'" x-cloak>
+              <label class="font-label-mono-sm text-label-mono-sm text-tac-gold-bright/60 uppercase ml-0.5 mb-1.5 block">Other Root Cause <span class="normal-case">(wajib bila Other)</span></label>
+              <input aria-label="Keterangan RCA lainnya" type="text" x-model="logForm.rcaOther"
+                x-bind:required="logForm.rca === 'Other'" x-bind:aria-required="logForm.rca === 'Other'"
+                @input="syncLogFormErrors()" placeholder="Jelaskan penyebab lainnya..." class="w-full">
+              <p class="mt-1 font-label-mono-sm text-label-mono-sm text-tac-status-emergency" x-show="logFormErrors.rcaOther" x-text="logFormErrors.rcaOther" x-cloak></p>
             </div>
           </div>
 
